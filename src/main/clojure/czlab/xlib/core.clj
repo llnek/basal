@@ -12,14 +12,13 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "General utilties"
       :author "kenl" }
 
-  czlab.xlib.util.core
+  czlab.xlib.core
 
   (:require
-    [czlab.xlib.util.logging :as log]
+    [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.string :as cs]
     [clojure.core :as ccore]
@@ -35,11 +34,11 @@
     [java.net URL]
     [java.nio.charset Charset]
     [java.io InputStream File FileInputStream
-    ByteArrayInputStream
-    ByteArrayOutputStream]
+     ByteArrayInputStream
+     ByteArrayOutputStream]
     [java.util Map Properties Date Calendar
-    HashMap HashSet ArrayList
-    GregorianCalendar TimeZone]
+     HashMap HashSet ArrayList
+     GregorianCalendar TimeZone]
     [java.sql Timestamp]
     [java.rmi.server UID]
     [org.apache.commons.lang3.text StrSubstitutor]
@@ -52,7 +51,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti ^String FPath
+(defmulti ^String fpath
   "Convert the path into nice format (no) backslash" class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

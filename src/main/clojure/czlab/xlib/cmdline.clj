@@ -12,21 +12,21 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "Functions to enable console questions"
       :author "kenl" }
 
-  czlab.xlib.util.cmdline
+  czlab.xlib.cmdline
 
   (:require
-    [czlab.xlib.util.core :refer [IsWindows?] ]
-    [czlab.xlib.util.str :refer [strim Has?] ]
-    [czlab.xlib.util.logging :as log]
+    [czlab.xlib.core :refer [isWindows?] ]
+    [czlab.xlib.str :refer [strim has?] ]
+    [czlab.xlib.logging :as log]
     [clojure.string :as cs])
 
   (:import
     [java.io BufferedOutputStream
-    InputStreamReader OutputStreamWriter]
+     InputStreamReader
+     OutputStreamWriter]
     [java.io Reader Writer]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -48,8 +48,8 @@
              (let [m (cond
                        (or (= c -1)(= c 4)) #{ :quit :break }
                        (= c (int \newline)) #{ :break }
-                       (or (= c (int \return))
-                           (= c (int \backspace)) (= c 27))
+                       (or (= c (int \backspace))
+                           (= c (int \return)) (= c 27))
                        #{}
                        :else
                        (do
@@ -72,11 +72,10 @@
    answer]
 
   (let [dft (strim (:default cmdQ))
+        res (:result cmdQ)
         must (:must cmdQ)
-        nxt (:next cmdQ)
-        res (:result cmdQ)]
-    (if
-      (nil? answer)
+        nxt (:next cmdQ)]
+    (if (nil? answer)
       (do
         (.write cout "\n")
         nil)
@@ -118,7 +117,7 @@
     (.write cout (str q (if must "*" "" ) " ? "))
     ;; choices ?
     (when-not (empty? chs)
-      (if (Has? chs \n)
+      (if (has? chs \n)
         (.write cout (str (if (.startsWith chs "\n")
                             "[" "[\n")
                           chs
@@ -152,7 +151,7 @@
 
   (loop [rc (popQ cout
                   cin
-                  (cmdQNs start) props) ]
+                  (cmdQNs start) props)]
     (cond
       (= :end rc) @props
       (nil? rc) {}
@@ -162,7 +161,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CLIConverse
+(defn cliConverse
 
   "Prompt a sequence of questions via console"
 
@@ -171,10 +170,10 @@
   {:pre [(map? cmdQs)]}
 
   (let [cout (->> (BufferedOutputStream. (System/out))
-                  (OutputStreamWriter. ))
-        kp (if (IsWindows?) "<Ctrl-C>" "<Ctrl-D>")
+                  (OutputStreamWriter.))
+        kp (if (isWindows?) "<ctrl-c>" "<ctrl-d>")
         cin (InputStreamReader. (System/in))
-        func (partial cycleQ cout cin) ]
+        func (partial cycleQ cout cin)]
     (.write cout (str ">>> Press "
                       kp "<Enter> to cancel...\n"))
     (->

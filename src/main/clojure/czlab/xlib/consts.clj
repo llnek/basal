@@ -12,11 +12,10 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc ""
       :author "kenl" }
 
-  czlab.xlib.util.consts)
+  czlab.xlib.consts)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -50,7 +49,7 @@
 (defonce MONTHS ["JAN" "FEB" "MAR" "APR" "MAY" "JUN"
              "JUL" "AUG" "SEP" "OCT" "NOV" "DEC" ] )
 
-(defonce ^String COPYRIGHT "Copyright (c) 2008-2015, Ken Leung. All rights reserved.")
+(defonce ^String COPYRIGHT "Copyright (c) 2008-2016, Kenneth Leung. All rights reserved.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
