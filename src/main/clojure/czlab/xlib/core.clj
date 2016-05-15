@@ -25,12 +25,12 @@
     [clojure.edn :as edn])
 
   (:import
-    [java.util.zip DataFormatException Deflater Inflater]
     [java.util.concurrent.atomic AtomicLong AtomicInteger]
-    [com.zotohlab.frwk.util BadDataError]
-    [com.zotohlab.skaro.core Muble]
-    [java.security SecureRandom]
+    [java.util.zip DataFormatException Deflater Inflater]
     [com.google.gson JsonObject JsonElement]
+    [java.security SecureRandom]
+    [czlab.xlib BadDataError]
+    [czlab.xlib Muble]
     [java.net URL]
     [java.nio.charset Charset]
     [java.io InputStream File FileInputStream
@@ -56,7 +56,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti ^Properties LoadJavaProps
+(defmulti ^Properties loadJavaProps
   "Load java properties from input-stream" class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -68,7 +68,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (meta nil) is fine, so no need to worry
-(defmacro GetTypeId "" [m] `(:typeid (meta ~m)))
+(defmacro getTypeId "" [m] `(:typeid (meta ~m)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -98,7 +98,7 @@
 
   [& exprs]
 
-  `(try ~@exprs (catch Throwable e# nil )) )
+  `(try ~@exprs (catch Throwable e# nil )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
