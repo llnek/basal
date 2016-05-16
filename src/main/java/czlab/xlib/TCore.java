@@ -12,20 +12,18 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-
-package com.zotohlab.frwk.util;
+package czlab.xlib;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
 
 
 /**

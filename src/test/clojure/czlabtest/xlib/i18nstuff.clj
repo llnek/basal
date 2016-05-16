@@ -1,4 +1,3 @@
-;;
 ;; Licensed under the Apache License, Version 2.0 (the "License");
 ;; you may not use this file except in compliance with the License.
 ;; You may obtain a copy of the License at
@@ -12,28 +11,22 @@
 ;; limitations under the License.
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
-;;
 
+(ns czlabtest.xlib.i18nstuff
 
-
-(ns
-
-  testcljc.util.seqnumgen
-
-  (:require [czlab.xlib.util.core :as SN])
-
-  (:use [clojure.test]))
+  (:use [czlab.xlib.resources]
+        [czlab.xlib.core]
+        [clojure.test]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftest testutil-seqnumgen
+(deftest czlabtestxlib-i18nstuff
 
-(is (> (SN/NextLong) 0))
-(is (> (SN/NextInt) 0))
+(is (= "hello joe, how is your dawg"
+       (let [ rs (loadResource (resUrl "czlab/xlib/Resources_en.properties")) ]
+           (rstr rs "test"  "joe" "dawg" ))))
 
 )
 
-(def ^:private seqnumgen-eof nil)
-
-;;(clojure.test/run-tests 'testcljc.util.seqnumgen)
+;;(clojure.test/run-tests 'czlabtest.xlib.i18nstuff)
 

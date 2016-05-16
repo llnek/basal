@@ -1,4 +1,3 @@
-;;
 ;; Licensed under the Apache License, Version 2.0 (the "License");
 ;; you may not use this file except in compliance with the License.
 ;; You may obtain a copy of the License at
@@ -12,43 +11,30 @@
 ;; limitations under the License.
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
-;;
 
+(ns czlab.xlib.byteutils
 
-
-(ns
-
-  testcljc.util.procutils
-
-  (:require [czlab.xlib.util.core :as CU]
-            [czlab.xlib.util.process :as PU])
-
+  (:require [czlab.xlib.io :as BU])
   (:use [clojure.test])
-
-  (:import  [org.apache.commons.io FileUtils]
-            [java.io File]))
-
+  (:import  [java.nio.charset Charset]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private CUR_MS (System/currentTimeMillis))
-(def ^:private CUR_FP (File. (str (System/getProperty "java.io.tmpdir") "/" CUR_MS)))
+(def ^:private CS_UTF8 "utf-8")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftest testutil-procutils
+(deftest czlabtestxlib-byteutils
 
-(is (true? (do
-              (PU/Coroutine (fn [] (FileUtils/writeStringToFile ^File CUR_FP "heeloo" "utf-8")))
-              (PU/SafeWait 3500)
-              (and (.exists ^File CUR_FP) (>= (.length ^File CUR_FP) 6)))))
+  (is (= "heeloo" (String. (BU/toChars (BU/toBytes (.toCharArray "heeloo") CS_UTF8) CS_UTF8))))
 
-(is (> (.length (PU/ProcessPid)) 0))
+  (is (= 4 (alength ^bytes (BU/writeBytes (Integer/MAX_VALUE)))))
+  (is (= 8 (alength ^bytes (BU/writeBytes (Long/MAX_VALUE)))))
 
+  (is (= (Integer/MAX_VALUE) (BU/readInt (BU/writeBytes (Integer/MAX_VALUE)))))
+  (is (= (Long/MAX_VALUE) (BU/readLong (BU/writeBytes (Long/MAX_VALUE)))))
 
 )
 
-(def ^:private procutils-eof nil)
-
-;;(clojure.test/run-tests 'testcljc.util.procutils)
+;;(clojure.test/run-tests 'czlabtest.xlib.byteutils)
 

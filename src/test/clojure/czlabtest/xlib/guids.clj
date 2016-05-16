@@ -1,4 +1,3 @@
-;;
 ;; Licensed under the Apache License, Version 2.0 (the "License");
 ;; you may not use this file except in compliance with the License.
 ;; You may obtain a copy of the License at
@@ -12,30 +11,28 @@
 ;; limitations under the License.
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
-;;
 
+(ns czlabtest.xlib.guids
 
+  (:require [czlab.xlib.guids :as GU])
+  (:use [clojure.test]))
 
-(ns
-
-  testcljc.i18n.i18nstuff
-
-  (:use [czlab.xlib.i18n.resources]
-        [czlab.xlib.util.core]
-        [clojure.test]))
-
+;;(def ^:private UID_2 (GU/new-uuid))
+;;(def ^:private UID_1 (GU/new-uuid))
+;;(def ^:private WID_2 (GU/new-wwid))
+;;(def ^:private WID_1 (GU/new-wwid))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftest testi18n-i18nstuff
+(deftest czlabtestxlib-guids
 
-(is (= "hello joe, how is your dawg"
-       (let [ rs (LoadResource (ResUrl "com/zotohlab/frwk/i18n/Resources_en.properties")) ]
-           (RStr rs "test"  "joe" "dawg" ))))
+  (is (not (= (GU/newWWid) (GU/newWWid))))
+  (is (not (= (GU/newUUid) (GU/newUUid))))
+
+  (is (> (.length (GU/newWWid)) 0))
+  (is (> (.length (GU/newUUid)) 0))
 
 )
 
-(def ^:private i18nstuff-eof nil)
-
-;;(clojure.test/run-tests 'testcljc.i18n.i18nstuff)
+;;(clojure.test/run-tests 'czlabtest.xlib.guids)
 

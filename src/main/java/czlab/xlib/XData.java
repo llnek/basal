@@ -12,11 +12,10 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
+package czlab.xlib;
 
-package com.zotohlab.frwk.io;
-
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.IOException;
@@ -57,8 +56,8 @@ public class XData implements Serializable {
     this(null);
   }
 
-  public String getEncoding() { return _encoding; }
   public XData setEncoding(String enc) { _encoding=enc;  return this; }
+  public String getEncoding() { return _encoding; }
 
   /**
    * Control the internal file.

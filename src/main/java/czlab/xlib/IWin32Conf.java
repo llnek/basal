@@ -12,8 +12,8 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
+package czlab.xlib;
 
-package com.zotohlab.frwk.util;
 import java.util.Map;
 import java.util.Set;
 

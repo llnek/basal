@@ -12,8 +12,7 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-
-package com.zotohlab.frwk.mime;
+package czlab.xlib;
 
 import static org.apache.commons.lang3.StringUtils.trim;
 import javax.activation.MimetypesFileTypeMap;

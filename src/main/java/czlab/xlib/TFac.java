@@ -12,7 +12,7 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-package com.zotohlab.frwk.util;
+package czlab.xlib;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.Executors;
@@ -55,7 +55,10 @@ public class TFac implements ThreadFactory {
     return t;
   }
 
-  private String mkTname() { return _pfx + "-" + _seq.incrementAndGet(); }
+  private String mkTname() {
+    return _pfx + "-" + _seq.incrementAndGet();
+  }
+
 
 }
 

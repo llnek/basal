@@ -1,4 +1,3 @@
-;;
 ;; Licensed under the Apache License, Version 2.0 (the "License");
 ;; you may not use this file except in compliance with the License.
 ;; You may obtain a copy of the License at
@@ -12,21 +11,16 @@
 ;; limitations under the License.
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
-;;
 
+(ns czlabtest.xlib.fileutils
 
-
-(ns
-
-  testcljc.util.fileutils
-
-  (:require [czlab.xlib.util.files :as FU]
-            [czlab.xlib.util.core :as CU])
+  (:require [czlab.xlib.files :as FU]
+            [czlab.xlib.core :as CU])
 
   (:use [clojure.test])
 
   (:import  [org.apache.commons.io FileUtils]
-            [com.zotohlab.frwk.io XData]
+            [czlab.xlib XData]
             [java.io File]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -37,28 +31,28 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftest testutil-fileutils
+(deftest czlabtestxlib-fileutils
 
-(is (true? (FU/FileReadWrite? TMP_FP)))
-(is (true? (FU/FileRead? TMP_FP)))
+(is (true? (FU/fileReadWrite? TMP_FP)))
+(is (true? (FU/fileRead? TMP_FP)))
 
-(is (true? (FU/DirReadWrite? TMP_DIR)))
-(is (true? (FU/DirRead? TMP_DIR)))
+(is (true? (FU/dirReadWrite? TMP_DIR)))
+(is (true? (FU/dirRead? TMP_DIR)))
 
-(is (false? (FU/CanExec? TMP_FP)))
-(is (true? (FU/CanExec? TMP_DIR)))
+(is (false? (FU/canExec? TMP_FP)))
+(is (true? (FU/canExec? TMP_DIR)))
 
-(is (= "/tmp/a/b" (FU/ParentPath "/tmp/a/b/c")))
-(is (nil?  (FU/ParentPath nil)))
+(is (= "/tmp/a/b" (FU/parentPath "/tmp/a/b/c")))
+(is (nil?  (FU/parentPath nil)))
 
 (is (= "heeloo" (let [ fp (str (CU/juid) ".txt") ]
-                    (FU/SaveFile ^File TMP_DIR fp (FU/GetFile ^File TMP_DIR (.getName ^File TMP_FP)))
+                    (FU/saveFile ^File TMP_DIR fp (FU/getFile ^File TMP_DIR (.getName ^File TMP_FP)))
                     (FileUtils/readFileToString (File. ^File TMP_DIR fp) "utf-8")) ))
 
 
 )
 
-(def ^:private fileutils-eof nil)
-
 ;;(clojure.test/run-tests 'testcljc.util.fileutils)
+
+
 

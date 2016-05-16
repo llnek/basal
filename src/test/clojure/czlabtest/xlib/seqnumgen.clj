@@ -1,4 +1,3 @@
-;;
 ;; Licensed under the Apache License, Version 2.0 (the "License");
 ;; you may not use this file except in compliance with the License.
 ;; You may obtain a copy of the License at
@@ -12,36 +11,21 @@
 ;; limitations under the License.
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
-;;
 
+(ns czlabtest.xlib.seqnumgen
 
-
-(ns
-
-  testcljc.util.guids
-
-  (:require [czlab.xlib.util.guids :as GU])
-
+  (:require [czlab.xlib.core :as SN])
   (:use [clojure.test]))
-
-;;(def ^:private UID_2 (GU/new-uuid))
-;;(def ^:private UID_1 (GU/new-uuid))
-;;(def ^:private WID_2 (GU/new-wwid))
-;;(def ^:private WID_1 (GU/new-wwid))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftest testutil-guids
+(deftest czlabtestxlib-seqnumgen
 
-(is (not (= (GU/NewWWid) (GU/NewWWid))))
-(is (not (= (GU/NewUUid) (GU/NewUUid))))
-
-(is (> (.length (GU/NewWWid)) 0))
-(is (> (.length (GU/NewUUid)) 0))
+  (is (> (SN/nextLong) 0))
+  (is (> (SN/nextInt) 0))
 
 )
 
-(def ^:private guids-eof nil)
 
-;;(clojure.test/run-tests 'testcljc.util.guids)
+;;(clojure.test/run-tests 'czlabtest.xlib.seqnumgen)
 

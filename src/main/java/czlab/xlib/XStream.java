@@ -12,8 +12,7 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-
-package com.zotohlab.frwk.io;
+package czlab.xlib;
 
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;

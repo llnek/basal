@@ -12,7 +12,7 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-package com.zotohlab.frwk.core;
+package czlab.xlib;
 
 /**
  * @author kenl
@@ -23,4 +23,6 @@ public interface Disposable {
   public void dispose();
 
 }
+
+
 

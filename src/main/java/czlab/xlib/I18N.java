@@ -12,16 +12,15 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-
-package com.zotohlab.frwk.i18n;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ResourceBundle;
+package czlab.xlib;
 
 import static java.lang.invoke.MethodHandles.*;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.*;
+
+import java.util.ResourceBundle;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author kenl

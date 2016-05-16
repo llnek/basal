@@ -1,4 +1,3 @@
-;;
 ;; Licensed under the Apache License, Version 2.0 (the "License");
 ;; you may not use this file except in compliance with the License.
 ;; You may obtain a copy of the License at
@@ -12,38 +11,33 @@
 ;; limitations under the License.
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
-;;
 
+(ns czlabtest.xlib.procutils
 
-
-(ns
-
-  testcljc.util.byteutils
-
-  (:require [czlab.xlib.util.io :as BU])
+  (:require [czlab.xlib.core :as CU]
+            [czlab.xlib.process :as PU])
   (:use [clojure.test])
-  (:import  [java.nio.charset Charset]))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(def ^:private CS_UTF8 "utf-8")
+  (:import  [org.apache.commons.io FileUtils]
+            [java.io File]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftest testutils-byteutils
+(def ^:private CUR_MS (System/currentTimeMillis))
+(def ^:private CUR_FP (File. (str (System/getProperty "java.io.tmpdir") "/" CUR_MS)))
 
-(is (= "heeloo" (String. (BU/ToChars (BU/ToBytes (.toCharArray "heeloo") CS_UTF8) CS_UTF8))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(deftest czlabtestxlib-procutils
 
-(is (= 4 (alength ^bytes (BU/WriteBytes (Integer/MAX_VALUE)))))
-(is (= 8 (alength ^bytes (BU/WriteBytes (Long/MAX_VALUE)))))
+  (is (true? (do
+               (PU/async! (fn [] (FileUtils/writeStringToFile ^File CUR_FP "heeloo" "utf-8")))
+              (PU/safeWait 3500)
+              (and (.exists ^File CUR_FP) (>= (.length ^File CUR_FP) 6)))))
 
-(is (= (Integer/MAX_VALUE) (BU/ReadInt (BU/WriteBytes (Integer/MAX_VALUE)))))
-(is (= (Long/MAX_VALUE) (BU/ReadLong (BU/WriteBytes (Long/MAX_VALUE)))))
+(is (> (.length (PU/processPid)) 0))
+
 
 )
 
-(def ^:private byteutils-eof nil)
-
-;;(clojure.test/run-tests 'testcljc.util.byteutils)
+;;(clojure.test/run-tests 'czlabtest.xlib.procutils)
 

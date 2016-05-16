@@ -12,10 +12,8 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
+package czlab.xlib;
 
-package com.zotohlab.frwk.util;
-
-import com.zotohlab.frwk.core.Identifiable;
 
 /**
  * @author kenl

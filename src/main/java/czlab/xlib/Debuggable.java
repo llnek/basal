@@ -12,7 +12,7 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-package com.zotohlab.frwk.core;
+package czlab.xlib;
 
 import java.io.PrintStream;
 

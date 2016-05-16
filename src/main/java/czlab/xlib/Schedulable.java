@@ -12,10 +12,7 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-
-package com.zotohlab.frwk.util;
-
-import com.zotohlab.frwk.core.Disposable;
+package czlab.xlib;
 
 /**
  * @author kenl

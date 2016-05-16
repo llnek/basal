@@ -12,8 +12,7 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-
-package com.zotohlab.frwk.util;
+package czlab.xlib;
 
 import java.util.Comparator;
 import java.util.TreeMap;
@@ -33,14 +32,12 @@ public class NCMap<T> extends TreeMap<String, T> implements java.io.Serializable
     super(new NoCase<String>());
   }
 
-  private static class NoCase<T> implements Comparator<T>     {
+  private static class NoCase<T> implements Comparator<T> {
 
     public int compare(T o1, T o2) {
-
       String s1 = o1 == null ? "" : o1.toString();
       String s2 = o2 == null ? "" : o2.toString();
       return s1.toUpperCase().compareTo(s2.toUpperCase());
-
     }
 
   }
