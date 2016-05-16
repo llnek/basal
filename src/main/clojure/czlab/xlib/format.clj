@@ -12,15 +12,14 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc ""
       :author "kenl" }
 
-  czlab.xlib.util.format
+  czlab.xlib.format
 
   (:require
-    [czlab.xlib.util.files :refer [ReadOneUrl]]
-    [czlab.xlib.util.logging :as log]
+    [czlab.xlib.files :refer [readOneUrl]]
+    [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.edn :as edn]
     [clojure.data.json :as js])
@@ -33,7 +32,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn WriteEdnString
+(defn writeEdnString
 
   "Convert clojure object into EDN format"
 
@@ -44,19 +43,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti ReadEdn "Parse EDN formatted text" (fn [a] (class a)))
+(defmulti readEdn "Parse EDN formatted text" (fn [a] (class a)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod ReadEdn File
+(defmethod readEdn File
 
   [^File fp]
 
-  (ReadEdn (io/as-url fp)))
+  (readEdn (io/as-url fp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod ReadEdn String
+(defmethod readEdn String
 
   [^String s]
 
@@ -64,15 +63,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod ReadEdn URL
+(defmethod readEdn URL
 
   [^URL url]
 
-  (edn/read-string (ReadOneUrl url)))
+  (edn/read-string (readOneUrl url)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn WriteJson
+(defn writeJson
 
   "Convert into JSON"
 
@@ -83,7 +82,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ReadJsonKW
+(defn readJsonKW
 
   "Parse JSON into object with keys mapped to keywords"
 
@@ -93,7 +92,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ReadJson
+(defn readJson
 
   "Parse JSON into object"
 
@@ -103,4 +102,5 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

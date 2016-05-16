@@ -12,21 +12,20 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "A Scheduler with pooled threads"
       :author "kenl" }
 
-  czlab.xlib.util.scheduler
+  czlab.xlib.scheduler
 
   (:require
-    [czlab.xlib.util.core
-    :refer [trap! ex* NextInt juid MubleObj!]]
-    [czlab.xlib.util.logging :as log]
-    [czlab.xlib.util.str :refer [ToKW hgl?]])
+    [czlab.xlib.core
+     :refer [trap! exp* nextInt juid mubleObj!]]
+    [czlab.xlib.logging :as log]
+    [czlab.xlib.str :refer [toKW hgl?]])
 
   (:import
-    [com.zotohlab.frwk.util RunnableWithId Schedulable TCore]
-    [com.zotohlab.frwk.core Activable Identifiable Named]
+    [czlab.xlib RunnableWithId Schedulable TCore]
+    [czlab.xlib Activable Identifiable Named]
     [java.util.concurrent ConcurrentHashMap]
     [java.util Map Properties Timer TimerTask]))
 
@@ -35,7 +34,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn NulScheduler*
+(defn mkNulScheduler
 
   "Make a Single threaded Scheduler"
 
@@ -77,7 +76,7 @@
       (activate [_ options] )
       (deactivate [_] ))
 
-    { :typeid (ToKW "czc.frwk.util" "NulScheduler") } ))
+    { :typeid (toKW "czc.frwk.util" "NulScheduler") } ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -130,7 +129,7 @@
         runQ (ConcurrentHashMap.)
         timer (atom nil)
         cpu (atom nil)
-        impl (MubleObj!) ]
+        impl (mubleObj!) ]
     (reset! timer (Timer. jid true))
     (with-meta
       (reify
@@ -202,15 +201,15 @@
           (.clear runQ)
           (.stop ^TCore @cpu)))
 
-      { :typeid (ToKW "czc.frwk.util" "Scheduler") } )))
+      { :typeid (toKW "czc.frwk.util" "Scheduler") } )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Scheduler*
+(defn mkScheduler
 
   "Make a Scheduler"
 
-  (^Schedulable [] (Scheduler* ""))
+  (^Schedulable [] (mkScheduler ""))
   (^Schedulable [^String named] (mkSCD named)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

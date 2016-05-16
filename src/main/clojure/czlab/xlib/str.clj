@@ -12,21 +12,20 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "String utilities"
       :author "kenl" }
 
-  czlab.xlib.util.str
+  czlab.xlib.str
 
   (:require
-    [czlab.xlib.util.logging :as log]
+    [czlab.xlib.logging :as log]
     [clojure.string :as cs])
 
   (:import
     [java.util Arrays Collection Iterator StringTokenizer]
     [org.apache.commons.lang3 StringUtils]
     [java.io CharArrayWriter File
-    OutputStream OutputStreamWriter Reader Writer]
+     OutputStream OutputStreamWriter Reader Writer]
     [java.lang StringBuilder]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,12 +39,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn TrimL "" [^String src ^String s] (StringUtils/stripStart src s))
-(defn TrimR "" [^String src ^String s] (StringUtils/stripEnd src s))
+(defn triml "" [^String src ^String s] (StringUtils/stripStart src s))
+(defn trimr "" [^String src ^String s] (StringUtils/stripEnd src s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SplitTokens ""
+(defn splitTokens ""
 
   [^String s ^String sep incSep?]
 
@@ -58,7 +57,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn HasNocase?
+(defn hasNoCase?
 
   "true if this sub-string is inside this bigger string"
 
@@ -68,7 +67,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Embeds?
+(defn embeds?
 
   "true if this sub-string is inside this bigger string"
 
@@ -78,7 +77,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Has?
+(defn has?
 
   "true if this character is inside this string"
 
@@ -114,7 +113,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ToKW
+(defn toKW
 
   "Concatenate all args and return it as a keyword"
 
@@ -135,7 +134,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Same?
+(defn same?
 
   "true if these 2 strings are the same"
 
@@ -187,7 +186,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn AddDelim!
+(defn addDelim!
 
   "Append to a string-builder, optionally
    inserting a delimiter if the buffer is not empty"
@@ -204,7 +203,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Splunk
+(defn splunk
 
   "Split a large string into chunks, each chunk having a specific length"
 
@@ -223,7 +222,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn HasicAny?
+(defn hasicAny?
 
   "Match against a list of possible args. (ignoring case)"
 
@@ -237,7 +236,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn HasAny? "Returns true if src contains one of these substrings"
+(defn hasAny? "Returns true if src contains one of these substrings"
 
   [^String src substrs]
 
@@ -248,7 +247,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn EWicAny? "Tests endsWith() no-case, looping through
+(defn ewicAny? "Tests endsWith() no-case, looping through
                 the list of possible suffixes"
 
   [^String src suxs]
@@ -261,7 +260,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn EWAny? "Tests endsWith(), looping through
+(defn ewAny? "Tests endsWith(), looping through
               the list of possible suffixes"
 
   [^String src suxs]
@@ -273,7 +272,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SWicAny? "Tests startWith() no-case, looping through
+(defn swicAny? "Tests startWith() no-case, looping through
                 the list of possible prefixes"
 
   [^String src pfxs]
@@ -286,7 +285,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SWAny? "Tests startWith(), looping through
+(defn swAny? "Tests startWith(), looping through
               the list of possible prefixes"
 
   [^String src pfxs]
@@ -298,7 +297,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn EqicAny? "Tests String.equals() against a
+(defn eqicAny? "Tests String.equals() against a
                 list of possible args. (ignore-case)"
 
   [^String src strs]
@@ -311,7 +310,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn EqAny? "Tests String.equals() against a list of possible args"
+(defn eqAny? "Tests String.equals() against a list of possible args"
 
   [^String src strs]
 
@@ -322,7 +321,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn MakeString "Make a string of certain length"
+(defn makeString "Make a string of certain length"
 
   ^String
   [^Character ch cnt]
@@ -334,7 +333,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Right "Gets the rightmost len characters of a String"
+(defn rights "Gets the rightmost len characters of a String"
 
   ^String
   [^String src len]
@@ -346,7 +345,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Left "Gets the leftmost len characters of a String"
+(defn lefts "Gets the leftmost len characters of a String"
 
   ^String
   [^String src len]
@@ -358,7 +357,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Format "Format a string using Java String format syntax"
+(defn sformat "Format a string using Java String format syntax"
 
   [^String fmt & args]
 
@@ -366,4 +365,5 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

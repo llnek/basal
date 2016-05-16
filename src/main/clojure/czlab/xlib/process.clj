@@ -12,24 +12,22 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "OS Process related utilities"
       :author "kenl" }
 
-  czlab.xlib.util.process
+  czlab.xlib.process
 
   (:require
-    [czlab.xlib.util.core :refer [try! tryc]]
-    [czlab.xlib.util.meta :refer [GetCldr]]
-    [czlab.xlib.util.logging :as log]
-    [czlab.xlib.util.str :refer [hgl?]])
+    [czlab.xlib.core :refer [try! tryc]]
+    [czlab.xlib.meta :refer [getCldr]]
+    [czlab.xlib.logging :as log]
+    [czlab.xlib.str :refer [hgl?]])
 
   (:import
     [java.lang.management ManagementFactory]
+    [czlab.xlib CU CallableWithArgs]
     [java.util.concurrent Callable]
     [java.util TimerTask Timer]
-    [com.zotohlab.frwk.util CU]
-    [com.zotohlab.frwk.core CallableWithArgs]
     [java.lang Thread Runnable]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -37,7 +35,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ThreadFunc
+(defn threadFunc
 
   "Run this function in a separate thread"
 
@@ -72,7 +70,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SyncBlockExec
+(defn syncBlockExec
 
   "Run this function synchronously"
 
@@ -88,7 +86,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Coroutine
+(defn async!
 
   "Run this function asynchronously"
 
@@ -96,11 +94,11 @@
 
   {:pre [(fn? func)]}
 
-  (ThreadFunc func true args))
+  (threadFunc func true args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SafeWait
+(defn safeWait
 
   "Block current thread for some millisecs"
 
@@ -111,7 +109,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ProcessPid
+(defn processPid
 
   "Get the current process pid"
 
@@ -128,7 +126,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn DelayExec
+(defn delayExec
 
   "Run this function after some delay"
 
@@ -144,4 +142,5 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

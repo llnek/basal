@@ -12,18 +12,17 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "Ways to generate an unique id"
       :author "kenl" }
 
-  czlab.xlib.util.guids
+  czlab.xlib.guids
 
   (:require
-    [czlab.xlib.util.core
-    :refer [NextInt NowMillis tryletc tryc NewRandom]]
-    [czlab.xlib.util.str :refer [Left Right]]
-    [czlab.xlib.util.logging :as log]
-    [czlab.xlib.util.io :refer [ReadInt ReadLong]])
+    [czlab.xlib.core
+     :refer [nextInt nowMillis tryletc tryc newRandom]]
+    [czlab.xlib.str :refer [lefts rights]]
+    [czlab.xlib.logging :as log]
+    [czlab.xlib.io :refer [readInt readLong]])
 
   (:import
     [java.lang StringBuilder]
@@ -84,10 +83,10 @@
 
   []
 
-  (let [s (fmtLong (NowMillis))
+  (let [s (fmtLong (nowMillis))
         n (.length s) ]
-    [ (Left s (/ n 2))
-      (Right s (max 0 (- n (/ n 2 )) )) ]))
+    [ (lefts s (/ n 2))
+      (rights s (max 0 (- n (/ n 2 )) ))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -99,10 +98,10 @@
   (tryletc [neta (InetAddress/getLocalHost)
             b (.getAddress neta) ]
     (if (.isLoopbackAddress neta)
-      (.nextLong (NewRandom))
+      (.nextLong (newRandom))
       (if (== 4 (alength b))
-        (long (ReadInt b))
-        (ReadLong b)))))
+        (long (readInt b))
+        (readLong b)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -110,7 +109,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn NewUUid
+(defn newUUid
 
   "RFC4122, version 4 form"
 
@@ -121,7 +120,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ^:no-doc MyOwnNewUUid
+(defn ^:no-doc myOwnNewUUid
 
   "RFC4122, version 4 form"
 
@@ -130,7 +129,7 @@
 
   ;; At i==19 set the high bits of clock sequence as per rfc4122, sec. 4.1.5
   (let [rc (char-array _UUIDLEN)
-        rnd (NewRandom) ]
+        rnd (newRandom) ]
     (dotimes [n (alength rc) ]
       (aset-char rc
                  n
@@ -147,21 +146,22 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn NewWWid
+(defn newWWid
 
   "A new guid based on time and ip-address"
 
   ^String
   []
 
-  (let [seed (.nextInt (NewRandom) (Integer/MAX_VALUE))
+  (let [seed (.nextInt (newRandom) (Integer/MAX_VALUE))
         ts (splitTime) ]
     (str (nth ts 0)
          (fmtLong _IP)
          (fmtInt seed)
-         (fmtInt (NextInt))
+         (fmtInt (nextInt))
          (nth ts 1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

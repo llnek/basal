@@ -16,34 +16,34 @@
 (ns ^{:doc "General file related utilities"
       :author "kenl" }
 
-  czlab.xlib.util.files
+  czlab.xlib.files
 
   (:require
-    [czlab.xlib.util.meta :refer [IsBytes?]]
-    [czlab.xlib.util.logging :as log]
+    [czlab.xlib.meta :refer [isBytes?]]
+    [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.string :as cs])
 
-  (:use [czlab.xlib.util.io])
+  (:use [czlab.xlib.io])
 
   (:import
     [org.apache.commons.io IOUtils  FileUtils]
     [org.apache.commons.io.filefilter
      FileFileFilter FileFilterUtils]
     [java.io File FileFilter
-    FileInputStream
-    FileOutputStream InputStream OutputStream]
+     FileInputStream
+     FileOutputStream InputStream OutputStream]
     [java.util ArrayList]
     [java.net URL URI]
     [java.util.zip ZipFile ZipEntry]
-    [com.zotohlab.frwk.io XData]))
+    [czlab.xlib XData]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FileReadWrite?
+(defn fileReadWrite?
 
   "true if file is readable & writable"
 
@@ -57,7 +57,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FileOK?
+(defn fileOK?
 
   "true if file exists"
 
@@ -68,7 +68,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FileRead?
+(defn fileRead?
 
   "true if file is readable"
 
@@ -81,7 +81,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn DirReadWrite?
+(defn dirReadWrite?
 
   "true if directory is readable and writable"
 
@@ -95,7 +95,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn DirRead?
+(defn dirRead?
 
   "true if directory is readable"
 
@@ -108,7 +108,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CanExec?
+(defn canExec?
 
   "true if file or directory is executable"
 
@@ -120,7 +120,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn fup ""
+(defn fprior ""
 
   ^File
   [^File f]
@@ -129,7 +129,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ParentPath
+(defn parentPath
 
   "Get the path to the parent directory"
 
@@ -142,7 +142,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ChangeFileContent ""
+(defn changeFileContent ""
 
   ^String
   [file work]
@@ -154,14 +154,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ReplaceFile ""
+(defn replaceFile ""
 
   [file work]
 
   {:pre [(fn? work)]}
 
   (spit file
-        (ChangeFileContent file work)
+        (changeFileContent file work)
         :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -186,12 +186,12 @@
       (do
         (.mkdirs (.getParentFile f))
         (with-open [inp (.getInputStream src en)
-                    os (FileOutputStream. f) ]
+                    os (FileOutputStream. f)]
           (IOUtils/copy inp os))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Unzip
+(defn unzipToDir
 
   "Unzip contents of zip file to a target folder"
 
@@ -206,7 +206,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CopyFiles
+(defn copyFiles
 
   "Copy all files with *ext* (no dot) to the destination folder"
 
@@ -221,7 +221,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CopyFileToDir
+(defn copyFileToDir
 
   "Copy a file to the target folder"
 
@@ -231,7 +231,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn MoveFileToDir
+(defn moveFileToDir
 
   "Move a file to the target folder"
 
@@ -244,7 +244,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CopyFile
+(defn copyFile
 
   "Copy a file"
 
@@ -254,7 +254,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CopyToDir
+(defn copyToDir
 
   "Copy source folder to be a subfolder of target folder"
 
@@ -264,7 +264,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CopyDirFiles
+(defn copyDirFiles
 
   "Copy all contents in source folder to target folder"
 
@@ -274,7 +274,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn DeleteDir
+(defn deleteDir
 
   "Erase the folder"
 
@@ -284,7 +284,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CleanDir
+(defn cleanDir
 
   "Remove contents in this folder"
 
@@ -294,7 +294,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn WriteOneFile
+(defn writeOneFile
 
   "Write data to file"
 
@@ -308,7 +308,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ReadFileBytes
+(defn readFileBytes
 
   "Read bytes from a file"
 
@@ -319,7 +319,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ReadOneFile
+(defn readOneFile
 
   "Read data from a file"
 
@@ -330,7 +330,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ReadOneUrl
+(defn readOneUrl
 
   "Read data from a URL"
 
@@ -341,7 +341,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SaveFile
+(defn saveFile
 
   "Save a file to a directory"
 
@@ -352,12 +352,12 @@
     (io/delete-file fp true)
     (if-not
       (.isDiskFile xdata)
-      (WriteOneFile fp (.javaBytes xdata))
+      (writeOneFile fp (.javaBytes xdata))
       (FileUtils/moveFile (.fileRef xdata) fp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn GetFile
+(defn getFile
 
   "Get a file from a directory"
 
@@ -367,18 +367,18 @@
   ;;(log/debug "getting file: %s" fname)
   (let [fp (io/file dir fname)
         xs (XData.) ]
-    (when (FileRead? fp)
+    (when (fileRead? fp)
       (doto xs
         (.setDeleteFile false)
         (.resetContent fp)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti Mkdirs "" class)
+(defmulti mkdirs "" class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod Mkdirs String
+(defmethod mkdirs String
 
   ^File
   [^String f]
@@ -387,7 +387,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod Mkdirs File
+(defmethod mkdirs File
 
   ^File
   [^File f]
@@ -396,7 +396,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ListAnyFiles
+(defn listAnyFiles
 
   "Look for files with certain extensions, without the dot"
 
@@ -411,17 +411,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ListFiles
+(defmacro listFiles
 
   "Look for files with certain extension, without the dot"
 
   [dir ext &[recurse?]]
 
-  `(ListAnyFiles ~dir [~ext] ~recurse?))
+  `(listAnyFiles ~dir [~ext] ~recurse?))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ListDirs
+(defn listDirs
 
   "List sub-directories"
 
@@ -434,4 +434,5 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

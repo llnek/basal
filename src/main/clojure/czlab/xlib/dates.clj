@@ -12,24 +12,23 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "Date related utilities"
       :author "kenl" }
 
-  czlab.xlib.util.dates
+  czlab.xlib.dates
 
   (:require
-    [czlab.xlib.util.str :refer [Has? HasAny? ]]
-    [czlab.xlib.util.core :refer [try!]]
-    [czlab.xlib.util.logging :as log]
+    [czlab.xlib.str :refer [has? hasAny?]]
+    [czlab.xlib.core :refer [try!]]
+    [czlab.xlib.logging :as log]
     [clojure.string :as cs])
 
-  (:use [czlab.xlib.util.consts])
+  (:use [czlab.xlib.consts])
 
   (:import
     [java.text ParsePosition SimpleDateFormat]
     [java.util Locale TimeZone SimpleTimeZone
-    Date Calendar GregorianCalendar]
+     Date Calendar GregorianCalendar]
     [java.sql Timestamp]
     [org.apache.commons.lang3 StringUtils]))
 
@@ -38,7 +37,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn LeapYear?
+(defn leapYear?
 
   "true if this is a leap year"
 
@@ -59,7 +58,7 @@
         ss (if (> pos 0)
              (.substring s (inc pos))
              "") ]
-    (or (HasAny? ss ["+" "-"])
+    (or (hasAny? ss ["+" "-"])
         (.matches ss "\\s*[a-zA-Z]+\\s*"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -91,7 +90,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ParseTimestamp
+(defn parseTimestamp
 
   "Convert string into a valid Timestamp object
   *tstr* conforming to the format \"yyyy-mm-dd hh:mm:ss.[fff...]\""
@@ -103,7 +102,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ParseDate
+(defn parseDate
 
   "Convert string into a Date object"
 
@@ -124,14 +123,14 @@
   [^String tstr]
 
   (when-not (empty? tstr)
-    (let [fmt (if (Has? tstr \:)
-                (if (Has? tstr \.) DT_FMT_MICRO DT_FMT )
+    (let [fmt (if (has? tstr \:)
+                (if (has? tstr \.) DT_FMT_MICRO DT_FMT )
                 DATE_FMT ) ]
-      (ParseDate tstr (if (hastz? tstr) (str fmt "Z") fmt)))))
+      (parseDate tstr (if (hastz? tstr) (str fmt "Z") fmt)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FmtTimestamp
+(defn fmtTimestamp
 
   "Convert Timestamp into a string value"
 
@@ -142,17 +141,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FmtDate
+(defn fmtDate
 
   "Convert Date into string value"
 
   (^String
     [^Date dt]
-    (FmtDate dt DT_FMT_MICRO nil))
+    (fmtDate dt DT_FMT_MICRO nil))
 
   (^String
     [^Date dt fmt]
-    (FmtDate dt fmt nil))
+    (fmtDate dt fmt nil))
 
   (^String
     [^Date dt fmt ^TimeZone tz]
@@ -164,14 +163,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FmtGMT
+(defn fmtGMT
 
   "Convert Date object into a string - GMT timezone"
 
   ^String
   [^Date dt]
 
-  (FmtDate dt DT_FMT_MICRO (SimpleTimeZone. 0 "GMT")))
+  (fmtDate dt DT_FMT_MICRO (SimpleTimeZone. 0 "GMT")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -187,7 +186,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn GCal* ""
+(defn gcal ""
 
   ^Calendar
   [date]
@@ -196,7 +195,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn AddYears
+(defn addYears
 
   "Add n more years to the calendar"
 
@@ -207,7 +206,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn AddMonths
+(defn addMonths
 
   "Add n more months to the calendar"
 
@@ -218,7 +217,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn AddDays
+(defn addDays
 
   "Add n more days to the calendar"
 
@@ -229,46 +228,46 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn PlusMonths
+(defn plusMonths
 
   "Add n months"
 
   ^Date
   [months]
 
-  (-> (GCal* (Date.))
-      (AddMonths  months)
+  (-> (gcal (Date.))
+      (addMonths  months)
       (.getTime)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn PlusYears
+(defn plusYears
 
   "Add n years"
 
   ^Date
   [years]
 
-  (-> (GCal* (Date.))
-      (AddYears  years)
+  (-> (gcal (Date.))
+      (addYears years)
       (.getTime)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn PlusDays
+(defn plusDays
 
   "Add n days"
 
   ^Date
   [days]
 
-  (-> (GCal* (Date.))
-      (AddDays  days)
+  (-> (gcal (Date.))
+      (addDays days)
       (.getTime)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FmtCal
+(defn fmtCal
 
   "Formats time to yyyy-MM-ddThh:mm:ss"
 
@@ -284,11 +283,11 @@
                  (.get cal Calendar/DAY_OF_MONTH)
                  (.get cal Calendar/HOUR_OF_DAY)
                  (.get cal Calendar/MINUTE)
-                 (.get cal Calendar/SECOND) ] )))
+                 (.get cal Calendar/SECOND)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn GmtCal ""
+(defn gmtCal ""
 
   ^GregorianCalendar
   []
@@ -297,11 +296,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn DTime "" [^Date d] (.getTime d))
+(defn dtime "" [^Date d] (.getTime d))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn DebugCal
+(defn debugCal
 
   "Debug show a calendar's internal data"
 
@@ -312,8 +311,9 @@
            ["{" (.. cal (getTimeZone) (getDisplayName) )  "} "
             "{" (.. cal (getTimeZone) (getID)) "} "
             "[" (.getTimeInMillis cal) "] "
-            (FmtCal cal) ]))
+            (fmtCal cal) ]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

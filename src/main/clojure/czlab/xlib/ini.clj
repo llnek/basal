@@ -12,37 +12,36 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "Functions to load and query a .ini file"
       :author "kenl" }
 
-  czlab.xlib.util.ini
+  czlab.xlib.ini
 
   (:require
-    [czlab.xlib.util.core
-    :refer [ThrowBadData ThrowIOE
-    ConvBool ConvInt ConvLong ConvDouble]]
-    [czlab.xlib.util.files :refer [FileRead?]]
-    [czlab.xlib.util.logging :as log]
+    [czlab.xlib.core
+     :refer [throwBadData throwIOE
+             convBool convInt convLong convDouble]]
+    [czlab.xlib.files :refer [fileRead?]]
+    [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.string :as cs]
-    [czlab.xlib.util.str :refer [strim lcase]])
+    [czlab.xlib.str :refer [strim lcase]])
 
   (:use [flatland.ordered.map])
 
   (:import
     [org.apache.commons.lang3 StringUtils]
-    [com.zotohlab.frwk.util IWin32Conf]
+    [czlab.xlib IWin32Conf]
     [java.net URL]
     [java.io File IOException
-    InputStreamReader LineNumberReader PrintStream]))
+     InputStreamReader LineNumberReader PrintStream]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti ^IWin32Conf ParseInifile "Parse a INI config file" class)
+(defmulti ^IWin32Conf parseInifile "Parse a INI config file" class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -50,7 +49,7 @@
 
   [^LineNumberReader rdr]
 
-  (ThrowBadData (str "Bad ini line: " (.getLineNumber rdr))))
+  (throwBadData (str "Bad ini line: " (.getLineNumber rdr))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -58,7 +57,7 @@
 
   [k]
 
-  (ThrowBadData (str "No such property " k)))
+  (throwBadData (str "No such property " k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -66,7 +65,7 @@
 
   [s]
 
-  (ThrowBadData (str "No such section " s )))
+  (throwBadData (str "No such section " s )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -174,35 +173,35 @@
 
     (getLong [this section property dft]
       (if-some [rc (getKV sects section property false) ]
-        (ConvLong rc)
+        (convLong rc)
         dft))
 
     (getLong [this section property]
-      (ConvLong (getKV sects section property true) 0))
+      (convLong (getKV sects section property true) 0))
 
     (getInt [this section property dft]
       (if-some [rc (getKV sects section property false) ]
-        (ConvInt rc dft)
+        (convInt rc dft)
         dft))
 
     (getInt [this section property]
-      (ConvInt (getKV sects section property true) ))
+      (convInt (getKV sects section property true) ))
 
     (getDouble [this section property dft]
       (if-some [rc (getKV sects section property false) ]
-        (ConvDouble rc dft)
+        (convDouble rc dft)
         dft))
 
     (getDouble [this section property]
-      (ConvDouble (getKV sects section property true) ))
+      (convDouble (getKV sects section property true) ))
 
     (getBool [this section property dft]
       (if-some [rc (getKV sects section property false) ]
-        (ConvBool rc dft)
+        (convBool rc dft)
         dft))
 
     (getBool [this section property]
-      (ConvBool (getKV sects section property true) ))
+      (convBool (getKV sects section property true) ))
 
     (dbgShow [_]
       (let [buf (StringBuilder.)]
@@ -215,13 +214,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod ParseInifile String
+(defmethod parseInifile String
 
   ^IWin32Conf
   [fpath]
 
   (when (some? fpath)
-    (ParseInifile (io/file fpath))))
+    (parseInifile (io/file fpath))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -230,8 +229,8 @@
   ^IWin32Conf
   [file]
 
-  (when (FileRead? file)
-    (ParseInifile (io/as-url file))))
+  (when (fileRead? file)
+    (parseInifile (io/as-url file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -255,7 +254,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod ParseInifile URL
+(defmethod parseInifile URL
 
   ^IWin32Conf
   [^URL fileUrl]
@@ -265,4 +264,5 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

@@ -12,29 +12,28 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "This is a utility class that provides
            various MIME related functionality"
       :author "kenl" }
 
-  czlab.xlib.util.mime
+  czlab.xlib.mime
 
   (:require
-    [czlab.xlib.util.core :refer [Bytesify try! IntoMap]]
-    [czlab.xlib.util.meta :refer [BytesClass]]
-    [czlab.xlib.util.logging :as log]
-    [czlab.xlib.util.str :refer [lcase ucase hgl?]]
-    [czlab.xlib.util.io :refer [Streamify]])
+    [czlab.xlib.core :refer [bytesify try! intoMap]]
+    [czlab.xlib.meta :refer [bytesClass]]
+    [czlab.xlib.logging :as log]
+    [czlab.xlib.str :refer [lcase ucase hgl?]]
+    [czlab.xlib.io :refer [streamify]])
 
   (:import
+    [org.apache.commons.codec.net URLCodec]
     [org.apache.commons.lang3 StringUtils]
     [java.io IOException InputStream File]
     [java.net URL]
-    [org.apache.commons.codec.net URLCodec]
     [java.util.regex Pattern Matcher]
     [java.util Properties]
     [javax.mail Message]
-    [com.zotohlab.frwk.mime MimeFileTypes]))
+    [czlab.xlib MimeFileTypes]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -123,7 +122,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn MimeCache* "Cache of most MIME types" [] @_mime_cache)
+(defn mimeCache "Cache of most MIME types" [] @_mime_cache)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -135,7 +134,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn GetCharset
+(defn getCharset
 
   "charset from this content-type string"
 
@@ -149,13 +148,13 @@
          ;;rc "ISO-8859-1" ]
     (if (> pos 0)
       (let [s (.substring cType (+ pos 8))
-            p (StringUtils/indexOfAny s "; \t\r\n") ]
+            p (StringUtils/indexOfAny s "; \t\r\n")]
         (if (> p 0) (.substring s 0 p) s))
       rc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn IsSigned?
+(defn isSigned?
 
   "true if this content-type indicates signed"
 
@@ -167,7 +166,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn IsEncrypted?
+(defn isEncrypted?
 
   "true if this content-type indicates encrypted"
 
@@ -178,7 +177,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn IsCompressed?
+(defn isCompressed?
 
   "true if this content-type indicates compressed"
 
@@ -190,7 +189,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn IsMDN?
+(defn isMDN?
 
   "true if this content-type indicates MDN"
 
@@ -202,7 +201,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn MaybeStream
+(defn maybeStream
 
   "Turn this object into some form of stream, if possible"
 
@@ -210,14 +209,14 @@
   [^Object obj]
 
   (condp instance? obj
-    String (Streamify (Bytesify obj))
+    String (streamify (bytesify obj))
     InputStream obj
-    (BytesClass) (Streamify obj)
+    (BytesClass) (streamify obj)
     nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn UrlDecode
+(defn urlDecode
 
   "URL decode this string"
 
@@ -229,7 +228,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn UrlEncode
+(defn urlEncode
 
   "URL encode this string"
 
@@ -241,7 +240,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn GuessMimeType
+(defn guessMimeType
 
   "Guess the MIME type of file"
 
@@ -255,12 +254,12 @@
              (.matches mc)
              (.group mc 1) "")
         p (if (hgl? ex)
-            (get (MimeCache*) (keyword ex) )) ]
+            (get (mimeCache) (keyword ex) )) ]
    (if (hgl? p) p (str dft))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn GuessContentType
+(defn guessContentType
 
   "Guess the content-type of file"
 
@@ -269,7 +268,7 @@
 
   (let [dft (or dft "application/octet-stream" )
         enc (or enc "utf-8")
-        mt (GuessMimeType file)
+        mt (guessMimeType file)
         ^String ct (if (hgl? mt) mt dft) ]
     (if-not (.startsWith ct "text/")
       ct
@@ -277,7 +276,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SetupCache
+(defn setupCache
 
   "Load file mime-types as a map"
 
@@ -287,8 +286,9 @@
     (let [ps (Properties.) ]
       (.load ps inp)
       (reset! _mime_types (MimeFileTypes/makeMimeFileTypes ps))
-      (reset! _mime_cache (IntoMap ps)))))
+      (reset! _mime_cache (intoMap ps)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

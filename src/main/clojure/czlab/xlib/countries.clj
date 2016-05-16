@@ -12,14 +12,13 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "A class that maps country-codes to the country-names."
       :author "kenl" }
 
-  czlab.xlib.util.countries
+  czlab.xlib.countries
 
   (:require
-    [czlab.xlib.util.logging :as log]
+    [czlab.xlib.logging :as log]
     [clojure.string :as cs]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -268,9 +267,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FindCountry
+(defn findCountry
 
-  "the full country name"
+  "The full country name"
 
   ^String
   [^String code]
@@ -279,7 +278,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ListCodes
+(defn listCodes
 
   "List all the country codes"
 
@@ -289,7 +288,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn IsUSA?
+(defn isUSA?
 
   "true if the code is US"
 
@@ -299,7 +298,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FindCountryCode
+(defn findCountryCode
 
   "the country code"
 
@@ -370,7 +369,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ListStates
+(defn listStates
 
   "List all the abbreviated states"
 
@@ -380,9 +379,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FindState
+(defn findState
 
-  "the full state name"
+  "The full state name"
 
   ^String
   [^String code]
@@ -391,9 +390,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FindStateCode
+(defn findStateCode
 
-  "the abbreviated state code"
+  "The abbreviated state code"
 
   ^String
   [^String state]
@@ -403,4 +402,5 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

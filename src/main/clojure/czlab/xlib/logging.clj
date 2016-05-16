@@ -12,11 +12,10 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc ""
       :author "kenl" }
 
-  czlab.xlib.util.logging
+  czlab.xlib.logging
 
   (:require [clojure.tools.logging :as log]))
 

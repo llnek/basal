@@ -12,15 +12,14 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "Locale resources."
       :author "kenl" }
 
-  czlab.xlib.i18n.resources
+  czlab.xlib.resources
 
   (:require
-    [czlab.xlib.util.meta :refer [GetCldr]]
-    [czlab.xlib.util.logging :as log]
+    [czlab.xlib.meta :refer [GetCldr]]
+    [czlab.xlib.logging :as log]
     [clojure.string :as cs]
     [clojure.java.io :as io])
 
@@ -36,20 +35,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti^ResourceBundle LoadResource
+(defmulti^ResourceBundle loadResource
   "Load properties file with localized strings" class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod LoadResource File
+(defmethod loadResource File
 
   [^File aFile]
 
-  (LoadResource (io/as-url aFile)))
+  (loadResource (io/as-url aFile)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod LoadResource URL
+(defmethod loadResource URL
 
   [^URL url]
 
@@ -57,30 +56,30 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod LoadResource String
+(defmethod loadResource String
 
   [^String path]
 
   (with-open
-    [inp (some-> (GetCldr)
+    [inp (some-> (getCldr)
                  (.getResource path)
                  (.openStream)) ]
     (PropertyResourceBundle. inp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn GetResource
+(defn getResource
 
   "A resource bundle"
 
   (^ResourceBundle
     [^String baseName]
-    (GetResource baseName (Locale/getDefault) nil))
+    (getResource baseName (Locale/getDefault) nil))
 
   (^ResourceBundle
     [^String baseName
      ^Locale locale]
-    (GetResource baseName locale nil))
+    (getResource baseName locale nil))
 
   (^ResourceBundle
     [^String baseName
@@ -90,11 +89,11 @@
             (nil? locale))
       nil
       (ResourceBundle/getBundle baseName
-                                locale (GetCldr cl))) ))
+                                locale (getCldr cl)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn RStr
+(defn rstr
 
   "The string value for this key,
    pms may contain values for positional substitutions"
@@ -117,12 +116,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn RStr* ""
+(defn rstr* ""
 
   [^ResourceBundle bundle & pms]
 
-  (map #(apply RStr bundle (first %) (drop 1 %)) pms))
+  (map #(apply rstr bundle (first %) (drop 1 %)) pms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

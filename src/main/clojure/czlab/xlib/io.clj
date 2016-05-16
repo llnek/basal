@@ -12,32 +12,30 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "Util functions related to stream/io"
       :author "kenl" }
 
-  czlab.xlib.util.io
+  czlab.xlib.io
 
   (:require
-    [czlab.xlib.util.core :refer [spos? try!]]
-    [czlab.xlib.util.logging :as log]
+    [czlab.xlib.core :refer [spos? try!]]
+    [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.string :as cs])
 
   (:import
     [java.util.zip GZIPInputStream GZIPOutputStream]
+    [org.apache.commons.codec.binary Base64]
     [java.io ByteArrayInputStream
-    ByteArrayOutputStream DataInputStream
-    DataInputStream DataOutputStream
-    FileInputStream FileOutputStream
-    CharArrayWriter OutputStreamWriter
-    File InputStream InputStreamReader
-    Closeable
-    OutputStream Reader Writer]
+     ByteArrayOutputStream DataInputStream
+     DataInputStream DataOutputStream
+     FileInputStream FileOutputStream
+     CharArrayWriter OutputStreamWriter
+     File InputStream InputStreamReader
+     Closeable OutputStream Reader Writer]
     [java.nio ByteBuffer CharBuffer]
     [java.nio.charset Charset]
-    [com.zotohlab.frwk.io XData XStream]
-    [org.apache.commons.codec.binary Base64]
+    [czlab.xlib XData XStream]
     [org.apache.commons.io IOUtils]
     [org.xml.sax InputSource]
     [java.nio.charset Charset]))
@@ -51,7 +49,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn StreamLimit
+(defn streamLimit
 
   "Beyond this limit, data will be swapped out to disk (temp file)"
 
@@ -61,7 +59,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SetStreamLimit! ""
+(defn setStreamLimit! ""
 
   ^long
   [limit]
@@ -72,11 +70,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn WorkDir "" ^File [] @_wd)
+(defn workDir "" ^File [] @_wd)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SetWorkDir! ""
+(defn setWorkDir! ""
 
   ^File
   [dir]
@@ -87,7 +85,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ByteOS
+(defn byteOS
 
   "Make a byte array output stream"
 
@@ -98,11 +96,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti WriteBytes "Write this long value out as byte[]" class)
+(defmulti writeBytes "Write this long value out as byte[]" class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ToBytes
+(defn toBytes
 
   "Convert char[] to byte[]"
 
@@ -115,7 +113,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ToChars
+(defn toChars
 
   "Convert byte[] to char[]"
 
@@ -128,31 +126,31 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ReadLong
+(defn readLong
 
-  "a long by scanning the byte[]"
-
-  [^bytes byteArray]
-
-  (-> (ByteArrayInputStream. byteArray)
-      (DataInputStream.  )
-      (.readLong )))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn ReadInt
-
-  "an int by scanning the byte[]"
+  "A long by scanning the byte[]"
 
   [^bytes byteArray]
 
   (-> (ByteArrayInputStream. byteArray)
-      (DataInputStream.  )
-      (.readInt )))
+      (DataInputStream.)
+      (.readLong)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod WriteBytes Integer
+(defn readInt
+
+  "An int by scanning the byte[]"
+
+  [^bytes byteArray]
+
+  (-> (ByteArrayInputStream. byteArray)
+      (DataInputStream.)
+      (.readInt)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmethod writeBytes Integer
 
   ^bytes
   [nnum]
@@ -165,7 +163,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod WriteBytes Long
+(defmethod writeBytes Long
 
   ^bytes
   [nnum]
@@ -178,7 +176,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Streamify
+(defn streamify
 
   "Wrapped these bytes in an input-stream"
 
@@ -190,7 +188,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CloseQ
+(defn closeQ
 
   "Quietly close this object"
 
@@ -202,7 +200,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn HexifyChars
+(defn hexifyChars
 
   "Turn bytes into hex chars"
 
@@ -223,7 +221,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn HexifyString
+(defn hexifyString
 
   "Turn bytes into hex string"
 
@@ -231,15 +229,15 @@
   [^bytes bits]
 
   (when (some? bits)
-    (String. (HexifyChars bits))))
+    (String. (hexifyChars bits))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti OpenFile "Open this file path" class)
+(defmulti openFile "Open this file path" class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Gzip
+(defn gzip
 
   "Gzip these bytes"
 
@@ -254,7 +252,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Gunzip
+(defn gunzip
 
   "Gunzip these bytes"
 
@@ -262,11 +260,11 @@
   [^bytes bits]
 
   (when (some? bits)
-    (IOUtils/toByteArray (GZIPInputStream. (Streamify bits)))))
+    (IOUtils/toByteArray (GZIPInputStream. (streamify bits)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ResetStream!
+(defn resetStream!
 
   "Call reset on this input stream"
 
@@ -276,7 +274,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod OpenFile String
+(defmethod openFile String
 
   ^XStream
   [^String fp]
@@ -286,7 +284,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod OpenFile File
+(defmethod openFile File
 
   ^XStream
   [^File f]
@@ -295,7 +293,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn FromGZB64
+(defn fromGZB64
 
   "Unzip content which is base64 encoded + gziped"
 
@@ -303,11 +301,11 @@
   [^String gzb64]
 
   (when (some? gzb64)
-    (Gunzip (Base64/decodeBase64 gzb64))))
+    (gunzip (Base64/decodeBase64 gzb64))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ToGZB64
+(defn toGZB64
 
   "Zip content and then base64 encode it"
 
@@ -315,11 +313,11 @@
   [^bytes bits]
 
   (when (some? bits)
-    (Base64/encodeBase64String (Gzip bits))))
+    (Base64/encodeBase64String (gzip bits))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn Available
+(defn available
 
   "Get the available bytes in this stream"
 
@@ -330,7 +328,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn TempFile ""
+(defn tempFile ""
 
   ^File
   [ & [pfx sux] ]
@@ -341,18 +339,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn OpenTempFile
+(defn openTempFile
 
-  "a Tuple(2) [ File, OutputStream? ]"
+  "A Tuple(2) [ File, OutputStream? ]"
 
   []
 
-  (let [fp (TempFile)]
+  (let [fp (tempFile)]
     [fp (FileOutputStream. fp)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CopyStream
+(defn copyStream
 
   "Copy content from this input-stream to a temp file"
 
@@ -360,16 +358,16 @@
   [^InputStream inp]
 
   (let [[^File fp ^OutputStream os]
-        (OpenTempFile) ]
+        (openTempFile) ]
     (try
       (IOUtils/copy inp os)
       (finally
-        CloseQ os))
+        closeQ os))
     fp))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn CopyBytes
+(defn copyBytes
 
   "Copy x number of bytes from the source input-stream"
 
@@ -381,7 +379,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ResetSource!
+(defn resetSource!
 
   "Reset an input source"
 
@@ -395,27 +393,27 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn NewXData*
+(defn newXData
 
-  "a newly created XData"
+  "A newly created XData"
 
   ^XData
   [ &[usefile] ]
 
   (if usefile
-    (XData. (TempFile))
+    (XData. (tempFile))
     (XData.)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SwapBytes
+(defn swapBytes
 
   "Swap bytes in buffer to file, returning a [File,OStream] tuple"
 
   [^ByteArrayOutputStream baos]
 
   (let [[^File fp ^OutputStream os]
-        (OpenTempFile) ]
+        (openTempFile) ]
     (doto os
       (.write (.toByteArray baos))
       (.flush))
@@ -424,19 +422,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn SwapChars
+(defn swapChars
 
   "Swap chars in writer to file, returning a [File,OWriter] tuple"
 
   [^CharArrayWriter wtr]
 
   (let [[^File fp ^OutputStream out]
-        (OpenTempFile)
+        (openTempFile)
         w (OutputStreamWriter. out "utf-8") ]
     (doto w
       (.write (.toCharArray wtr))
       (.flush))
-    (CloseQ wtr)
+    (closeQ wtr)
     [fp w]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -458,14 +456,14 @@
             (XData. @fout)
             (XData. @os))
           (finally
-            (CloseQ @os)))
+            (closeQ @os)))
         ;;else
         (do
           (when (> c 0)
             (.write ^OutputStream @os bits 0 c)
             (if (and (nil? @fout)
                      (> (+ c cnt) limit))
-              (let [[f o] (SwapBytes @os)]
+              (let [[f o] (swapBytes @os)]
                 (var-set fout f)
                 (var-set os o))))
           (recur bits
@@ -492,14 +490,14 @@
             (XData. @fout)
             (XData. @wtr))
           (finally
-            (CloseQ @wtr)))
+            (closeQ @wtr)))
         ;;else
         (do
           (when (> c 0)
             (.write ^Writer @wtr carr 0 c)
             (if (and (nil? @fout)
                      (> (+ c cnt) limit))
-              (let [[f w] (SwapChars @wtr)]
+              (let [[f w] (swapChars @wtr)]
                 (var-set fout f)
                 (var-set wtr w))))
           (recur carr
@@ -508,29 +506,29 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ReadBytes
+(defn readBytes
 
   "Read bytes and return a XData"
 
   ^XData
   [^InputStream inp & [usefile]]
 
-  (slurpBytes inp (if usefile 1 (StreamLimit))))
+  (slurpBytes inp (if usefile 1 (streamLimit))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ReadChars
+(defn readChars
 
   "Read chars and return a XData"
 
   ^XData
   [^Reader rdr & [usefile]]
 
-  (slurpChars rdr (if usefile 1 (StreamLimit))))
+  (slurpChars rdr (if usefile 1 (streamLimit))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn MorphChars
+(defn morphChars
 
   "Convert these bytes to chars"
 
@@ -540,8 +538,9 @@
   (when (some? bits)
     (let [^Charset
           cs (or charSet (Charset/forName "utf-8")) ]
-      (IOUtils/toCharArray (Streamify bits) cs))))
+      (IOUtils/toCharArray (streamify bits) cs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 
