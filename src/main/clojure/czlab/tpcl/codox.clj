@@ -29,7 +29,7 @@
 ;;
 (defn -main "Run the codox document generator"
 
-  [ & args ]
+  [& args]
 
   (require 'codox.main)
   (if (> (count args) 0)

@@ -596,6 +596,7 @@
                 task options nested] } tobj
         pre-options (or pre-options
                         xxx-preopts)]
+    (log/info "task name: %s" tname)
     (->> (doto ^Task
            task
            (.setProject pj)
@@ -621,6 +622,7 @@
         tg (Target.)]
     (.setName tg (or target ""))
     (.addOrReplaceTarget pj tg)
+    (log/info "number of tasks ==== %d" (count tasks))
     (doseq [t tasks]
       (init-task pj tg t))
     tg))
@@ -675,6 +677,7 @@
 
   [& tasks]
 
+  (log/info "running tasks count = %d" (count tasks))
   (runTarget "" tasks))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

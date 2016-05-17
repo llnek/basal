@@ -192,7 +192,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn cexp? "" ^Throwable [e]  (Cast? Throwable e))
+(defn cexp? "" ^Throwable [e]  (cast? Throwable e))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -595,7 +595,7 @@
 
   (if (nil? aFile)
     ""
-    (FPath (.getCanonicalPath aFile))))
+    (fpath (.getCanonicalPath aFile))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -651,7 +651,7 @@
     (fn [^Properties memo k]
       (.put memo
             k
-            (SubsVar (.get props k)))
+            (subsVar (.get props k)))
       memo)
     (Properties.)
     (.keySet props)))
@@ -769,7 +769,7 @@
 
   []
 
-  (>= (.indexOf (cs/lower-case (SysProp "os.name"))
+  (>= (.indexOf (cs/lower-case (sysProp "os.name"))
                 "windows") 0 ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -957,7 +957,7 @@
     (with-open
       [inp (resStream rcPath czLoader)]
       (-> (IOUtils/toByteArray inp)
-          (Stringify  encoding ))) ))
+          (stringify  encoding ))) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1270,7 +1270,7 @@
     (loop [_end (if (< end Integer/MAX_VALUE)
                   (+ end 1)
                   end)
-           r (NewRandom)
+           r (newRandom)
            rc []
            cnt howMany ]
       (if (<= cnt 0)

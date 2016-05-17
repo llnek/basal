@@ -155,7 +155,7 @@
   ^bytes
   [nnum]
 
-  (with-open [baos (ByteOS)]
+  (with-open [baos (byteOS)]
     (doto (DataOutputStream. baos)
       (.writeInt (int nnum))
       (.flush))
@@ -168,7 +168,7 @@
   ^bytes
   [nnum]
 
-  (with-open [baos (ByteOS) ]
+  (with-open [baos (byteOS) ]
     (doto (DataOutputStream. baos)
       (.writeLong ^long nnum)
       (.flush))
@@ -245,7 +245,7 @@
   [^bytes bits]
 
   (when (some? bits)
-    (let [baos (ByteOS)]
+    (let [baos (byteOS)]
       (with-open [g (GZIPOutputStream. baos)]
         (.write g bits 0 (alength bits)))
       (.toByteArray baos))))
@@ -445,7 +445,7 @@
   [^InputStream inp limit]
 
   (with-local-vars
-    [os (ByteOS) fout nil]
+    [os (byteOS) fout nil]
     (loop [bits (byte-array 4096)
            cnt 0
            c (.read inp bits)]

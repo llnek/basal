@@ -301,7 +301,7 @@
   [^File fout ^Object data & [enc] ]
 
   (if
-    (IsBytes? (class data))
+    (isBytes? (class data))
     (FileUtils/writeByteArrayToFile fout ^bytes data)
     (->> (str  (or enc "utf-8"))
          (FileUtils/writeStringToFile fout (str data) ))))

@@ -211,7 +211,7 @@
   (condp instance? obj
     String (streamify (bytesify obj))
     InputStream obj
-    (BytesClass) (streamify obj)
+    (bytesClass) (streamify obj)
     nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

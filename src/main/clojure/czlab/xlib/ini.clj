@@ -224,7 +224,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod ParseInifile File
+(defmethod parseInifile File
 
   ^IWin32Conf
   [file]

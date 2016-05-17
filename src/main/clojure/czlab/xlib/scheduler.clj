@@ -123,7 +123,7 @@
   [^String named]
 
   (let [jid (if-not (hgl? named)
-              (format "xlib#core-%03d" (NextInt))
+              (format "xlib#core-%03d" (nextInt))
               (str named "#core"))
         holdQ (ConcurrentHashMap.)
         runQ (ConcurrentHashMap.)

@@ -18,7 +18,7 @@
   czlab.xlib.resources
 
   (:require
-    [czlab.xlib.meta :refer [GetCldr]]
+    [czlab.xlib.meta :refer [getCldr]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs]
     [clojure.java.io :as io])
