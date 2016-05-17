@@ -128,7 +128,7 @@
     (a/antExec
       {:executable "babel"
        :dir workingDir}
-      [[:argvalues args ]])))
+      [[:argvalues args]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -247,7 +247,7 @@
 
     (a/runTarget* "clean/public"
       (a/antDelete {}
-        [[:fileset @pms ]]))))
+        [[:fileset @pms]]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
