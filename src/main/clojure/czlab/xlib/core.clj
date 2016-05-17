@@ -240,7 +240,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ^:no-doc NilNichts
+(defn ^:no-doc nilNichts
 
   "If object is nil, return a NICHTS"
 
@@ -251,7 +251,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ^:no-doc IsNichts?
+(defn ^:no-doc isNichts?
 
   "Returns true if the object is the NICHTS"
 

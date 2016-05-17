@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns czlab.xlib.byteutils
+(ns czlabtest.xlib.byteutils
 
   (:require [czlab.xlib.io :as BU])
   (:use [clojure.test])

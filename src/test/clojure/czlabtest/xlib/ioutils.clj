@@ -49,7 +49,7 @@
 
   (is (instance? OutputStream (IO/byteOS)))
 
-  (is (= "616263" (IO/HexifyString (CU/bytesify "abc"))))
+  (is (= "616263" (IO/hexifyString (CU/bytesify "abc"))))
 
   (is (= "heeloo world!" (CU/stringify (IO/gunzip (IO/gzip (CU/bytesify "heeloo world!"))))))
 

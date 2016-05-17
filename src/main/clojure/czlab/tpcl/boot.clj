@@ -415,7 +415,7 @@
       [[:classpath (ge :TJPATH)]
        [:formatter {:type "plain"
                     :useFile false}]
-       [:test {:name (str (ge :DOMAIN) ".ClojureJUnit")
+       [:test {:name "czlabtest.xlib.ClojureJUnit"
                :todir (ge :reportTestDir)}
               [[:formatter {:type "xml"}]]]])))
 

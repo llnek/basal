@@ -154,12 +154,12 @@
   (is (= "java.lang.IllegalArgumentException: heeloo" (CU/rootCauseMsg (IllegalArgumentException. "heeloo"))))
 
   (is (= "ACZ" (CU/sortJoin [ "Z" "C" "A"])))
-  (is (= 3 (count (CU/GenNumbers 1 10 3))))
+  (is (= 3 (count (CU/genNumbers 1 10 3))))
 
   (is (false? (nil? (:1 (CU/intoMap dummyProperties)))))
   (is (= 3 (count (CU/intoMap dummyProperties))))
 
-  (is (= 100 (.getv (doto (CU/MubleObj!) (.setv :1 100)) :1)))
+  (is (= 100 (.getv (doto (CU/mubleObj!) (.setv :1 100)) :1)))
 
 )
 
