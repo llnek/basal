@@ -438,7 +438,7 @@
 
   [top bin fext]
 
-  (doseq [f (.listFiles (io/file top))]
+  (doseq [^File f (.listFiles (io/file top))]
     (cond
       (.isDirectory f)
       (grep-paths f bin fext)
@@ -472,21 +472,22 @@
 
   [^Stack stk ext out seed]
 
-  (doseq [f (-> (or seed (.peek stk))
-                (.listFiles))]
-    (let [p (if (.empty stk)
-              '()
-              (for [x (.toArray stk)] (.getName x)))
-          fid (.getName f)
-          paths (conj (into [] p) fid) ]
-      (if
-        (.isDirectory f)
-        (do
-          (.push stk f)
-          (scan-tree stk ext out nil))
-        ;else
-        (if (.endsWith fid ext)
-          (swap! out conj (cs/join "/" paths))))))
+  (let [^File top (or seed (.peek stk))]
+    (doseq [^File f (.listFiles top)]
+      (let [p (if (.empty stk)
+                '()
+                (for [x (.toArray stk)]
+                  (.getName ^File x)))
+            fid (.getName f)
+            paths (conj (into [] p) fid) ]
+        (if
+          (.isDirectory f)
+          (do
+            (.push stk f)
+            (scan-tree stk ext out nil))
+          ;else
+          (if (.endsWith fid ext)
+            (swap! out conj (cs/join "/" paths)))))))
   (when-not (.empty stk) (.pop stk)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

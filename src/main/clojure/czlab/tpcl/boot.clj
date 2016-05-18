@@ -20,7 +20,6 @@
   (:require
     [boot.task.built-in :refer [uber aot]]
     [czlab.xlib.logging :as log]
-    [czlab.xlib.core :as co]
     [clojure.data.json :as js]
     [cemerick.pomegranate :as pom]
     [clojure.java.io :as io]
@@ -34,6 +33,53 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn replaceFile ""
+
+  [file work]
+
+  {:pre [(fn? work)]}
+
+  (spit file
+        (-> (slurp file :encoding "utf-8")
+              (work))
+        :encoding "utf-8"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- grep-paths ""
+
+  [top bin fext]
+
+  (doseq [f (.listFiles (io/file top))]
+    (cond
+      (.isDirectory f)
+      (grep-paths f bin fext)
+      (.endsWith (.getName f) fext)
+      (let [p (.getParentFile f)]
+        (when-not (contains? @bin p))
+          (swap! bin assoc p p))
+      :else nil)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn grepFolderPaths
+
+  "Recurse a folder, picking out sub-folders
+   which contain files with the given extension"
+  [rootDir ext]
+
+  (let [rpath (.getCanonicalPath (io/file rootDir))
+        rlen (.length rpath)
+        out (atom [])
+        bin (atom {})]
+    (grep-paths rootDir bin ext)
+    (doseq [[k v] @bin]
+      (let [kp (.getCanonicalPath ^File k)]
+        (swap! out conj (.substring kp (+ rlen 1)))))
+    @out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -158,7 +204,7 @@
   []
 
   (let [root (io/file (ge :srcDir) "clojure")
-        ps (co/grepFolderPaths root ".clj")
+        ps (grepFolderPaths root ".clj")
         bin (atom '())]
     (doseq [p ps]
       (swap! bin concat (partition-all 25 (listCljNsps root p))))
@@ -233,7 +279,7 @@
   []
 
   (let [root (io/file (ge :tstDir) "clojure")
-        ps (co/grepFolderPaths root ".clj")
+        ps (grepFolderPaths root ".clj")
         bin (atom '())]
     (doseq [p ps]
       (swap! bin concat (partition-all 25 (listCljNsps root p))))
@@ -340,7 +386,13 @@
 
     (se! options :basedir (System/getProperty "user.dir"))
 
+    (se! options :target-path "target")
+
+    (se! options
+         :warnonref
+         :clojure.compile.warn-on-reflection)
     (se! options :warn-reflection true)
+
 
     ;;(se! options :classes "classes")
     (se! options :cout "z")
@@ -409,7 +461,7 @@
           [:location (ge :jzzDir)]
           [:location (ge :czzDir)]
           [:fileset {:dir (ge :libDir)
-           :includes "**/*.jar"}]])
+                     :includes "**/*.jar"}]])
 
     (se! options
          :TPATH
@@ -435,7 +487,7 @@
          :TJPATH
          (->> (ge :CJPATH)
               (concat [[:location (fp! (ge :tstDir) "clojure")]
-                       [:location (ge :buildTestDir)]]) o
+                       [:location (ge :buildTestDir)]])
               (into [])))
 
     (se! options
@@ -447,13 +499,19 @@
 
     (se! options
          :CLJC_SYSPROPS
-         {:clojure.compile.warn-on-reflection
-          (ge :warn-reflection)
+         {(ge :warnonref) (ge :warn-reflection)
           :clojure.compile.path (ge :czzDir)})
 
     (se! options
          :CJNESTED
          [[:sysprops (ge :CLJC_SYSPROPS)]
+          [:classpath (ge :CJPATH)]])
+
+    (se! options
+         :CJNESTED_RAW
+         [[:sysprops
+           (-> (ge :CLJC_SYSPROPS)
+               (assoc (ge :warnonref) false))]
           [:classpath (ge :CJPATH)]])
 
     (doseq [[k v] options]

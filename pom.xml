@@ -2,12 +2,12 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.zotohlab</groupId>
-  <artifactId>skaro</artifactId>
+  <groupId>czlab</groupId>
+  <artifactId>xlib</artifactId>
   <version>@@VERSION@@</version>
   <packaging>gzip</packaging>
 
-  <name>skaro</name>
+  <name>czlab-xlib</name>
   <url>http://maven.apache.org</url>
 
   <properties>

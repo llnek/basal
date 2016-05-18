@@ -32,7 +32,6 @@
     [java.net URL]
     [java.util.regex Pattern Matcher]
     [java.util Properties]
-    [javax.mail Message]
     [czlab.xlib MimeFileTypes]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
