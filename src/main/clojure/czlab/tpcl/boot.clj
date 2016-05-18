@@ -20,6 +20,7 @@
   (:require
     [boot.task.built-in :refer [uber aot]]
     [czlab.xlib.logging :as log]
+    [czlab.xlib.core :as co]
     [clojure.data.json :as js]
     [cemerick.pomegranate :as pom]
     [clojure.java.io :as io]
@@ -28,8 +29,7 @@
     [czlab.tpcl.antlib :as a])
 
   (:import
-    [java.util GregorianCalendar Date Stack UUID]
-    [java.text SimpleDateFormat]
+    [java.util Stack]
     [java.io File]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -37,11 +37,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ge "" [expr] `(bc/get-env ~expr))
+(defmacro ge
+
+  "get-env"
+  [expr]
+
+  `(bc/get-env ~expr))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn fp! "" [& args] (cs/join "/" args))
+(defn fp!
+
+  "Constructs a file path"
+  [& args]
+
+  (cs/join "/" args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -51,203 +61,43 @@
 
   [options k dv]
 
-  (if-some [v (get options k)]
+  (let [v (get options k)]
     (if (fn? v)
       (v options k)
-      (set-env! k v))
-    (set-env! k dv)))
+      (set-env! k (or v dv)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro minitask ""
+(defmacro minitask
 
+  "Wraps it like an ant task"
   [func & forms]
 
   `(do (println (str ~func ":")) ~@forms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn fmtTime ""
+(defn listCljNsps
 
-  [^String fmt]
-
-  (-> (SimpleDateFormat. fmt)
-      (.format (-> (GregorianCalendar.)
-                   (.getTimeInMillis)
-                   (Date.)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn randUUID "" [] (UUID/randomUUID))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn replaceFile ""
-
-  [file work]
-
-  {:pre [(fn? work)]}
-
-  (->> (-> (slurp file :encoding "utf-8")
-           (work))
-       (spit file)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn fmtCljNsps
-
-  "Format list of namespaces"
+  "Format a list of clojure namespaces"
 
   [root & paths]
 
-  (let [bn #(cs/replace (.getName %) #"\.[^\.]+$" "")
+  (let [base #(cs/replace (.getName %) #"\.[^\.]+$" "")
         dot #(cs/replace % "/" ".")
         ffs #(and (.isFile %)
                   (.endsWith (.getName %) ".clj"))]
-    (reduce
-      (fn [memo path]
-        (let [nsp (dot path)]
-          (concat
-            memo
-            (map #(str nsp "." (bn %))
-                 (filter ffs
-                         (.listFiles (io/file root path)))))))
-      []
-      paths)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn babel
-
-  "Run babel on the given arguments"
-
-  [workingDir args]
-
-  (a/runTarget*
-    "babel"
-    (a/antExec
-      {:executable "babel"
-       :dir workingDir}
-      [[:argvalues args]])))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- walk-tree ""
-
-  [cfgtor ^Stack stk seed]
-
-  (doseq [f (-> (or seed (.peek stk))
-                (.listFiles))]
-    (let [p (if (.empty stk)
-              '()
-              (for [x (.toArray stk)] (.getName x)))
-          fid (.getName f)
-          paths (conj (into [] p) fid) ]
-      (if
-        (.isDirectory f)
-        (when (some? (cfgtor f :dir true))
-          (.push stk f)
-          (walk-tree cfgtor stk nil))
-        ;else
-        (when-some [rc (cfgtor f :paths paths)]
-          (babel (:work-dir rc) (:args rc))
-          (cfgtor f :paths paths :postgen true)))))
-  (when-not (.empty stk) (.pop stk)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn babelTree ""
-
-  [rootDir cfgtor]
-
-  {:pre [(fn? cfgtor)]}
-
-  (walk-tree cfgtor (Stack.) (io/file rootDir)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- collect-paths ""
-
-  [^File top bin fext]
-
-  (doseq [f (.listFiles top)]
-    (cond
-      (.isDirectory f)
-      (collect-paths f bin fext)
-      (.endsWith (.getName f) fext)
-      (let [p (.getParentFile f)]
-        (when-not (contains? @bin p))
-          (swap! bin assoc p p))
-      :else nil)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- scan-tree ""
-
-  [^Stack stk ext out seed]
-
-  (doseq [f (-> (or seed (.peek stk))
-                (.listFiles))]
-    (let [p (if (.empty stk)
-              '()
-              (for [x (.toArray stk)] (.getName x)))
-          fid (.getName f)
-          paths (conj (into [] p) fid) ]
-      (if
-        (.isDirectory f)
-        (do
-          (.push stk f)
-          (scan-tree stk ext out nil))
-        ;else
-        (if (.endsWith fid ext)
-          (swap! out conj (cs/join "/" paths))))))
-  (when-not (.empty stk) (.pop stk)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn collectFilePaths ""
-
-  [rootDir ext]
-
-  (let [out (atom [])]
-    (scan-tree (Stack.) ext out (io/file rootDir))
-    @out))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn collectCljPaths ""
-
-  [^File root]
-
-  (let [rpath (.getCanonicalPath root)
-        rlen (.length rpath)
-        out (atom [])
-        bin (atom {})]
-    (collect-paths root bin ".clj")
-    (doseq [[k v] @bin]
-      (let [kp (.getCanonicalPath ^File k)]
-        (swap! out conj (.substring kp (+ rlen 1)))))
-    (sort @out)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn cleanPublic ""
-
-  [& args]
-
-  (let
-    [ics (:includes (first args))
-     ecs (:excludes (first args))
-     pms (atom {:dir (fp! (ge :basedir) "public")}) ]
-    (if (empty? ics)
-      (swap! pms assoc :includes "pages/**,styles/**,scripts/**")
-      (swap! pms assoc :includes ics))
-    (if-not (empty? ecs)
-      (swap! pms assoc :excludes ecs))
-
-    (a/runTarget* "clean/public"
-      (a/antDelete {}
-        [[:fileset @pms]]))))
+    (sort
+      (reduce
+        (fn [memo path]
+          (let [nsp (dot path)]
+            (concat
+              memo
+              (map #(str nsp "." (base %))
+                   (filter ffs
+                           (.listFiles (io/file root path)))))))
+        []
+        paths))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -255,7 +105,8 @@
 
   [& args]
 
-  (a/runTarget* "clean/build"
+  (a/runTarget*
+    "clean/build"
     (a/antDelete {:dir (ge :bootBuildDir)
                   :excludes (str (ge :czz) "/**")})
     (a/antDelete {}
@@ -274,7 +125,7 @@
                (ge :distDir)
                (ge :libDir)
                (ge :qaDir)
-               (ge :wzzDir)
+               ;;(ge :wzzDir)
                (ge :czzDir)
                (ge :jzzDir)]]
       (.mkdirs (io/file s)))))
@@ -285,7 +136,8 @@
 
   []
 
-  (a/runTarget* "compile/java"
+  (a/runTarget*
+    "compile/java"
     (a/antJavac
       (ge :JAVAC_OPTS)
       [[:compilerarg (ge :COMPILER_ARGS)]
@@ -306,10 +158,10 @@
   []
 
   (let [root (io/file (ge :srcDir) "clojure")
-        ps (collectCljPaths root)
+        ps (co/grepFolderPaths root ".clj")
         bin (atom '())]
     (doseq [p ps]
-      (swap! bin concat (partition-all 25 (fmtCljNsps root p))))
+      (swap! bin concat (partition-all 25 (listCljNsps root p))))
     (minitask "compile/clj"
       (doseq [p @bin]
         (a/runTasks*
@@ -328,22 +180,19 @@
 
   []
 
-  (let [j [:fileset {:dir (ge :jzzDir)
-                     :excludes "demo/**,**/log4j.properties,**/logback.xml"} ]
-        c [:fileset {:dir (ge :czzDir)
-                     :excludes "demo/**,**/log4j.properties,**/logback.xml"} ] ]
-    (a/runTarget* "jar/files"
+  (let [j [:fileset
+           {:dir (ge :jzzDir)
+            :excludes "**/log4j.properties,**/logback.xml"} ]
+        c [:fileset
+           {:dir (ge :czzDir)
+            :excludes "**/log4j.properties,**/logback.xml"} ]]
+    (a/runTarget*
+      "jar/files"
       (a/antJar
         {:destFile (fp! (ge :distDir)
-                        (str "java-" (ge :buildVersion) ".jar"))}
-        [j])
-      (a/antJar
-        {:destFile (fp! (ge :distDir)
-                        (str "clj-" (ge :buildVersion) ".jar"))}
-        [c])
-      (a/antJar
-        {:destFile (fp! (ge :distDir)
-                        (str (ge :PID) "-" (ge :buildVersion) ".jar"))}
+                        (str (ge :PID)
+                             "-"
+                             (ge :buildVersion) ".jar"))}
         [j c]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -352,7 +201,8 @@
 
   []
 
-  (minitask "pretest"
+  (minitask
+    "pretest"
     (.mkdirs (io/file (ge :buildTestDir)))
     (.mkdirs (io/file (ge :reportTestDir)))))
 
@@ -362,16 +212,19 @@
 
   []
 
-  (a/runTarget* "compile/test/java"
-    (a/antJavac (merge (ge :JAVAC_OPTS)
-                         {:srcdir (fp! (ge :tstDir) "java")
-                          :destdir (ge :buildTestDir)})
-                  [[:include "**/*.java"]
-                   [:classpath (ge :TPATH)]
-                   [:compilerarg (ge :COMPILER_ARGS)]])
-    (a/antCopy {:todir (ge :buildTestDir)}
-                 [[:fileset {:dir (fp! (ge :tstDir) "java")
-                             :excludes "**/*.java"}]])))
+  (a/runTarget*
+    "compile/test/java"
+    (a/antJavac
+      (merge (ge :JAVAC_OPTS)
+             {:srcdir (fp! (ge :tstDir) "java")
+              :destdir (ge :buildTestDir)})
+      [[:include "**/*.java"]
+       [:classpath (ge :TPATH)]
+       [:compilerarg (ge :COMPILER_ARGS)]])
+    (a/antCopy
+      {:todir (ge :buildTestDir)}
+      [[:fileset {:dir (fp! (ge :tstDir) "java")
+                  :excludes "**/*.java"}]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -380,11 +233,12 @@
   []
 
   (let [root (io/file (ge :tstDir) "clojure")
-        ps (collectCljPaths root)
+        ps (co/grepFolderPaths root ".clj")
         bin (atom '())]
     (doseq [p ps]
-      (swap! bin concat (partition-all 25 (fmtCljNsps root p))))
-    (minitask "compile/test/clj"
+      (swap! bin concat (partition-all 25 (listCljNsps root p))))
+    (minitask
+      "compile/test/clj"
       (doseq [p @bin]
         (a/runTasks*
           (a/antJava
@@ -405,7 +259,8 @@
 
   []
 
-  (a/runTarget* "run/test/clj"
+  (a/runTarget*
+    "run/test/clj"
     (a/antJunit
       {:logFailedTests true
        :showOutput false
@@ -415,7 +270,7 @@
       [[:classpath (ge :TJPATH)]
        [:formatter {:type "plain"
                     :useFile false}]
-       [:test {:name "czlabtest.xlib.ClojureJUnit"
+       [:test {:name (ge :test-runner)
                :todir (ge :reportTestDir)}
               [[:formatter {:type "xml"}]]]])))
 
@@ -425,7 +280,8 @@
 
   []
 
-  (a/runTarget* "run/test/java"
+  (a/runTarget*
+    "run/test/java"
     (a/antJunit
       {:logFailedTests true
        :showOutput false
@@ -467,7 +323,8 @@
 
   [cmd workDir args]
 
-  (a/runTarget* cmd
+  (a/runTarget*
+    (str "cmd:" cmd)
     (a/antExec {:executable cmd
                 :dir workDir
                 :spawn false}
@@ -475,31 +332,31 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bootEnvVars ""
+(defn bootEnvVars! "Basic vars"
 
   [& [options]]
 
   (let [options (or options {})]
 
-    (se! options :warn-reflection :clojure.compile.warn-on-reflection)
-    (se! options :skaroHome (System/getProperty "skaro.home.dir"))
-    (se! options :basedir (System/getProperty "skaro.app.dir"))
+    (se! options :basedir (System/getProperty "user.dir"))
 
-    (se! options :classes "classes")
+    (se! options :warn-reflection true)
+
+    ;;(se! options :classes "classes")
     (se! options :cout "z")
     (se! options :jzz "j")
     (se! options :czz "c")
-    (se! options :wzz "w")
+    ;;(se! options :wzz "w")
 
     (se! options :bld "build")
     (se! options :pmode "dev")
 
     (se! options :bootBuildDir (fp! (ge :basedir) (ge :bld)))
 
-    (se! options :clzDir (fp! (ge :bootBuildDir) (ge :classes)))
+    ;;(se! options :clzDir (fp! (ge :bootBuildDir) (ge :classes)))
     (se! options :jzzDir (fp! (ge :bootBuildDir) (ge :jzz)))
     (se! options :czzDir (fp! (ge :bootBuildDir) (ge :czz)))
-    (se! options :wzzDir (fp! (ge :bootBuildDir) (ge :wzz)))
+    ;;(se! options :wzzDir (fp! (ge :bootBuildDir) (ge :wzz)))
 
     (se! options :distDir (fp! (ge :bootBuildDir) "d"))
     (se! options :qaDir (fp! (ge :bootBuildDir) "t"))
@@ -513,10 +370,11 @@
 
     (se! options :reportTestDir (fp! (ge :qaDir) "reports"))
     (se! options :buildTestDir (fp! (ge :qaDir) (ge :cout)))
+    (se! options :packDir (fp! (ge :bootBuildDir) "p"))
 
-    (doseq [k (keys options)]
+    (doseq [[k v] options]
       (when (nil? (get-env k))
-        (se! options k nil))) ))
+        (se! options k v)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -529,64 +387,90 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bootEnvPaths ""
+(defn bootEnvPaths! "Compiler paths and options"
 
   [& [options]]
 
   (let [options (or options {})]
 
-    (se! options :COMPILER_ARGS {:line "-Xlint:deprecation -Xlint:unchecked"})
+    (se! options
+         :COMPILER_ARGS
+         {:line "-Xlint:deprecation -Xlint:unchecked"})
 
-    (se! options :COMPILE_OPTS {:debug (ge :buildDebug)
-                                :includeantruntime false
-                                :fork true})
+    (se! options
+         :COMPILE_OPTS
+         {:includeantruntime false
+          :debug (ge :buildDebug)
+          :fork true})
 
-    (se! options :CPATH [[:location (fp! (ge :srcDir) "artifacts")]
-                         [:location (ge :clzDir)]
-                         [:location (ge :jzzDir)]
-                         [:location (ge :czzDir)]
-                         [:fileset {:dir (ge :libDir)
-                                    :includes "**/*.jar"}]
-                         [:fileset {:dir (fp! (ge :skaroHome) "dist")
-                                    :includes "**/*.jar"} ]
-                         [:fileset {:dir (fp! (ge :skaroHome) "lib")
-                                    :includes "**/*.jar"} ]] )
+    (se! options
+         :CPATH
+         [;;[:location (ge :clzDir)]
+          [:location (ge :jzzDir)]
+          [:location (ge :czzDir)]
+          [:fileset {:dir (ge :libDir)
+           :includes "**/*.jar"}]])
 
-    (se! options :TPATH (->> (ge :CPATH)
-                             (cons [:location (ge :buildTestDir)])
-                             (into [])))
+    (se! options
+         :TPATH
+         (->> (ge :CPATH)
+              (cons [:location (ge :buildTestDir)])
+              (into [])))
 
-    (se! options :JAVAC_OPTS (merge {:srcdir (fp! (ge :srcDir) "java")
-                                     :destdir (ge :jzzDir)
-                                     :target "1.8"
-                                     :debugLevel "lines,vars,source"}
-                                    (ge :COMPILE_OPTS)))
+    (se! options
+         :JAVAC_OPTS
+         (merge {:srcdir (fp! (ge :srcDir) "java")
+                 :destdir (ge :jzzDir)
+                 :target "1.8"
+                 :debugLevel "lines,vars,source"}
+                (ge :COMPILE_OPTS)))
 
-    (se! options :CJPATH (->> (ge :CPATH)
-                              (cons [:location (fp! (ge :srcDir) "clojure")])
-                              (into [])))
+    (se! options
+         :CJPATH
+         (->> (ge :CPATH)
+              (cons [:location (fp! (ge :srcDir) "clojure")])
+              (into [])))
 
-    (se! options :TJPATH (->> (ge :CJPATH)
-                              (concat [[:location (fp! (ge :tstDir) "clojure")]
-                                       [:location (ge :buildTestDir)]])
-                              (into [])))
+    (se! options
+         :TJPATH
+         (->> (ge :CJPATH)
+              (concat [[:location (fp! (ge :tstDir) "clojure")]
+                       [:location (ge :buildTestDir)]]) o
+              (into [])))
 
-    (se! options :CLJC_OPTS {:classname "clojure.lang.Compile"
-                             :fork true
-                             :failonerror true
-                             :maxmemory "2048m"})
+    (se! options
+         :CLJC_OPTS
+         {:classname "clojure.lang.Compile"
+          :fork true
+          :failonerror true
+          :maxmemory "2048m"})
 
-    (se! options :CLJC_SYSPROPS {:clojure.compile.path (ge :czzDir)
-                                 (ge :warn-reflection) true})
+    (se! options
+         :CLJC_SYSPROPS
+         {:clojure.compile.warn-on-reflection
+          (ge :warn-reflection)
+          :clojure.compile.path (ge :czzDir)})
 
-    (se! options :CJNESTED [[:sysprops (ge :CLJC_SYSPROPS)]
-                            [:classpath (ge :CJPATH)]])
+    (se! options
+         :CJNESTED
+         [[:sysprops (ge :CLJC_SYSPROPS)]
+          [:classpath (ge :CJPATH)]])
 
-    (doseq [k (keys options)]
+    (doseq [[k v] options]
       (when (nil? (get-env k))
-        (se! options k nil)))
+        (se! options k v)))
 
     (bootSyncCPath (str (ge :jzzDir) "/"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn bootEnv! "Setup env-vars and paths"
+
+  [& [options]]
+
+  (let [options (or options {})]
+    (bootEnvVars! options)
+    (bootEnvPaths! options)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -703,7 +587,6 @@
 
   (bc/with-pre-wrap fileset
     (clean4Build)
-    (cleanPublic)
     (preBuild)
     fileset))
 
@@ -746,4 +629,5 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

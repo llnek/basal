@@ -33,7 +33,7 @@
     [java.io File FileFilter
      FileInputStream
      FileOutputStream InputStream OutputStream]
-    [java.util ArrayList]
+    [java.util Stack ArrayList]
     [java.net URL URI]
     [java.util.zip ZipFile ZipEntry]
     [czlab.xlib XData]))
@@ -431,6 +431,77 @@
          (accept [_ f] (.isDirectory f)))
        (.listFiles (io/file dir))
        (into [])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- grep-paths ""
+
+  [top bin fext]
+
+  (doseq [f (.listFiles (io/file top))]
+    (cond
+      (.isDirectory f)
+      (grep-paths f bin fext)
+      (.endsWith (.getName f) fext)
+      (let [p (.getParentFile f)]
+        (when-not (contains? @bin p))
+          (swap! bin assoc p p))
+      :else nil)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn grepFolderPaths
+
+  "Recurse a folder, picking out sub-folders
+   which contain files with the given extension"
+  [rootDir ext]
+
+  (let [rpath (.getCanonicalPath (io/file rootDir))
+        rlen (.length rpath)
+        out (atom [])
+        bin (atom {})]
+    (grep-paths rootDir bin ext)
+    (doseq [[k v] @bin]
+      (let [kp (.getCanonicalPath ^File k)]
+        (swap! out conj (.substring kp (+ rlen 1)))))
+    @out))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- scan-tree ""
+
+  [^Stack stk ext out seed]
+
+  (doseq [f (-> (or seed (.peek stk))
+                (.listFiles))]
+    (let [p (if (.empty stk)
+              '()
+              (for [x (.toArray stk)] (.getName x)))
+          fid (.getName f)
+          paths (conj (into [] p) fid) ]
+      (if
+        (.isDirectory f)
+        (do
+          (.push stk f)
+          (scan-tree stk ext out nil))
+        ;else
+        (if (.endsWith fid ext)
+          (swap! out conj (cs/join "/" paths))))))
+  (when-not (.empty stk) (.pop stk)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn grepFilePaths
+
+  "Recurse a folder, picking out files with the given extension"
+
+  [rootDir ext]
+
+  (let [out (atom [])]
+    ;; the stack is used to store the folder hierarchy
+    (scan-tree (Stack.) ext out (io/file rootDir))
+    @out))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

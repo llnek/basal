@@ -165,17 +165,23 @@
   :source-paths #{"src/main/clojure" "src/main/java"}
   :buildVersion "0.9.0-SNAPSHOT"
   :buildDebug true
+  :test-runner "czlabtest.xlib.ClojureJUnit"
   :DOMAIN "czlab.xlib"
   :PID "xlib")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(require '[czlab.tpcl.boot :as b :refer [fp! ge testjava testclj]]
-         '[clojure.tools.logging :as log]
-         '[clojure.java.io :as io]
-         '[clojure.string :as cs]
-         '[czlab.tpcl.antlib :as a]
-         '[boot.core :as bc])
+(require
+  '[czlab.tpcl.boot
+    :as b
+    :refer [fp! ge testjava testclj]]
+  '[clojure.tools.logging :as log]
+  '[clojure.java.io :as io]
+  '[clojure.string :as cs]
+  '[czlab.tpcl.antlib :as a]
+  '[czlab.xlib.files :as fs]
+  '[czlab.xlib.core :as co]
+  '[boot.core :as bc])
 
 (import '[org.apache.tools.ant Project Target Task]
         '[java.io File])
@@ -187,21 +193,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(b/bootEnvVars
-  {:basedir (System/getProperty "user.dir")
-   :packDir #(set-env! %2 (fp! (ge :bootBuildDir) "p"))})
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(b/bootEnvPaths
-  {:CPATH [[:location (ge :jzzDir)]
-           [:location (ge :czzDir)]
-           [:fileset {:dir (ge :libDir)
-                      :includes "*.jar"}]]
-   :CJNESTED_RAW
-   #(set-env! %2 [[:sysprops (-> (ge :CLJC_SYSPROPS)
-                                 (assoc (ge :warn-reflection) false))]
-                  [:classpath (ge :CJPATH)]])})
+(b/bootEnv!)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

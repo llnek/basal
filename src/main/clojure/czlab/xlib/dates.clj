@@ -265,6 +265,19 @@
       (addDays days)
       (.getTime)))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn fmtTime
+
+  "Format current time"
+  [^String fmt]
+
+  (-> (SimpleDateFormat. fmt)
+      (.format (-> (GregorianCalendar.)
+                   (.getTimeInMillis)
+                   (Date.)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn fmtCal
