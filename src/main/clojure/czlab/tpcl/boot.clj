@@ -622,8 +622,8 @@
                         :tofile (fp! to (last mt))})
             (a/antCopy {:file (fp! dir pn)
                         :todir to}))))
-      (format "copied (%d) jars to %s" (count jars) to))
-    fileset))
+      (println (format "copied (%d) jars to %s" (count jars) to))
+    fileset)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -633,6 +633,7 @@
 
   []
 
+  (a/cleanDir (io/file (ge :libDir)))
   (comp (uber)(juber)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

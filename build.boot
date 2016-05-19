@@ -1,14 +1,20 @@
 (set-env!
   :dependencies '[
+    ;;[javax.servlet/servlet-api "2.5" :scope "provided"]
 
+    [org.apache.ant/ant-apache-log4j "1.9.7" :exclusions [log4j]]
+    [ant-contrib/ant-contrib "1.0b3" :exclusions [ant]]
+    [org.apache.ant/ant "1.9.7" ]
+    [org.apache.ant/ant-launcher "1.9.7" ]
+    [org.apache.ant/ant-junit4 "1.9.7" ]
+    [org.apache.ant/ant-junit "1.9.7" ]
     [org.apache.logging.log4j/log4j-core "2.5" ]
     [org.slf4j/slf4j-api "1.7.21" ]
 
     [ch.qos.logback/logback-classic "1.1.7" ]
     [ch.qos.logback/logback-core "1.1.7" ]
 
-    [com.google.code.gson/gson "2.6.2" ]
-
+    [commons-fileupload/commons-fileupload "1.3.1" ]
     [org.apache.commons/commons-compress "1.11" ]
     [org.apache.commons/commons-lang3 "3.4" ]
     [org.apache.commons/commons-exec "1.3" ]
@@ -16,72 +22,47 @@
     [commons-logging/commons-logging "1.2" ]
     [commons-codec/commons-codec "1.10" ]
 
-    [org.apache.ant/ant "1.9.7" ]
-    [org.apache.ant/ant-launcher "1.9.7" ]
-    [org.apache.ant/ant-junit4 "1.9.7" ]
-    [org.apache.ant/ant-junit "1.9.7" ]
-    [org.apache.ant/ant-apache-log4j "1.9.7" :exclusions [log4j]]
+    [org.apache.httpcomponents/httpclient "4.5.2" ]
+    [org.apache.httpcomponents/httpcore "4.4.4" ]
+    [javax.servlet/javax.servlet-api "3.1.0"]
+    [joda-time/joda-time "2.9.3" ]
 
-    [ant-contrib/ant-contrib "1.0b3" :exclusions [ant]]
+    [org.mozilla/rhino "1.7.7.1" ]
+    [jline/jline "2.14.1" ]
 
-    [org.clojure/math.numeric-tower "0.0.4" ]
-    [org.clojure/math.combinatorics "0.1.1" ]
-    [org.clojure/tools.logging "0.3.1" ]
-    [org.clojure/tools.nrepl "0.2.12" ]
-    [org.clojure/tools.reader "0.10.0" ]
-    [org.clojure/data.codec "0.1.0" ]
-    [org.clojure/data.csv "0.1.3" ]
-    [org.clojure/java.data "0.1.1" ]
-    [org.clojure/data.json "0.2.6" ]
-    [org.clojure/data.xml "0.0.8" ]
-    [org.clojure/core.cache "0.6.5" ]
-    [org.clojure/core.match "0.2.2" ]
-    [org.clojure/core.memoize "0.5.9" ]
-    [org.clojure/tools.analyzer.jvm "0.6.9"]
-    [org.clojure/tools.analyzer "0.6.7"]
-    [org.clojure/tools.cli "0.3.3" ]
-    [org.clojure/data.generators "0.1.2" ]
+    [com.google.code.gson/gson "2.6.2" ]
+    [com.google.guava/guava "19.0" ]
+
     [org.clojure/data.priority-map "0.0.7" ]
-    [org.clojure/core.async "0.2.374" ]
-    [org.clojure/core.logic "0.8.10" ]
-    [org.clojure/algo.monads "0.1.5" ]
-    [org.clojure/algo.generic "0.1.2" ]
+    [org.clojure/data.xml "0.0.8" ]
+    [org.clojure/tools.reader "0.10.0" ]
+    [org.clojure/tools.logging "0.3.1" ]
     [org.clojure/core.memoize "0.5.9" ]
+    [org.clojure/core.async "0.2.374" ]
+    [org.clojure/data.json "0.2.6" ]
+    [org.clojure/core.cache "0.6.5" ]
     [org.flatland/ordered "1.5.3"]
     [com.cemerick/pomegranate "0.3.1"]
-    [codox/codox "0.9.5" ]
-    [org.clojure/clojure "1.8.0" ]
-    [org.clojure/clojurescript "1.8.51" ]
 
-    [jline/jline "2.14.1" ]
+    [hiccup/hiccup "1.0.5"]
+    [enlive/enlive "1.1.6"]
+    [codox/codox "0.9.5" ]
+
+    [org.clojure/clojurescript "1.8.51" ]
+    [org.clojure/clojure "1.8.0" ]
 
     [net.mikera/cljunit "0.4.0" ]
     [junit/junit "4.12"  ]
 
-
+    [ring/ring-core "1.4.0"
+     :exclusions [javax.servlet/servlet-api]]
     ;; boot/clj stuff
-
-    [boot/base "2.5.5"
-     :exclusions [javax.servlet/servlet-api
-                  org.projectodd.shimdandy/shimdandy-impl
-                  org.projectodd.shimdandy/shimdandy-api]]
-    [boot/core "2.5.5"
-     :exclusions [javax.servlet/servlet-api
-                  org.projectodd.shimdandy/shimdandy-impl
-                  org.projectodd.shimdandy/shimdandy-api]]
-    [boot/pod "2.5.5"
-     :exclusions [javax.servlet/servlet-api
-                  org.projectodd.shimdandy/shimdandy-impl
-                  org.projectodd.shimdandy/shimdandy-api]]
-    [boot/worker "2.5.5"
-     :exclusions [javax.servlet/servlet-api
-                  org.projectodd.shimdandy/shimdandy-impl
-                  org.projectodd.shimdandy/shimdandy-api]]
+    [boot/base "2.5.5"]
+    [boot/core "2.5.5"]
+    [boot/pod "2.5.5"]
+    [boot/worker "2.5.5"]
     ;; this is causing the RELEASE_6 warning
-    [boot/aether "2.5.5"
-     :exclusions [javax.servlet/servlet-api
-                  org.projectodd.shimdandy/shimdandy-impl
-                  org.projectodd.shimdandy/shimdandy-api]]
+    [boot/aether "2.5.5"]
 
   ]
 
