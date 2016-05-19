@@ -18,7 +18,7 @@
   czlab.tpcl.boot
 
   (:require
-    [boot.task.built-in :refer [uber aot]]
+    [boot.task.built-in :refer [pom target uber aot]]
     [czlab.xlib.logging :as log]
     [clojure.data.json :as js]
     [cemerick.pomegranate :as pom]
@@ -673,6 +673,17 @@
   (comp (clean4build)
         (libjars)
         (buildr)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(deftask pom!
+
+  ""
+  []
+
+  (comp (pom :project (ge :project)
+             :version (ge :version))
+        (target :dir (ge :jzzDir))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -83,6 +83,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (require
+  '[boot.task.built-in :refer [pom target]]
   '[czlab.tpcl.boot
     :as b
     :refer [fp! ge testjava testclj]]
@@ -356,6 +357,8 @@
         (b/libjars)
         (javacmp)
         (cljcmp)
+        ;;(pom :project (ge :project) :version (ge :version))
+        ;;(target :dir #{(ge :jzzDir)})
         (jar!)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -380,6 +383,21 @@
   "release bundle"
   []
   (comp (dev) (pack)))
+
+
+(deftask poo []
+   (bc/with-pre-wrap fileset
+
+     (let [p (output-files fileset)]
+       (doseq [x (seq p)]
+         (println x)))
+
+    fileset))
+
+(deftask shit []
+  (comp (pom :project 'abc/def
+             :version "10.1")
+        (poo)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
