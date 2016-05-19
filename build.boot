@@ -77,7 +77,7 @@
   :test-runner "czlabtest.xlib.ClojureJUnit"
   :version "0.9.0-SNAPSHOT"
   :debug true
-  :project 'czlab.xlib
+  :project 'czlab/xlib
   :PID "czlab-xlib")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -91,6 +91,7 @@
   '[clojure.java.io :as io]
   '[clojure.string :as cs]
   '[czlab.tpcl.antlib :as a]
+  '[boot.pom :as bp]
   '[boot.core :as bc])
 
 (import '[org.apache.tools.ant Project Target Task]
@@ -243,9 +244,7 @@
     (a/antCopy
       {:todir (ge :packDir)}
       [[:fileset {:dir (ge :basedir)
-                  :includes "pom.xml,*.md,*.html,*.txt,LICENSE"}]]))
-  (b/replaceFile (fp! (ge :packDir) "pom.xml")
-                 #(cs/replace % "@@VERSION@@" (ge :version))))
+                  :includes "*.md,*.html,*.txt,LICENSE"}]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -342,8 +341,21 @@
   []
 
   (bc/with-pre-wrap fileset
-    (b/replaceFile (fp! (ge :jzzDir) "czlab/xlib/version.properties")
-                   #(cs/replace % "@@pom.version@@" (ge :version)))
+    (doseq [f (seq (output-files fileset))]
+      (let [dir (:dir f)
+            pn (:path f)
+            tf (io/file (ge :jzzDir) pn)
+            pd (.getParentFile tf)]
+        (when (.startsWith pn "META-INF")
+          (.mkdirs pd)
+          (spit tf
+                (slurp (fp! dir pn)
+                       :encoding "utf-8")
+                :encoding "utf-8"))))
+    (b/replaceFile
+      (fp! (ge :jzzDir)
+           "czlab/xlib/version.properties")
+      #(cs/replace % "@@pom.version@@" (ge :version)))
     (b/jarFiles)
     fileset))
 
@@ -357,8 +369,7 @@
         (b/libjars)
         (javacmp)
         (cljcmp)
-        ;;(pom :project (ge :project) :version (ge :version))
-        ;;(target :dir #{(ge :jzzDir)})
+        (pom :project (ge :project) :version (ge :version))
         (jar!)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -382,22 +393,16 @@
 (deftask release
   "release bundle"
   []
-  (comp (dev) (pack)))
 
-
-(deftask poo []
-   (bc/with-pre-wrap fileset
-
-     (let [p (output-files fileset)]
-       (doseq [x (seq p)]
-         (println x)))
-
-    fileset))
-
-(deftask shit []
-  (comp (pom :project 'abc/def
-             :version "10.1")
-        (poo)))
+  (comp (dev)
+        (pack)
+        (install :file
+                 (str (ge :distDir)
+                      "/"
+                      (ge :PID)
+                      "-"
+                      (ge :version)
+                      ".jar"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

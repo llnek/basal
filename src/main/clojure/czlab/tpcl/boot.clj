@@ -625,6 +625,18 @@
       (println (format "copied (%d) jars to %s" (count jars) to))
     fileset)))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(deftask nullfs
+
+  ""
+
+  []
+
+  (bc/with-pre-wrap fileset
+    (bc/new-fileset)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftask libjars
@@ -634,7 +646,7 @@
   []
 
   (a/cleanDir (io/file (ge :libDir)))
-  (comp (uber)(juber)))
+  (comp (uber)(juber) (nullfs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
