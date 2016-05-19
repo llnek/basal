@@ -1,6 +1,13 @@
 (set-env!
+
+  :license {:name "Apache License 2.0"
+            :url "http://www.apache.org/licenses/LICENSE-2.0"}
+  :description ""
+  :url "https://github.com/llnek/xlib"
+
+  :exclusions '[javax.servlet/servlet-api]
+
   :dependencies '[
-    ;;[javax.servlet/servlet-api "2.5" :scope "provided"]
 
     [org.apache.ant/ant-apache-log4j "1.9.7" :exclusions [log4j]]
     [ant-contrib/ant-contrib "1.0b3" :exclusions [ant]]
@@ -54,8 +61,8 @@
     [net.mikera/cljunit "0.4.0" ]
     [junit/junit "4.12"  ]
 
-    [ring/ring-core "1.4.0"
-     :exclusions [javax.servlet/servlet-api]]
+    [ring/ring-core "1.4.0"]
+
     ;; boot/clj stuff
     [boot/base "2.5.5"]
     [boot/core "2.5.5"]
@@ -67,11 +74,11 @@
   ]
 
   :source-paths #{"src/main/clojure" "src/main/java"}
-  :buildVersion "0.9.0-SNAPSHOT"
-  :buildDebug true
   :test-runner "czlabtest.xlib.ClojureJUnit"
-  :DOMAIN "czlab.xlib"
-  :PID "xlib")
+  :version "0.9.0-SNAPSHOT"
+  :debug true
+  :project 'czlab.xlib
+  :PID "czlab-xlib")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -117,7 +124,7 @@
                          :excludes "**/*.clj"}]])
         t3 (a/antJar
              {:destFile (fp! (ge :distDir)
-                             (str "xlib-" (ge :buildVersion) ".jar"))}
+                             (str "xlib-" (ge :version) ".jar"))}
              [[:fileset {:dir (ge :czzDir)
                          :includes "czlab/xlib/**"
                          :excludes (str "**/log4j.properties,"
@@ -147,7 +154,7 @@
                           :excludes "**/*.clj"}]])
         t3 (a/antJar
               {:destFile (fp! (ge :distDir)
-                              (str "tpcl-" (ge :buildVersion) ".jar"))}
+                              (str "tpcl-" (ge :version) ".jar"))}
               [[:fileset {:dir (ge :czzDir)
                           :includes "czlab/tpcl/**"
                           :excludes (str "**/log4j.properties,"
@@ -237,7 +244,7 @@
       [[:fileset {:dir (ge :basedir)
                   :includes "pom.xml,*.md,*.html,*.txt,LICENSE"}]]))
   (b/replaceFile (fp! (ge :packDir) "pom.xml")
-                 #(cs/replace % "@@VERSION@@" (ge :buildVersion))))
+                 #(cs/replace % "@@VERSION@@" (ge :version))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -277,7 +284,7 @@
       {:destFile (fp! (ge :distDir)
                       (str (ge :PID)
                            "-"
-                           (ge :buildVersion) ".tar.gz"))
+                           (ge :version) ".tar.gz"))
        :compression "gzip"}
       [[:tarfileset {:dir (ge :packDir)
                      :excludes "bin/**"}]
@@ -335,7 +342,7 @@
 
   (bc/with-pre-wrap fileset
     (b/replaceFile (fp! (ge :jzzDir) "czlab/xlib/version.properties")
-                   #(cs/replace % "@@pom.version@@" (ge :buildVersion)))
+                   #(cs/replace % "@@pom.version@@" (ge :version)))
     (b/jarFiles)
     fileset))
 
@@ -374,6 +381,10 @@
   []
   (comp (dev) (pack)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;(doseq [[k v] (get-env)] (println k "=" v))
+;;(doseq [k (sort (keys (get-sys-env)))] (println k))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
 

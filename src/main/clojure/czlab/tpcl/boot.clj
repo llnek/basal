@@ -238,7 +238,7 @@
         {:destFile (fp! (ge :distDir)
                         (str (ge :PID)
                              "-"
-                             (ge :buildVersion) ".jar"))}
+                             (ge :version) ".jar"))}
         [j c]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -452,7 +452,7 @@
     (se! options
          :COMPILE_OPTS
          {:includeantruntime false
-          :debug (ge :buildDebug)
+          :debug (ge :debug)
           :fork true})
 
     (se! options
