@@ -77,8 +77,7 @@
   :test-runner "czlabtest.xlib.ClojureJUnit"
   :version "0.9.0-SNAPSHOT"
   :debug true
-  :project 'czlab/xlib
-  :PID "czlab-xlib")
+  :project 'czlab/czlab-xlib)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -86,7 +85,7 @@
   '[boot.task.built-in :refer [pom target]]
   '[czlab.tpcl.boot
     :as b
-    :refer [fp! ge testjava testclj]]
+    :refer [artifactID fp! ge testjava testclj]]
   '[clojure.tools.logging :as log]
   '[clojure.java.io :as io]
   '[clojure.string :as cs]
@@ -282,7 +281,7 @@
     "pack/all"
     (a/antTar
       {:destFile (fp! (ge :distDir)
-                      (str (ge :PID)
+                      (str (artifactID)
                            "-"
                            (ge :version) ".tar.gz"))
        :compression "gzip"}
@@ -399,7 +398,7 @@
         (install :file
                  (str (ge :distDir)
                       "/"
-                      (ge :PID)
+                      (artifactID)
                       "-"
                       (ge :version)
                       ".jar"))))
