@@ -99,8 +99,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(def ^:dynamic *genjars* false)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (b/bootEnv!)
@@ -113,7 +111,7 @@
   [& args]
 
   (a/cleanDir (fp! (ge :czzDir) "czlab/xlib"))
-  (let [ t1 (a/antJava
+  (let [t1 (a/antJava
               (ge :CLJC_OPTS)
               (concat [[:argvalues (b/listCljNsps
                                      (fp! (ge :srcDir) "clojure")
@@ -122,17 +120,8 @@
         t2 (a/antCopy
              {:todir (fp! (ge :czzDir) "czlab/xlib")}
              [[:fileset {:dir (fp! (ge :srcDir) "clojure/czlab/xlib")
-                         :excludes "**/*.clj"}]])
-        t3 (a/antJar
-             {:destFile (fp! (ge :distDir)
-                             (str "xlib-" (ge :version) ".jar"))}
-             [[:fileset {:dir (ge :czzDir)
-                         :includes "czlab/xlib/**"
-                         :excludes (str "**/log4j.properties,"
-                                        "**/logback.xml")}]])]
-    (->> (if *genjars*
-           [t1 t2 t3]
-           [t1 t2])
+                         :excludes "**/*.clj"}]])]
+    (->> [t1 t2]
          (a/runTarget "clj/xlib"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -152,17 +141,8 @@
         t2 (a/antCopy
               {:todir (fp! (ge :czzDir) "czlab/tpcl")}
               [[:fileset {:dir (fp! (ge :srcDir) "clojure/czlab/tpcl")
-                          :excludes "**/*.clj"}]])
-        t3 (a/antJar
-              {:destFile (fp! (ge :distDir)
-                              (str "tpcl-" (ge :version) ".jar"))}
-              [[:fileset {:dir (ge :czzDir)
-                          :includes "czlab/tpcl/**"
-                          :excludes (str "**/log4j.properties,"
-                                         "**/logback.xml")}]]) ]
-    (->> (if *genjars*
-           [t1 t2 t3]
-           [t1 t2])
+                          :excludes "**/*.clj"}]])]
+    (->> [t1 t2]
          (a/runTarget "clj/tpcl"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
