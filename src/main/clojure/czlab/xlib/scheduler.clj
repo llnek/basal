@@ -19,7 +19,7 @@
 
   (:require
     [czlab.xlib.core
-     :refer [trap! exp* nextInt juid mubleObj!]]
+     :refer [trap! exp! nextInt juid mubleObj!]]
     [czlab.xlib.logging :as log]
     [czlab.xlib.str :refer [toKW hgl?]])
 
