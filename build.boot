@@ -75,7 +75,7 @@
 
   :source-paths #{"src/main/clojure" "src/main/java"}
   :test-runner "czlabtest.xlib.ClojureJUnit"
-  :version "0.9.0-SNAPSHOT"
+  :version "1.0.0"
   :debug true
   :project 'czlab/czlab-xlib)
 
