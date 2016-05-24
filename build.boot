@@ -63,6 +63,9 @@
 
     [ring/ring-core "1.4.0"]
 
+    ;;[org.projectodd.shimdandy/shimdandy-impl "1.1.0"]
+    ;;[org.projectodd.shimdandy/shimdandy-api "1.2.0"]
+
     ;; boot/clj stuff
     [boot/base "2.5.5"]
     [boot/core "2.5.5"]
