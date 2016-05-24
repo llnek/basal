@@ -409,8 +409,8 @@
     (se! options :czz "c")
     ;;(se! options :wzz "w")
 
-    (se! options :bld "build")
     (se! options :pmode "dev")
+    (se! options :bld "cout")
 
     (se! options :bootBuildDir (fp! (ge :basedir) (ge :bld)))
 
