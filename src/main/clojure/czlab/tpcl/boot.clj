@@ -34,8 +34,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
+(defonce ^:private D-VARS (atom {}))
+(defonce ^:private U-VARS (atom {}))
 
-(defonce ^:private LOCAL-VARS (atom {}))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn se! ""
+
+  [k v]
+
+  (swap! D-VARS assoc k v))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn getDVars "" [] @D-VARS)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -86,15 +98,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro _ge
-
-  "get-env"
-  [expr]
-
-  `(bc/get-env ~expr))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn fp!
 
   "Constructs a file path"
@@ -105,34 +108,30 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ge ""
+(defn- glocal ""
 
   [k]
 
-  (if-let [v (get @LOCAL-VARS k)]
+  (let [v (get @D-VARS k)]
     (if (fn? v)
-      (v @LOCAL-VARS k)
-      v)
-    (get-env k)))
+      (v k)
+      v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn se! ""
+(defn ge ""
 
-  [k v]
+  [k & [local]]
 
-  (swap! LOCAL-VARS assoc k v))
-
-(defn _se!
-
-  "Local version of set-env!"
-
-  [options k dv]
-
-  (let [v (get options k)]
-    (if (fn? v)
-      (v options k)
-      (set-env! k (or v dv)))))
+  (or
+    (if (nil? local)
+      (if-let [v (get @U-VARS k)]
+        (if (fn? v)
+          (v k)
+          v)
+        (glocal k))
+      (glocal k))
+    (get-env k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -197,13 +196,7 @@
   [& args]
 
   (minitask "prebuild"
-    (doseq [s [(ge :bootBuildDir)
-               (ge :distDir)
-               (ge :libDir)
-               (ge :qaDir)
-               ;;(ge :wzzDir)
-               (ge :czzDir)
-               (ge :jzzDir)]]
+    (doseq [s (ge :mdirs)]
       (.mkdirs (io/file s)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -418,7 +411,7 @@
   (se! :target-path "target")
 
   (se! :warnonref
-           :clojure.compile.warn-on-reflection)
+            :clojure.compile.warn-on-reflection)
   (se! :warn-reflection true)
 
   (se! :pmode "dev")
@@ -429,45 +422,65 @@
   (se! :czz "c")
   (se! :wzz "w")
 
+  (se! :mdirs
+            (fn [_]
+              [(ge :bootBuildDir)
+               (ge :distDir)
+               (ge :libDir)
+               (ge :qaDir)
+               (ge :czzDir)
+               (ge :jzzDir)]))
+
   (se! :bootBuildDir
-       (fn [& a] (fp! (ge :basedir) (ge :bld))))
+            (fn [_] (fp! (ge :basedir)
+                         (ge :bld))))
 
   (se! :jzzDir
-       (fn [& a] (fp! (ge :bootBuildDir) (ge :jzz))))
+            (fn [_] (fp! (ge :bootBuildDir)
+                         (ge :jzz))))
 
   (se! :czzDir
-       (fn [& a] (fp! (ge :bootBuildDir) (ge :czz))))
+            (fn [_] (fp! (ge :bootBuildDir)
+                         (ge :czz))))
 
   (se! :wzzDir
-       (fn [& a] (fp! (ge :bootBuildDir) (ge :wzz))))
+            (fn [_] (fp! (ge :bootBuildDir)
+                         (ge :wzz))))
 
   (se! :distDir
-       (fn [& a] (fp! (ge :bootBuildDir) "d")))
+            (fn [_] (fp! (ge :bootBuildDir)
+                         "d")))
 
   (se! :qaDir
-       (fn [& a] (fp! (ge :bootBuildDir) "t")))
+            (fn [_] (fp! (ge :bootBuildDir)
+                         "t")))
 
   (se! :docs
-       (fn [& a] (fp! (ge :bootBuildDir) "docs")))
+            (fn [_] (fp! (ge :bootBuildDir)
+                         "docs")))
 
   (se! :libDir
-       (fn [& a] (fp! (ge :basedir)
-                     (ge :target-path))))
+            (fn [_] (fp! (ge :basedir)
+                         (ge :target-path))))
 
   (se! :srcDir
-       (fn [& a] (fp! (ge :basedir) "src" "main")))
+            (fn [_] (fp! (ge :basedir)
+                         "src" "main")))
 
   (se! :tstDir
-       (fn [& a] (fp! (ge :basedir) "src" "test")))
+            (fn [_] (fp! (ge :basedir)
+                         "src" "test")))
 
   (se! :buildTestDir
-       (fn [& a] (fp! (ge :qaDir) (ge :cout))))
+            (fn [_] (fp! (ge :qaDir)
+                         (ge :cout))))
 
   (se! :reportTestDir
-       (fn [& a] (fp! (ge :qaDir) "r")))
+            (fn [_] (fp! (ge :qaDir) "r")))
 
   (se! :packDir
-       (fn [& a] (fp! (ge :bootBuildDir) "p"))))
+            (fn [_] (fp! (ge :bootBuildDir)
+                         "p"))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -485,71 +498,84 @@
 
   []
 
-  (se! :COMPILER_ARGS
-       (fn [& a] {:line "-Xlint:deprecation -Xlint:unchecked"}))
+  (se!
+    :COMPILER_ARGS
+    (fn [_]
+      {:line "-Xlint:deprecation -Xlint:unchecked"}))
 
-  (se! :COMPILE_OPTS
-       (fn [& a]
-         {:includeantruntime false
-          :debug (ge :debug)
-          :fork true}))
+  (se!
+    :COMPILE_OPTS
+    (fn [_]
+      {:includeantruntime false
+       :debug (ge :debug)
+       :fork true}))
 
-  (se! :CPATH
-       (fn [& a]
-         [[:location (ge :jzzDir)]
-          [:location (ge :czzDir)]
-          [:fileset {:dir (ge :libDir)
-                     :includes "**/*.jar"}]]))
+  (se!
+    :CPATH
+    (fn [_]
+      [[:location (ge :jzzDir)]
+       [:location (ge :czzDir)]
+       [:fileset {:dir (ge :libDir)
+                  :includes "**/*.jar"}]]))
 
-  (se! :TPATH
-       (fn [& a]
-         (->> (ge :CPATH)
-              (cons [:location (ge :buildTestDir)])
-              (into []))))
+  (se!
+    :TPATH
+    (fn [_]
+      (->> (ge :CPATH)
+           (cons [:location (ge :buildTestDir)])
+           (into []))))
 
-  (se! :JAVAC_OPTS
-       (fn [& a]
-         (merge {:srcdir (fp! (ge :srcDir) "java")
-                 :destdir (ge :jzzDir)
-                 :target "1.8"
-                 :debugLevel "lines,vars,source"}
-                (ge :COMPILE_OPTS))))
+  (se!
+    :JAVAC_OPTS
+    (fn [_]
+      (merge {:srcdir (fp! (ge :srcDir) "java")
+              :destdir (ge :jzzDir)
+              :target "1.8"
+              :debugLevel "lines,vars,source"}
+             (ge :COMPILE_OPTS))))
 
-  (se! :CJPATH
-       (fn [& a]
-         (->> (ge :CPATH)
-              (cons [:location (fp! (ge :srcDir) "clojure")])
-              (into []))))
+  (se!
+    :CJPATH
+    (fn [_]
+      (->> (ge :CPATH)
+           (cons [:location (fp! (ge :srcDir)
+                                 "clojure")])
+           (into []))))
 
-  (se! :TJPATH
-       (fn [& a]
-         (->> (ge :CJPATH)
-              (concat [[:location (fp! (ge :tstDir) "clojure")]
-                     [:location (ge :buildTestDir)]])
-              (into []))))
+  (se!
+    :TJPATH
+    (fn [_]
+      (->> (ge :CJPATH)
+           (concat [[:location (fp! (ge :tstDir) "clojure")]
+                    [:location (ge :buildTestDir)]])
+           (into []))))
 
-  (se! :CLJC_OPTS
-       (fn [& a]
-         {:classname "clojure.lang.Compile"
-          :fork true
-          :failonerror true
-          :maxmemory "2048m"}))
+  (se!
+    :CLJC_OPTS
+    (fn [_]
+      {:classname "clojure.lang.Compile"
+       :fork true
+       :failonerror true
+       :maxmemory "2048m"}))
 
-  (se! :CLJC_SYSPROPS
-       (fn [& a]
-         {(ge :warnonref) (ge :warn-reflection)
-          :clojure.compile.path (ge :czzDir)}))
+  (se!
+    :CLJC_SYSPROPS
+    (fn [_]
+      {(ge :warnonref) (ge :warn-reflection)
+       :clojure.compile.path (ge :czzDir)}))
 
-  (se! :CJNESTED
-       (fn [& a]
-         [[:sysprops (ge :CLJC_SYSPROPS)]
-          [:classpath (ge :CJPATH)]]))
+  (se!
+    :CJNESTED
+    (fn [_]
+      [[:sysprops (ge :CLJC_SYSPROPS)]
+       [:classpath (ge :CJPATH)]]))
 
-  (se! :CJNESTED_RAW
-       (fn [& a]
-         [[:sysprops (-> (ge :CLJC_SYSPROPS)
-                         (assoc (ge :warnonref) false))]
-          [:classpath (ge :CJPATH)]]))
+  (se!
+    :CJNESTED_RAW
+    (fn [_]
+      [[:sysprops (-> (ge :CLJC_SYSPROPS)
+                      (assoc (ge :warnonref) false))]
+       [:classpath (ge :CJPATH)]]))
 
   nil)
 
@@ -560,9 +586,7 @@
 
   [& [options]]
 
-  (when (map? options)
-    (doseq [[k v] options]
-      (se! k v)))
+  (reset! U-VARS (merge {} options))
   (bootEnvVars!)
   (bootEnvPaths!)
   (bootSyncCPath (str (ge :jzzDir) "/")))
