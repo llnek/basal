@@ -11,15 +11,16 @@
 
     [org.apache.ant/ant-apache-log4j "1.9.7" :exclusions [log4j]]
     [ant-contrib/ant-contrib "1.0b3" :exclusions [ant]]
-    [org.apache.ant/ant "1.9.7" ]
+
+    [org.apache.logging.log4j/log4j-core "2.5" ]
+    [org.slf4j/slf4j-api "1.7.21" ]
+    [ch.qos.logback/logback-classic "1.1.7" ]
+    [ch.qos.logback/logback-core "1.1.7" ]
+
     [org.apache.ant/ant-launcher "1.9.7" ]
     [org.apache.ant/ant-junit4 "1.9.7" ]
     [org.apache.ant/ant-junit "1.9.7" ]
-    [org.apache.logging.log4j/log4j-core "2.5" ]
-    [org.slf4j/slf4j-api "1.7.21" ]
-
-    [ch.qos.logback/logback-classic "1.1.7" ]
-    [ch.qos.logback/logback-core "1.1.7" ]
+    [org.apache.ant/ant "1.9.7" ]
 
     [commons-fileupload/commons-fileupload "1.3.1" ]
     [org.apache.commons/commons-compress "1.11" ]
@@ -58,7 +59,7 @@
     [org.clojure/clojurescript "1.8.51" ]
     [org.clojure/clojure "1.8.0" ]
 
-    [net.mikera/cljunit "0.4.0" ]
+    [net.mikera/cljunit "0.4.1" ]
     [junit/junit "4.12"  ]
 
     [ring/ring-core "1.4.0"]
@@ -67,12 +68,12 @@
     ;;[org.projectodd.shimdandy/shimdandy-api "1.2.0"]
 
     ;; boot/clj stuff
-    [boot/base "2.5.5"]
-    [boot/core "2.5.5"]
-    [boot/pod "2.5.5"]
-    [boot/worker "2.5.5"]
+    [boot/base "2.6.0"]
+    [boot/core "2.6.0"]
+    [boot/pod "2.6.0"]
+    [boot/worker "2.6.0"]
     ;; this is causing the RELEASE_6 warning
-    [boot/aether "2.5.5"]
+    [boot/aether "2.6.0"]
 
   ]
 
@@ -88,7 +89,11 @@
   '[boot.task.built-in :refer [pom target]]
   '[czlab.tpcl.boot
     :as b
-    :refer [artifactID fp! ge testjava testclj]]
+    :refer [artifactID
+            fp!
+            ge
+            testjava
+            testclj]]
   '[clojure.tools.logging :as log]
   '[clojure.java.io :as io]
   '[clojure.string :as cs]
@@ -105,7 +110,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (b/bootEnv!)
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

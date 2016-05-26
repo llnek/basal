@@ -36,6 +36,7 @@
 
 (defonce ^:private D-VARS (atom {}))
 (defonce ^:private U-VARS (atom {}))
+(defonce ^:private LATCH (atom nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -587,6 +588,7 @@
   [& [options]]
 
   (reset! U-VARS (merge {} options))
+  (reset! LATCH 911)
   (bootEnvVars!)
   (bootEnvPaths!)
   (bootSyncCPath (str (ge :jzzDir) "/")))
