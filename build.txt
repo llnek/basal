@@ -161,14 +161,6 @@
         (b/localInstall)
         (b/packDistro)))
 
-
-(deftask poo
-
-  "" []
-
-  (comp (pom :project 'a/b :version "1.0")
-        (show )))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;(doseq [[k v] (get-env)] (println k "=" v))
