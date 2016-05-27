@@ -18,7 +18,11 @@
   czlab.tpcl.boot
 
   (:require
-    [boot.task.built-in :refer [pom target uber aot]]
+    [boot.task.built-in
+     :refer [install
+             pom
+             target
+             uber aot]]
     [czlab.xlib.logging :as log]
     [clojure.data.json :as js]
     [cemerick.pomegranate :as pom]
@@ -177,18 +181,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn clean4Build ""
+(defn clsBuild ""
 
   [& args]
 
-  (a/runTarget*
-    "clean/build"
-    (a/antDelete {:dir (ge :bootBuildDir)
-                  :excludes (str (ge :czz) "/**")})
-    (a/antDelete {}
-      [[:fileset {:dir (ge :czzDir)
-                  :excludes "clojure/**"}]]))
-  (a/cleanDir (io/file (ge :libDir))))
+  (minitask "clean/build"
+    (a/cleanDir (io/file (ge :bootBuildDir)))
+    (a/cleanDir (io/file (ge :libDir)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -196,7 +195,7 @@
 
   [& args]
 
-  (minitask "prebuild"
+  (minitask "pre/build"
     (doseq [s (ge :mdirs)]
       (.mkdirs (io/file s)))))
 
@@ -402,6 +401,44 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn genDocs ""
+
+  [& args]
+
+  (let [rootDir (fp! (ge :packDir) "docs/api")
+        srcDir (ge :srcDir)]
+    (a/cleanDir rootDir)
+    (a/runTarget*
+      "pack/docs"
+      (a/antJavadoc
+        {:destdir rootDir
+         :access "protected"
+         :author true
+         :nodeprecated false
+         :nodeprecatedlist false
+         :noindex false
+         :nonavbar false
+         :notree false
+         :source "1.8"
+         :splitindex true
+         :use true
+         :version true}
+         [[:fileset {:dir (fp! srcDir "java")
+                     :includes "**/*.java"}]
+          [:classpath (ge :CPATH) ]])
+
+    (a/antJava
+      {:classname "czlab.tpcl.codox"
+       :fork true
+       :failonerror true}
+      [[:argvalues [(ge :basedir)
+                    (fp! srcDir "clojure")
+                    (fp! rootDir)]]
+       [:classpath (ge :CJPATH) ]]) )))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn- bootEnvVars! "Basic vars"
 
   []
@@ -483,6 +520,14 @@
             (fn [_] (fp! (ge :bootBuildDir)
                          "p"))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn idAndVer
+
+  ""
+  []
+
+  (str (artifactID) "-" (ge :version)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -592,7 +637,6 @@
   (bootEnvVars!)
   (bootEnvPaths!)
   (bootSyncCPath (str (ge :jzzDir) "/")))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -714,14 +758,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftask clean4build
+(deftask initBuild
 
   "clean,pre-build"
 
   []
 
   (bc/with-pre-wrap fileset
-    (clean4Build)
+    (clsBuild)
     (preBuild)
     fileset))
 
@@ -740,15 +784,44 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftask dev
+(deftask jar!
 
-  "clean,resolve,build"
+  "jar!"
 
   []
 
-  (comp (clean4build)
-        (libjars)
-        (buildr)))
+  (bc/with-pre-wrap fileset
+    (let [p (str (ge :project))]
+      (replaceFile
+        (fp! (ge :jzzDir)
+             p
+             "version.properties")
+        #(cs/replace %
+                     "@@pom.version@@"
+                     (ge :version))))
+    (jarFiles)
+  fileset))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(deftask post-pom!
+
+  ""
+  []
+
+  (bc/with-pre-wrap fileset
+    (doseq [f (seq (output-files fileset))]
+      (let [dir (:dir f)
+            pn (:path f)
+            tf (io/file (ge :jzzDir) pn)
+            pd (.getParentFile tf)]
+        (when (.startsWith pn "META-INF")
+          (.mkdirs pd)
+          (spit tf
+                (slurp (fp! dir pn)
+                       :encoding "utf-8")
+                :encoding "utf-8"))))
+    fileset))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -757,21 +830,106 @@
   ""
   []
 
-  (comp (pom :project (ge :project)
+  (comp (nullfs)
+        (pom :project (ge :project)
              :version (ge :version))
-        (target :dir (ge :jzzDir))))
+        (post-pom!)
+        (nullfs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftask jar!
+(deftask dev
 
-  "jar!"
+  "clean,resolve,build"
 
   []
 
+  (comp (initBuild)
+        (libjars)
+        (buildr)
+        (pom!)
+        (jar!)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(deftask packDistro
+
+  ""
+  []
+
   (bc/with-pre-wrap fileset
-    (jarFiles)
-  fileset))
+
+    (let [root (ge :packDir)
+          dist (ge :distDir)
+          ver (ge :version)
+          src (ge :srcDir)]
+      ;; make some dirs
+      (a/cleanDir root)
+      (map #(.mkdirs (io/file root %))
+           ["dist" "lib" "docs"])
+      ;; copy license stuff
+      (a/runTarget*
+        "pack/lics"
+        (a/antCopy
+          {:todir root}
+          [[:fileset
+            {:dir (ge :basedir)
+             :includes "*.md,LICENSE"}]]))
+      ;; copy source
+      (a/runTarget*
+        "pack/src"
+        (a/antCopy
+          {:todir (fp! root "src/main/clojure")}
+          [[:fileset {:dir (fp! src "clojure")}]])
+        (a/antCopy
+          {:todir (fp! root "src/main/java")}
+          [[:fileset {:dir (fp! src "java")}]]))
+      ;; copy distro jars
+      (a/runTarget*
+        "pack/dist"
+        (a/antCopy
+          {:todir (fp! root "dist")}
+          [[:fileset {:dir dist
+                      :includes "*.jar"}]]))
+      (a/runTarget*
+        "pack/lib"
+        (a/antCopy
+          {:todir (fp! root "lib")}
+          [[:fileset {:dir (ge :libDir)}]]))
+
+      (if (ge :wantDocs) (genDocs))
+
+      ;; tar everything
+      (a/runTarget*
+        "pack/all"
+        (a/antTar
+          {:destFile
+           (fp! dist (str (artifactID)
+                          "-"
+                          ver
+                          ".tar.gz"))
+           :compression "gzip"}
+          [[:tarfileset {:dir root
+                         :excludes "bin/**"}]
+           [:tarfileset {:dir root
+                         :mode "755"
+                         :includes "bin/**"}]]))
+      nil)
+    fileset))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(deftask localInstall
+
+  ""
+  []
+
+  (comp
+        (install :file
+                 (str (ge :distDir)
+                      "/"
+                      (idAndVer)
+                      ".jar"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
