@@ -29,7 +29,7 @@
     [clojure.java.io :as io]
     [boot.core :as bc :refer :all]
     [clojure.string :as cs]
-    [czlab.tpcl.antlib :as a])
+    [czlab.xlib.antlib :as a])
 
   (:import
     [java.util Stack]
@@ -522,6 +522,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn toggleDoco
+
+  ""
+  [b]
+
+  (se! :wantDocs b))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn idAndVer
 
   ""
@@ -838,17 +847,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftask dev
-
-  "clean,resolve,build"
-
-  []
-
+(comment
+(deftask dev "" []
   (comp (initBuild)
-        (libjars)
-        (buildr)
-        (pom!)
-        (jar!)))
+        (libjars) (buildr) (pom!) (jar!))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

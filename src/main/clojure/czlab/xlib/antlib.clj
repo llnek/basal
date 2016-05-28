@@ -15,7 +15,7 @@
 (ns ^{:doc ""
       :author "kenl" }
 
-  czlab.tpcl.antlib
+  czlab.xlib.antlib
 
   (:import
     [org.apache.tools.ant.taskdefs.optional.unix Symlink]

@@ -30,13 +30,13 @@
     [commons-logging/commons-logging "1.2" ]
     [commons-codec/commons-codec "1.10" ]
 
-    [org.apache.httpcomponents/httpclient "4.5.2" ]
-    [org.apache.httpcomponents/httpcore "4.4.4" ]
-    [javax.servlet/javax.servlet-api "3.1.0"]
+    ;;[org.apache.httpcomponents/httpclient "4.5.2" ]
+    ;;[org.apache.httpcomponents/httpcore "4.4.4" ]
+    ;;[javax.servlet/javax.servlet-api "3.1.0"]
     [joda-time/joda-time "2.9.3" ]
 
-    [org.mozilla/rhino "1.7.7.1" ]
-    [jline/jline "2.14.1" ]
+    ;;[org.mozilla/rhino "1.7.7.1" ]
+    ;;[jline/jline "2.14.1" ]
 
     [com.google.code.gson/gson "2.6.2" ]
     [com.google.guava/guava "19.0" ]
@@ -52,28 +52,28 @@
     [org.flatland/ordered "1.5.3"]
     [com.cemerick/pomegranate "0.3.1"]
 
-    [hiccup/hiccup "1.0.5"]
-    [enlive/enlive "1.1.6"]
-    [codox/codox "0.9.5" ]
+    ;;[hiccup/hiccup "1.0.5"]
+    ;;[enlive/enlive "1.1.6"]
+    [codox/codox "0.9.5" :scope "provided"]
 
-    [org.clojure/clojurescript "1.8.51" ]
+    ;;[org.clojure/clojurescript "1.8.51" ]
     [org.clojure/clojure "1.8.0" ]
 
     [net.mikera/cljunit "0.4.1" ]
     [junit/junit "4.12"  ]
 
-    [ring/ring-core "1.4.0"]
+    ;;[ring/ring-core "1.4.0"]
 
     ;;[org.projectodd.shimdandy/shimdandy-impl "1.1.0"]
     ;;[org.projectodd.shimdandy/shimdandy-api "1.2.0"]
 
     ;; boot/clj stuff
-    [boot/base "2.6.0"]
-    [boot/core "2.6.0"]
-    [boot/pod "2.6.0"]
-    [boot/worker "2.6.0"]
+    [boot/base "2.6.0" :scope "provided"]
+    [boot/core "2.6.0" :scope "provided"]
+    ;;[boot/pod "2.6.0" :scope "provided"]
+    [boot/worker "2.6.0" :scope "provided"]
     ;; this is causing the RELEASE_6 warning
-    [boot/aether "2.6.0"]
+    ;;[boot/aether "2.6.0" :scope "provided"]
 
   ]
 
@@ -89,11 +89,11 @@
   '[boot.task.built-in :refer [pom target]]
   '[czlab.tpcl.boot
     :as b
-    :refer [artifactID fp! ge]]
+    :refer [artifactID fp! se! ge]]
   '[clojure.tools.logging :as log]
   '[clojure.java.io :as io]
   '[clojure.string :as cs]
-  '[czlab.tpcl.antlib :as a]
+  '[czlab.xlib.antlib :as a]
   '[boot.pom :as bp]
   '[boot.core :as bc])
 
@@ -155,19 +155,12 @@
 (deftask release
 
   ""
-  []
+  [d doco bool "Generate doc"]
 
+  (b/toggleDoco doco)
   (comp (dev)
         (b/localInstall)
         (b/packDistro)))
-
-
-(deftask poo
-
-  "" []
-
-  (comp (pom :project 'a/b :version "1.0")
-        (show )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
