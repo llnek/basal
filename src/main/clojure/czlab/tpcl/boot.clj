@@ -12,22 +12,22 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc ""
+(ns ^{:doc "Set of helper functions for boot-clj."
       :author "kenl" }
 
   czlab.tpcl.boot
 
   (:require
+    [cemerick.pomegranate :as pom]
+    [czlab.xlib.logging :as log]
+    [boot.core :as bc :refer :all]
     [boot.task.built-in
      :refer [install
              pom
              target
              uber aot]]
-    [czlab.xlib.logging :as log]
     [clojure.data.json :as js]
-    [cemerick.pomegranate :as pom]
     [clojure.java.io :as io]
-    [boot.core :as bc :refer :all]
     [clojure.string :as cs]
     [czlab.xlib.antlib :as a])
 
@@ -40,24 +40,48 @@
 
 (defonce ^:private D-VARS (atom {}))
 (defonce ^:private U-VARS (atom {}))
-(defonce ^:private LATCH (atom nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn se! ""
+(defmacro lsfs
 
+  "List files in a folder"
+  [& args]
+
+  `(.listFiles (apply io/file ~@args [])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro ficp
+
+  "Get the canonical path of this file"
+  [f]
+
+  `(.getCanonicalPath (io/file ~f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn se!
+
+  "Set a local var"
   [k v]
 
   (swap! D-VARS assoc k v))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn getDVars "" [] @D-VARS)
+(defn getDVars
+
+  "Get all the local vars"
+  []
+
+  @D-VARS)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn replaceFile ""
+(defn replaceFile
 
+  "Replace content of a file"
   [file work]
 
   {:pre [(fn? work)]}
@@ -69,18 +93,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- grep-paths ""
+(defn- grep-paths
 
-  [top bin fext]
+  "Recurse and look for folders containing
+  files with this extension"
+  [top out fext]
 
-  (doseq [f (.listFiles (io/file top))]
+  (doseq [f (lsfs top)]
     (cond
+      ;;1
       (.isDirectory f)
-      (grep-paths f bin fext)
+      (grep-paths f out fext)
+      ;;2
       (.endsWith (.getName f) fext)
       (let [p (.getParentFile f)]
-        (when-not (contains? @bin p))
-          (swap! bin assoc p p))
+        (when-not (contains? @out p))
+          (swap! out assoc p p))
+      ;;3
       :else nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -89,16 +118,18 @@
 
   "Recurse a folder, picking out sub-folders
    which contain files with the given extension"
-  [rootDir ext]
+  [root ext]
 
-  (let [rpath (.getCanonicalPath (io/file rootDir))
-        rlen (.length rpath)
+  (let [rlen (-> (ficp root)
+                 (.length ))
         out (atom [])
         bin (atom {})]
-    (grep-paths rootDir bin ext)
+    (grep-paths root bin ext)
     (doseq [[k v] @bin]
-      (let [kp (.getCanonicalPath ^File k)]
-        (swap! out conj (.substring kp (+ rlen 1)))))
+      (let [kp (ficp k)]
+        (swap! out
+               conj
+               (.substring kp (+ rlen 1)))))
     @out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -113,8 +144,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- glocal ""
+(defn- glocal
 
+  "Get the value for this local var"
   [k]
 
   (let [v (get @D-VARS k)]
@@ -124,8 +156,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ge ""
+(defn ge
 
+  "Get the value for this local var"
   [k & [local]]
 
   (or
@@ -149,8 +182,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn artifactID ""
+(defn artifactID
 
+  "Get the name of this artifact"
   []
 
   (name (ge :project)))
@@ -160,10 +194,10 @@
 (defn listCljNsps
 
   "Format a list of clojure namespaces"
-
   [root & paths]
 
-  (let [base #(cs/replace (.getName %) #"\.[^\.]+$" "")
+  (let [base #(cs/replace
+                (.getName %) #"\.[^\.]+$" "")
         dot #(cs/replace % "/" ".")
         ffs #(and (.isFile %)
                   (.endsWith (.getName %) ".clj"))]
@@ -175,15 +209,16 @@
               memo
               (map #(str nsp "." (base %))
                    (filter ffs
-                           (.listFiles (io/file root path)))))))
+                           (lsfs root path))))))
         []
         paths))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn clsBuild ""
+(defn clsBuild
 
-  [& args]
+  "Clean out folders"
+  []
 
   (minitask "clean/build"
     (a/cleanDir (io/file (ge :bootBuildDir)))
@@ -193,7 +228,7 @@
 ;;
 (defn preBuild ""
 
-  [& args]
+  []
 
   (minitask "pre/build"
     (doseq [s (ge :mdirs)]
@@ -201,8 +236,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn compileJava ""
+(defn compileJava
 
+  "Compile java source files"
   []
 
   (a/runTarget*
@@ -214,39 +250,47 @@
        [:classpath (ge :CPATH)]])
     (a/antCopy
       {:todir (ge :jzzDir)}
-      [[:fileset {:dir (fp! (ge :srcDir) "java")
-                  :excludes "**/*.java"}]])
-    (a/antCopy
-      {:todir (ge :jzzDir)}
-      [[:fileset {:dir (fp! (ge :srcDir) "resources")}]])))
+      [[:fileset
+        {:dir (fp! (ge :srcDir) "java")
+         :excludes "**/*.java"}]
+       [:fileset
+        {:dir (fp! (ge :srcDir) "resources")}]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn compileClj ""
+(defn compileClj
 
+  "Compile clojure source files"
   []
 
   (let [root (io/file (ge :srcDir) "clojure")
         ps (grepFolderPaths root ".clj")
-        bin (atom '())]
+        out (atom '())]
+    ;;figure out all files(namespaces)
     (doseq [p ps]
-      (swap! bin concat (partition-all 25 (listCljNsps root p))))
+      (swap! out
+             concat
+             (partition-all 25
+                            (listCljNsps root p))))
+    ;;compile each namespace
     (minitask "compile/clj"
-      (doseq [p @bin]
+      (doseq [p @out]
         (a/runTasks*
           (a/antJava
             (ge :CLJC_OPTS)
-            (concat [[:argvalues p ]] (ge :CJNESTED)))))
+            (concat [[:argvalues p ]]
+                    (ge :CJNESTED)))))
       (a/runTasks*
         (a/antCopy
-              {:todir (ge :czzDir)}
-              [[:fileset {:dir root
-                          :excludes "**/*.clj"}]])))))
+          {:todir (ge :czzDir)}
+           [[:fileset {:dir root
+                       :excludes "**/*.clj"}]])))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn jarFiles ""
+(defn jarFiles
 
+  "Create the jar file"
   []
 
   (let [j [:fileset
@@ -266,19 +310,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn preTest ""
+(defn preTest
 
+  "Prepare for test"
   []
 
   (minitask
-    "pretest"
+    "pre/test"
     (.mkdirs (io/file (ge :buildTestDir)))
     (.mkdirs (io/file (ge :reportTestDir)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn compileJavaTest ""
+(defn compileJavaTest
 
+  "Compile java test files"
   []
 
   (a/runTarget*
@@ -297,18 +343,22 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn compileCljTest ""
+(defn compileCljTest
 
+  "Compile clojure test files"
   []
 
   (let [root (io/file (ge :tstDir) "clojure")
         ps (grepFolderPaths root ".clj")
-        bin (atom '())]
+        out (atom '())]
     (doseq [p ps]
-      (swap! bin concat (partition-all 25 (listCljNsps root p))))
+      (swap! out
+             concat
+             (partition-all 25
+                            (listCljNsps root p))))
     (minitask
       "compile/test/clj"
-      (doseq [p @bin]
+      (doseq [p @out]
         (a/runTasks*
           (a/antJava
             (ge :CLJC_OPTS)
@@ -324,8 +374,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn runCljTest ""
+(defn runCljTest
 
+  "Execute clojure test cases"
   []
 
   (a/runTarget*
@@ -345,8 +396,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn runJavaTest ""
+(defn runJavaTest
 
+  "Execute java test cases"
   []
 
   (a/runTarget*
@@ -367,8 +419,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn buildCljTest ""
+(defn buildCljTest
 
+  "Build for clojure tests"
   []
 
   (a/cleanDir (io/file (ge :buildTestDir)))
@@ -378,8 +431,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn buildJavaTest ""
+(defn buildJavaTest
 
+  "Build for java tests"
   []
 
   (a/cleanDir (io/file (ge :buildTestDir)))
@@ -388,8 +442,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn runCmd ""
+(defn runCmd
 
+  "Run an external command"
   [cmd workDir args]
 
   (a/runTarget*
@@ -401,9 +456,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn genDocs ""
+(defn genDocs
 
-  [& args]
+  "Generate api docs"
+  []
 
   (let [rootDir (fp! (ge :packDir) "docs/api")
         srcDir (ge :srcDir)]
@@ -439,8 +495,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- bootEnvVars! "Basic vars"
+(defn- bootEnvVars!
 
+  "Basic vars"
   []
 
   (se! :homedir (System/getProperty "user.home"))
@@ -524,7 +581,7 @@
 ;;
 (defn toggleDoco
 
-  ""
+  "Enable/disable api docs"
   [b]
 
   (se! :wantDocs b))
@@ -533,15 +590,16 @@
 ;;
 (defn idAndVer
 
-  ""
+  "Format string returning id and version"
   []
 
   (str (artifactID) "-" (ge :version)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- bootSyncCPath ""
+(defn- bootSyncCPath
 
+  "Add these file paths to class-path"
   [& paths]
 
   (doseq [p paths]
@@ -549,8 +607,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- bootEnvPaths! ""
+(defn- bootEnvPaths!
 
+  "File paths and class paths for builds"
   []
 
   (se!
@@ -637,35 +696,41 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bootEnv! "Setup env-vars and paths"
+(defn bootEnv!
+
+  "Setup env-vars and paths, must be called
+  by the user"
 
   [& [options]]
 
   (reset! U-VARS (merge {} options))
-  (reset! LATCH 911)
   (bootEnvVars!)
   (bootEnvPaths!)
   (bootSyncCPath (str (ge :jzzDir) "/")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bootSpit ""
+(defn bootSpit
 
+  "Write to file"
   [^String s file]
 
   (spit file s :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bootSpitJson ""
+(defn bootSpitJson
 
+  "Write JSON object to file"
   [json file]
 
   (bootSpit (js/write-str json) file))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bootSlurp ""
+(defn bootSlurp
+
+  "Read file content as string"
 
   ^String
   [file]
@@ -674,8 +739,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bootSlurpJson ""
+(defn bootSlurpJson
 
+  "Read file content as JSON"
   [file]
 
   (-> (bootSlurp file)
@@ -691,8 +757,7 @@
 ;;
 (deftask testjava
 
-  "test java"
-
+  "Test java"
   []
 
   (bc/with-pre-wrap fileset
@@ -704,7 +769,7 @@
 ;;
 (deftask testclj
 
-  "test clj"
+  "Test clojure"
 
   []
 
@@ -717,8 +782,7 @@
 ;;
 (deftask juber
 
-  "my own uber"
-
+  "Pull all dependent files to target folder"
   []
 
   (bc/with-pre-wrap fileset
@@ -747,7 +811,7 @@
 ;;
 (deftask nullfs
 
-  ""
+  "Return a empty fileset"
 
   []
 
@@ -758,7 +822,7 @@
 ;;
 (deftask libjars
 
-  "resolve all dependencies (jars)"
+  "Resolve all dependencies (jars)"
 
   []
 
@@ -769,8 +833,7 @@
 ;;
 (deftask initBuild
 
-  "clean,pre-build"
-
+  "Prepare for a build"
   []
 
   (bc/with-pre-wrap fileset
@@ -782,7 +845,7 @@
 ;;
 (deftask buildr
 
-  "compile"
+  "Compile all source files"
 
   []
 
@@ -795,7 +858,7 @@
 ;;
 (deftask jar!
 
-  "jar!"
+  "Create final jar file"
 
   []
 
@@ -815,7 +878,7 @@
 ;;
 (deftask post-pom!
 
-  ""
+  "Write out the pom files to output folder"
   []
 
   (bc/with-pre-wrap fileset
@@ -836,7 +899,7 @@
 ;;
 (deftask pom!
 
-  ""
+  "Run the default pom task"
   []
 
   (comp (nullfs)
@@ -856,7 +919,7 @@
 ;;
 (deftask packDistro
 
-  ""
+  "Package all output files into a tar file"
   []
 
   (bc/with-pre-wrap fileset
@@ -923,7 +986,7 @@
 ;;
 (deftask localInstall
 
-  ""
+  "Install artifact to local maven repo"
   []
 
   (comp
