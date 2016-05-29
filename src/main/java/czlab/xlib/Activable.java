@@ -12,16 +12,14 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-package czlab.xlib;
+package czlab.xlib;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 /**
  * @author kenl
  */
 public interface Activable {
-
   public void activate(Object options);
   public void deactivate();
-
 }
 
 

@@ -12,7 +12,7 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-package czlab.xlib;
+package czlab.xlib;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -24,8 +24,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
-
-import czlab.xlib.CallableWithArgs;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -46,7 +44,6 @@ public enum CU {
 ;
 
   public static final Logger TLOG=getLogger(lookup().lookupClass());
-
   private static final AtomicInteger _si= new AtomicInteger(0);
   private static final AtomicLong _sn= new AtomicLong(0L);
 

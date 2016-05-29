@@ -12,16 +12,13 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-package czlab.xlib;
+package czlab.xlib;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 /**
  * @author kenl
  */
-@FunctionalInterface
-public interface CallableWithArgs {
-
+@FunctionalInterface public interface CallableWithArgs {
   public Object run(Object a1, Object...  args);
-
 }
 
 
