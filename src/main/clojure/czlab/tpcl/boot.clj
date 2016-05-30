@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Set of helper functions for boot-clj."
+(ns ^{:doc "Helper functions for boot-clj."
       :author "kenl" }
 
   czlab.tpcl.boot
@@ -461,13 +461,13 @@
   "Generate api docs"
   []
 
-  (let [rootDir (fp! (ge :packDir) "docs/api")
+  (let [rootDir (fp! (ge :packDir) "docs")
         srcDir (ge :srcDir)]
     (a/cleanDir rootDir)
     (a/runTarget*
       "pack/docs"
       (a/antJavadoc
-        {:destdir rootDir
+        {:destdir (fp! rootDir "java")
          :access "protected"
          :author true
          :nodeprecated false
@@ -489,7 +489,7 @@
        :failonerror true}
       [[:argvalues [(ge :basedir)
                     (fp! srcDir "clojure")
-                    (fp! rootDir)]]
+                    (fp! rootDir "clojure")]]
        [:classpath (ge :CJPATH) ]]) )))
 
 

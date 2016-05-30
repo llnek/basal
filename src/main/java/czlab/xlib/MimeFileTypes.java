@@ -14,6 +14,7 @@
 
 package czlab.xlib;
 
+
 import static org.apache.commons.lang3.StringUtils.trim;
 import javax.activation.MimetypesFileTypeMap;
 import java.io.UnsupportedEncodingException;
@@ -28,7 +29,10 @@ import java.util.Properties;
  */
 public class MimeFileTypes {
 
-  public static MimetypesFileTypeMap makeMimeFileTypes(Properties props) throws IOException{
+  /**
+   * load mime file extensions/types
+   */
+  public static MimetypesFileTypeMap makeMimeFileTypes(Properties props) throws IOException {
     StringBuilder sum = new StringBuilder();
     for (Entry<Object, Object> en : props.entrySet()) {
       sum.append( trim( en.getValue().toString() )  + "  " + trim(en.getKey().toString() )  + "\n");

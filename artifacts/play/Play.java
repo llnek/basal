@@ -48,10 +48,30 @@ public enum CU {
   private static final AtomicInteger _si= new AtomicInteger(0);
   private static final AtomicLong _sn= new AtomicLong(0L);
 
+  public static void main(String[] args) {
+    try {
+/*
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      "`~!@#$%^&*()-_+={}[]|\:;',.<>?/'"
+*/
+//      String script = "(fn [_] {:a 1} )";
+//      IFn fn = (IFn)RT.var("clojure.core", "eval").invoke(RT.var("clojure.core","read-string").invoke(script));
+//      Object obj = fn.invoke("Hello");
+//      Map<?,?> m= (Map<?,?>)obj;
+//      Keyword k= Keyword.intern("a");
+//      System.out.println("obj= " + m.get(k));
+      //System.out.println(shuffle("0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz"));
+//      URLCodec cc = new URLCodec("utf-8");
+//      System.out.println(cc.encode("hello\u0000world"));
+//      String[] rc= StringUtils.split(",;,;,;", ",;");
+      String rc= new Locale("en").toString();
+      rc=null;
 
-  /**
-   * wait on this lock.
-   */
+    } catch (Throwable t) {
+      t.printStackTrace();
+    }
+  }
+
   public static void blockAndWait(Object lock, long waitMillis) {
     try {
       synchronized (lock) {
@@ -67,9 +87,6 @@ public enum CU {
     }
   }
 
-  /**
-   * notify all threads waiting on this lock.
-   */
   public static void unblock(Object lock) {
     try {
       synchronized (lock) {
@@ -81,22 +98,19 @@ public enum CU {
     }
   }
 
-  /**
-   * cast this to Object.
-   */
   public static Object asJObj(Object a) {
     return a;
   }
 
-  /**
-   * null string to blank.  safely stringify this object.
-   */
   public static String nsb(Object x) {
     return x==null ? "" : x.toString();
   }
 
   /**
-   * shuffle characters in this string.
+   * Shuffle characters in this string.
+   *
+   * @param s
+   * @return
    */
   public static String shuffle(String s) {
     List<Character> lst = new ArrayList<>();
@@ -111,20 +125,21 @@ public enum CU {
     return new String(cs);
   }
 
-  /**
-   * wait forever until this thread dies.
-   */
   public static void blockForever() {
     try {
       Thread.currentThread().join();
     } catch (Throwable e) {
       TLOG.error("", e);
     }
+    /*
+    while (true) try {
+      Thread.sleep(8000);
+    }
+    catch (Throwable e)
+    {}
+    */
   }
 
-  /**
-   * parse a json file.
-   */
   public static JsonElement readJson(File f) {
     try {
       return readJson(FileUtils.readFileToString(f, "utf-8"));
@@ -134,62 +149,31 @@ public enum CU {
     }
   }
 
-  /**
-   * parse a json string.
-   */
   public static JsonElement readJson(String s) {
     return new JsonParser().parse(s);
   }
 
-  /**
-   * split a string delimited by a NUL char.
-   */
   public static String[] splitNull(String s) {
     return StringUtils.split( nsb(s), "\u0000");
   }
 
-  /**
-   * load this java class.
-   */
-  public static Class<?> loadClass(String cz)
-    throws ClassNotFoundException {
+  public static Class<?> loadClass(String cz) throws ClassNotFoundException {
     return Thread.currentThread().getContextClassLoader().loadClass(cz);
   }
 
-  /**
-   * call the default constructor on this java class.
-   */
-  public static Object dftCtor(String cz)
-    throws InstantiationException,
-                    IllegalAccessException,
-                    IllegalArgumentException,
-                    InvocationTargetException,
-                    NoSuchMethodException,
-                    SecurityException,
-                    ClassNotFoundException  {
+  public static Object dftCtor(String cz) throws InstantiationException, IllegalAccessException,
+  IllegalArgumentException, InvocationTargetException,
+  NoSuchMethodException, SecurityException, ClassNotFoundException  {
     return loadClass(cz).getDeclaredConstructor().newInstance();
   }
 
-  /**
-   * block and call this function.
-   */
-  public static Object syncExec(
-      Object syncObj,
-      CallableWithArgs  r, Object a1, Object... args) throws Exception {
-
+  public static Object syncExec(Object syncObj, CallableWithArgs  r, Object a1, Object... args) throws Exception {
     synchronized(syncObj) {
       return r.run(a1, args);
     }
   }
 
-  /**
-   * return next sequence number.
-   */
   public static long nextSeqLong() { return _sn.incrementAndGet(); }
-
-  /**
-   * return next sequence number.
-   */
   public static int nextSeqInt() { return _si.incrementAndGet(); }
 
 }

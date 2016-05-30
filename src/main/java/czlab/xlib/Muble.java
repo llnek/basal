@@ -15,13 +15,27 @@
 package czlab.xlib;
 
 /**
+ * Like a POJO (mutable), name values.
+ *
  * @author kenl
  */
 public interface Muble extends Gettable, Settable {
 
+  /**
+   * get list of attrributes
+   */
   public Iterable<?> seq();
+
+  /**
+   * format to clojur EDN
+   */
   public Object toEDN();
+
+  /**
+   * remove all attributes
+   */
   public void clear();
 
 }
+
 

@@ -46,7 +46,6 @@ public class XData implements Serializable {
   private Object _data = null;
   private boolean _cls=true;
 
-  //
 
   public XData(Object p) {
     resetContent(p);

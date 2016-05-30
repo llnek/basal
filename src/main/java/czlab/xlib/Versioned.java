@@ -17,11 +17,8 @@ package czlab.xlib;
 /**
  * @author kenl
  */
-@FunctionalInterface
-public interface Versioned {
-
+@FunctionalInterface public interface Versioned {
   public String version();
-
 }
 
 

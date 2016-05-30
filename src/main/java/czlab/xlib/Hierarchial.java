@@ -17,11 +17,8 @@ package czlab.xlib;
 /**
  * @author kenl
  */
-@FunctionalInterface
-public interface Hierarchial {
-
+@FunctionalInterface public interface Hierarchial {
   public Object parent();
-
 }
 
 

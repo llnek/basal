@@ -33,13 +33,11 @@ public class NCMap<T> extends TreeMap<String, T> implements java.io.Serializable
   }
 
   private static class NoCase<T> implements Comparator<T> {
-
     public int compare(T o1, T o2) {
       String s1 = o1 == null ? "" : o1.toString();
       String s2 = o2 == null ? "" : o2.toString();
       return s1.toUpperCase().compareTo(s2.toUpperCase());
     }
-
   }
 
 }

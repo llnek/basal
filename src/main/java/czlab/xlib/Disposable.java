@@ -17,11 +17,8 @@ package czlab.xlib;
 /**
  * @author kenl
  */
-@FunctionalInterface
-public interface Disposable {
-
+@FunctionalInterface public interface Disposable {
   public void dispose();
-
 }
 
 

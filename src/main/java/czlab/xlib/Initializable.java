@@ -17,11 +17,8 @@ package czlab.xlib;
 /**
  * @author kenl
  */
-@FunctionalInterface
-public interface Initializable {
-
+@FunctionalInterface public interface Initializable {
   public void initialize();
-
 }
 
 

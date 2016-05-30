@@ -17,11 +17,8 @@ package czlab.xlib;
 /**
  * @author kenl
  */
-@FunctionalInterface
-public interface Enqueable {
-
+@FunctionalInterface public interface Enqueable {
   public void put(Object something);
-
 }
 
 

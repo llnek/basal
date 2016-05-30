@@ -17,11 +17,8 @@ package czlab.xlib;
 /**
  * @author kenl
  */
-@FunctionalInterface
-public interface Gettable {
-
+@FunctionalInterface public interface Gettable {
   public Object getv(Object key);
-
 }
 
 

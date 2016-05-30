@@ -17,11 +17,8 @@ package czlab.xlib;
 /**
  * @author kenl
  */
-@FunctionalInterface
-public interface Morphable {
-
+@FunctionalInterface public interface Morphable {
   public Object morph();
-
 }
 
 

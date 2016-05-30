@@ -44,7 +44,6 @@ public class XStream extends InputStream {
   protected File _fn;
   private long pos = 0L;
 
-  //
 
   public XStream(File f, boolean delFile) {
     _deleteFile = delFile;

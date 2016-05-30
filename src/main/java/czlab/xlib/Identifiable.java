@@ -17,11 +17,8 @@ package czlab.xlib;
 /**
  * @author kenl
  */
-@FunctionalInterface
-public interface Identifiable {
-
+@FunctionalInterface public interface Identifiable {
   public Object id();
-
 }
 
 

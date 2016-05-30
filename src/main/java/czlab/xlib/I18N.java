@@ -28,12 +28,23 @@ import java.util.Map;
 public enum I18N {
 ;
 
-  private static Map<Object,ResourceBundle> _bundles= new HashMap<>();
+  public static final Logger TLOG= getLogger(lookup().lookupClass());
+  private static Map<Object,ResourceBundle> _bs = new HashMap<>();
   private static ResourceBundle _base;
 
-  public static final Logger TLOG= getLogger(lookup().lookupClass());
 
-  //
+  public static void setBundle(Object bkey, ResourceBundle b) {
+    TLOG.info("setting a resource bundle, bkey = {}", bkey);
+    _bs .put(bkey,b);
+  }
+
+  public static ResourceBundle getBundle(Object bkey) {
+    return _bs .get(bkey);
+  }
+
+  public static void unsetBundle(String bkey) {
+    _bs .remove(bkey);
+  }
 
   public static void setBase(ResourceBundle b) {
     _base=b;
@@ -41,19 +52,6 @@ public enum I18N {
 
   public static ResourceBundle getBase() {
     return _base;
-  }
-
-  public static ResourceBundle getBundle(Object bkey) {
-    return _bundles.get(bkey);
-  }
-
-  public static void setBundle(Object bkey, ResourceBundle b) {
-    TLOG.info("setting a resource bundle, bkey = {}", bkey);
-    _bundles.put(bkey,b);
-  }
-
-  public static void clsBundle(String bkey) {
-    _bundles.remove(bkey);
   }
 
 }
