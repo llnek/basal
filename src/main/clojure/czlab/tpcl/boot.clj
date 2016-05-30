@@ -88,7 +88,7 @@
 
   (spit file
         (-> (slurp file :encoding "utf-8")
-              (work))
+            (work))
         :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -107,8 +107,8 @@
       ;;2
       (.endsWith (.getName f) fext)
       (let [p (.getParentFile f)]
-        (when-not (contains? @out p))
-          (swap! out assoc p p))
+        (when-not (contains? @out p)
+          (swap! out conj p )))
       ;;3
       :else nil)))
 
@@ -123,9 +123,9 @@
   (let [rlen (-> (ficp root)
                  (.length ))
         out (atom [])
-        bin (atom {})]
+        bin (atom #{})]
     (grep-paths root bin ext)
-    (doseq [[k v] @bin]
+    (doseq [k @bin]
       (let [kp (ficp k)]
         (swap! out
                conj
@@ -196,8 +196,7 @@
   "Format a list of clojure namespaces"
   [root & paths]
 
-  (let [base #(cs/replace
-                (.getName %) #"\.[^\.]+$" "")
+  (let [base #(cs/replace (.getName %) #"\.[^\.]+$" "")
         dot #(cs/replace % "/" ".")
         ffs #(and (.isFile %)
                   (.endsWith (.getName %) ".clj"))]
@@ -505,8 +504,7 @@
 
   (se! :target-path "target")
 
-  (se! :warnonref
-            :clojure.compile.warn-on-reflection)
+  (se! :warnonref :clojure.compile.warn-on-reflection)
   (se! :warn-reflection true)
 
   (se! :pmode "dev")
