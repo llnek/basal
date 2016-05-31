@@ -161,15 +161,12 @@
   "Get the value for this local var"
   [k & [local]]
 
-  (or
-    (if (nil? local)
-      (if-let [v (get @U-VARS k)]
-        (if (fn? v)
-          (v k)
-          v)
-        (glocal k))
-      (glocal k))
-    (get-env k)))
+  (or (if local
+        (glocal k)
+        (if-let [v (get @U-VARS k)]
+          (if (fn? v) (v k) v)
+          (glocal k)))
+      (get-env k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -179,6 +176,15 @@
   [func & forms]
 
   `(do (println (str ~func ":")) ~@forms))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn idAndVer
+
+  "Format string returning id and version"
+  []
+
+  (str (artifactID) "-" (ge :version)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -214,7 +220,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn clsBuild
+(defn clrBuild
 
   "Clean out folders"
   []
@@ -272,7 +278,7 @@
              (partition-all 25
                             (listCljNsps root p))))
     ;;compile each namespace
-    (minitask "compile/clj"
+    (minitask "compile/clojure"
       (doseq [p @out]
         (a/runTasks*
           (a/antJava
@@ -292,19 +298,14 @@
   "Create the jar file"
   []
 
-  (let [j [:fileset
-           {:dir (ge :jzzDir)
-            :excludes "**/log4j.properties,**/logback.xml"} ]
-        c [:fileset
-           {:dir (ge :czzDir)
-            :excludes "**/log4j.properties,**/logback.xml"} ]]
+  (let [d {:excludes "**/log4j.properties,**/logback.xml"}
+        j [:fileset (merge {:dir (ge :jzzDir)} d)]
+        c [:fileset (merge {:dir (ge :czzDir)} d)]]
     (a/runTarget*
       "jar/files"
       (a/antJar
         {:destFile (fp! (ge :distDir)
-                        (str (artifactID)
-                             "-"
-                             (ge :version) ".jar"))}
+                        (str (idAndVer) ".jar"))}
         [j c]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -356,7 +357,7 @@
              (partition-all 25
                             (listCljNsps root p))))
     (minitask
-      "compile/test/clj"
+      "compile/test/clojure"
       (doseq [p @out]
         (a/runTasks*
           (a/antJava
@@ -379,7 +380,7 @@
   []
 
   (a/runTarget*
-    "run/test/clj"
+    "run/test/clojure"
     (a/antJunit
       {:logFailedTests true
        :showOutput false
@@ -586,15 +587,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn idAndVer
-
-  "Format string returning id and version"
-  []
-
-  (str (artifactID) "-" (ge :version)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn- bootSyncCPath
 
   "Add these file paths to class-path"
@@ -696,8 +688,7 @@
 ;;
 (defn bootEnv!
 
-  "Setup env-vars and paths, must be called
-  by the user"
+  "Setup env-vars and paths, must be called by the user"
 
   [& [options]]
 
@@ -711,6 +702,7 @@
 (defn bootSpit
 
   "Write to file"
+
   [^String s file]
 
   (spit file s :encoding "utf-8"))
@@ -720,6 +712,7 @@
 (defn bootSpitJson
 
   "Write JSON object to file"
+
   [json file]
 
   (bootSpit (js/write-str json) file))
@@ -740,6 +733,7 @@
 (defn bootSlurpJson
 
   "Read file content as JSON"
+
   [file]
 
   (-> (bootSlurp file)
@@ -835,7 +829,7 @@
   []
 
   (bc/with-pre-wrap fileset
-    (clsBuild)
+    (clrBuild)
     (preBuild)
     fileset))
 
