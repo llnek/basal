@@ -24,10 +24,21 @@
     [java.util Stack]
     [java.io File]
     [org.apache.tools.ant.taskdefs
-     Javadoc Java Copy Chmod
-     Concat Move Mkdir Tar
-     Replace ExecuteOn
-     Delete Jar Zip ExecTask Javac]
+     Javadoc
+     Java
+     Copy
+     Chmod
+     Concat
+     Move
+     Mkdir
+     Tar
+     Replace
+     ExecuteOn
+     Delete
+     Jar
+     Zip
+     ExecTask
+     Javac]
     [org.apache.tools.ant.listener
      AnsiColorLogger
      TimestampedLogger]
@@ -36,10 +47,15 @@
      Commandline$Marker
      PatternSet$NameEntry
      Environment$Variable
-     Reference FileSet Path DirSet]
+     Reference
+     FileSet
+     Path
+     DirSet]
     [org.apache.tools.ant
      NoBannerLogger
-     Project Target Task]
+     Project
+     Target
+     Task]
     [org.apache.tools.ant.taskdefs.optional.junit
      FormatterElement$TypeAttribute
      JUnitTask$SummaryAttribute
@@ -95,9 +111,7 @@
   []
 
   (let [lg (doto
-             ;;(TimestampedLogger.)
              (AnsiColorLogger.)
-             ;;(NoBannerLogger.)
              (.setOutputPrintStream System/out)
              (.setErrorPrintStream System/err)
              (.setMessageOutputLevel Project/MSG_INFO))]
@@ -118,14 +132,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- getBeanInfo ""
+(defn- getBeanInfo
+
+  "Get java bean info of this class"
   [cz]
-  (->> (-> (Introspector/getBeanInfo cz)
-           (.getPropertyDescriptors))
-       (reduce (fn [memo pd]
-                 (assoc memo
-                        (keyword (.getName pd)) pd))
-               {})))
+
+  (persistent!
+    (->> (-> (Introspector/getBeanInfo cz)
+             (.getPropertyDescriptors))
+         (reduce (fn [memo pd]
+                   (assoc! memo
+                           (keyword (.getName pd)) pd))
+                 (transient {} )))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;create a default project.
@@ -137,8 +155,9 @@
       syms (atom [])]
   (doseq [[k v] (.getTaskDefinitions @dftprj)]
     (when (.isAssignableFrom Task v)
-      (let [n (str "ant" (capstr k))]
-        (reset! syms (conj @syms n k)))
+      (swap! syms
+             conj
+             (str "ant" (capstr k)) k)
       (swap! beans assoc v (getBeanInfo v))))
   (def ^:private tasks (atom (partition 2 (map #(symbol %) @syms))))
   (def ^:private props (atom @beans)))
@@ -254,7 +273,7 @@
         skips (or skips #{})
         cz (.getClass pojo)
         ps (or (get @props cz)
-               (maybeListProps cz)) ]
+               (maybeListProps cz))]
     (doseq [[k v] options]
       (when-not (contains? skips k)
         (if-some [pd (get ps k)]
@@ -684,7 +703,7 @@
 ;;
 (defmacro ^:private ant-task
 
-  "Generate wrapper function for ant task"
+  "Generate wrapper function for an ant task"
 
   [pj sym docstr func & [preopt]]
 
@@ -718,8 +737,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro decl-ant-tasks ""
+(defmacro decl-ant-tasks
+
+  "Introspect the default project and cache all registered ant-tasks"
+
   [pj]
+
   `(do ~@(map (fn [[a b]]
                 `(ant-task ~pj ~a "" ~b))
               (deref tasks))))
@@ -767,7 +790,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn copyFile ""
+(defn copyFile
+
+  "Copy a file to the target folder"
 
   [file toDir]
 
@@ -778,7 +803,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn moveFile ""
+(defn moveFile
+
+  "Move a file to the target folder"
 
   [file toDir]
 
@@ -789,7 +816,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn symLink ""
+(defn symLink
+
+  "Create a file system symbolic link"
 
   [link target]
 
