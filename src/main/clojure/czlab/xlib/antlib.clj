@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Wrapper which allows you to call ant tasks."
+(ns ^{:doc ""
       :author "kenl" }
 
   czlab.xlib.antlib
@@ -24,21 +24,10 @@
     [java.util Stack]
     [java.io File]
     [org.apache.tools.ant.taskdefs
-     Javadoc
-     Java
-     Copy
-     Chmod
-     Concat
-     Move
-     Mkdir
-     Tar
-     Replace
-     ExecuteOn
-     Delete
-     Jar
-     Zip
-     ExecTask
-     Javac]
+     Javadoc Java Copy Chmod
+     Concat Move Mkdir Tar
+     Replace ExecuteOn
+     Delete Jar Zip ExecTask Javac]
     [org.apache.tools.ant.listener
      AnsiColorLogger
      TimestampedLogger]
@@ -47,15 +36,10 @@
      Commandline$Marker
      PatternSet$NameEntry
      Environment$Variable
-     Reference
-     FileSet
-     Path
-     DirSet]
+     Reference FileSet Path DirSet]
     [org.apache.tools.ant
      NoBannerLogger
-     Project
-     Target
-     Task]
+     Project Target Task]
     [org.apache.tools.ant.taskdefs.optional.junit
      FormatterElement$TypeAttribute
      JUnitTask$SummaryAttribute
@@ -93,7 +77,7 @@
 ;;
 (defn- capstr
 
-  "Capitalize the 1st character"
+  "Just capitalize the 1st character"
 
   ^String
   [^String s]
@@ -105,12 +89,15 @@
 ;;
 (defn antProject
 
-  "Create a new Ant project"
+  "Create a new ant project"
 
   ^Project
   []
 
-  (let [lg (doto (AnsiColorLogger.)
+  (let [lg (doto
+             ;;(TimestampedLogger.)
+             (AnsiColorLogger.)
+             ;;(NoBannerLogger.)
              (.setOutputPrintStream System/out)
              (.setErrorPrintStream System/err)
              (.setMessageOutputLevel Project/MSG_INFO))]
@@ -127,39 +114,31 @@
 
   [^Target target]
 
-  (.executeTarget (.getProject target)
-                  (.getName target)))
+  (.executeTarget (.getProject target) (.getName target)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- getBeanInfo
-
-  "Get java bean info of this class"
+(defn- getBeanInfo ""
   [cz]
-
-  (let [out (transient {})]
-    (->> (-> (Introspector/getBeanInfo cz)
-             (.getPropertyDescriptors))
-         (reduce (fn [memo pd]
-                   (assoc! memo
-                           (keyword (.getName pd)) pd))
-                 out))
-    (persistent! out)))
+  (->> (-> (Introspector/getBeanInfo cz)
+           (.getPropertyDescriptors))
+       (reduce (fn [memo pd]
+                 (assoc memo
+                        (keyword (.getName pd)) pd))
+               {})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;create a default project.
 (def ^:private dftprj (atom (antProject)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;cache ant task names as symbols,
-;;and cache bean-info of class.
+;;cache ant task names as symbols, and cache bean-info of class.
 (let [beans (atom {})
       syms (atom [])]
   (doseq [[k v] (.getTaskDefinitions @dftprj)]
     (when (.isAssignableFrom Task v)
-      (swap! syms
-             conj
-             (str "ant" (capstr k)) k)
+      (let [n (str "ant" (capstr k))]
+        (reset! syms (conj @syms n k)))
       (swap! beans assoc v (getBeanInfo v))))
   (def ^:private tasks (atom (partition 2 (map #(symbol %) @syms))))
   (def ^:private props (atom @beans)))
@@ -200,7 +179,7 @@
        java.lang.Integer
        Long/TYPE
        java.lang.Long
-       org.apache.tools.ant.types.Path])))
+       org.apache.tools.ant.types.Path ])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -250,9 +229,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- setProp!
-
-  "Set a POJO property"
+(defn- setProp! ""
 
   [^Method wm pojo k arr]
 
@@ -269,7 +246,7 @@
 ;;
 (defn- setOptions
 
-  "Use reflection and invoke setters on the POJO"
+  "Use reflection and invoke setters"
 
   [pj pojo options & [skips]]
 
@@ -277,7 +254,7 @@
         skips (or skips #{})
         cz (.getClass pojo)
         ps (or (get @props cz)
-               (maybeListProps cz))]
+               (maybeListProps cz)) ]
     (doseq [[k v] options]
       (when-not (contains? skips k)
         (if-some [pd (get ps k)]
@@ -444,9 +421,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- maybeCfgNested
-
-  "Handle nested config objects"
+(defn- maybeCfgNested ""
 
   [pj tk nested]
 
@@ -612,7 +587,7 @@
 ;;
 (defn- init-task
 
-  "Create and configure actual ant tasks"
+  "Reify and configure actual ant tasks"
 
   ^Task
   [^Project pj ^Target target tobj]
