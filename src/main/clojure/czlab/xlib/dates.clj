@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Date related utilities"
+(ns ^{:doc "Date related utilities."
       :author "kenl" }
 
   czlab.xlib.dates
@@ -27,8 +27,13 @@
 
   (:import
     [java.text ParsePosition SimpleDateFormat]
-    [java.util Locale TimeZone SimpleTimeZone
-     Date Calendar GregorianCalendar]
+    [java.util
+     Locale
+     TimeZone
+     SimpleTimeZone
+     Date
+     Calendar
+     GregorianCalendar]
     [java.sql Timestamp]
     [org.apache.commons.lang3 StringUtils]))
 
@@ -39,7 +44,7 @@
 ;;
 (defn leapYear?
 
-  "true if this is a leap year"
+  "Is this a leap year"
 
   [year]
 
@@ -50,7 +55,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- hastzpart? ""
+(defn- hastzpart?
+
+  "Does the string contain time zone info"
 
   [^String s]
 
@@ -65,7 +72,7 @@
 ;;
 (defn- hastz?
 
-  "true if this datetime string contains some timezone info"
+  "Does the string contain time zone info"
 
   [^String dateStr]
 
@@ -96,9 +103,9 @@
   *tstr* conforming to the format \"yyyy-mm-dd hh:mm:ss.[fff...]\""
 
   ^Timestamp
-  [^String tstr]
+  [^String s]
 
-  (try! (Timestamp/valueOf tstr) ))
+  (try! (Timestamp/valueOf s) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -155,10 +162,12 @@
 
   (^String
     [^Date dt fmt ^TimeZone tz]
-    (if (or (nil? dt) (empty? fmt))
+    (if (or (nil? dt)
+            (empty? fmt))
       ""
       (let [df (SimpleDateFormat. fmt) ]
-        (when (some? tz) (.setTimeZone df tz))
+        (when (some? tz)
+          (.setTimeZone df tz))
         (.format df dt)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -174,7 +183,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- add ""
+(defn- add
+
+  "Add some amount to the current date"
 
   ^Calendar
   [^Calendar cal calendarField amount]
@@ -186,7 +197,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn gcal ""
+(defn gcal
+
+  "Make a Calendar"
 
   ^Calendar
   [date]
@@ -300,7 +313,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn gmtCal ""
+(defn gmtCal
+
+  "Make a Calendar (GMT)"
 
   ^GregorianCalendar
   []
@@ -309,7 +324,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn dtime "" [^Date d] (.getTime d))
+(defn dtime
+
+  "Get the time in millis"
+
+  [^Date d]
+
+  (.getTime d))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

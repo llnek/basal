@@ -12,7 +12,8 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc ""
+(ns ^{:doc "Handlers for common file formats
+           such as JSON, EDN."
       :author "kenl" }
 
   czlab.xlib.format

@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "A class that maps country-codes to the country-names."
+(ns ^{:doc "Maps country-codes to the country-names."
       :author "kenl" }
 
   czlab.xlib.countries
@@ -274,7 +274,7 @@
   ^String
   [^String code]
 
-  (_CCODES (cs/upper-case code)))
+  (get _CCODES (cs/upper-case code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -386,7 +386,7 @@
   ^String
   [^String code]
 
-  (_STATES (cs/upper-case code)))
+  (get _STATES (cs/upper-case code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

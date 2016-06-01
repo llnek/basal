@@ -18,11 +18,15 @@
   czlab.xlib.guids
 
   (:require
-    [czlab.xlib.core
-     :refer [nextInt nowMillis tryletc tryc newRandom]]
+    [czlab.xlib.io :refer [readInt readLong]]
     [czlab.xlib.str :refer [lefts rights]]
     [czlab.xlib.logging :as log]
-    [czlab.xlib.io :refer [readInt readLong]])
+    [czlab.xlib.core
+     :refer [nextInt
+             nowMillis
+             tryletc
+             tryc
+             newRandom]])
 
   (:import
     [java.lang StringBuilder]

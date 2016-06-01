@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Functions to enable console questions"
+(ns ^{:doc "Functions to enable console interactions."
       :author "kenl" }
 
   czlab.xlib.cmdline
@@ -64,7 +64,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onAnswer ""
+(defn- onAnswer
+
+  "Process the answer, returning the next question"
 
   [^Writer cout
    cmdQ
@@ -103,7 +105,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- popQQ ""
+(defn- popQQ
+
+  "Pop the question"
 
   [^Writer cout
    ^Reader cin
@@ -135,7 +139,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- popQ ""
+(defn- popQ
+
+  "Pop the question"
 
   [cout cin cmdQ props]
 
@@ -145,7 +151,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- cycleQ ""
+(defn- cycleQ
+
+  "Cycle through the questions"
 
   [cout cin cmdQNs start props]
 
@@ -207,4 +215,5 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

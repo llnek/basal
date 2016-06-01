@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc ""
+(ns ^{:doc "Some useful constants."
       :author "kenl" }
 
   czlab.xlib.consts)
@@ -48,8 +48,6 @@
 
 (defonce MONTHS ["JAN" "FEB" "MAR" "APR" "MAY" "JUN"
              "JUL" "AUG" "SEP" "OCT" "NOV" "DEC" ] )
-
-(defonce ^String COPYRIGHT "Copyright (c) 2008-2016, Kenneth Leung. All rights reserved.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

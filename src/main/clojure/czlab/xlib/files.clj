@@ -13,7 +13,7 @@
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
 
-(ns ^{:doc "General file related utilities"
+(ns ^{:doc "File related utilities."
       :author "kenl" }
 
   czlab.xlib.files
@@ -29,13 +29,18 @@
   (:import
     [org.apache.commons.io IOUtils  FileUtils]
     [org.apache.commons.io.filefilter
-     FileFileFilter FileFilterUtils]
-    [java.io File FileFilter
-     FileInputStream
-     FileOutputStream InputStream OutputStream]
-    [java.util Stack ArrayList]
-    [java.net URL URI]
+     FileFileFilter
+     FileFilterUtils]
     [java.util.zip ZipFile ZipEntry]
+    [java.util Stack ArrayList]
+    [java.io
+     File
+     InputStream
+     OutputStream
+     FileFilter
+     FileInputStream
+     FileOutputStream]
+    [java.net URL URI]
     [czlab.xlib XData]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -120,7 +125,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn fprior ""
+(defn parentFile
+
+  "Parent file"
 
   ^File
   [^File f]
@@ -131,7 +138,7 @@
 ;;
 (defn parentPath
 
-  "Get the path to the parent directory"
+  "Path to the parent file"
 
   ^String
   [^String path]
@@ -142,7 +149,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn changeFileContent ""
+(defn changeFileContent
+
+  "Pass file content to the work function,
+  returning new content"
 
   ^String
   [file work]
@@ -154,7 +164,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn replaceFile ""
+(defn replaceFile
+
+  "Update file with new content"
 
   [file work]
 
@@ -166,7 +178,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- jiggleZipEntryName ""
+(defn- jiggleZipEntryName
+
+  "Remove leading separators from name"
 
   ^String
   [^ZipEntry en]
@@ -374,7 +388,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti mkdirs "" class)
+(defmulti mkdirs "Make directories" class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -436,16 +450,16 @@
 ;;
 (defn- grep-paths ""
 
-  [top bin fext]
+  [top out fext]
 
   (doseq [^File f (.listFiles (io/file top))]
     (cond
       (.isDirectory f)
-      (grep-paths f bin fext)
+      (grep-paths f out fext)
       (.endsWith (.getName f) fext)
       (let [p (.getParentFile f)]
-        (when-not (contains? @bin p))
-          (swap! bin assoc p p))
+        (when-not (contains? @out p))
+          (swap! out conj p))
       :else nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -459,16 +473,18 @@
   (let [rpath (.getCanonicalPath (io/file rootDir))
         rlen (.length rpath)
         out (atom [])
-        bin (atom {})]
+        bin (atom #{})]
     (grep-paths rootDir bin ext)
-    (doseq [[k v] @bin]
+    (doseq [k @bin]
       (let [kp (.getCanonicalPath ^File k)]
         (swap! out conj (.substring kp (+ rlen 1)))))
     @out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- scan-tree ""
+(defn- scan-tree
+
+  "Walk down folder hierarchies"
 
   [^Stack stk ext out seed]
 

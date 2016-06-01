@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc ""
+(ns ^{:doc "Wrapper for Apache Ant tasks."
       :author "kenl" }
 
   czlab.xlib.antlib

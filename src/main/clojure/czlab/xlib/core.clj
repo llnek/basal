@@ -12,13 +12,14 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "General utilties"
+(ns ^{:doc "General utilities."
       :author "kenl" }
 
   czlab.xlib.core
 
   (:require
     [czlab.xlib.logging :as log]
+    [clojure.walk :refer :all]
     [clojure.java.io :as io]
     [clojure.string :as cs]
     [clojure.core :as ccore]
@@ -33,12 +34,22 @@
     [czlab.xlib Muble]
     [java.net URL]
     [java.nio.charset Charset]
-    [java.io InputStream File FileInputStream
+    [java.io
+     InputStream
+     File
+     FileInputStream
      ByteArrayInputStream
      ByteArrayOutputStream]
-    [java.util Map Properties Date Calendar
-     HashMap HashSet ArrayList
-     GregorianCalendar TimeZone]
+    [java.util
+     Map
+     Properties
+     Date
+     Calendar
+     HashMap
+     HashSet
+     ArrayList
+     GregorianCalendar
+     TimeZone]
     [java.sql Timestamp]
     [java.rmi.server UID]
     [org.apache.commons.lang3.text StrSubstitutor]
@@ -61,19 +72,24 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private _BOOLS #{ "true" "yes"  "on"  "ok"  "active"  "1"} )
-(def ^:private _PUNCS #{ \_ \- \. \( \) \space } )
+(def ^:private _BOOLS #{ "true" "yes"  "on"  "ok"  "active"  "1"})
+(def ^:private _PUNCS #{ \_ \- \. \( \) \space })
 
 (deftype TypeNichts [])
 (ns-unmap *ns* '->TypeNichts)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (meta nil) is fine, so no need to worry
-(defmacro getTypeId "" [m] `(:typeid (meta ~m)))
+(defmacro getTypeId
+
+  "Get the typeid from the metadata"
+  [m]
+
+  `(:typeid (meta ~m)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro trycr
+(defmacro tryclr
 
   "Catch exception,log it and return a default value"
 
@@ -83,9 +99,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defmacro trycr
+
+  "Catch exception, and return a default value"
+
+  [defv & exprs]
+
+  `(try ~@exprs (catch Throwable _# ~defv )) )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro tryc
 
-  "Catch exception and log it"
+  "Catch exception and log it, returns nil"
 
   [& exprs]
 
@@ -105,7 +131,7 @@
 ;;
 (defmacro trylet!
 
-  "Try and skip error"
+  "Try and eat the error"
 
   [bindings & body]
 
@@ -115,7 +141,7 @@
 ;;
 (defmacro tryletc
 
-  "Try and log error"
+  "Try and eat(log) the error"
 
   [bindings & body]
 
@@ -125,7 +151,7 @@
 ;;
 (defmacro doto->>
 
-  ""
+  "Combine doto and ->>"
 
   [x & forms]
 
@@ -142,7 +168,7 @@
 ;;
 (defmacro exp!
 
-  ""
+  "Create an exception instance"
 
   [e & args]
 
@@ -154,7 +180,7 @@
 ;;
 (defmacro trap!
 
-  ""
+  "Throw this exception"
 
   [e & args]
 
@@ -174,9 +200,9 @@
 
   "Same as clojure's instance?"
 
-  [a b]
+  [theType theObj]
 
-  `(instance? ~a ~b))
+  `(instance? ~theType ~theObj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -192,7 +218,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn cexp? "" ^Throwable [e]  (cast? Throwable e))
+(defn cexp?
+
+  "Try to cast into an exception"
+
+  ^Throwable
+  [e]
+
+  (cast? Throwable e))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -213,21 +246,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ternary ""
+(defmacro ternary
+
+  "The ternary operator"
 
   [x y]
 
   `(let [x# ~x]
      (if (nil? x#) ~y x#)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; local hack
-(defn- nsb ""
-
-  ^String
-  [^Object s]
-
-  (if (nil? s) "" (.toString s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; local hack
@@ -349,13 +375,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro bool! ""
+(defmacro bool!
+
+  "Make this into a real boolean value"
   [e]
+
   `(if-some [e# ~e] (not (false? e#)) false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn toJavaInt ""
+(defn toJavaInt
+
+  "Make this into a java int"
 
   ^java.lang.Integer
   [n]
@@ -463,10 +494,9 @@
 
   "true if this char is inside this set of chars"
 
-  ;; boolean
   [ch setOfChars]
 
-  (if (nil? setOfChars) false (ccore/contains? setOfChars ch)))
+  (if (set? setOfChars) (ccore/contains? setOfChars ch) false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -530,9 +560,9 @@
   ^SecureRandom
   [ & [numBytes] ]
 
-  (->> (long (or numBytes 4))
-       (SecureRandom/getSeed )
-       (SecureRandom.)))
+  (-> (long (or numBytes 4))
+      (SecureRandom/getSeed )
+      (SecureRandom.)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -663,7 +693,7 @@
   "Get the value of a system property"
 
   ^String
-  [^String prop]
+  [prop]
 
   (System/getProperty (str prop) ""))
 
@@ -755,11 +785,9 @@
   "Get the file path"
 
   ^String
-  [^File aFile]
+  [aFile]
 
-  (if (nil? aFile)
-    ""
-    (fpath aFile)))
+  (fpath aFile))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -769,8 +797,7 @@
 
   []
 
-  (>= (.indexOf (cs/lower-case (sysProp "os.name"))
-                "windows") 0 ))
+  (>= (.indexOf (cs/lower-case (sysProp "os.name")) "windows") 0 ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -790,14 +817,12 @@
 
   (^long
     [^String s dftLongVal]
-    (try
-      (Long/parseLong s)
-      (catch Throwable _ dftLongVal)))
+    (trycr
+      (Long/parseLong s) dftLongVal))
 
   (^long
     [^String s]
     (convLong s 0)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -807,9 +832,9 @@
 
   (^java.lang.Integer
     [^String s dftIntVal]
-    (try
+    (trycr
       (Integer/parseInt s)
-      (catch Throwable _ (int dftIntVal))))
+      (int dftIntVal)))
 
   (^java.lang.Integer
     [^String s]
@@ -824,9 +849,8 @@
 
   (^double
     [^String s dftDblVal]
-    (try
-      (Double/parseDouble s)
-      (catch Throwable _ dftDblVal)))
+    (trycr
+      (Double/parseDouble s) dftDblVal))
 
   (^double
     [^String s]
@@ -1095,9 +1119,7 @@
   "Tests if object is subclass of parent"
 
   (fn [a b c]
-    (if
-      (instance? Class b) :class
-      :object)))
+    (if (instance? Class b) :class :object)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1303,10 +1325,11 @@
 
   [^java.util.Map props]
 
-  (persistent! (reduce (fn [sum k]
-                         (assoc! sum (keyword k) (.get props k)))
-                       (transient {})
-                       (seq (.keySet props)))))
+  (persistent!
+    (reduce (fn [sum k]
+              (assoc! sum (keyword k) (.get props k)))
+            (transient {})
+            (seq (.keySet props)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1388,11 +1411,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn prtStk ""
+(defn prtStk
 
-  [^Throwable ex]
+  "Print stack trace"
 
-  (.printStackTrace ex))
+  [^Throwable e]
+
+  (.printStackTrace e))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1437,7 +1462,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- convList ""
+(defn- convList
+
+  "Convert sequence to Java List"
 
   ^ArrayList
   [obj]
@@ -1449,7 +1476,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- convSet ""
+(defn- convSet
+
+  "Convert to Java Set"
 
   ^HashSet
   [obj]
@@ -1461,7 +1490,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- convMap ""
+(defn- convMap
+
+  "Convert to Java Map"
 
   ^HashMap
   [obj]
@@ -1473,7 +1504,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- toJava ""
+(defn- toJava
+
+  "Convert a clojure collection to its Java equivalent"
 
   ^Object
   [obj]
