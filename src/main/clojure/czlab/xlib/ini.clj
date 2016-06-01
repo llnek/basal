@@ -12,20 +12,24 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Functions to load and query a .ini file"
+(ns ^{:doc "Load and query win32 .ini file."
       :author "kenl" }
 
   czlab.xlib.ini
 
   (:require
-    [czlab.xlib.core
-     :refer [throwBadData throwIOE
-             convBool convInt convLong convDouble]]
     [czlab.xlib.files :refer [fileRead?]]
+    [czlab.xlib.core
+     :refer [throwBadData
+             throwIOE
+             convBool
+             convInt
+             convLong
+             convDouble]]
     [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.string :as cs]
-    [czlab.xlib.str :refer [strim lcase]])
+    [czlab.xlib.str :refer [strim strimAny lcase]])
 
   (:use [flatland.ordered.map])
 
@@ -33,8 +37,12 @@
     [org.apache.commons.lang3 StringUtils]
     [czlab.xlib IWin32Conf]
     [java.net URL]
-    [java.io File IOException
-     InputStreamReader LineNumberReader PrintStream]))
+    [java.io
+     File
+     PrintStream
+     IOException
+     InputStreamReader
+     LineNumberReader ]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -45,7 +53,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- throwBadIni ""
+(defn- throwBadIni
+
+  ""
 
   [^LineNumberReader rdr]
 
@@ -55,6 +65,8 @@
 ;;
 (defn- throwBadKey
 
+  ""
+
   [k]
 
   (throwBadData (str "No such property " k)))
@@ -62,6 +74,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- throwBadMap
+
+  ""
 
   [s]
 
@@ -71,15 +85,20 @@
 ;;
 (defn- maybeSection
 
+  "Look for a section, store the actual section name in metadata"
+
   [^LineNumberReader rdr
    ncmap
    ^String line]
 
-  (let [s (strim (StringUtils/strip line "[]")) ]
-    (when (empty? s) (throwBadIni rdr))
+  (let [s (strimAny line "[]" true) ]
+    (when (empty? s)
+      (throwBadIni rdr))
     (let [k (keyword (lcase s))]
       (when-not (contains? @ncmap k)
-        (->> (assoc @ncmap k (with-meta (sorted-map) {:name s}))
+        (->> (assoc @ncmap
+                    k
+                    (with-meta (sorted-map) {:name s}))
              (reset! ncmap)))
       k)))
 
@@ -87,18 +106,22 @@
 ;;
 (defn- maybeLine
 
+  "Parse a line (name=value) under a section"
+
   [^LineNumberReader rdr
    ncmap
    section
    ^String line]
 
   (let [kvs (get @ncmap section) ]
-    (when (nil? kvs) (throwBadIni rdr))
+    (when (nil? kvs)
+      (throwBadIni rdr))
     (let [pos (.indexOf line (int \=))
           nm (if (> pos 0)
                (strim (.substring line 0 pos))
                "" ) ]
-      (when (empty? nm) (throwBadIni rdr))
+      (when (empty? nm)
+        (throwBadIni rdr))
       (let [k (keyword (lcase nm))]
         (->> (assoc kvs k [ nm  (strim (.substring line (+ pos 1))) ])
              (swap! ncmap assoc section)))
@@ -107,6 +130,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- evalOneLine
+
+  "Parse a line in the file"
 
   [^LineNumberReader rdr
    ncmap
@@ -127,7 +152,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- getKV ""
+(defn- getKV
+
+  ""
 
   ^String
   [sects s k err]
@@ -143,23 +170,26 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- makeWinini ""
+(defn- makeWinini
+
+  ""
 
   [sects]
 
   (reify
-
     IWin32Conf
 
     (sectionKeys [_]
-      (reduce
-        #(conj %1 (:name (meta %2)))
-        #{}
-        (vals sects)))
+      (persistent!
+        (reduce
+          #(conj! %1 (:name (meta %2)))
+          (transient #{})
+          (vals sects))))
 
     (getSection [_ sect]
       (let [sn (keyword (lcase sect))]
-        (reduce #(assoc %1 (first %2) (last %2))
+        (reduce #(assoc %1
+                        (first %2) (last %2))
                 (sorted-map)
                 (or (vals (get sects sn)) []))))
 

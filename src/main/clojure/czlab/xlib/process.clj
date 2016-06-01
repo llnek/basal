@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "OS Process related utilities"
+(ns ^{:doc "OS Process related utilities."
       :author "kenl" }
 
   czlab.xlib.process
@@ -45,9 +45,7 @@
   {:pre [(fn? func)]}
 
   (let
-    [t (-> (reify
-             Runnable
-             (run [_] (func)))
+    [t (-> (reify Runnable (run [_] (func)))
            (Thread. ))]
     (with-local-vars
       [daemon false cl nil]

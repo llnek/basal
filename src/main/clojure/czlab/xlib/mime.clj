@@ -13,7 +13,7 @@
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
 (ns ^{:doc "This is a utility class that provides
-           various MIME related functionality"
+           various MIME related functionality."
       :author "kenl" }
 
   czlab.xlib.mime

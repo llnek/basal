@@ -12,14 +12,18 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "A Scheduler with pooled threads"
+(ns ^{:doc "A Scheduler with pooled threads."
       :author "kenl" }
 
   czlab.xlib.scheduler
 
   (:require
     [czlab.xlib.core
-     :refer [trap! exp! nextInt juid mubleObj!]]
+     :refer [trap!
+             exp!
+             nextInt
+             juid
+             mubleObj!]]
     [czlab.xlib.logging :as log]
     [czlab.xlib.str :refer [toKW hgl?]])
 
@@ -76,7 +80,7 @@
       (activate [_ options] )
       (deactivate [_] ))
 
-    { :typeid (toKW "czc.frwk.util" "NulScheduler") } ))
+    { :typeid :czc.frwk.util/NulScheduler } ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -201,7 +205,7 @@
           (.clear runQ)
           (.stop ^TCore @cpu)))
 
-      { :typeid (toKW "czc.frwk.util" "Scheduler") } )))
+      { :typeid :czc.frwk.util/Scheduler } )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

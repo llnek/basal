@@ -818,7 +818,8 @@
   (^long
     [^String s dftLongVal]
     (trycr
-      (Long/parseLong s) dftLongVal))
+      dftLongVal
+      (Long/parseLong s) ))
 
   (^long
     [^String s]
@@ -833,8 +834,8 @@
   (^java.lang.Integer
     [^String s dftIntVal]
     (trycr
-      (Integer/parseInt s)
-      (int dftIntVal)))
+      (int dftIntVal)
+      (Integer/parseInt s)))
 
   (^java.lang.Integer
     [^String s]
@@ -850,7 +851,8 @@
   (^double
     [^String s dftDblVal]
     (trycr
-      (Double/parseDouble s) dftDblVal))
+      dftDblVal
+      (Double/parseDouble s) ))
 
   (^double
     [^String s]

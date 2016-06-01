@@ -26,26 +26,37 @@
   (:import
     [java.util.zip GZIPInputStream GZIPOutputStream]
     [org.apache.commons.codec.binary Base64]
-    [java.io ByteArrayInputStream
-     ByteArrayOutputStream DataInputStream
-     DataInputStream DataOutputStream
-     FileInputStream FileOutputStream
-     CharArrayWriter OutputStreamWriter
-     File InputStream InputStreamReader
-     Closeable OutputStream Reader Writer]
+    [java.io
+     ByteArrayOutputStream
+     ByteArrayInputStream
+     DataInputStream
+     DataInputStream
+     DataOutputStream
+     FileInputStream
+     FileOutputStream
+     CharArrayWriter
+     OutputStreamWriter
+     File
+     InputStream
+     InputStreamReader
+     Closeable
+     OutputStream
+     Reader
+     Writer]
     [java.nio ByteBuffer CharBuffer]
+    [org.apache.commons.io IOUtils]
     [java.nio.charset Charset]
     [czlab.xlib XData XStream]
-    [org.apache.commons.io IOUtils]
     [org.xml.sax InputSource]
     [java.nio.charset Charset]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(def ^:private _wd (atom (File. (System/getProperty "java.io.tmpdir"))))
-(def ^:private _slimit (atom (* 4 1024 1024)))
 (def ^:private ^chars HEX_CHS (.toCharArray "0123456789ABCDEF"))
+(def ^:private _slimit (atom (* 4 1024 1024)))
+(def ^:private _wd
+  (atom (io/file (System/getProperty "java.io.tmpdir"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -59,7 +70,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn setStreamLimit! ""
+(defn setStreamLimit!
+
+  "Set the limit to flush to disk"
 
   ^long
   [limit]
@@ -70,16 +83,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn workDir "" ^File [] @_wd)
+(defn workDir "The working directory" ^File [] @_wd)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn setWorkDir! ""
+(defn setWorkDir!
+
+  "Set the working directory"
 
   ^File
   [dir]
 
-  (->> (doto (io/file dir) (.mkdirs))
+  (->> (doto
+         (io/file dir)
+         (.mkdirs))
        (reset! _wd))
   @_wd)
 
@@ -156,7 +173,8 @@
   [nnum]
 
   (with-open [baos (byteOS)]
-    (doto (DataOutputStream. baos)
+    (doto
+      (DataOutputStream. baos)
       (.writeInt (int nnum))
       (.flush))
     (.toByteArray baos)))
@@ -169,7 +187,8 @@
   [nnum]
 
   (with-open [baos (byteOS) ]
-    (doto (DataOutputStream. baos)
+    (doto
+      (DataOutputStream. baos)
       (.writeLong ^long nnum)
       (.flush))
     (.toByteArray baos)))
@@ -328,7 +347,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn tempFile ""
+(defn tempFile
+
+  "Create a temporary file"
 
   ^File
   [ & [pfx sux] ]
@@ -398,7 +419,7 @@
   "A newly created XData"
 
   ^XData
-  [ &[usefile] ]
+  [ & [usefile] ]
 
   (if usefile
     (XData. (tempFile))
@@ -439,7 +460,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- slurpBytes ""
+(defn- slurpBytes
+
+  "Read bytes from the stream"
 
   ^XData
   [^InputStream inp limit]
@@ -472,7 +495,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- slurpChars ""
+(defn- slurpChars
+
+  "Read chars from the reader"
 
   ^XData
   [^Reader rdr limit]

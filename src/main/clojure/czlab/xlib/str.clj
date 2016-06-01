@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "String utilities"
+(ns ^{:doc "String utilities."
       :author "kenl" }
 
   czlab.xlib.str
@@ -24,8 +24,13 @@
   (:import
     [java.util Arrays Collection Iterator StringTokenizer]
     [org.apache.commons.lang3 StringUtils]
-    [java.io CharArrayWriter File
-     OutputStream OutputStreamWriter Reader Writer]
+    [java.io
+     File
+     CharArrayWriter
+     OutputStream
+     OutputStreamWriter
+     Reader
+     Writer]
     [java.lang StringBuilder]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,25 +40,39 @@
 ;;
 (defmacro lcase "Lowercase string" [s] `(if-some [s# ~s] (cs/lower-case s#) ""))
 (defmacro ucase "Uppercase string" [s] `(if-some [s# ~s] (cs/upper-case s#) ""))
-(defmacro stror "" [s s2] `(let [s# ~s] (if (empty? s#) ~s2 s#)))
+(defmacro stror "If not s then s2" [s s2] `(let [s# ~s] (if (empty? s#) ~s2 s#)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn triml "" [^String src ^String s] (StringUtils/stripStart src s))
-(defn trimr "" [^String src ^String s] (StringUtils/stripEnd src s))
+(defn triml
+
+  "Get rid of unwanted chars from left"
+  [^String src ^String s]
+
+  (StringUtils/stripStart src s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn splitTokens ""
+(defn trimr
+
+  "Get rid of unwanted chars from right"
+  [^String src ^String s]
+
+  (StringUtils/stripEnd src s))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn splitTokens
+
+  "String tokenizer"
 
   [^String s ^String sep incSep?]
 
   (let [t (StringTokenizer. s sep incSep?)]
-    (with-local-vars
-      [rc (transient [])]
-      (while (.hasMoreTokens t)
-        (conj! @rc (.nextToken t)))
-      (persistent! @rc))))
+    (loop [rc (transient [])]
+      (if-not (.hasMoreTokens t)
+        (persistent! rc)
+        (recur (conj! rc (.nextToken t)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -105,11 +124,9 @@
   ^String
   [^Object obj]
 
-  (cond
-    (keyword? obj) (name obj)
-    (nil? obj) ""
-    :else
-    (.toString obj)))
+  (if (keyword? obj)
+    (name obj)
+    (str obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -183,6 +200,17 @@
   [s]
 
   (if (nil? s) "" (cs/trim (nsb s))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn strimAny
+
+  "Strip source string of these unwanted chars"
+
+  [^String src ^String unwantedChars & [whitespace]]
+
+  (let [s (StringUtils/strip src unwantedChars) ]
+    (if whitespace (strim s) s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

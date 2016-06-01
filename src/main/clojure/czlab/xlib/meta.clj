@@ -12,8 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Utility functions for class related or
-           reflection related operations"
+(ns ^{:doc "Class related or reflection related operations."
       :author "kenl" }
 
   czlab.xlib.meta
@@ -35,11 +34,7 @@
 
   "true if clazz is subclass of this base class"
 
-  (fn [_ b]
-    (if
-      (instance? Class b)
-      :class
-      :object)))
+  (fn [_ b] (if (instance? Class b) :class :object)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -65,15 +60,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bytesClass "java class for byte[]" ^Class [] (Class/forName "[B"))
+(defn bytesClass "Java class for byte[]" ^Class [] (Class/forName "[B"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn charsClass "java class for char[]" ^Class [] (Class/forName "[C"))
+(defn charsClass "Java class for char[]" ^Class [] (Class/forName "[C"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- gcn "" [^Class c] (.getName c))
+(defn- gcn "Get name of this Class" [^Class c] (.getName c))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
