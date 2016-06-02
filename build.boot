@@ -86,7 +86,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (require
-  '[boot.task.built-in :refer [pom target]]
   '[czlab.tpcl.boot
     :as b
     :refer [artifactID fp! se! ge]]
@@ -94,14 +93,9 @@
   '[clojure.java.io :as io]
   '[clojure.string :as cs]
   '[czlab.xlib.antlib :as a]
-  '[boot.pom :as bp]
   '[boot.core :as bc])
 
-(import '[org.apache.tools.ant
-          Project
-          Target
-          Task]
-        '[java.io File])
+(import '[java.io File])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
