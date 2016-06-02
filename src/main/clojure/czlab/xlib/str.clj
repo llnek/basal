@@ -207,10 +207,11 @@
 
   "Strip source string of these unwanted chars"
 
-  [^String src ^String unwantedChars & [whitespace]]
+  [^String src ^String unwantedChars & [whitespace?]]
 
-  (let [s (StringUtils/strip src unwantedChars) ]
-    (if whitespace (strim s) s)))
+  (let [ s (-> (if whitespace? (strim src) src)
+               (StringUtils/strip unwantedChars))]
+    (if whitespace? (strim s) s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
