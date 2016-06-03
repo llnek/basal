@@ -711,7 +711,7 @@
         tm (cs/lower-case
              (.substring s (+ 1 (.lastIndexOf s "."))))]
     ;;(println "task---- " s)
-    `(defn ~sym ~docstr [& [options# nested#]]
+    `(defn ~sym ~docstr {:no-doc true} [& [options# nested#]]
        (let [tk# (doto (.createTask ~pj ~s)
                      (.setTaskName ~tm))
              o# (or options# {})
