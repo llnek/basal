@@ -31,6 +31,7 @@
     [com.google.gson JsonObject JsonElement]
     [java.security SecureRandom]
     [czlab.xlib BadDataError]
+    [clojure.lang Keyword]
     [czlab.xlib Muble]
     [java.net URL]
     [java.nio.charset Charset]
@@ -519,6 +520,17 @@
   [envname]
 
   `(when-some [e# ~envname] (System/getenv e#)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn asFQKeyword
+
+  "Scope a name as keyword"
+
+  ^Keyword
+  [^String t]
+
+  (keyword (str *ns* "/" t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
