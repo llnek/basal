@@ -14,7 +14,7 @@
 
 (ns ^{:doc "Handlers for common file formats
            such as JSON, EDN."
-      :author "kenl" }
+      :author "Kenneth Leung" }
 
   czlab.xlib.format
 

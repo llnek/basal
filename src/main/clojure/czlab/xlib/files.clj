@@ -14,7 +14,7 @@
 
 
 (ns ^{:doc "File related utilities."
-      :author "kenl" }
+      :author "Kenneth Leung" }
 
   czlab.xlib.files
 

@@ -14,7 +14,7 @@
 
 (ns ^{:doc "This is a utility class that provides
            various MIME related functionality."
-      :author "kenl" }
+      :author "Kenneth Leung" }
 
   czlab.xlib.mime
 

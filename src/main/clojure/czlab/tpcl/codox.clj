@@ -13,7 +13,7 @@
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
 (ns ^{:doc "Call and execute the codox document generator."
-      :author "kenl" }
+      :author "Kenneth Leung" }
 
   czlab.tpcl.codox
 

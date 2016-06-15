@@ -13,7 +13,7 @@
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
 (ns ^{:doc "Ways to generate an unique id"
-      :author "kenl" }
+      :author "Kenneth Leung" }
 
   czlab.xlib.guids
 

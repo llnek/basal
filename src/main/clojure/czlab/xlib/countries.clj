@@ -13,7 +13,7 @@
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
 (ns ^{:doc "Maps country-codes to the country-names."
-      :author "kenl" }
+      :author "Kenneth Leung" }
 
   czlab.xlib.countries
 
