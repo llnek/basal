@@ -292,9 +292,11 @@
 
   "Force throw an unsupported operation exception"
 
-  [^String msg]
+  [^String fmt & xs]
 
-  (trap! UnsupportedOperationException msg))
+  (->> ^String
+       (apply format fmt xs)
+       (trap! UnsupportedOperationException )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -302,21 +304,33 @@
 
   "Force throw a bad parameter exception"
 
-  [^String msg]
+  [^String fmt & xs]
 
-  (trap! IllegalArgumentException msg))
+  (->> ^String
+       (apply format fmt xs)
+       (trap! IllegalArgumentException )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti throwIOE "Throw an IO Exception" class)
+(defmulti throwIOE "Throw an IO Exception" (fn [a & xs] (class a)))
 
-(defmethod throwIOE Throwable
-  [^Throwable t]
+(defmethod throwIOE
+
+  Throwable
+
+  [^Throwable t & xs]
+
   (trap! java.io.IOException t))
 
-(defmethod throwIOE String
-  [^String msg]
-  (trap! java.io.IOException msg))
+(defmethod throwIOE
+
+  String
+
+  [^String fmt & xs]
+
+  (->> ^String
+       (apply format fmt xs)
+       (trap! java.io.IOException )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -324,9 +338,11 @@
 
   "Throw an Bad Data Exception"
 
-  [^String msg]
+  [^String fmt & xs]
 
-  (trap! BadDataError msg))
+  (->> ^String
+       (apply format fmt xs)
+       (trap! BadDataError )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
