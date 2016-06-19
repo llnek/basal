@@ -44,29 +44,55 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defmacro hgl?
+
+  "true if this string is not empty"
+
+  [s]
+
+  `(not (empty? ~s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn triml
 
   "Get rid of unwanted chars from left"
+
+  ^String
   [^String src ^String unwantedChars]
 
   (if (and (hgl? unwantedChars)
            (hgl? src))
     (loop [len (.length src)
            pos 0]
-      (if (and (<= pos len)
-               (< (.indexOf s (.charAt src pos)) 0))
+      (println "pos = " pos)(println "len = " len)
+      (if (and (< pos len)
+               (>= (.indexOf unwantedChars
+                             (int (.charAt src pos))) 0))
         (recur len (inc pos))
         (.substring src pos)))
     src))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn trimr
 
   "Get rid of unwanted chars from right"
-  [^String src ^String s]
 
-  (StringUtils/stripEnd src s))
+  ^String
+  [^String src ^String unwantedChars]
+
+  (if (and (hgl? unwantedChars)
+           (hgl? src))
+    (loop [pos (.length src)]
+      (println "pos = " pos)
+      (if (and (>  pos 0)
+               (>= (.indexOf unwantedChars
+                             (int (.charAt src (dec pos)))) 0))
+        (recur (dec pos))
+        (.substring src 0 pos)))
+    src))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -74,9 +100,9 @@
 
   "String tokenizer"
 
-  [^String s ^String sep incSep?]
+  [^String s ^String sep & [incSep?]]
 
-  (let [t (StringTokenizer. s sep incSep?)]
+  (let [t (StringTokenizer. s sep (boolean incSep?))]
     (loop [rc (transient [])]
       (if-not (.hasMoreTokens t)
         (persistent! rc)
@@ -177,16 +203,6 @@
 
     :else
     (Arrays/equals (.toCharArray a) (.toCharArray b)) ))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro hgl?
-
-  "true if this string is not empty"
-
-  [s]
-
-  `(not (empty? ~s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
