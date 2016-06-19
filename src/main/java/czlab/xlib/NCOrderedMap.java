@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * A map that has case-ignored string keys.
  *
- * @author kenl
+ * @author Kenneth Leung
  *
  * @param <T>
  */

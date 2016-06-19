@@ -20,7 +20,7 @@ import java.util.Set;
 /**
  * Handle windows config file in INI format.
  *
- * @author kenl
+ * @author Kenneth Leung
  */
 public interface IWin32Conf {
 

@@ -38,18 +38,26 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defmacro stror "If not s then s2" [s s2] `(let [s# ~s] (if (empty? s#) ~s2 s#)))
 (defmacro lcase "Lowercase string" [s] `(if-some [s# ~s] (cs/lower-case s#) ""))
 (defmacro ucase "Uppercase string" [s] `(if-some [s# ~s] (cs/upper-case s#) ""))
-(defmacro stror "If not s then s2" [s s2] `(let [s# ~s] (if (empty? s#) ~s2 s#)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn triml
 
   "Get rid of unwanted chars from left"
-  [^String src ^String s]
+  [^String src ^String unwantedChars]
 
-  (StringUtils/stripStart src s))
+  (if (and (hgl? unwantedChars)
+           (hgl? src))
+    (loop [len (.length src)
+           pos 0]
+      (if (and (<= pos len)
+               (< (.indexOf s (.charAt src pos)) 0))
+        (recur len (inc pos))
+        (.substring src pos)))
+    src))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

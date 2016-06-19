@@ -20,7 +20,7 @@ import java.util.Set;
 
 
 /**
- * @author kenl
+ * @author Kenneth Leung
  */
 public interface Config {
 

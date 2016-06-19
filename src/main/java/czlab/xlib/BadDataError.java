@@ -16,7 +16,7 @@ package czlab.xlib;
 
 
 /**
- * @author kenl
+ * @author Kenneth Leung
  */
 public class BadDataError extends RuntimeException {
 

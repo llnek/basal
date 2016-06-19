@@ -19,11 +19,9 @@ import java.io.ByteArrayInputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 
 import static java.lang.invoke.MethodHandles.*;
 import org.slf4j.Logger;
@@ -33,7 +31,7 @@ import static org.slf4j.LoggerFactory.*;
  * Wrapper structure to abstract a piece of data which can be a file
  * or a memory byte[], String or some object.
  *
- * @author kenl
+ * @author Kenneth Leung
  *
  */
 public class XData implements Serializable {
@@ -68,7 +66,8 @@ public class XData implements Serializable {
 
   public void destroy() {
     if (_data instanceof File && _cls) {
-      FileUtils.deleteQuietly( (File) _data);
+      try { ((File) _data).delete(); }
+      catch (Throwable t) {}
     }
     reset();
   }
@@ -109,7 +108,19 @@ public class XData implements Serializable {
     byte[] bits;
 
     if (_data instanceof File) {
-      bits = IOUtils.toByteArray(((File) _data).toURI().toURL());
+      File f= (File) _data;
+      long n= f.length();
+      try (InputStream inp = new FileInputStream (f)) {
+        if (n >  Integer.MAX_VALUE) {
+          throw new IOException("file too large");
+        }
+        bits= new byte[(int) n];
+        inp.read(bits);
+      } catch (IOException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new IOException(e);
+      }
     }
     else
     if (_data instanceof String) {

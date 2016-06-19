@@ -20,9 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.File;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-
 import static java.lang.invoke.MethodHandles.*;
 import org.slf4j.Logger;
 import static org.slf4j.LoggerFactory.*;
@@ -31,7 +28,7 @@ import static org.slf4j.LoggerFactory.*;
  * Wrapper on top of a File input stream such that it can
  * delete itself from the file system when necessary.
  *
- * @author kenl
+ * @author Kenneth Leung
  *
  */
 public class XStream extends InputStream {
@@ -89,7 +86,8 @@ public class XStream extends InputStream {
   }
 
   public void close() {
-    IOUtils.closeQuietly(_inp);
+    try { if (_inp != null) _inp.close(); }
+    catch (Throwable t) {}
     _inp= null;
     _closed= true;
   }
@@ -118,7 +116,7 @@ public class XStream extends InputStream {
   public void delete() {
     close();
     if (_deleteFile && _fn != null) {
-      FileUtils.deleteQuietly(_fn);
+      try { _fn.delete(); } catch (Throwable t) {}
     }
   }
 

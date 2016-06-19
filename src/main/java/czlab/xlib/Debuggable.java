@@ -17,7 +17,7 @@ package czlab.xlib;
 import java.io.PrintStream;
 
 /**
- * @author kenl
+ * @author Kenneth Leung
  */
 public interface Debuggable {
 

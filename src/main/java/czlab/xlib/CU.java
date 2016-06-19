@@ -17,17 +17,11 @@ package czlab.xlib;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +32,7 @@ import java.util.Locale;
 
 
 /**
- * @author kenl
+ * @author Kenneth Leung
  */
 @SuppressWarnings("unused")
 public enum CU {
@@ -123,29 +117,10 @@ public enum CU {
   }
 
   /**
-   * parse a json file.
-   */
-  public static JsonElement readJson(File f) {
-    try {
-      return readJson(FileUtils.readFileToString(f, "utf-8"));
-    } catch (IOException e) {
-      TLOG.error("",e);
-      return null;
-    }
-  }
-
-  /**
-   * parse a json string.
-   */
-  public static JsonElement readJson(String s) {
-    return new JsonParser().parse(s);
-  }
-
-  /**
    * split a string delimited by a NUL char.
    */
   public static String[] splitNull(String s) {
-    return StringUtils.split( nsb(s), "\u0000");
+    return nsb(s).split("\u0000");
   }
 
   /**

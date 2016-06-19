@@ -15,7 +15,7 @@
 package czlab.xlib;
 
 /**
- * @author kenl
+ * @author Kenneth Leung
  */
 @FunctionalInterface public interface Named {
   public String getName();

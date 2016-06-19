@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadFactory;
  * we cloned this is so that we can control how the thread-id is
  * traced out. (we want some meaninful thread name).
  *
- * @author kenl
+ * @author Kenneth Leung
  */
 @SuppressWarnings("unused")
 @Deprecated

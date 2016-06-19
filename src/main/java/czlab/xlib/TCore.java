@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A (thread executor)
  *
- * @author kenl
+ * @author Kenneth Leung
  */
 public class TCore implements RejectedExecutionHandler {
 
@@ -87,7 +87,6 @@ public class TCore implements RejectedExecutionHandler {
   }
 
   private void activate() {
-//    _scd= Executors.newCachedThreadPool( new TFac(_id) )
     _scd= new ThreadPoolExecutor( _tds, _tds, 5000L,
         TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
         new BasicThreadFactory.Builder()
