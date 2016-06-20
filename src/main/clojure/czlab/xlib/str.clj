@@ -23,7 +23,9 @@
 
   (:import
     [java.util Arrays Collection Iterator StringTokenizer]
-    [org.apache.commons.lang3 StringUtils]
+    [clojure.lang
+     Keyword
+     APersistentVector]
     [java.io
      File
      CharArrayWriter
@@ -46,7 +48,7 @@
 ;;
 (defmacro hgl?
 
-  "true if this string is not empty"
+  "true if this string is not empty, hgl stands for *has good length*"
 
   [s]
 
@@ -65,7 +67,6 @@
            (hgl? src))
     (loop [len (.length src)
            pos 0]
-      (println "pos = " pos)(println "len = " len)
       (if (and (< pos len)
                (>= (.indexOf unwantedChars
                              (int (.charAt src pos))) 0))
@@ -86,7 +87,6 @@
   (if (and (hgl? unwantedChars)
            (hgl? src))
     (loop [pos (.length src)]
-      (println "pos = " pos)
       (if (and (>  pos 0)
                (>= (.indexOf unwantedChars
                              (int (.charAt src (dec pos)))) 0))
@@ -100,6 +100,7 @@
 
   "String tokenizer"
 
+  ^APersistentVector
   [^String s ^String sep & [incSep?]]
 
   (let [t (StringTokenizer. s sep (boolean incSep?))]
@@ -110,13 +111,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn hasNoCase?
+(defmacro hasNoCase?
 
-  "true if this sub-string is inside this bigger string"
+  "true if this sub-string is inside this bigger string, ignoring case"
 
-  [^String bigs ^String s]
+  [bigs s]
 
-  (>= (.indexOf (lcase bigs) (lcase s)) 0))
+  `(embeds? (lcase ~bigs) (lcase ~s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -168,9 +169,11 @@
 
   "Concatenate all args and return it as a keyword"
 
+  ^Keyword
   [& args]
 
-  (keyword (cs/join "/" args)))
+  (if-not (empty? args)
+    (keyword (cs/join "/" args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -221,9 +224,9 @@
   "Safely trim this string - handles null"
 
   ^String
-  [s]
+  [^String s]
 
-  (if (nil? s) "" (cs/trim (nsb s))))
+  (if (nil? s) "" (cs/trim s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -231,10 +234,12 @@
 
   "Strip source string of these unwanted chars"
 
+  ^String
   [^String src ^String unwantedChars & [whitespace?]]
 
-  (let [ s (-> (if whitespace? (strim src) src)
-               (StringUtils/strip unwantedChars))]
+  (let [s (-> (if whitespace? (strim src) src)
+              (trimr unwantedChars)
+              (triml unwantedChars))]
     (if whitespace? (strim s) s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -260,9 +265,10 @@
 
   "Split a large string into chunks, each chunk having a specific length"
 
+  ^APersistentVector
   [^String largeString chunkLength]
 
-  (if (nil? largeString)
+  (if-not (hgl? largeString)
     []
     (loop [ret (transient [])
            src largeString ]
@@ -281,6 +287,8 @@
 
   [^String src substrs]
 
+  {:pre [(coll? substrs)]}
+
   (if (or (empty? substrs)
           (nil? src))
     false
@@ -289,9 +297,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn hasAny? "Returns true if src contains one of these substrings"
+(defn hasAny?
+
+  "Returns true if src contains one of these substrings"
 
   [^String src substrs]
+
+  {:pre [(coll? substrs)]}
 
   (if (or (empty? substrs)
           (nil? src))
@@ -300,10 +312,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ewicAny? "Tests endsWith() no-case, looping through
-                the list of possible suffixes"
+(defn ewicAny?
+
+  "Tests endsWith() no-case, looping through
+   the list of possible suffixes"
 
   [^String src suxs]
+
+  {:pre [(coll? suxs)]}
 
   (if (or (empty? suxs)
           (nil? src))
@@ -313,10 +329,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ewAny? "Tests endsWith(), looping through
-              the list of possible suffixes"
+(defn ewAny?
+
+  "Tests endsWith(), looping through
+   the list of possible suffixes"
 
   [^String src suxs]
+
+  {:pre [(coll? suxs)]}
 
   (if (or (empty? suxs)
           (nil? src))
@@ -325,10 +345,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn swicAny? "Tests startWith() no-case, looping through
-                the list of possible prefixes"
+(defn swicAny?
+
+  "Tests startWith() no-case, looping through
+   the list of possible prefixes"
 
   [^String src pfxs]
+
+  {:pre [(coll? pfxs)]}
 
   (if (or (empty? pfxs)
           (nil? src))
@@ -338,10 +362,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn swAny? "Tests startWith(), looping through
-              the list of possible prefixes"
+(defn swAny?
+
+  "Tests startWith(), looping through
+   the list of possible prefixes"
 
   [^String src pfxs]
+
+  {:pre [(coll? pfxs)]}
 
   (if (or (empty? pfxs)
           (nil? src))
@@ -350,10 +378,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn eqicAny? "Tests String.equals() against a
-                list of possible args. (ignore-case)"
+(defn eqicAny?
+
+  "Tests String.equals() against a
+   list of possible args. (ignore-case)"
 
   [^String src strs]
+
+  {:pre [(coll? strs)]}
 
   (if (or (empty? strs)
           (nil? src))
@@ -363,9 +395,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn eqAny? "Tests String.equals() against a list of possible args"
+(defn eqAny?
+
+  "Tests String.equals() against a list of possible args"
 
   [^String src strs]
+
+  {:pre [(coll? strs)]}
 
   (if (or (empty? strs)
           (nil? src))
@@ -374,7 +410,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn makeString "Make a string of certain length"
+(defn makeString
+
+  "Make a string of certain length"
 
   ^String
   [^Character ch cnt]
@@ -386,7 +424,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn rights "Gets the rightmost len characters of a String"
+(defn rights
+
+  "Gets the rightmost len characters of a String"
 
   ^String
   [^String src len]
@@ -394,11 +434,15 @@
   (if (or (<= len 0)
           (nil? src))
     ""
-    (StringUtils/right src (int len))))
+    (if (< (.length src) len)
+      src
+      (.substring src (- (.length src) len)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn lefts "Gets the leftmost len characters of a String"
+(defn lefts
+
+  "Gets the leftmost len characters of a String"
 
   ^String
   [^String src len]
@@ -406,11 +450,15 @@
   (if (or (<= len 0)
           (nil? src))
     ""
-    (StringUtils/left src (int len))))
+    (if (< (.length src) len)
+      src
+      (.substring src 0 len))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn sformat "Format a string using Java String format syntax"
+(defn- sformat
+
+  ""
 
   [^String fmt & args]
 
