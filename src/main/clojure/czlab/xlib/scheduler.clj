@@ -38,52 +38,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn mkNulScheduler
-
-  "Make a Single threaded Scheduler"
-
-  ^Schedulable
-  []
-
-  (with-meta
-    (reify
-
-      Schedulable
-
-      (dequeue [_ w] )
-
-      (run [this w]
-        (when-some [^Runnable r w]
-          (.run r)))
-
-      (postpone [this w delayMillis]
-        (when (> delayMillis 0)
-          (Thread/sleep delayMillis))
-        (.run this w))
-
-      (hold [this w] (.hold this 0 w))
-
-      (hold [_ _ w]
-        (trap! Exception "Not Implemented."))
-
-      (wakeup [this w]
-        (.wakeAndRun this 0 w))
-
-      (wakeAndRun [this _ w] (.run this w))
-
-      (reschedule [this w] (.run this w))
-
-      (dispose [_] )
-
-      Activable
-
-      (activate [_ options] )
-      (deactivate [_] ))
-
-    { :typeid :czc.frwk.util/NulScheduler } ))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn- xrefPID
 
   "id of this runnable or nil"
@@ -113,9 +67,9 @@
   "Schedule a timer task"
 
   [^Timer timer ^TimerTask task
-   ^long delay]
+   ^long delayMillis]
 
-  (.schedule timer task delay))
+  (.schedule timer task delayMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -127,8 +81,8 @@
   [^String named]
 
   (let [jid (if-not (hgl? named)
-              (format "xlib#core-%03d" (nextInt))
-              (str named "#core"))
+              (format "scheduler-%03d" (nextInt))
+              named)
         holdQ (ConcurrentHashMap.)
         runQ (ConcurrentHashMap.)
         timer (atom nil)
@@ -140,7 +94,6 @@
 
         Schedulable
 
-        ;; called by a *running* task to remove itself from the running queue
         (dequeue [_ w]
           (when-some [pid (xrefPID w)]
             (.remove runQ pid)))
@@ -205,7 +158,7 @@
           (.clear runQ)
           (.stop ^TCore @cpu)))
 
-      { :typeid :czc.frwk.util/Scheduler } )))
+      {:typeid ::Scheduler } )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -213,7 +166,7 @@
 
   "Make a Scheduler"
 
-  (^Schedulable [] (mkScheduler ""))
+  (^Schedulable [] (mkScheduler (juid)))
   (^Schedulable [^String named] (mkSCD named)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

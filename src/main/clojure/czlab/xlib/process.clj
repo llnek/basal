@@ -40,7 +40,7 @@
   "Run this function in a separate thread"
 
   ^Thread
-  [func start & [arg]]
+  [func start? & [arg]]
 
   {:pre [(fn? func)]}
 
@@ -60,7 +60,7 @@
       (when (some? @cl)
         (.setContextClassLoader t ^ClassLoader @cl))
       (.setDaemon t (true? @daemon))
-      (when start (.start t))
+      (when start? (.start t))
       (log/debug "threadFunc: thread#%s%s%s"
                  (.getName t)
                  ", daemon = " (.isDaemon t)))

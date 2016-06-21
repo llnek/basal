@@ -23,6 +23,7 @@
     [czlab.xlib.core :refer [test-nonil]])
 
   (:import
+    [clojure.lang APersistentVector]
     [java.lang.reflect Member Field Method Modifier]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -38,7 +39,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod isChild? :class
+(defmethod isChild?
+
+  :class
 
   [^Class basz ^Class cz]
 
@@ -72,11 +75,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ^:private isXXX? ""
+(defn- isXXX?
+
+  ""
 
   [classObj classes]
 
-  `(eqAny? (gcn ~classObj) ~classes))
+  {:pre [(instance? Class classObj)]}
+
+  (eqAny? (gcn classObj) classes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -244,17 +251,19 @@
   ^Class
   [^String clazzName & [cl]]
 
-  (if (empty? clazzName)
+  (if-not (hgl? clazzName)
     nil
     (.loadClass (getCldr cl) clazzName)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti ^Object newObjArgN
+(defmulti newObjArgN
 
   "Instantiate object with arity-n constructor"
 
-  (fn [a & args] (class a)))
+  ^Object
+
+  (fn [a & xs] (class a)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -262,7 +271,7 @@
 
   [^Class cz & args]
 
-  {:pre [(some? cz)]}
+  {:pre [(some? cz)(> (count args) 0)]}
 
   (let [len (count args)
         cargs (object-array len)
@@ -304,7 +313,7 @@
   ^Object
   [^String clazzName & [cl]]
 
-  (if (empty? clazzName)
+  (if-not (hgl? clazzName)
     nil
     (ctorObj (loadClass clazzName cl))))
 
@@ -314,6 +323,7 @@
 
   "List all parent classes"
 
+  ^APersistentVector
   [^Class javaClass]
 
   {:pre [(some? javaClass)]}
@@ -327,11 +337,13 @@
                    (.getSuperclass par)))) ]
     ;; since we always add the original class,
     ;; we need to ignore it on return
-    (drop 1 rc)))
+    (into [] (drop 1 rc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- iterXXX ""
+(defn- iterXXX
+
+  ""
 
   [cz level getDeclXXX bin]
 
@@ -347,7 +359,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- listMtds ""
+(defn- listMtds
+
+  ""
 
   [^Class cz level]
 
@@ -361,7 +375,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- listFlds ""
+(defn- listFlds
+
+  ""
 
   [^Class cz level]
 

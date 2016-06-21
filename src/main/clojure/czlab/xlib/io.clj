@@ -60,6 +60,54 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn copyLarge
+
+  ""
+
+  ^long
+  [^InputStream input ^OutputStream output]
+
+  (loop [buf (byte-array (* 1024 4))
+         cnt 0
+         n (.read input buf)]
+    (if (< n 0)
+      cnt
+      (do
+        (when (> n 0)
+          (.write output buf 0 n))
+        (recur buf
+               (+ n cnt)
+               (.read input buf))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn copy
+
+  ""
+
+  ^long
+  [^InputStream input ^OutputStream output]
+
+  (let [cnt (copyLarge input output)]
+    (if (> cnt Integer/MAX_VALUE)
+      (throw (Exception. "size too large"))
+      cnt)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn toBytes
+
+  ""
+
+  ^bytes
+  [^InputStream input]
+
+  (let [out (ByteArrayOutputStream.) ]
+    (copy input out)
+    (.toByteArray out)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn streamLimit
 
   "Beyond this limit, data will be swapped out to disk (temp file)"
@@ -113,7 +161,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti writeBytes "Write this long value out as byte[]" class)
+(defmulti writeBytes "Write this long value out as byte[]" ^bytes class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -167,7 +215,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod writeBytes Integer
+(defmethod writeBytes
+
+  Integer
 
   ^bytes
   [nnum]
@@ -181,7 +231,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod writeBytes Long
+(defmethod writeBytes
+
+  Long
 
   ^bytes
   [nnum]
@@ -252,7 +304,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti openFile "Open this file path" class)
+(defmulti openFile "Open this file path" ^XStream class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -279,7 +331,7 @@
   [^bytes bits]
 
   (when (some? bits)
-    (IOUtils/toByteArray (GZIPInputStream. (streamify bits)))))
+    (toBytes (GZIPInputStream. (streamify bits)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -381,7 +433,7 @@
   (let [[^File fp ^OutputStream os]
         (openTempFile) ]
     (try
-      (IOUtils/copy inp os)
+      (copy inp os)
       (finally
         closeQ os))
     fp))
@@ -396,7 +448,33 @@
 
   (when
     (> bytesToCopy 0)
-    (IOUtils/copyLarge src out 0 ^long bytesToCopy)))
+    (copyLarge src out 0 ^long bytesToCopy)))
+    public static long copyLarge(final InputStream input, final OutputStream output,
+                                 final long inputOffset, final long length, final byte[] buffer) throws IOException {
+        if (inputOffset > 0) {
+            skipFully(input, inputOffset);
+        }
+        if (length == 0) {
+            return 0;
+        }
+        final int bufferLength = buffer.length;
+        int bytesToRead = bufferLength;
+        if (length > 0 && length < bufferLength) {
+            bytesToRead = (int) length;
+        }
+        int read;
+        long totalRead = 0;
+        while (bytesToRead > 0 && EOF != (read = input.read(buffer, 0, bytesToRead))) {
+            output.write(buffer, 0, read);
+            totalRead += read;
+            if (length > 0) { // only adjust length if not reading to the end
+                // Note the cast must work because buffer.length is an integer
+                bytesToRead = (int) Math.min(length - totalRead, bufferLength);
+            }
+        }
+        return totalRead;
+    }
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -23,10 +23,16 @@
 (deftest czlabtestxlib-i18nstuff
 
 (is (= "hello joe, how is your dawg"
-       (let [ rs (loadResource (resUrl "czlab/xlib/Resources_en.properties")) ]
-           (rstr rs "test"  "joe" "dawg" ))))
+       (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
+           (rstr "test"  "joe" "dawg" ))))
+
+(is (= ["hello joe, how is your dawg" "hello joe, how is your dawg"]
+       (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
+           (rstr* ["test"  "joe" "dawg"] ["test2"  "joe" "dawg"] ))))
 
 )
+
+
 
 ;;(clojure.test/run-tests 'czlabtest.xlib.i18nstuff)
 

@@ -38,6 +38,11 @@
   (is (not (SU/embeds? "hello joe" "JOE")))
   (is (SU/hasNoCase? "hello joe" "JOE"))
 
+  (is (== -1 (SU/indexAny "hallowed are the ori" "zku")))
+  (is (== -1 (SU/indexAny "hallowed are the ori" "")))
+  (is (== 5 (SU/indexAny "hallowed are the ori" "zkw")))
+  (is (== 1 (SU/indexAny "hallowed are the ori" "akz")))
+
   (is (not (SU/has? "hallowed are the ori" \z)))
   (is (SU/has? "hallowed are the ori" \w))
 

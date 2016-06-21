@@ -19,12 +19,12 @@
 
   (:require
     [czlab.xlib.meta :refer [getCldr]]
+    [czlab.xlib.str :refer [hgl?]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs]
     [clojure.java.io :as io])
 
   (:import
-    [org.apache.commons.lang3 StringUtils]
     [java.io File FileInputStream]
     [java.util
      Locale
@@ -37,12 +37,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti^ResourceBundle loadResource
-  "Load properties file with localized strings" class)
+(defmulti loadResource
+  "Load properties file with localized strings" ^ResourceBundle class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod loadResource File
+(defmethod loadResource
+
+  File
 
   [^File aFile]
 
@@ -50,7 +52,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod loadResource URL
+(defmethod loadResource
+
+  URL
 
   [^URL url]
 
@@ -58,14 +62,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod loadResource String
+(defmethod loadResource
+
+  String
 
   [^String path]
 
-  (with-open
-    [inp (some-> (getCldr)
-                 (.getResource path)
-                 (.openStream)) ]
+  (with-open [inp (some-> (getCldr)
+                          (.getResource path) (.openStream)) ]
     (PropertyResourceBundle. inp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -103,23 +107,27 @@
   ^String
   [^ResourceBundle bundle ^String pkey & pms]
 
-  (if (empty? pkey)
-    ""
+  (if (hgl? pkey)
     (let [kv (str (.getString bundle pkey))
           pc (count pms) ]
       ;;(log/debug "RStr key = %s, value = %s" pkey kv)
       (loop [src kv pos 0 ]
         (if (>= pos pc)
          src
-         (recur (StringUtils/replace src
-                            "{}"
-                            (str (nth pms pos)) 1)
-                (inc pos)))))))
+         (recur (.replaceFirst src
+                               "\\{\\}"
+                               (str (nth pms pos)) )
+                (inc pos)))))
+    ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn rstr* ""
+(defn rstr*
 
+  "Handle a bunch of resource keys
+  (rstr bundle [\"k1\" p1 p2] [\"k2\" p3 p4] )"
+
+  ^String
   [^ResourceBundle bundle & pms]
 
   (map #(apply rstr bundle (first %) (drop 1 %)) pms))

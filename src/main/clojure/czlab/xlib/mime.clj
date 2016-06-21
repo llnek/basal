@@ -19,17 +19,16 @@
   czlab.xlib.mime
 
   (:require
+    [czlab.xlib.str :refer [indexAny lcase ucase hgl?]]
     [czlab.xlib.core :refer [bytesify try! intoMap]]
     [czlab.xlib.meta :refer [bytesClass]]
     [czlab.xlib.logging :as log]
-    [czlab.xlib.str :refer [lcase ucase hgl?]]
     [czlab.xlib.io :refer [streamify]])
 
   (:import
-    [org.apache.commons.codec.net URLCodec]
-    [org.apache.commons.lang3 StringUtils]
     [java.io IOException InputStream File]
-    [java.net URL]
+    [java.net URL URLEncoder URLDecoder]
+    [clojure.lang APersistentMap]
     [java.util.regex Pattern Matcher]
     [java.util Properties]
     [czlab.xlib MimeFileTypes]))
@@ -121,11 +120,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn mimeCache "Cache of most MIME types" [] @_mime_cache)
+(defn mimeCache "Cache of most MIME types" ^APersistentMap [] @_mime_cache)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- isPkcs7Mime? ""
+(defn- isPkcs7Mime?
+
+  ""
 
   [^String s]
 
@@ -147,7 +148,7 @@
          ;;rc "ISO-8859-1" ]
     (if (> pos 0)
       (let [s (.substring cType (+ pos 8))
-            p (StringUtils/indexOfAny s "; \t\r\n")]
+            p (indexAny s "; \t\r\n")]
         (if (> p 0) (.substring s 0 p) s))
       rc)))
 
@@ -222,8 +223,9 @@
   ^String
   [^String u]
 
-  (when-not (empty? u)
-    (try! (-> (URLCodec. "utf-8")(.decode u)))))
+  (if (hgl? u)
+    (URLDecoder/decode u "utf-8")
+    u))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -234,8 +236,9 @@
   ^String
   [^String u]
 
-  (when-not (empty? u)
-    (try! (-> (URLCodec. "utf-8")(.encode u)))))
+  (if (hgl? u)
+    (URLEncoder/encode u "utf-8")
+    u))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

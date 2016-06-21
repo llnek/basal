@@ -141,6 +141,22 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn indexAny
+
+  "true if any one character is inside this string"
+
+  [^String bigs ^String chStr]
+
+  (if (and (hgl? chStr)
+           (hgl? bigs))
+    (let [rc (some #(let [x (.indexOf bigs (int %))]
+                      (if (< x 0) nil x))
+                   (.toCharArray chStr))]
+      (if (nil? rc) -1 (int rc)))
+    -1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro sname
 
   "Safely get the name of this object"
