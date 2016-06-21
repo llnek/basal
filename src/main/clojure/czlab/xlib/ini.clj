@@ -34,7 +34,6 @@
   (:use [flatland.ordered.map])
 
   (:import
-    [org.apache.commons.lang3 StringUtils]
     [czlab.xlib IWin32Conf]
     [java.net URL]
     [java.io
@@ -49,7 +48,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti ^IWin32Conf parseInifile "Parse a INI config file" class)
+(defmulti parseInifile "Parse a INI config file"  ^IWin32Conf class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -59,7 +58,7 @@
 
   [^LineNumberReader rdr]
 
-  (throwBadData (str "Bad ini line: " (.getLineNumber rdr))))
+  (throwBadData (format "Bad ini line: %s" (.getLineNumber rdr))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -69,7 +68,7 @@
 
   [k]
 
-  (throwBadData (str "No such property " k)))
+  (throwBadData (format "No such property %s" k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -79,7 +78,7 @@
 
   [s]
 
-  (throwBadData (str "No such section " s )))
+  (throwBadData (format "No such section %s" s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -244,7 +243,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod parseInifile String
+(defmethod parseInifile
+
+  String
 
   ^IWin32Conf
   [fpath]
@@ -254,7 +255,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod parseInifile File
+(defmethod parseInifile
+
+  File
 
   ^IWin32Conf
   [file]
@@ -284,7 +287,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod parseInifile URL
+(defmethod parseInifile
+
+  URL
 
   ^IWin32Conf
   [^URL fileUrl]

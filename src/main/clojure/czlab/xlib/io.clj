@@ -25,7 +25,8 @@
 
   (:import
     [java.util.zip GZIPInputStream GZIPOutputStream]
-    [org.apache.commons.codec.binary Base64]
+    [java.util Base64 Base64$Decoder Base64$Encoder]
+    [clojure.lang APersistentVector]
     [java.io
      ByteArrayOutputStream
      ByteArrayInputStream
@@ -44,7 +45,6 @@
      Reader
      Writer]
     [java.nio ByteBuffer CharBuffer]
-    [org.apache.commons.io IOUtils]
     [java.nio.charset Charset]
     [czlab.xlib XData XStream]
     [org.xml.sax InputSource]
@@ -60,7 +60,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn copyLarge
+(defn- copyAll
 
   ""
 
@@ -81,14 +81,37 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn copyBytes
+
+  "Copy certain number of bytes to output"
+
+  ^long
+  [^InputStream input ^OutputStream output ^long numToRead]
+
+  (let [buf (byte-array (* 1024 4))
+        bsz (alength buf)]
+    (loop [remain numToRead
+           total 0]
+      (let [len (if (< remain bsz) remain bsz)
+            n (if (> len 0) (.read input buf 0 len) -1)]
+        (if (n < 0)
+          total
+          (do
+            (when (> n 0)
+              (.write output buf 0 n))
+            (recur (long (- remain n))
+                   (long (+ total n)))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn copy
 
-  ""
+  "Copy bytes to output"
 
   ^long
   [^InputStream input ^OutputStream output]
 
-  (let [cnt (copyLarge input output)]
+  (let [cnt (copyAll input output)]
     (if (> cnt Integer/MAX_VALUE)
       (throw (Exception. "size too large"))
       cnt)))
@@ -345,7 +368,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod openFile String
+(defmethod openFile
+
+  String
 
   ^XStream
   [^String fp]
@@ -355,7 +380,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod openFile File
+(defmethod openFile
+
+  File
 
   ^XStream
   [^File f]
@@ -372,7 +399,9 @@
   [^String gzb64]
 
   (when (some? gzb64)
-    (gunzip (Base64/decodeBase64 gzb64))))
+    (-> (Base64/getDecoder)
+        (.decode gzb64)
+        (gunzip ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -384,7 +413,8 @@
   [^bytes bits]
 
   (when (some? bits)
-    (Base64/encodeBase64String (gzip bits))))
+    (-> (Base64/getEncoder)
+        (.encodeToString (gzip bits)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -392,10 +422,10 @@
 
   "Get the available bytes in this stream"
 
-  ;; int
+  ^Integer
   [^InputStream inp]
 
-  (if (nil? inp) 0 (.available inp)))
+  (if (nil? inp) (int 0) (.available inp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -416,6 +446,7 @@
 
   "A Tuple(2) [ File, OutputStream? ]"
 
+  ^APersistentVector
   []
 
   (let [fp (tempFile)]
@@ -437,44 +468,6 @@
       (finally
         closeQ os))
     fp))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn copyBytes
-
-  "Copy x number of bytes from the source input-stream"
-
-  [^InputStream src ^OutputStream out bytesToCopy]
-
-  (when
-    (> bytesToCopy 0)
-    (copyLarge src out 0 ^long bytesToCopy)))
-    public static long copyLarge(final InputStream input, final OutputStream output,
-                                 final long inputOffset, final long length, final byte[] buffer) throws IOException {
-        if (inputOffset > 0) {
-            skipFully(input, inputOffset);
-        }
-        if (length == 0) {
-            return 0;
-        }
-        final int bufferLength = buffer.length;
-        int bytesToRead = bufferLength;
-        if (length > 0 && length < bufferLength) {
-            bytesToRead = (int) length;
-        }
-        int read;
-        long totalRead = 0;
-        while (bytesToRead > 0 && EOF != (read = input.read(buffer, 0, bytesToRead))) {
-            output.write(buffer, 0, read);
-            totalRead += read;
-            if (length > 0) { // only adjust length if not reading to the end
-                // Note the cast must work because buffer.length is an integer
-                bytesToRead = (int) Math.min(length - totalRead, bufferLength);
-            }
-        }
-        return totalRead;
-    }
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -505,7 +498,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn swapBytes
+(defn- swapBytes
 
   "Swap bytes in buffer to file, returning a [File,OStream] tuple"
 
@@ -521,7 +514,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn swapChars
+(defn- swapChars
 
   "Swap chars in writer to file, returning a [File,OWriter] tuple"
 
@@ -628,20 +621,6 @@
   [^Reader rdr & [usefile]]
 
   (slurpChars rdr (if usefile 1 (streamLimit))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn morphChars
-
-  "Convert these bytes to chars"
-
-  ^chars
-  [^bytes bits & [charSet]]
-
-  (when (some? bits)
-    (let [^Charset
-          cs (or charSet (Charset/forName "utf-8")) ]
-      (IOUtils/toCharArray (streamify bits) cs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

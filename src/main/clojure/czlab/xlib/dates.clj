@@ -18,7 +18,7 @@
   czlab.xlib.dates
 
   (:require
-    [czlab.xlib.str :refer [has? hasAny?]]
+    [czlab.xlib.str :refer [has? hasAny? indexAny]]
     [czlab.xlib.core :refer [try!]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs])
@@ -34,8 +34,7 @@
      Date
      Calendar
      GregorianCalendar]
-    [java.sql Timestamp]
-    [org.apache.commons.lang3 StringUtils]))
+    [java.sql Timestamp]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -61,7 +60,7 @@
 
   [^String s]
 
-  (let [pos (StringUtils/indexOf s ",; \t\r\n\f")
+  (let [pos (indexAny s ",; \t\r\n\f")
         ss (if (> pos 0)
              (.substring s (inc pos))
              "") ]

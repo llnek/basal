@@ -100,8 +100,6 @@
                      (not (.isDiskFile ^XData x))
                      (> (.size ^XData x) 0))) ))
 
-  (is (= "heeloo" (String. (IO/morphChars (CU/bytesify "heeloo")))))
-
 
 )
 

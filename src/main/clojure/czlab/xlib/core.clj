@@ -28,7 +28,6 @@
   (:import
     [java.util.concurrent.atomic AtomicLong AtomicInteger]
     [java.util.zip DataFormatException Deflater Inflater]
-    [com.google.gson JsonObject JsonElement]
     [java.security SecureRandom]
     [czlab.xlib BadDataError]
     [clojure.lang Keyword]
@@ -54,7 +53,6 @@
     [java.sql Timestamp]
     [java.rmi.server UID]
     [org.apache.commons.lang3.text StrSubstitutor]
-    [org.apache.commons.lang3 StringUtils]
     [org.apache.commons.io IOUtils FilenameUtils]
     [org.apache.commons.lang3 SerializationUtils]))
 
@@ -442,68 +440,6 @@
   [b]
 
   (or b false))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn safeGetJsonObject
-
-  "If the field is a JsonObject, return it else nil"
-
-  ^JsonObject
-  [^JsonObject json ^String field]
-
-  (when (.has json field)
-    (-> (.get json field)
-        (.getAsJsonObject))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn safeGetJsonString
-
-  "If the field is a String, return it else nil"
-
-  ^String
-  [^JsonObject json ^String field]
-
-  (when (.has json field)
-    (-> (.get json field)
-        (.getAsString))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn safeGetJsonDouble
-
-  "If the field is a double, return it else nil"
-
-  [^JsonObject json ^String field]
-
-  (when (.has json field)
-    (-> (.get json field)
-        (.getAsDouble))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn safeGetJsonInt
-
-  "If the field is an int, return it else nil"
-
-  [^JsonObject json ^String field]
-
-  (when (.has json field)
-    (-> (.get json field)
-        (.getAsInt))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn safeGetJsonBool
-
-  "If the field is a boolean, return it else nil"
-
-  [^JsonObject json ^String field]
-
-  (when (.has json field)
-    (-> (.get json field)
-        (.getAsBoolean))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1200,7 +1136,7 @@
 
   [^String param v]
 
-  (assert (not (StringUtils/isEmpty v))
+  (assert (and (notnil? v)(> (.length v) 0))
           (str "" param " is empty")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1483,8 +1419,10 @@
     (throwBadData (str "Bad email address " email))
 
     :else
-    (let [ss (StringUtils/split email "@" 2) ]
-      (str (aget ss 0) "@" (cs/lower-case (aget ss 1))))))
+    (let [ss (.split email "@") ]
+      (if (= 2 (alength ss))
+        (str (aget ss 0) "@" (cs/lower-case (aget ss 1)))
+        (throwBadData (str "Bad email address " email))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
