@@ -17,9 +17,9 @@
     [ch.qos.logback/logback-classic "1.1.7" ]
     [ch.qos.logback/logback-core "1.1.7" ]
 
-    [org.apache.ant/ant-junit4 "1.9.7" :scope "provided"]
-    [org.apache.ant/ant-junit "1.9.7" :scope "provided"]
     [org.apache.ant/ant-launcher "1.9.7" ]
+    [org.apache.ant/ant-junit4 "1.9.7" ]
+    [org.apache.ant/ant-junit "1.9.7" ]
     [org.apache.ant/ant "1.9.7" ]
 
     ;;[commons-fileupload/commons-fileupload "1.3.1" ]
