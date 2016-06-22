@@ -27,13 +27,12 @@
   (:use [czlab.xlib.io])
 
   (:import
-    [org.apache.commons.io IOUtils  FileUtils]
-    [org.apache.commons.io.filefilter
-     FileFileFilter
-     FileFilterUtils]
+    [java.nio.file Files CopyOption StandardCopyOption]
     [java.util.zip ZipFile ZipEntry]
     [java.util Stack ArrayList]
     [java.io
+     ByteArrayOutputStream
+     ByteArrayInputStream
      File
      InputStream
      OutputStream
@@ -178,6 +177,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn writeOneFile
+
+  "Write data to file"
+
+  [^File fout ^Object data & [enc] ]
+
+  (io/copy data fout :encoding (or enc "utf-8")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn- jiggleZipEntryName
 
   "Remove leading separators from name"
@@ -201,7 +210,7 @@
         (.mkdirs (.getParentFile f))
         (with-open [inp (.getInputStream src en)
                     os (FileOutputStream. f)]
-          (IOUtils/copy inp os))))))
+          (copy inp os))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -220,108 +229,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn copyFiles
-
-  "Copy all files with *ext* (no dot) to the destination folder"
-
-  [^File srcDir ^File destDir ext]
-
-  (FileUtils/copyDirectory
-    srcDir
-    destDir
-    (->> (str "." ext)
-         (FileFilterUtils/suffixFileFilter )
-         (FileFilterUtils/andFileFilter FileFileFilter/FILE))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn copyFileToDir
-
-  "Copy a file to the target folder"
-
-  [^File fp ^File dir]
-
-  (FileUtils/copyFileToDirectory fp dir))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn moveFileToDir
-
-  "Move a file to the target folder"
-
-  [^File fp ^File dir & [mkdir]]
-
-  (FileUtils/moveFileToDirectory
-    fp
-    dir
-    (not (false? mkdir))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn copyFile
-
-  "Copy a file"
-
-  [^File fp ^File target]
-
-  (FileUtils/copyFile fp target))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn copyToDir
-
-  "Copy source folder to be a subfolder of target folder"
-
-  [^File dir ^File targetDir]
-
-  (FileUtils/copyDirectoryToDirectory dir targetDir))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn copyDirFiles
-
-  "Copy all contents in source folder to target folder"
-
-  [^File dir ^File targetDir]
-
-  (FileUtils/copyDirectory dir targetDir))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn deleteDir
-
-  "Erase the folder"
-
-  [^File dir]
-
-  (FileUtils/deleteDirectory dir))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn cleanDir
-
-  "Remove contents in this folder"
-
-  [^File dir]
-
-  (FileUtils/cleanDirectory dir))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn writeOneFile
-
-  "Write data to file"
-
-  [^File fout ^Object data & [enc] ]
-
-  (if
-    (isBytes? (class data))
-    (FileUtils/writeByteArrayToFile fout ^bytes data)
-    (->> (str  (or enc "utf-8"))
-         (FileUtils/writeStringToFile fout (str data) ))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn readFileBytes
 
   "Read bytes from a file"
@@ -329,7 +236,9 @@
   ^bytes
   [^File fp]
 
-  (FileUtils/readFileToByteArray fp))
+  (with-open [out (ByteArrayOutputStream. 4096)]
+    (io/copy fp out :buffer-size 4096)
+    (.toByteArray out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -364,10 +273,15 @@
   ;;(log/debug "saving file: %s" fname)
   (let [fp (io/file dir fname) ]
     (io/delete-file fp true)
-    (if-not
-      (.isDiskFile xdata)
+    (if-not (.isDiskFile xdata)
       (writeOneFile fp (.javaBytes xdata))
-      (FileUtils/moveFile (.fileRef xdata) fp))))
+      (let [opts (make-array CopyOption 1)]
+        (aset #^"[Ljava.nio.file.CopyOption;"
+              opts
+              0 StandardCopyOption/REPLACE_EXISTING)
+        (Files/move (.toPath (.fileRef xdata))
+                    (.toPath fp)
+                    opts)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -407,21 +321,6 @@
   [^File f]
 
   (doto f (.mkdirs)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn listAnyFiles
-
-  "Look for files with certain extensions, without the dot"
-
-  [dir exts &[recurse?]]
-
-  {:pre [(coll? exts)]}
-
-  (FileUtils/listFiles
-    (io/file dir)
-    #^"[Ljava.lang.String;"
-    (into-array String exts) (true? recurse?)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -35,8 +35,7 @@
 (eval '(do
   (.put ^Properties dummyProperties "1" "hello${user.name}")
   (.put ^Properties dummyProperties "2" "hello${PATH}")
-  (.put ^Properties dummyProperties "3" "${user.name}${PATH}")
-  (def ^:private dummyPropertiesResult (CU/subsProps dummyProperties))))
+  (.put ^Properties dummyProperties "3" "${user.name}${PATH}")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -49,9 +48,6 @@
 
   (is (not (CU/matchChar? \space #{ \a \b \x })))
   (is (CU/matchChar? \x #{ \a \b \x }))
-
-  (is (not (nil? (CU/sysVar "java.io.tmpdir"))))
-  (is (not (nil? (CU/envVar "PATH"))))
 
   (is (not (nil? (CU/juid))))
   (is (< (.indexOf (CU/juid) ":\\-") 0))
@@ -67,14 +63,6 @@
 
   (is (= "/c:/temp/abc.txt" (CU/fpath (File. "/c:\\temp\\abc.txt"))))
   (is (= "/c:/temp/abc.txt" (CU/fpath "/c:\\temp\\abc.txt")))
-
-  (is (= (str "hello" VAR_PATH "world" VAR_USER) (CU/subsVar "hello${PATH}world${user.name}")))
-  (is (= (str "hello" VAR_PATH) (CU/subsEVar "hello${PATH}")))
-  (is (= (str "hello" VAR_USER) (CU/subsSVar "hello${user.name}")))
-
-  (is (= (str VAR_USER VAR_PATH) (.getProperty ^Properties dummyPropertiesResult "3")))
-  (is (= (str "hello" VAR_USER) (.getProperty ^Properties dummyPropertiesResult "1")))
-  (is (= (str "hello" VAR_PATH) (.getProperty ^Properties dummyPropertiesResult "2")))
 
   (is (= "Java Virtual Machine Specification" (CU/sysProp "java.vm.specification.name")))
 
@@ -99,11 +87,6 @@
   (is (true? (CU/convBool "1")))
   (is (false? (CU/convBool "no")))
   (is (false? (CU/convBool "0")))
-
-  (is (= 3 (.size
-    (let [ fp (File. (str (System/getProperty "java.io.tmpdir") "/" (CU/juid))) ]
-      (with-open [ os (FileOutputStream. fp) ] (.store ^Properties dummyProperties os ""))
-      (CU/loadJavaProps fp)) )))
 
   (is (= "heeloo" (CU/stringify (CU/bytesify "heeloo"))))
 

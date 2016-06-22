@@ -17,8 +17,7 @@
   (:require [czlab.xlib.core :as CU]
             [czlab.xlib.process :as PU])
   (:use [clojure.test])
-  (:import  [org.apache.commons.io FileUtils]
-            [java.io File]))
+  (:import  [java.io File]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -30,7 +29,7 @@
 (deftest czlabtestxlib-procutils
 
   (is (true? (do
-               (PU/async! (fn [] (FileUtils/writeStringToFile ^File CUR_FP "heeloo" "utf-8")))
+               (PU/async! (fn [] (spit CUR_FP "heeloo" :encoding "utf-8")))
               (PU/safeWait 3500)
               (and (.exists ^File CUR_FP) (>= (.length ^File CUR_FP) 6)))))
 

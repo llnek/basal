@@ -14,8 +14,6 @@
 
 package czlab.xlib;
 
-
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.slf4j.LoggerFactory.getLogger;
 import org.slf4j.Logger;
@@ -89,11 +87,7 @@ public class TCore implements RejectedExecutionHandler {
   private void activate() {
     _scd= new ThreadPoolExecutor( _tds, _tds, 5000L,
         TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
-        new BasicThreadFactory.Builder()
-        .priority(Thread.NORM_PRIORITY)
-        .namingPattern(_id + "-%d")
-        .daemon(false)
-        .build(),
+        new TFac(_id),
         this );
     if (_trace) {
       TLOG.debug("Core \"{}\" activated with threads = {}" , _id , "" + _tds, "");

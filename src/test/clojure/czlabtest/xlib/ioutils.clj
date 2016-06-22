@@ -15,12 +15,12 @@
 (ns czlabtest.xlib.ioutils
 
   (:require [czlab.xlib.core :as CU]
+            [clojure.java.io :as io]
             [czlab.xlib.io :as IO])
 
   (:use [clojure.test])
 
-  (:import  [org.apache.commons.io FileUtils]
-            [java.io FileReader
+  (:import  [java.io FileReader
              File InputStream
              OutputStream FileOutputStream]
             [czlab.xlib XData XStream]))
@@ -29,7 +29,7 @@
 ;;
 (def ^:private TMP_DIR (File. (System/getProperty "java.io.tmpdir")))
 (def ^:private TMP_FP (File. ^File TMP_DIR (str (CU/juid) ".txt")))
-(eval '(do (FileUtils/writeStringToFile ^File TMP_FP "heeloo" "utf-8")))
+(eval '(do (spit TMP_FP "heeloo" :encoding "utf-8")))
 ;; force to use file
 ;;(eval '(do (czlab.xlib.IO/setStreamLimit 2)))
 

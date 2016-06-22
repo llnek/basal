@@ -35,9 +35,12 @@
     [java.net URL]
     [java.nio.charset Charset]
     [java.io
+     Serializable
      InputStream
      File
      FileInputStream
+     ObjectOutputStream
+     ObjectInputStream
      ByteArrayInputStream
      ByteArrayOutputStream]
     [java.util
@@ -51,10 +54,7 @@
      GregorianCalendar
      TimeZone]
     [java.sql Timestamp]
-    [java.rmi.server UID]
-    [org.apache.commons.lang3.text StrSubstitutor]
-    [org.apache.commons.io IOUtils FilenameUtils]
-    [org.apache.commons.lang3 SerializationUtils]))
+    [java.rmi.server UID]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -578,7 +578,9 @@
   ^String
   [^String fp]
 
-  (FilenameUtils/normalizeNoEndSeparator (str fp) true))
+  (if-not (nil? fp)
+    (cs/replace fp #"\\" "/")
+    fp))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -590,65 +592,6 @@
   (if (nil? aFile)
     ""
     (fpath (.getCanonicalPath aFile))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn subsVar
-
-  "Replaces all system & env variables in the value"
-
-  ^String
-  [^String value]
-
-  (if (nil? value)
-    ""
-    (->> value
-         (StrSubstitutor/replaceSystemProperties )
-         (.replace (StrSubstitutor. (System/getenv))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn subsSVar
-
-  "Expand any sys-var found inside the string value"
-
-  ^String
-  [^String value]
-
-  (if (nil? value)
-    ""
-    (StrSubstitutor/replaceSystemProperties value)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn subsEVar
-
-  "Expand any env-var found inside the string value"
-
-  ^String
-  [^String value]
-
-  (if (nil? value)
-    ""
-    (.replace (StrSubstitutor. (System/getenv)) value)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn subsProps
-
-  "Expand any env & sys vars found inside the property values"
-
-  ^Properties
-  [^Properties props]
-
-  (reduce
-    (fn [^Properties memo k]
-      (.put memo
-            k
-            (subsVar (.get props k)))
-      memo)
-    (Properties.)
-    (.keySet props)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -712,10 +655,14 @@
   "Object serialization"
 
   ^bytes
-  [obj]
+  [^Serializable obj]
 
-  (when (some? obj)
-    (SerializationUtils/serialize obj)))
+  {:pre [(some? obj)]}
+
+  (with-open [out (ByteArrayOutputStream. 4096)
+              oos (ObjectOutputStream. out)]
+    (.writeObject oos obj)
+    (.toByteArray out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -723,11 +670,14 @@
 
   "Object deserialization"
 
-  ^Object
+  ^Serializable
   [^bytes bits]
 
-  (when (some? bits)
-    (SerializationUtils/deserialize bits)))
+  {:pre [(some? bits)]}
+
+  (with-open [in (ByteArrayInputStream. bits)
+              ois (ObjectInputStream. in)]
+    (.readObject ois)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -945,9 +895,11 @@
      ^String encoding
      ^ClassLoader czLoader]
     (with-open
-      [inp (resStream rcPath czLoader)]
-      (-> (IOUtils/toByteArray inp)
-          (stringify  encoding ))) ))
+      [out (ByteArrayOutputStream. 4096)
+       inp (resStream rcPath czLoader)]
+      (io/copy inp out :buffer-size 4096)
+      (-> (.toByteArray out)
+          (stringify  encoding))) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -963,8 +915,10 @@
     [^String rcPath
      ^ClassLoader czLoader]
     (with-open
-      [inp (resStream rcPath czLoader) ]
-      (IOUtils/toByteArray inp))) )
+      [out (ByteArrayOutputStream. 4096)
+       inp (resStream rcPath czLoader) ]
+      (io/copy inp out :buffer-size 4096)
+      (.toByteArray out))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1134,7 +1088,7 @@
 
   "Assert string is not empty"
 
-  [^String param v]
+  [^String param ^String v]
 
   (assert (and (notnil? v)(> (.length v) 0))
           (str "" param " is empty")))

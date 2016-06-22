@@ -94,7 +94,7 @@
            total 0]
       (let [len (if (< remain bsz) remain bsz)
             n (if (> len 0) (.read input buf 0 len) -1)]
-        (if (n < 0)
+        (if (< n 0)
           total
           (do
             (when (> n 0)
@@ -188,7 +188,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn toBytes
+(defn charsToBytes
 
   "Convert char[] to byte[]"
 

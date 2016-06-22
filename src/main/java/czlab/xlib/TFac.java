@@ -26,7 +26,6 @@ import java.util.concurrent.ThreadFactory;
  * @author Kenneth Leung
  */
 @SuppressWarnings("unused")
-@Deprecated
 public class TFac implements ThreadFactory {
 
   private ThreadFactory _fac = Executors.defaultThreadFactory();

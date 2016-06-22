@@ -15,19 +15,19 @@
 (ns czlabtest.xlib.fileutils
 
   (:require [czlab.xlib.files :as FU]
-            [czlab.xlib.core :as CU])
+            [czlab.xlib.core :as CU]
+            [clojure.java.io :as io])
 
   (:use [clojure.test])
 
-  (:import  [org.apache.commons.io FileUtils]
-            [czlab.xlib XData]
+  (:import  [czlab.xlib XData]
             [java.io File]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (def ^:private TMP_DIR (File. (System/getProperty "java.io.tmpdir")))
 (def ^:private TMP_FP (File. ^File TMP_DIR (str (CU/juid) ".txt")))
-(eval '(do (FileUtils/writeStringToFile ^File TMP_FP "heeloo")))
+(eval '(do (spit TMP_FP "heeloo" :encoding "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -47,7 +47,7 @@
 
 (is (= "heeloo" (let [ fp (str (CU/juid) ".txt") ]
                     (FU/saveFile ^File TMP_DIR fp (FU/getFile ^File TMP_DIR (.getName ^File TMP_FP)))
-                    (FileUtils/readFileToString (File. ^File TMP_DIR fp) "utf-8")) ))
+                    (slurp (File. ^File TMP_DIR fp) :encoding "utf-8")) ))
 
 
 )
