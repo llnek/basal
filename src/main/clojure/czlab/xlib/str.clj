@@ -37,13 +37,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
+(def ^:private HEXCHS (.toCharArray "0123456789abcdef"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro stror "If not s then s2" [s s2] `(let [s# ~s] (if (empty? s#) ~s2 s#)))
 (defmacro lcase "Lowercase string" [s] `(if-some [s# ~s] (cs/lower-case s#) ""))
 (defmacro ucase "Uppercase string" [s] `(if-some [s# ~s] (cs/upper-case s#) ""))
-
+;;#^"[Ljava.lang.Class;"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro hgl?
@@ -154,6 +155,36 @@
                    (.toCharArray chStr))]
       (if (nil? rc) -1 (int rc)))
     -1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn countStr
+
+  "Count how many times this substring appears in the source string"
+  [^String src ^String sub]
+
+  (if (and (hgl? src)
+           (hgl? sub))
+    (loop [len (.length sub)
+           total 0
+           start 0]
+      (let [pos (.indexOf src sub start)]
+        (if (< pos 0)
+          total
+          (recur len (inc total) (+ pos len)))))
+    0))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn countChar
+
+  ""
+  [^String src ^Character ch]
+
+  (reduce
+    #(if (= ch %2) (inc %1) %1)
+    0
+    (.toCharArray src)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

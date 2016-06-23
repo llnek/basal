@@ -307,7 +307,7 @@
       (when-not (>= pos len)
         (let [n (bit-and (aget ^bytes bits k) 0xff) ]
           (aset-char out pos
-                     (aget ^chars HEX_CHS (bit-shift-right n 4))) ;; high 4 bits
+                     (aget ^chars HEX_CHS (unsigned-bit-shift-right n 4))) ;; high 4 bits
           (aset-char out (+ pos 1)
                      (aget ^chars HEX_CHS (bit-and n 0xf))) ;; low 4 bits
           (recur (inc k) (+ 2 pos)) )))
