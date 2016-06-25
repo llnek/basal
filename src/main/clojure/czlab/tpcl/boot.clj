@@ -617,7 +617,8 @@
   (se!
     :CPATH
     (fn [_]
-      [[:location (ge :jzzDir)]
+      [[:location (fp! (ge :basedir) "artifacts")]
+       [:location (ge :jzzDir)]
        [:location (ge :czzDir)]
        [:fileset {:dir (ge :libDir)
                   :includes "**/*.jar"}]]))
@@ -778,8 +779,8 @@
   []
 
   (bc/with-pre-wrap fileset
-    (let [from (io/file (ge :basedir)
-                        (ge :target-path))
+    (let [target (io/file (ge :basedir)
+                          (ge :target-path))
           jars (output-files fileset)
           to (io/file (ge :libDir))]
       (a/runTarget
@@ -796,7 +797,7 @@
             (a/antCopy {:file (fp! dir pn)
                         :todir to}))))
       (println (format "copied (%d) jars to %s" (count jars) to))
-    fileset)))
+      fileset)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
