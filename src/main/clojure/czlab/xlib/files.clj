@@ -298,7 +298,8 @@
     (when (fileRead? fp)
       (doto xs
         (.setDeleteFile false)
-        (.resetContent fp)))))
+        (.resetContent fp)))
+    xs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
