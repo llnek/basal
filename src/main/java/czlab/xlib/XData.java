@@ -72,7 +72,7 @@ public class XData implements Serializable {
     reset();
   }
 
-  public boolean isDiskFile() {
+  public boolean isFile() {
     return _data instanceof File;
   }
 

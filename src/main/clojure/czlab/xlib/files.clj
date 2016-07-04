@@ -273,7 +273,7 @@
   ;;(log/debug "saving file: %s" fname)
   (let [fp (io/file dir fname) ]
     (io/delete-file fp true)
-    (if-not (.isDiskFile xdata)
+    (if-not (.isFile xdata)
       (writeOneFile fp (.javaBytes xdata))
       (let [opts (make-array CopyOption 1)]
         (aset #^"[Ljava.nio.file.CopyOption;"

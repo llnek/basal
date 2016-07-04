@@ -77,27 +77,27 @@
                       (IO/copyBytes inp os 4)))
                   (>= (.length ^File v) 4))))
 
-  (is (true? (.isDiskFile (IO/newXData true))))
-  (is (false? (.isDiskFile (IO/newXData))))
+  (is (true? (.isFile (IO/newXData true))))
+  (is (false? (.isFile (IO/newXData))))
 
   (is (true? (let [ x (with-open [ ^InputStream inp (IO/openFile TMP_FP)] (IO/readBytes inp true))]
                 (and (instance? XData x)
-                     (.isDiskFile ^XData x)
+                     (.isFile ^XData x)
                      (> (.size ^XData x) 0))) ))
 
   (is (true? (let [ x (with-open [ ^InputStream inp (IO/openFile TMP_FP)] (IO/readBytes inp))]
                 (and (instance? XData x)
-                     (not (.isDiskFile ^XData x))
+                     (not (.isFile ^XData x))
                      (> (.size ^XData x) 0))) ))
 
   (is (true? (let [ x (with-open [ rdr (FileReader. ^File TMP_FP)] (IO/readChars rdr true))]
                 (and (instance? XData x)
-                     (.isDiskFile ^XData x)
+                     (.isFile ^XData x)
                      (> (.size ^XData x) 0))) ))
 
   (is (true? (let [ x (with-open [ rdr (FileReader. ^File TMP_FP)] (IO/readChars rdr))]
                 (and (instance? XData x)
-                     (not (.isDiskFile ^XData x))
+                     (not (.isFile ^XData x))
                      (> (.size ^XData x) 0))) ))
 
 
