@@ -9,10 +9,11 @@
 
   :dependencies '[
 
-    [org.apache.ant/ant-apache-log4j "1.9.7" :exclusions [log4j]]
+    ;;[org.apache.ant/ant-apache-log4j "1.9.7" :exclusions [log4j]]
     [ant-contrib/ant-contrib "1.0b3" :exclusions [ant]]
 
-    [org.apache.logging.log4j/log4j-core "2.5" ]
+    ;;[org.apache.logging.log4j/log4j-slf4j-impl "2.6.1"]
+    ;;[org.apache.logging.log4j/log4j-core "2.6.1" ]
     [org.slf4j/slf4j-api "1.7.21" ]
     [ch.qos.logback/logback-classic "1.1.7" ]
     [ch.qos.logback/logback-core "1.1.7" ]
