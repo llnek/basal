@@ -23,6 +23,7 @@
 
   (:import
     [java.util Arrays Collection Iterator StringTokenizer]
+    [java.net URLEncoder URLDecoder]
     [clojure.lang
      Keyword
      APersistentVector]
@@ -520,6 +521,28 @@
   [^String fmt & args]
 
   (String/format fmt (into-array Object args)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn urldecode
+
+  ""
+
+  ^String
+  [^String s & [enc]]
+
+  (URLDecoder/decode s ^String (or enc "utf-8")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn urlencode
+
+  ""
+
+  ^String
+  [^String s & [enc]]
+
+  (URLEncoder/encode s ^String (or enc "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

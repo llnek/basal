@@ -28,10 +28,11 @@
   (:import
     [java.util.concurrent.atomic AtomicLong AtomicInteger]
     [java.util.zip DataFormatException Deflater Inflater]
+    [czlab.xlib MonoFlop Muble Watch]
+    [java.util.concurrent TimeUnit]
     [java.security SecureRandom]
     [czlab.xlib BadDataError]
     [clojure.lang Keyword]
-    [czlab.xlib Muble]
     [java.net URL]
     [java.nio.charset Charset]
     [java.io
@@ -242,6 +243,53 @@
 (defonce KiloBytes 1024)
 (defonce MegaBytes (* 1024 1024))
 (defonce NICHTS (TypeNichts.))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn newMonoFlop
+
+  ""
+  []
+
+  (let [toggled (atom false)]
+    (reify
+
+      MonoFlop
+
+      (firstCall [_]
+        (not
+          (if @toggled
+            true
+            (do
+              (reset! toggled true)
+              false)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn newWatch
+
+  ""
+
+  ^Watch
+  []
+
+  (let [start (atom (System/nanoTime))]
+    (reify
+
+      Watch
+
+      (reset [_] (reset! start (System/nanoTime)))
+
+      (elapsedMillis [_]
+        (-> TimeUnit/MILLISECONDS
+            (.convert (- (System/nanoTime) @start)
+                      TimeUnit/NANOSECONDS)))
+
+      (elapsedNanos [_]
+        (-> TimeUnit/NANOSECONDS
+            (.convert (- (System/nanoTime) @start)
+                      TimeUnit/NANOSECONDS))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
