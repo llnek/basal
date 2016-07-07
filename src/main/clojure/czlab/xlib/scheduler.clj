@@ -18,19 +18,20 @@
   czlab.xlib.scheduler
 
   (:require
-    [czlab.xlib.core
-     :refer [trap!
-             exp!
-             nextInt
-             juid
-             mubleObj!]]
+    [czlab.xlib.core :refer [cast? juid]]
     [czlab.xlib.logging :as log]
     [czlab.xlib.str :refer [toKW hgl?]])
 
   (:import
-    [czlab.xlib RunnableWithId Schedulable TCore]
-    [czlab.xlib Activable Identifiable Named]
     [java.util.concurrent ConcurrentHashMap]
+    [czlab.xlib
+     Schedulable
+     TCore
+     Disposable
+     Activable
+     Identifiable
+     Named
+     RunnableWithId]
     [java.util Map Properties Timer TimerTask]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,34 +41,32 @@
 ;;
 (defn- xrefPID
 
-  "id of this runnable or nil"
+  ""
 
-  [runable]
+  ^Object
+  [r]
 
   (when
-    (instance? Identifiable runable)
-    (.id ^Identifiable runable)))
+    (instance? Identifiable r)
+    (.id ^Identifiable r)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- preRun
 
-  "Stuff to do before running the task"
+  ""
+  [hQ w]
 
-  [^Map hQ ^Map rQ w]
-
-  (when-some [pid (xrefPID w) ]
-    (.remove hQ pid)
-    (.put rQ pid w)))
+  (when-some [pid (xrefPID w)]
+    (.remove ^Map hQ pid)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- addTimer
 
-  "Schedule a timer task"
+  ""
 
-  [^Timer timer ^TimerTask task
-   ^long delayMillis]
+  [^Timer timer ^TimerTask task ^long delayMillis]
 
   (.schedule timer task delayMillis))
 
@@ -75,53 +74,46 @@
 ;;
 (defn- mkSCD
 
-  "Make a Scheduler"
+  ""
 
   ^Schedulable
   [^String named]
 
-  (let [jid (if-not (hgl? named)
-              (format "scheduler-%03d" (nextInt))
-              named)
+  (let [timer (atom (Timer. named true))
         holdQ (ConcurrentHashMap.)
-        runQ (ConcurrentHashMap.)
-        timer (atom nil)
-        cpu (atom nil)
-        impl (mubleObj!) ]
-    (reset! timer (Timer. jid true))
+        cpu (atom nil)]
     (with-meta
       (reify
 
         Schedulable
 
-        (dequeue [_ w]
-          (when-some [pid (xrefPID w)]
-            (.remove runQ pid)))
+        (dequeue [_ w] )
 
         (run [this w]
-          (when-some [^Runnable r w]
-            (preRun holdQ runQ r)
+          (when-some [^Runnable
+                      r (cast? Runnable w)]
+            (preRun holdQ r)
             (-> ^TCore
                 @cpu
-                (.schedule r))))
+                (.execute r))))
 
         (postpone [me w delayMillis]
           (cond
             (< delayMillis 0) (.hold me w)
-            (= delayMillis 0) (.run me w)
+            (== delayMillis 0) (.run me w)
             :else
-            (do
-              (addTimer @timer
-                (proxy [TimerTask] []
-                  (run [] (.wakeup me w))) delayMillis)) ))
+            (addTimer @timer
+                      (proxy
+                        [TimerTask][]
+                        (run [] (.wakeup me w)))
+                      delayMillis)))
 
         (hold [this w]
           (.hold this (xrefPID w) w))
 
         (hold [_ pid w]
           (when (some? pid)
-            (.remove runQ pid)
-            (.put holdQ pid w) ))
+            (.put holdQ pid w)))
 
         (wakeup [this w]
           (.wakeAndRun this (xrefPID w) w))
@@ -129,18 +121,18 @@
         (wakeAndRun [this pid w]
           (when (some? pid)
             (.remove holdQ pid)
-            (.put runQ pid w)
-            (.run this w) ))
+            (.run this w)))
 
         (reschedule [this w]
           (when (some? w)
             (.run this w)))
 
+        Disposable
+
         (dispose [_]
           (let [^TCore c @cpu]
             (.cancel ^Timer @timer)
             (.clear holdQ)
-            (.clear runQ)
             (when (some? c) (.dispose c))))
 
         Activable
@@ -148,14 +140,13 @@
         (activate [_ options]
           (let [^long t (or (:threads options) 4)
                 b (not (false? (:trace options)))
-                c (TCore. jid t b) ]
+                c (TCore. named t b)]
             (reset! cpu c)
             (.start c)))
 
         (deactivate [_]
           (.cancel ^Timer @timer)
           (.clear holdQ)
-          (.clear runQ)
           (.stop ^TCore @cpu)))
 
       {:typeid ::Scheduler } )))
@@ -166,7 +157,7 @@
 
   "Make a Scheduler"
 
-  (^Schedulable [] (mkScheduler (juid)))
+  (^Schedulable [] (mkScheduler (juid) ))
   (^Schedulable [^String named] (mkSCD named)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

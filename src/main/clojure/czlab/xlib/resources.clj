@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Locale resources."
+(ns ^{:doc "Locale resources"
       :author "Kenneth Leung" }
 
   czlab.xlib.resources
@@ -29,7 +29,7 @@
     [java.util
      Locale
      ResourceBundle
-     PropertyResourceBundle ]
+     PropertyResourceBundle]
     [java.net URL]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,7 +58,7 @@
 
   [^URL url]
 
-  (with-open [inp (.openStream url) ] (PropertyResourceBundle. inp)))
+  (with-open [inp (.openStream url)] (PropertyResourceBundle. inp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -111,7 +111,7 @@
     (let [kv (str (.getString bundle pkey))
           pc (count pms) ]
       ;;(log/debug "RStr key = %s, value = %s" pkey kv)
-      (loop [src kv pos 0 ]
+      (loop [src kv pos 0]
         (if (>= pos pc)
          src
          (recur (.replaceFirst src

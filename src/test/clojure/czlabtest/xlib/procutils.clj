@@ -14,28 +14,47 @@
 
 (ns czlabtest.xlib.procutils
 
-  (:require [czlab.xlib.core :as CU]
-            [czlab.xlib.process :as PU])
+  (:require
+    [czlab.xlib.process :as PU]
+    [clojure.java.io :as io]
+    [czlab.xlib.core :as CU])
+
   (:use [clojure.test])
   (:import  [java.io File]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private CUR_MS (System/currentTimeMillis))
-(def ^:private CUR_FP (File. (str (System/getProperty "java.io.tmpdir") "/" CUR_MS)))
+(def ^:private CUR_MS (str (System/currentTimeMillis)))
+(def ^:private CUR_FP (io/file (System/getProperty "java.io.tmpdir") CUR_MS))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestxlib-procutils
 
   (is (true? (do
-               (PU/async! (fn [] (spit CUR_FP "heeloo" :encoding "utf-8")))
-              (PU/safeWait 3500)
-              (and (.exists ^File CUR_FP) (>= (.length ^File CUR_FP) 6)))))
+               (PU/async! #(spit CUR_FP "123" :encoding "utf-8"))
+               (PU/safeWait 2500)
+               (and (.exists ^File CUR_FP)
+                    (>= (.length ^File CUR_FP) 3)))))
 
-(is (> (.length (PU/processPid)) 0))
+  (is (true? (do
+               (PU/delayExec #(spit CUR_FP "123456" :encoding "utf-8") 1500)
+               (PU/safeWait 2500)
+               (and (.exists ^File CUR_FP)
+                    (>= (.length ^File CUR_FP) 6)))))
 
+  (is (true? (do
+               (PU/syncBlockExec
+                 (String. "lock")
+                 (fn [a & xs]
+                   (spit CUR_FP (apply str a xs) :encoding "utf-8"))
+                 "123" "456" "789")
+               (and (.exists ^File CUR_FP)
+                    (>= (.length ^File CUR_FP) 9)))))
 
+  (is (> (.length (PU/processPid)) 0))
+
+    ;;
 )
 
 ;;(clojure.test/run-tests 'czlabtest.xlib.procutils)

@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Load and query win32 .ini file."
+(ns ^{:doc "Access to a win32 .ini file"
       :author "Kenneth Leung" }
 
   czlab.xlib.ini
@@ -41,7 +41,7 @@
      PrintStream
      IOException
      InputStreamReader
-     LineNumberReader ]))
+     LineNumberReader]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -176,61 +176,62 @@
   [sects]
 
   (reify
+
     IWin32Conf
 
-    (sectionKeys [_]
+    (headings [_]
       (persistent!
         (reduce
           #(conj! %1 (:name (meta %2)))
           (transient #{})
           (vals sects))))
 
-    (getSection [_ sect]
+    (heading [_ sect]
       (let [sn (keyword (lcase sect))]
         (reduce #(assoc %1
                         (first %2) (last %2))
                 (sorted-map)
                 (or (vals (get sects sn)) []))))
 
-    (getString [this section property]
-      (str (getKV sects section property true)))
+    (strValue [this section prop]
+      (str (getKV sects section prop true)))
 
-    (getString [this section property dft]
-      (if-some [rc (getKV sects section property false) ]
+    (strValue [this section prop dft]
+      (if-some [rc (getKV sects section prop false) ]
         rc
         dft))
 
-    (getLong [this section property dft]
-      (if-some [rc (getKV sects section property false) ]
+    (longValue [this section prop dft]
+      (if-some [rc (getKV sects section prop false) ]
         (convLong rc)
         dft))
 
-    (getLong [this section property]
-      (convLong (getKV sects section property true) 0))
+    (longValue [this section prop]
+      (convLong (getKV sects section prop true) 0))
 
-    (getInt [this section property dft]
-      (if-some [rc (getKV sects section property false) ]
+    (intValue [this section prop dft]
+      (if-some [rc (getKV sects section prop false) ]
         (convInt rc dft)
         dft))
 
-    (getInt [this section property]
-      (convInt (getKV sects section property true) ))
+    (intValue [this section prop]
+      (convInt (getKV sects section prop true) ))
 
-    (getDouble [this section property dft]
-      (if-some [rc (getKV sects section property false) ]
+    (doubleValue [this section prop dft]
+      (if-some [rc (getKV sects section prop false) ]
         (convDouble rc dft)
         dft))
 
-    (getDouble [this section property]
-      (convDouble (getKV sects section property true) ))
+    (doubleValue [this section prop]
+      (convDouble (getKV sects section prop true) ))
 
-    (getBool [this section property dft]
-      (if-some [rc (getKV sects section property false) ]
+    (boolValue [this section prop dft]
+      (if-some [rc (getKV sects section prop false) ]
         (convBool rc dft)
         dft))
 
-    (getBool [this section property]
-      (convBool (getKV sects section property true) ))
+    (boolValue [this section prop]
+      (convBool (getKV sects section prop true) ))
 
     (dbgShow [_]
       (let [buf (StringBuilder.)]

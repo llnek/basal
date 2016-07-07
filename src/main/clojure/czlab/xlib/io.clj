@@ -37,6 +37,7 @@
      FileOutputStream
      CharArrayWriter
      OutputStreamWriter
+     IOException
      File
      InputStream
      InputStreamReader
@@ -53,9 +54,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(def ^:private ^chars HEX_CHS (.toCharArray "0123456789ABCDEF"))
-(def ^:private _slimit (atom (* 4 1024 1024)))
-(def ^:private _wd
+(defonce ^:private ^chars HEX_CHS (.toCharArray "0123456789abcdef"))
+(defonce ^:private _slimit (atom (* 4 1024 1024)))
+(defonce ^:private BUF_SZ (* 4 1024))
+(defonce ^:private _wd
   (atom (io/file (System/getProperty "java.io.tmpdir"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -67,7 +69,7 @@
   ^long
   [^InputStream input ^OutputStream output]
 
-  (loop [buf (byte-array (* 1024 4))
+  (loop [buf (byte-array BUF_SZ)
          cnt 0
          n (.read input buf)]
     (if (< n 0)
@@ -88,7 +90,7 @@
   ^long
   [^InputStream input ^OutputStream output ^long numToRead]
 
-  (let [buf (byte-array (* 1024 4))
+  (let [buf (byte-array BUF_SZ)
         bsz (alength buf)]
     (loop [remain numToRead
            total 0]
@@ -113,7 +115,7 @@
 
   (let [cnt (copyAll input output)]
     (if (> cnt Integer/MAX_VALUE)
-      (throw (Exception. "size too large"))
+      (throw (IOException. "size too large"))
       cnt)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -125,7 +127,7 @@
   ^bytes
   [^InputStream input]
 
-  (let [out (ByteArrayOutputStream.) ]
+  (let [out (ByteArrayOutputStream.)]
     (copy input out)
     (.toByteArray out)))
 
@@ -180,7 +182,7 @@
   ^ByteArrayOutputStream
   [ & [size] ]
 
-  (ByteArrayOutputStream. (int (or size 4096))))
+  (ByteArrayOutputStream. (int (or size BUF_SZ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -437,7 +439,7 @@
   [ & [pfx sux] ]
 
   (File/createTempFile
-    (if (> (count pfx) 2) pfx "tmp-")
+    (if (> (count pfx) 2) pfx "tmp")
     (if (> (count sux) 2) sux ".dat")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -466,7 +468,7 @@
     (try
       (copy inp os)
       (finally
-        closeQ os))
+        (closeQ os)))
     fp))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -540,7 +542,7 @@
 
   (with-local-vars
     [os (byteOS) fout nil]
-    (loop [bits (byte-array 4096)
+    (loop [bits (byte-array BUF_SZ)
            cnt 0
            c (.read inp bits)]
       (if
@@ -574,9 +576,9 @@
   [^Reader rdr limit]
 
   (with-local-vars
-    [wtr (CharArrayWriter. (int 4096))
+    [wtr (CharArrayWriter. (int BUF_SZ))
      fout nil]
-    (loop [carr (char-array 4096)
+    (loop [carr (char-array BUF_SZ)
            cnt 0
            c (.read rdr carr)]
       (if

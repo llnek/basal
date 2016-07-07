@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Logging api."
+(ns ^{:doc "Logging api"
       :author "Kenneth Leung" }
 
   czlab.xlib.logging

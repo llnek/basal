@@ -306,8 +306,8 @@
   [^String src ^String unwantedChars & [whitespace?]]
 
   (let [s (-> (if whitespace? (strim src) src)
-              (trimr unwantedChars)
-              (triml unwantedChars))]
+              (triml unwantedChars)
+              (trimr unwantedChars))]
     (if whitespace? (strim s) s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -336,113 +336,108 @@
   ^APersistentVector
   [^String largeString chunkLength]
 
-  (if-not (hgl? largeString)
-    []
-    (loop [ret (transient [])
-           src largeString ]
-      (if (<= (.length src) chunkLength)
-        (persistent! (if (> (.length src) 0)
-                       (conj! ret src)
-                       ret))
-        (recur (conj! ret (.substring src 0 chunkLength))
-               (.substring src chunkLength))))))
+  (if (and (hgl? largeString)
+           (pos? chunkLength))
+    (into [] (map #(cs/join "" %1)
+                  (partition-all chunkLength largeString)))
+    []))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn hasicAny?
 
-  "Match against a list of possible args. (ignoring case)"
+  "true if src contains any one of these strs. (ignore case)"
 
-  [^String src substrs]
+  [^String src listOfSubstrs]
 
-  {:pre [(coll? substrs)]}
+  {:pre [(coll? listOfSubstrs)]}
 
-  (if (or (empty? substrs)
+  (if (or (empty? listOfSubstrs)
           (nil? src))
     false
     (let [lc (lcase src)]
-      (true? (some #(>= (.indexOf lc (lcase %)) 0) substrs)))))
+      (true? (some #(>= (.indexOf lc (lcase %)) 0) listOfSubstrs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn hasAny?
 
-  "Returns true if src contains one of these substrings"
+  "true if src contains any one of these strs. (ignore case)"
 
-  [^String src substrs]
+  [^String src listOfSubstrs]
 
-  {:pre [(coll? substrs)]}
+  {:pre [(coll? listOfSubstrs)]}
 
-  (if (or (empty? substrs)
+  (if (or (empty? listOfSubstrs)
           (nil? src))
     false
-    (true? (some #(>= (.indexOf src ^String %) 0) substrs))))
+    (true? (some #(>= (.indexOf src ^String %) 0) listOfSubstrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn ewicAny?
 
-  "Tests endsWith() no-case, looping through
+  "true if endsWith() ignore-case, looping through
    the list of possible suffixes"
 
-  [^String src suxs]
+  [^String src listOfSubstrs]
 
-  {:pre [(coll? suxs)]}
+  {:pre [(coll? listOfSubstrs)]}
 
-  (if (or (empty? suxs)
+  (if (or (empty? listOfSubstrs)
           (nil? src))
     false
     (let [lc (lcase src)]
-      (true? (some #(.endsWith lc (lcase %)) suxs)))))
+      (true? (some #(.endsWith lc (lcase %)) listOfSubstrs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn ewAny?
 
-  "Tests endsWith(), looping through
+  "true if endsWith(), looping through
    the list of possible suffixes"
 
-  [^String src suxs]
+  [^String src listOfSubstrs]
 
-  {:pre [(coll? suxs)]}
+  {:pre [(coll? listOfSubstrs)]}
 
-  (if (or (empty? suxs)
+  (if (or (empty? listOfSubstrs)
           (nil? src))
     false
-    (true? (some #(.endsWith src ^String %) suxs))))
+    (true? (some #(.endsWith src ^String %) listOfSubstrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn swicAny?
 
-  "Tests startWith() no-case, looping through
+  "true if startWith() ignore-case, looping through
    the list of possible prefixes"
 
-  [^String src pfxs]
+  [^String src listOfSubstrs]
 
-  {:pre [(coll? pfxs)]}
+  {:pre [(coll? listOfSubstrs)]}
 
-  (if (or (empty? pfxs)
+  (if (or (empty? listOfSubstrs)
           (nil? src))
     false
     (let [lc (lcase src)]
-      (true? (some #(.startsWith lc (lcase %)) pfxs)))))
+      (true? (some #(.startsWith lc (lcase %)) listOfSubstrs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn swAny?
 
-  "Tests startWith(), looping through
+  "true if startWith(), looping through
    the list of possible prefixes"
 
-  [^String src pfxs]
+  [^String src listOfSubstrs]
 
-  {:pre [(coll? pfxs)]}
+  {:pre [(coll? listOfSubstrs)]}
 
-  (if (or (empty? pfxs)
+  (if (or (empty? listOfSubstrs)
           (nil? src))
     false
-    (true? (some #(.startsWith src ^String %) pfxs))))
+    (true? (some #(.startsWith src ^String %) listOfSubstrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -457,33 +452,33 @@
 ;;
 (defn eqicAny?
 
-  "Tests String.equals() against a
+  "true if String.equals() against a
    list of possible args. (ignore-case)"
 
-  [^String src strs]
+  [^String src listOfSubstrs]
 
-  {:pre [(coll? strs)]}
+  {:pre [(coll? listOfSubstrs)]}
 
-  (if (or (empty? strs)
+  (if (or (empty? listOfSubstrs)
           (nil? src))
     false
     (let [lc (lcase src)]
-      (true? (some #(.equals lc (lcase %)) strs)))))
+      (true? (some #(.equals lc (lcase %)) listOfSubstrs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn eqAny?
 
-  "Tests String.equals() against a list of possible args"
+  "true if String.equals() against a list of possible args"
 
-  [^String src strs]
+  [^String src listOfSubstrs]
 
-  {:pre [(coll? strs)]}
+  {:pre [(coll? listOfSubstrs)]}
 
-  (if (or (empty? strs)
+  (if (or (empty? listOfSubstrs)
           (nil? src))
     false
-    (true? (some #(.equals src %) strs))))
+    (true? (some #(.equals src %) listOfSubstrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -509,7 +504,7 @@
   [^String src len]
 
   (if (or (<= len 0)
-          (nil? src))
+          (empty? src))
     ""
     (if (< (.length src) len)
       src
@@ -525,7 +520,7 @@
   [^String src len]
 
   (if (or (<= len 0)
-          (nil? src))
+          (empty? src))
     ""
     (if (< (.length src) len)
       src
@@ -543,7 +538,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn urldecode
+(defn urlDecode
 
   ""
 
@@ -554,7 +549,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn urlencode
+(defn urlEncode
 
   ""
 

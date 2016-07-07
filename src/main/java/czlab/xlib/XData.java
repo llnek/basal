@@ -72,7 +72,7 @@ public class XData implements Serializable {
    *
    * @param del true to delete, false ignore.
    */
-  public XData setDeleteFile(boolean del) {
+  public XData setDeleteFlag(boolean del) {
     _cls= del;
     return this;
   }
@@ -113,7 +113,7 @@ public class XData implements Serializable {
     else {
       _data=obj;
     }
-    setDeleteFile(del);
+    setDeleteFlag(del);
     return this;
   }
 

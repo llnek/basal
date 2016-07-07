@@ -12,8 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Handlers for common file formats
-           such as JSON, EDN."
+(ns ^{:doc "Handlers for common file formats such as JSON, EDN"
       :author "Kenneth Leung" }
 
   czlab.xlib.format
@@ -44,11 +43,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti readEdn "Parse EDN formatted text" (fn [a] (class a)))
+(defmulti readEdn "Parse EDN formatted text" class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readEdn File
+(defmethod readEdn
+
+  File
 
   [^File fp]
 
@@ -56,7 +57,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readEdn String
+(defmethod readEdn
+
+  String
 
   [^String s]
 
@@ -64,7 +67,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readEdn URL
+(defmethod readEdn
+
+  URL
 
   [^URL url]
 
@@ -98,6 +103,7 @@
   "Parse JSON into object"
 
   (^String [^String data] (js/read-str data))
+
   (^String [^String data keyfn]
            (js/read-str data :key-fn keyfn)))
 

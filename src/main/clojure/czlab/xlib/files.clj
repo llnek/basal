@@ -274,7 +274,7 @@
   (let [fp (io/file dir fname) ]
     (io/delete-file fp true)
     (if-not (.isFile xdata)
-      (writeOneFile fp (.javaBytes xdata))
+      (writeOneFile fp (.getBytes xdata))
       (let [opts (make-array CopyOption 1)]
         (aset #^"[Ljava.nio.file.CopyOption;"
               opts
@@ -297,8 +297,8 @@
         xs (XData.) ]
     (when (fileRead? fp)
       (doto xs
-        (.setDeleteFile false)
-        (.resetContent fp)))
+        (.setDeleteFlag false)
+        (.reset fp)))
     xs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

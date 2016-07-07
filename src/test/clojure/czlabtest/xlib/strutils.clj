@@ -21,6 +21,20 @@
 ;;
 (deftest czlabtestxlib-strutils
 
+  (is (= "ABC" (SU/ucase "abc")))
+  (is (= "abc" (SU/lcase "ABC")))
+
+  (is (= "" (SU/ucase nil)))
+  (is (= "" (SU/lcase nil)))
+
+  (is (not (SU/hgl? nil)))
+  (is (not (SU/hgl? "")))
+  (is (SU/hgl? "aaa"))
+
+  (is (= "b" (SU/stror nil "b")))
+  (is (= "b" (SU/stror "" "b")))
+  (is (= "a" (SU/stror "a" "b")))
+
   (is (= "abcdefghijk" (SU/triml "abcdefghijk" "xyz")))
   (is (= "defghijk" (SU/triml "abcdefghijk" "abc")))
   (is (= "" (SU/triml "abcdefghijk" "abcdefghijk")))
@@ -28,6 +42,12 @@
   (is (= "abcdefghijk" (SU/trimr "abcdefghijk" "xyz")))
   (is (= "abcdefgh" (SU/trimr "abcdefghijk" "ijk")))
   (is (= "" (SU/trimr "abcdefghijk" "abcdefghijk")))
+
+  (is (== 4 (SU/countChar "abcaaazzz" \a)))
+  (is (== 0 (SU/countChar "abcaaazzz" \A)))
+
+  (is (== 4 (SU/countStr "abcaaazzz" "a")))
+  (is (== 0 (SU/countStr "abcaaazzz" "A")))
 
   (is (= ["abc" "def" "ghijk"] (SU/splitTokens "abc,def,ghijk,,,," ",")))
   (is (= ["abc" ":" "def"] (SU/splitTokens "abc:def" ":" true)))
@@ -45,6 +65,10 @@
 
   (is (not (SU/has? "hallowed are the ori" \z)))
   (is (SU/has? "hallowed are the ori" \w))
+
+  (is (= "abc" (SU/sname "abc")))
+  (is (= "abc" (SU/sname :abc)))
+  (is (nil? (SU/sname nil)))
 
   (is (= :a/b/c (SU/toKW "a" "b" "c")))
   (is (nil? (SU/toKW )))
@@ -92,16 +116,26 @@
   (is (SU/swAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "ha" ]))
   (is (not (SU/swAny? "hallowed are the ori" [ "sdfsdg" "jffflf" ])))
 
+  (is (SU/ewicAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "Ori" ]))
+  (is (SU/ewAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "ori" ]))
+  (is (not (SU/ewAny? "hallowed are the ori" [ "sdfsdg" "jffflf" ])))
+
   (is (SU/eqicAny? "heeloo" [ "sdfsdg" "jffflf" "HeeLoo" ]))
   (is (SU/eqAny? "heeloo" [ "sdfsdg" "jffflf" "heeloo" ]))
   (is (not (SU/eqAny? "heeloo" [ "sdfsdg" "jffflf" ])))
+
+  (is (not (SU/eqic? "abc" "AbCd")))
+  (is (SU/eqic? "abc" "AbC"))
 
   (is (= 10 (.length (SU/makeString \x 10))))
   (is (= "xxx" (SU/makeString \x 3)))
   (is (= "ori" (SU/rights "Hallowed are the ori" 3)))
   (is (= "Hal" (SU/lefts "Hallowed are the ori" 3)))
 
+  (is (= "abc def" (SU/urlDecode (SU/urlEncode "abc def"))))
+  (is (not= "abc def" (SU/urlEncode "abc def")))
 
+;;
 )
 
 

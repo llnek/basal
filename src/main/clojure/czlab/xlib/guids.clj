@@ -41,18 +41,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;pre-shuffle the chars in string
 ;;"0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz"
-(def ^:private ^String _SS "YcQnPuzVAvpi7taGj1XwoJbIK3smye96NlHrR2DZS0CUxkLF5O4g8fBTqMEdhW")
-(def ^:private ^chars  _CHARS (.toCharArray _SS))
-(def ^:private _UUIDLEN (.length _SS))
+(defonce ^:private ^String _SS "YcQnPuzVAvpi7taGj1XwoJbIK3smye96NlHrR2DZS0CUxkLF5O4g8fBTqMEdhW")
+(defonce ^:private ^chars  _CHARS (.toCharArray _SS))
+(defonce ^:private _UUIDLEN (.length _SS))
 
-(def ^:private ^String LONG_MASK "0000000000")
-(def ^:private ^String INT_MASK "00000")
+(defonce ^:private ^String LONG_MASK "0000000000")
+(defonce ^:private ^String INT_MASK "00000")
 ;;(def ^:private LONG_MASK "0000000000000000")
 ;;(def ^:private INT_MASK "00000000")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- fmt ""
+(defn- fmt
+
+  ""
 
   ^String
   [^String pad ^String mask]
@@ -65,7 +67,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- fmtInt ""
+(defn- fmtInt
+
+  ""
 
   ^String
   [nm]
@@ -74,7 +78,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- fmtLong ""
+(defn- fmtLong
+
+  ""
 
   ^String
   [nm]
@@ -83,7 +89,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- splitTime  ""
+(defn- splitTime
+
+  ""
 
   []
 
@@ -94,7 +102,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- maybeSetIP ""
+(defn- maybeSetIP
+
+  ""
 
   ^long
   []
@@ -109,7 +119,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private _IP (Math/abs (maybeSetIP)) )
+(defonce ^:private _IP (Math/abs (maybeSetIP)) )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -124,11 +134,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ^:no-doc myOwnNewUUid
+(defn myOwnNewUUid
 
   "RFC4122, version 4 form"
 
-  ^String
+  {:tag String :no-doc true}
   []
 
   ;; At i==19 set the high bits of clock sequence as per rfc4122, sec. 4.1.5

@@ -22,13 +22,14 @@
 
   (:import  [java.io FileReader
              File InputStream
-             OutputStream FileOutputStream]
+             OutputStream
+             FileOutputStream]
             [czlab.xlib XData XStream]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private TMP_DIR (File. (System/getProperty "java.io.tmpdir")))
-(def ^:private TMP_FP (File. ^File TMP_DIR (str (CU/juid) ".txt")))
+(def ^:private TMP_DIR (io/file (System/getProperty "java.io.tmpdir")))
+(def ^:private TMP_FP (io/file TMP_DIR (str (CU/juid) ".txt")))
 (eval '(do (spit TMP_FP "heeloo" :encoding "utf-8")))
 ;; force to use file
 ;;(eval '(do (czlab.xlib.IO/setStreamLimit 2)))
@@ -80,26 +81,25 @@
   (is (true? (.isFile (IO/newXData true))))
   (is (false? (.isFile (IO/newXData))))
 
-  (is (true? (let [ x (with-open [ ^InputStream inp (IO/openFile TMP_FP)] (IO/readBytes inp true))]
+  (is (true? (let [ x (with-open [^InputStream inp (IO/openFile TMP_FP)] (IO/readBytes inp true))]
                 (and (instance? XData x)
                      (.isFile ^XData x)
                      (> (.size ^XData x) 0))) ))
 
-  (is (true? (let [ x (with-open [ ^InputStream inp (IO/openFile TMP_FP)] (IO/readBytes inp))]
+  (is (true? (let [ x (with-open [^InputStream inp (IO/openFile TMP_FP)] (IO/readBytes inp))]
                 (and (instance? XData x)
                      (not (.isFile ^XData x))
                      (> (.size ^XData x) 0))) ))
 
-  (is (true? (let [ x (with-open [ rdr (FileReader. ^File TMP_FP)] (IO/readChars rdr true))]
+  (is (true? (let [ x (with-open [rdr (FileReader. ^File TMP_FP)] (IO/readChars rdr true))]
                 (and (instance? XData x)
                      (.isFile ^XData x)
                      (> (.size ^XData x) 0))) ))
 
-  (is (true? (let [ x (with-open [ rdr (FileReader. ^File TMP_FP)] (IO/readChars rdr))]
+  (is (true? (let [ x (with-open [rdr (FileReader. ^File TMP_FP)] (IO/readChars rdr))]
                 (and (instance? XData x)
                      (not (.isFile ^XData x))
                      (> (.size ^XData x) 0))) ))
-
 
 )
 

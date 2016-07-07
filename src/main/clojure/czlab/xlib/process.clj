@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "OS Process related utilities."
+(ns ^{:doc "OS process related helper functions"
       :author "Kenneth Leung" }
 
   czlab.xlib.process
@@ -45,7 +45,9 @@
   {:pre [(fn? func)]}
 
   (let
-    [t (-> (reify Runnable (run [_] (func)))
+    [t (-> (reify
+             Runnable
+             (run [_] (func)))
            (Thread. ))]
     (with-local-vars
       [daemon false cl nil]
@@ -77,10 +79,10 @@
   (CU/syncExec
     lock
     (reify CallableWithArgs
-      (run [_ p1 more]
-        (apply func p1 more)))
+      (run [_ p1 xs]
+        (apply func p1 xs)))
     (first args)
-    (drop 1 args)))
+    (object-array (drop 1 args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -88,11 +90,11 @@
 
   "Run this function asynchronously"
 
-  [func & [args]]
+  [func & [arg]]
 
   {:pre [(fn? func)]}
 
-  (threadFunc func true args))
+  (threadFunc func true arg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -116,8 +118,8 @@
 
   (let [ss (-> (ManagementFactory/getRuntimeMXBean)
                (.getName)
-               (str)
-               (.split "@")) ]
+               str
+               (.split "@"))]
     (if (empty ss)
       ""
       (first ss))))
@@ -133,9 +135,9 @@
   {:pre [(fn? func)]}
 
   (-> (Timer. true)
-      (.schedule (proxy [TimerTask][]
-                   (run []
-                     (func)))
+      (.schedule (proxy
+                   [TimerTask][]
+                   (run [] (func)))
                  (long delayMillis))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

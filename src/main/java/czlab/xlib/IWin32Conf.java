@@ -30,7 +30,7 @@ public interface IWin32Conf {
 
   /**
    */
-  public Set<?> keys();
+  public Set<?> headings();
 
   /**
    */

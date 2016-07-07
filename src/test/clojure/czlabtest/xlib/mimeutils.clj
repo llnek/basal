@@ -40,13 +40,8 @@
   (is (instance? InputStream (MU/maybeStream "hello")))
   (is (not (instance? InputStream (MU/maybeStream 3))))
 
-  (is (= "a b" (MU/urlDecode (MU/urlEncode "a b"))))
-
   (is (>= (.indexOf (MU/guessMimeType (File. "/tmp/abc.jpeg")) "image/") 0))
   (is (> (.indexOf (MU/guessContentType (File. "/tmp/abc.pdf")) "/pdf") 0))
-
-
-
 
 
 )

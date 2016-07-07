@@ -13,14 +13,20 @@
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
 (ns ^{:doc "This is a utility class that provides
-           various MIME related functionality."
+           various MIME related functionality"
       :author "Kenneth Leung" }
 
   czlab.xlib.mime
 
   (:require
-    [czlab.xlib.str :refer [indexAny lcase ucase hgl?]]
     [czlab.xlib.core :refer [bytesify try! intoMap]]
+    [czlab.xlib.str
+     :refer [indexAny
+             lcase
+             ucase
+             hgl?
+             urlDecode
+             urlEncode]]
     [czlab.xlib.meta :refer [bytesClass]]
     [czlab.xlib.logging :as log]
     [czlab.xlib.io :refer [streamify]])
@@ -45,7 +51,6 @@
 (defonce MIME_USER_PROP  "mime.rfc2822.user")
 (defonce MIME_USER_JAVAMAIL   "javamail")
 (defonce DEF_USER  "popeye")
-(defonce MIME_USER_PREFIX   "zotohlab")
 (defonce DEF_HOST  "localhost")
 (defonce MIME_HEADER_MSGID  "Message-ID")
 (defonce MIME_MULTIPART_BOUNDARY  "boundary")
@@ -94,13 +99,13 @@
 (defonce RFC822 "rfc822")
 (defonce RFC822_PFX (str RFC822 "; "))
 
+(defonce MSG_DISP "message/disposition-notification")
+(defonce APP_OCTET "application/octet-stream")
 (defonce APP_XML "application/xml")
 (defonce TEXT_PLAIN "text/plain")
-(defonce APP_OCTET "application/octet-stream")
 (defonce PKCS7SIG "pkcs7-signature")
 (defonce TEXT_HTML "text/html")
 (defonce TEXT_XML "text/xml")
-(defonce MSG_DISP "message/disposition-notification")
 
 (defonce ERROR   "error")
 (defonce FAILURE "failure")
@@ -114,13 +119,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private ^Pattern _extRegex (Pattern/compile "^.*\\.([^.]+)$"))
-(def ^:private _mime_cache (atom {}))
-(def ^:private _mime_types (atom nil))
+(defonce ^:private ^Pattern _extRegex (Pattern/compile "^.*\\.([^.]+)$"))
+(defonce ^:private _mime_cache (atom {}))
+(defonce ^:private _mime_types (atom nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn mimeCache "Cache of most MIME types" ^APersistentMap [] @_mime_cache)
+(defn mimeCache
+  "Cache of most MIME types" ^APersistentMap [] @_mime_cache)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -136,7 +142,7 @@
 ;;
 (defn getCharset
 
-  "charset from this content-type string"
+  "charset from this content-type"
 
   ^String
   [^String cType]
@@ -144,7 +150,7 @@
   (let [pos (-> (str cType)
                 (lcase )
                 (.indexOf "charset="))
-        rc "utf-8" ]
+        rc "utf-8"]
          ;;rc "ISO-8859-1" ]
     (if (> pos 0)
       (let [s (.substring cType (+ pos 8))
@@ -160,9 +166,10 @@
 
   [^String cType]
 
-  (let [ct (lcase (str cType)) ]
+  (let [ct (lcase cType)]
     (or (>= (.indexOf ct "multipart/signed") 0)
-        (and (isPkcs7Mime? ct) (>= (.indexOf ct "signed-data") 0)))))
+        (and (isPkcs7Mime? ct)
+             (>= (.indexOf ct "signed-data") 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -172,8 +179,9 @@
 
   [^String cType]
 
-  (let [ct (lcase (str cType)) ]
-    (and (isPkcs7Mime? ct) (>= (.indexOf ct "enveloped-data") 0))))
+  (let [ct (lcase cType)]
+    (and (isPkcs7Mime? ct)
+         (>= (.indexOf ct "enveloped-data") 0))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -183,7 +191,7 @@
 
   [^String cType]
 
-  (let [ct (lcase (str cType)) ]
+  (let [ct (lcase cType)]
     (and (>= (.indexOf ct "application/pkcs7-mime") 0)
          (>= (.indexOf ct "compressed-data") 0))))
 
@@ -195,7 +203,7 @@
 
   [^String cType]
 
-  (let [ct (lcase (str cType)) ]
+  (let [ct (lcase cType)]
     (and (>= (.indexOf ct "multipart/report") 0)
          (>= (.indexOf ct "disposition-notification") 0))))
 
@@ -203,42 +211,16 @@
 ;;
 (defn maybeStream
 
-  "Turn this object into some form of stream, if possible"
+  "Convert object into some form of stream, if possible"
 
   ^InputStream
-  [^Object obj]
+  [obj]
 
   (condp instance? obj
     String (streamify (bytesify obj))
     InputStream obj
     (bytesClass) (streamify obj)
     nil))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn urlDecode
-
-  "URL decode this string"
-
-  ^String
-  [^String u]
-
-  (if (hgl? u)
-    (URLDecoder/decode u "utf-8")
-    u))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn urlEncode
-
-  "URL encode this string"
-
-  ^String
-  [^String u]
-
-  (if (hgl? u)
-    (URLEncoder/encode u "utf-8")
-    u))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -268,10 +250,10 @@
   ^String
   [^File file & [enc dft]]
 
-  (let [dft (or dft "application/octet-stream" )
+  (let [dft (or dft "application/octet-stream")
         enc (or enc "utf-8")
         mt (guessMimeType file)
-        ^String ct (if (hgl? mt) mt dft) ]
+        ^String ct (if (hgl? mt) mt dft)]
     (if-not (.startsWith ct "text/")
       ct
       (str ct "; charset=" enc))))
@@ -284,8 +266,8 @@
 
   [^URL fileUrl]
 
-  (with-open [inp (.openStream fileUrl) ]
-    (let [ps (Properties.) ]
+  (with-open [inp (.openStream fileUrl)]
+    (let [ps (Properties.)]
       (.load ps inp)
       (reset! _mime_types (MimeFileTypes/makeMimeFileTypes ps))
       (reset! _mime_cache (intoMap ps)))))

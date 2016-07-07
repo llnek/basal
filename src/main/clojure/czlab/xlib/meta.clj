@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Class related or reflection related operations."
+(ns ^{:doc "Class & reflection related operations"
       :author "Kenneth Leung" }
 
   czlab.xlib.meta
@@ -32,9 +32,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti isChild?
-
   "true if clazz is subclass of this base class"
-
   (fn [_ b] (if (instance? Class b) :class :object)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,7 +50,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod isChild? :object
+(defmethod isChild?
+
+  :object
 
   [^Class basz ^Object obj]
 
@@ -267,7 +267,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod newObjArgN Class
+(defmethod newObjArgN
+
+  Class
 
   [^Class cz & args]
 
@@ -284,7 +286,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod newObjArgN String
+(defmethod newObjArgN
+
+  String
 
   [^String cz & args]
 
@@ -334,7 +338,7 @@
           (if (nil? par)
             (persistent! sum)
             (recur (conj! sum par)
-                   (.getSuperclass par)))) ]
+                   (.getSuperclass par))))]
     ;; since we always add the original class,
     ;; we need to ignore it on return
     (into [] (drop 1 rc))))
@@ -365,7 +369,7 @@
 
   [^Class cz level]
 
-  (let [par (.getSuperclass cz) ]
+  (let [par (.getSuperclass cz)]
     (iterXXX cz
              level
              #(.getDeclaredMethods ^Class %)
@@ -415,7 +419,7 @@
 
   (vals (if (nil? javaClass)
           {}
-          (persistent! (listFlds javaClass 0 )))))
+          (persistent! (listFlds javaClass 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

@@ -33,14 +33,14 @@
 ;;
 (deftest czlabtestxlib-wi32ini
 
-  (is (= (count (.sectionKeys INIFILE)) 2))
+  (is (= (count (.headings INIFILE)) 2))
 
-  (is (map? (.getSection INIFILE "operating systems")))
-  (is (map? (.getSection INIFILE "boot loader")))
+  (is (map? (.heading INIFILE "operating systems")))
+  (is (map? (.heading INIFILE "boot loader")))
 
-  (is (true? (.endsWith (.getString INIFILE "boot loader" "default") "WINDOWS")))
+  (is (true? (.endsWith (.strValue INIFILE "boot loader" "default") "WINDOWS")))
 
-  (is (true? (= (.getLong INIFILE "boot loader" "timeout") 30)))
+  (is (true? (= (.longValue INIFILE "boot loader" "timeout") 30)))
 
 
 )
