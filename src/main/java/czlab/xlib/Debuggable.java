@@ -21,8 +21,12 @@ import java.io.PrintStream;
  */
 public interface Debuggable {
 
+  /**
+   */
   public void dbgShow(PrintStream out);
 
+  /**
+   */
   public String dbgStr();
 
 }

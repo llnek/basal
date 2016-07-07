@@ -14,6 +14,7 @@
 
 package czlab.xlib;
 
+import static org.slf4j.LoggerFactory.*;
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.CharArrayWriter;
@@ -22,10 +23,7 @@ import java.io.IOException;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
-
-import static java.lang.invoke.MethodHandles.*;
 import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.*;
 
 /**
  * Wrapper structure to abstract a piece of data which can be a file
@@ -37,46 +35,68 @@ import static org.slf4j.LoggerFactory.*;
 public class XData implements Serializable {
 
   private static final long serialVersionUID = -8637175588593032279L;
-
-  public static final Logger TLOG= getLogger(lookup().lookupClass());
-
+  public static final Logger TLOG= getLogger(XData.class);
   private String _encoding ="utf-8";
   private Object _data = null;
   private boolean _cls=true;
 
-
+  /**
+   */
   public XData(Object p) {
-    resetContent(p);
+    reset(p);
   }
 
+  /**
+   */
   public XData() {
     this(null);
   }
 
-  public XData setEncoding(String enc) { _encoding=enc;  return this; }
-  public String getEncoding() { return _encoding; }
+  /**
+   */
+  public String encoding() { return _encoding; }
+
+  /**
+   */
+  public XData setEncoding(String enc) {
+    _encoding=enc;
+    return this;
+  }
+
+  /**
+   */
+  public boolean isDeleteFile() { return _cls; }
 
   /**
    * Control the internal file.
    *
    * @param del true to delete, false ignore.
    */
-  public XData setDeleteFile(boolean del) { _cls= del; return this; }
-  public boolean isDeleteFile() { return _cls; }
+  public XData setDeleteFile(boolean del) {
+    _cls= del;
+    return this;
+  }
 
-  public void destroy() {
+  /**
+   */
+  private void destroy() {
     if (_data instanceof File && _cls) {
       try { ((File) _data).delete(); }
       catch (Throwable t) {}
+      _data=null;
     }
-    reset();
+    init();
   }
 
+  /**
+   */
   public boolean isFile() {
     return _data instanceof File;
   }
 
-  public XData resetContent(Object obj, boolean delIfFile) {
+  /**
+   */
+  public XData reset(Object obj, boolean del) {
     destroy();
     if (obj instanceof CharArrayWriter) {
       _data = new String( ((CharArrayWriter) obj).toCharArray() );
@@ -93,25 +113,34 @@ public class XData implements Serializable {
     else {
       _data=obj;
     }
-    setDeleteFile(delIfFile);
+    setDeleteFile(del);
     return this;
   }
 
-  public XData resetContent(Object obj) {
-    return resetContent(obj, true);
+  /**
+   */
+  public XData reset(Object obj) {
+    return reset(obj, true);
   }
 
+  /**
+   */
   public boolean hasContent() { return _data != null; }
+
+  /**
+   */
   public Object content() { return _data; }
 
-  public byte[] javaBytes() throws IOException {
+  /**
+   */
+  public byte[] getBytes() throws IOException {
     byte[] bits;
 
     if (_data instanceof File) {
       File f= (File) _data;
       long n= f.length();
       try (InputStream inp = new FileInputStream (f)) {
-        if (n >  Integer.MAX_VALUE) {
+        if (n > Integer.MAX_VALUE) {
           throw new IOException("file too large");
         }
         bits= new byte[(int) n];
@@ -137,14 +166,20 @@ public class XData implements Serializable {
     return bits;
   }
 
+  /**
+   */
   public File fileRef() {
     return _data instanceof File ? ((File) _data) : null;
   }
 
+  /**
+   */
   public String filePath() throws IOException {
     return _data instanceof File ? ((File) _data).getCanonicalPath() : "";
   }
 
+  /**
+   */
   public long size() {
     long len=0L;
     if (_data instanceof File) {
@@ -164,30 +199,37 @@ public class XData implements Serializable {
     return len;
   }
 
-  public void finalize() {
+  @Override
+  public void finalize() throws Throwable {
     destroy();
   }
 
+  /**
+   */
   public String stringify() throws IOException {
     return !hasContent()
       ? ""
       : (_data instanceof String)
         ? _data.toString()
-        : new String(javaBytes(), _encoding);
+        : new String(getBytes(), _encoding);
   }
 
+  /**
+   */
   public InputStream stream() throws IOException {
     InputStream inp= null;
     if (_data instanceof File) {
-      inp = new XStream( (File) _data);
+      inp = new XStream((File) _data);
     }
     else if (hasContent()) {
-      inp= new ByteArrayInputStream(javaBytes());
+      inp= new ByteArrayInputStream(getBytes());
     }
     return inp;
   }
 
-  private void reset() {
+  /**
+   */
+  private void init() {
     _encoding= "utf-8";
     _cls=true;
     _data=null;

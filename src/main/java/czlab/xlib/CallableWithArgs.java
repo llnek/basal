@@ -19,7 +19,11 @@ package czlab.xlib;
  * @author Kenneth Leung
  */
 @FunctionalInterface public interface CallableWithArgs {
+
+  /**
+   */
   public Object run(Object a1, Object...  args);
+
 }
 
 

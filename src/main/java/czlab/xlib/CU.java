@@ -14,14 +14,12 @@
 
 package czlab.xlib;
 
-
-import static java.lang.invoke.MethodHandles.lookup;
-import static org.slf4j.LoggerFactory.getLogger;
-import org.slf4j.Logger;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,15 +36,14 @@ import java.util.Locale;
 public enum CU {
 ;
 
-  public static final Logger TLOG=getLogger(lookup().lookupClass());
   private static final AtomicInteger _si= new AtomicInteger(0);
   private static final AtomicLong _sn= new AtomicLong(0L);
-
+  public static final Logger TLOG=getLogger(CU.class);
 
   /**
-   * wait on this lock.
+   * block and wait on this lock.
    */
-  public static void blockAndWait(Object lock, long waitMillis) {
+  public static void block(Object lock, long waitMillis) {
     try {
       synchronized (lock) {
         if (waitMillis > 0L) {
@@ -106,9 +103,9 @@ public enum CU {
   }
 
   /**
-   * wait forever until this thread dies.
+   * block forever until this thread dies.
    */
-  public static void blockForever() {
+  public static void block() {
     try {
       Thread.currentThread().join();
     } catch (Throwable e) {

@@ -19,7 +19,11 @@ package czlab.xlib;
  * @author Kenneth Leung
  */
 @FunctionalInterface public interface Configurable {
+
+  /**
+   */
   public void configure(Object c);
+
 }
 
 

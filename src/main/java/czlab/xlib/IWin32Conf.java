@@ -24,25 +24,57 @@ import java.util.Set;
  */
 public interface IWin32Conf {
 
-  public Map<?,?> getSection(String sectionName);
-  public Set<?> sectionKeys();
+  /**
+   */
+  public Map<?,?> heading(String heading);
 
+  /**
+   */
+  public Set<?> keys();
+
+  /**
+   */
   public void dbgShow();
 
-  public String getString(String sectionName, String property, String dft);
-  public String getString(String sectionName, String property);
+  /**
+   */
+  public String strValue(String heading, String prop, String dft);
 
-  public long getLong(String sectionName, String property, long dft);
-  public long getLong(String sectionName, String property);
+  /**
+   */
+  public String strValue(String heading, String prop);
 
-  public int getInt(String sectionName, String property, int dft);
-  public int getInt(String sectionName, String property);
+  /**
+   */
+  public long longValue(String heading, String prop, long dft);
 
-  public boolean getBool(String sectionName, String property, boolean dft);
-  public boolean getBool(String sectionName, String property);
+  /**
+   */
+  public long longValue(String heading, String prop);
 
-  public double getDouble(String sectionName, String property, double dft);
-  public double getDouble(String sectionName, String property);
+  /**
+   */
+  public int intValue(String heading, String prop, int dft);
+
+  /**
+   */
+  public int intValue(String heading, String prop);
+
+  /**
+   */
+  public boolean boolValue(String heading, String prop, boolean dft);
+
+  /**
+   */
+  public boolean boolValue(String heading, String prop);
+
+  /**
+   */
+  public double doubleValue(String heading, String prop, double dft);
+
+  /**
+   */
+  public double doubleValue(String heading, String prop);
 
 }
 

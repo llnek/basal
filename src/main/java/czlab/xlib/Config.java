@@ -24,19 +24,45 @@ import java.util.Set;
  */
 public interface Config {
 
-  public Iterable<?> getSequence(String name);
-  public Config getChild(String name);
+  /**
+   */
+  public double doubleValue(String name, double dft);
 
+  /**
+   */
+  public boolean boolValue(String name, boolean dft);
+
+  /**
+   */
+  public String strValue(String name, String dft);
+
+  /**
+   */
+  public long longValue(String name, long dft);
+
+  /**
+   */
+  public Date dateValue(String name);
+
+  /**
+   */
+  public Iterable<?> sequence(String name);
+
+  /**
+   */
+  public Config child(String name);
+
+  /**
+   */
   public boolean contains(String name);
+
+  /**
+   */
   public int size();
 
-  public String getString(String name, String dft);
-  public long getLong(String name, long dft);
-  public double getDouble(String name, double dft);
-  public boolean getBool(String name, boolean dft);
-  public Date getDate(String name);
-
-  public Set<String> getKeys();
+  /**
+   */
+  public Set<String> keys();
 
 }
 

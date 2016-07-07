@@ -18,8 +18,15 @@ package czlab.xlib;
  * @author Kenneth Leung
  */
 public interface Activable {
+
+  /**
+   */
   public void activate(Object options);
+
+  /**
+   */
   public void deactivate();
+
 }
 
 

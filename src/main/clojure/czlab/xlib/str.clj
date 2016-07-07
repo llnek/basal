@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "String utilities."
+(ns ^{:doc "Helper functions for String related operations"
       :author "Kenneth Leung" }
 
   czlab.xlib.str
@@ -38,13 +38,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
-(def ^:private HEXCHS (.toCharArray "0123456789abcdef"))
+(defonce ^:private HEXCHS (.toCharArray "0123456789abcdef"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro hgl?
 
-  "true if this string is not empty, hgl stands for *has good length*"
+  "true if this string *has good length* - not empty or nil"
 
   [s]
 
@@ -52,11 +52,31 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro stror "If not s then s2" [s s2] `(let [s# ~s] (if (empty? s#) ~s2 s#)))
-(defmacro lcase "Lowercase string" [s] `(if-some [s# ~s] (cs/lower-case s#) ""))
-(defmacro ucase "Uppercase string" [s] `(if-some [s# ~s] (cs/upper-case s#) ""))
-;;#^"[Ljava.lang.Class;"
+(defmacro stror
 
+  "If not s then s2"
+  [s s2]
+
+  `(let [s# ~s] (if (empty? s#) ~s2 s#)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro lcase
+
+  "Lowercase string, handling nil"
+  [s]
+  `(if-some [s# ~s] (cs/lower-case s#) ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro ucase
+
+  "Uppercase string, handling nil"
+  [s]
+
+  `(if-some [s# ~s] (cs/upper-case s#) ""))
+
+;;#^"[Ljava.lang.Class;"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn triml
@@ -77,7 +97,6 @@
         (.substring src pos)))
     src))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn trimr
@@ -90,7 +109,7 @@
   (if (and (hgl? unwantedChars)
            (hgl? src))
     (loop [pos (.length src)]
-      (if (and (>  pos 0)
+      (if (and (> pos 0)
                (>= (.indexOf unwantedChars
                              (int (.charAt src (dec pos)))) 0))
         (recur (dec pos))
@@ -114,19 +133,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro hasNoCase?
-
-  "true if this sub-string is inside this bigger string, ignoring case"
-
-  [bigs s]
-
-  `(embeds? (lcase ~bigs) (lcase ~s)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn embeds?
 
-  "true if this sub-string is inside this bigger string"
+  "true if sub-str is inside the bigger str"
 
   [^String bigs ^String s]
 
@@ -134,9 +143,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defmacro hasNoCase?
+
+  "true if sub-str is inside the bigger str - ignore case"
+
+  [bigs s]
+
+  `(embeds? (lcase ~bigs) (lcase ~s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn has?
 
-  "true if this character is inside this string"
+  "true if the char is inside the str"
 
   [^String bigs ^Character ch]
 
@@ -146,7 +165,7 @@
 ;;
 (defn indexAny
 
-  "true if any one character is inside this string"
+  "if any one char is inside the str, return the position"
 
   [^String bigs ^String chStr]
 
@@ -162,7 +181,8 @@
 ;;
 (defn countStr
 
-  "Count how many times this substring appears in the source string"
+  "Count the times this sub-str appears in the source str"
+
   [^String src ^String sub]
 
   (if (and (hgl? src)
@@ -180,7 +200,8 @@
 ;;
 (defn countChar
 
-  ""
+  "Count the times this char appears in the source str"
+
   [^String src ^Character ch]
 
   (reduce
@@ -206,11 +227,9 @@
   "Empty string if obj is null, or obj.toString"
 
   ^String
-  [^Object obj]
+  [obj]
 
-  (if (keyword? obj)
-    (name obj)
-    (str obj)))
+  (if (keyword? obj) (name obj) (str obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -231,9 +250,9 @@
   "(null) if obj is null, or obj.toString"
 
   ^String
-  [^Object obj]
+  [obj]
 
-  (if (nil? obj) "(null)" (.toString obj)))
+  (if (nil? obj) "(null)" (str obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

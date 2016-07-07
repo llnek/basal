@@ -19,7 +19,12 @@ package czlab.xlib;
  */
 public interface Startable {
 
+  /**
+   */
   public void start();
+
+  /**
+   */
   public void stop();
 
 }

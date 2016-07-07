@@ -19,7 +19,12 @@ package czlab.xlib;
  */
 public interface Settable {
 
+  /**
+   */
   public void setv( Object key, Object p);
+
+  /**
+   */
   public void unsetv( Object key);
 
 }

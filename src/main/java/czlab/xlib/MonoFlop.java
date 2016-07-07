@@ -18,9 +18,12 @@ package czlab.xlib;
  * @author Kenneth Leung
  *
  */
-public interface MonoFlop {
+@FunctionalInterface public interface MonoFlop {
 
+  /**
+   */
   public boolean firstCall();
 
 }
+
 

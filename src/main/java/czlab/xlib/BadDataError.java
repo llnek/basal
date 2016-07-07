@@ -22,10 +22,14 @@ public class BadDataError extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
+  /**
+   */
   public BadDataError(Throwable t) {
     super(t);
   }
 
+  /**
+   */
   public BadDataError(String msg) {
     super(msg);
   }

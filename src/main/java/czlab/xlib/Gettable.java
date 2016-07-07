@@ -18,7 +18,11 @@ package czlab.xlib;
  * @author Kenneth Leung
  */
 @FunctionalInterface public interface Gettable {
+
+  /**
+   */
   public Object getv(Object key);
+
 }
 
 

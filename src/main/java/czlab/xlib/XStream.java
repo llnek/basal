@@ -14,15 +14,13 @@
 
 package czlab.xlib;
 
+import static org.slf4j.LoggerFactory.*;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.File;
-
-import static java.lang.invoke.MethodHandles.*;
 import org.slf4j.Logger;
-import static org.slf4j.LoggerFactory.*;
 
 /**
  * Wrapper on top of a File input stream such that it can
@@ -31,31 +29,35 @@ import static org.slf4j.LoggerFactory.*;
  * @author Kenneth Leung
  *
  */
-public class XStream extends InputStream {
+public class XStream extends InputStream implements Disposable {
 
-  public static final Logger TLOG= getLogger(lookup().lookupClass());
-
+  public static final Logger TLOG= getLogger(XStream.class);
   private transient InputStream _inp = null;
   protected boolean _closed = true;
-  protected boolean _deleteFile;
+  protected boolean _transientFile;
   protected File _fn;
   private long pos = 0L;
 
-
+  /**
+   */
   public XStream(File f, boolean delFile) {
-    _deleteFile = delFile;
+    _transientFile = delFile;
     _fn= f;
   }
 
+  /**
+   */
   public XStream(File f) {
     this(f,false);
   }
 
+  @Override
   public int available() throws IOException {
     pre();
     return _inp.available();
   }
 
+  @Override
   public int read() throws IOException {
     pre();
     int r = _inp.read();
@@ -63,6 +65,7 @@ public class XStream extends InputStream {
     return r;
   }
 
+  @Override
   public int read(byte[] b, int offset, int len) throws IOException {
     if (b == null) { return -1; } else {
       pre();
@@ -72,10 +75,12 @@ public class XStream extends InputStream {
     }
   }
 
+  @Override
   public int read(byte[] b) throws IOException {
     return (b==null) ? -1 : read(b, 0, b.length);
   }
 
+  @Override
   public long skip(long n) throws IOException {
     if (n < 0L) { return -1L; } else {
       pre();
@@ -85,6 +90,7 @@ public class XStream extends InputStream {
     }
   }
 
+  @Override
   public void close() {
     try { if (_inp != null) _inp.close(); }
     catch (Throwable t) {}
@@ -92,12 +98,14 @@ public class XStream extends InputStream {
     _closed= true;
   }
 
+  @Override
   public void mark(int readLimit) {
     if (_inp != null) {
       _inp.mark(readLimit);
     }
   }
 
+  @Override
   public void reset() {
     close();
     try {
@@ -109,17 +117,27 @@ public class XStream extends InputStream {
     pos=0L;
   }
 
+  @Override
   public boolean markSupported() { return true; }
 
-  public XStream setDelete(boolean dfile) { _deleteFile = dfile ; return this; }
+  /**
+   */
+  public XStream setTransientFlag(boolean dfile) {
+    _transientFile = dfile ;
+    return this;
+  }
 
-  public void delete() {
+  @Override
+  public void dispose() {
     close();
-    if (_deleteFile && _fn != null) {
+    if (_transientFile && _fn != null) {
       try { _fn.delete(); } catch (Throwable t) {}
+      _fn=null;
     }
   }
 
+  /**
+   */
   public String filename() {
     try {
       return (_fn != null) ? _fn.getCanonicalPath() : "" ;
@@ -129,16 +147,26 @@ public class XStream extends InputStream {
     }
   }
 
+  @Override
   public String toString() { return filename(); }
 
+  /**
+   */
   public long getPosition() { return pos; }
 
-  public void finalize() { delete(); }
+  @Override
+  public void finalize() throws Throwable {
+    dispose();
+  }
 
+  /**
+   */
   private void pre() {
     if (_closed) { ready(); }
   }
 
+  /**
+   */
   private void ready() {
     reset();
   }

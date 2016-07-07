@@ -20,10 +20,16 @@ package czlab.xlib;
  */
 public interface Watch {
 
+  /**
+   */
   public long elapsedMillis();
 
+  /**
+   */
   public void reset();
 
+  /**
+   */
   public long elapsedNanos();
 
 }

@@ -33,13 +33,13 @@ public class MimeFileTypes {
    */
   public static MimetypesFileTypeMap makeMimeFileTypes(Properties props) throws IOException {
     StringBuilder sum = new StringBuilder();
-    for (Entry<Object, Object> en : props.entrySet()) {
-      sum.append( en.getValue().toString().trim()  +
+    for (Entry<Object,Object> en : props.entrySet()) {
+      sum.append(en.getValue().toString().trim()  +
           "  " +
           en.getKey().toString().trim()  + "\n");
     }
     try {
-      return new MimetypesFileTypeMap( new ByteArrayInputStream( sum.toString().getBytes("utf-8")) );
+      return new MimetypesFileTypeMap(new ByteArrayInputStream( sum.toString().getBytes("utf-8")) );
     } catch (UnsupportedEncodingException e) {
       throw new IOException("Failed to parse mime.properties.");
     }

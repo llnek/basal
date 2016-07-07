@@ -15,8 +15,6 @@
 package czlab.xlib;
 
 /**
- * Like a POJO (mutable), name values.
- *
  * @author Kenneth Leung
  */
 public interface Muble extends Gettable, Settable {

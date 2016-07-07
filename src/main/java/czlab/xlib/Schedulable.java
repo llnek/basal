@@ -20,29 +20,33 @@ package czlab.xlib;
 public interface Schedulable extends Disposable {
 
   /**
-   * delay x millis before running this function
+   * delay x millis before running
    */
   public void postpone(Runnable w, long delayMillis);
 
+  /**
+   */
   public void dequeue(Runnable w);
 
   /**
-   * run this function
    */
   public void run(Runnable w);
 
   /**
-   * hold on to this function
    */
   public void hold(Object pid, Runnable w);
 
+  /**
+   */
   public void hold(Runnable w);
 
   /**
    * take the function out of *hold* state and run it
    */
-  public void wakeAndRun(Object pid,Runnable w);
+  public void wakeAndRun(Object pid, Runnable w);
 
+  /**
+   */
   public void wakeup(Runnable w);
 
   /**

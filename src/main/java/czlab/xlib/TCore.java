@@ -14,15 +14,13 @@
 
 package czlab.xlib;
 
-import static java.lang.invoke.MethodHandles.lookup;
-import static org.slf4j.LoggerFactory.getLogger;
-import org.slf4j.Logger;
-
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
 
 
 /**
@@ -30,68 +28,92 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Kenneth Leung
  */
-public class TCore implements RejectedExecutionHandler {
+public class TCore extends ThreadPoolExecutor implements RejectedExecutionHandler, Startable, Disposable {
 
-  public static final Logger TLOG = getLogger(lookup().lookupClass());
-
-  private ExecutorService _scd;
-  private boolean _trace;
+  public static final Logger TLOG = getLogger(TCore.class);
   private boolean _paused;
+  private boolean _trace;
   private String _id ="";
   private int _tds = 4;
 
-  public TCore(String id, int tds, boolean traceable) {
-    _tds= Math.max(1,tds);
-    _trace=traceable;
-    _paused=true;
+  /**
+   */
+  public TCore(String id,
+               int tds,
+               long keepAliveMillis, boolean trace) {
+    super(Math.max(1,tds),
+          Math.max(1,tds),
+          keepAliveMillis,
+          TimeUnit.MILLISECONDS,
+          new LinkedBlockingQueue<Runnable>());
+    setRejectedExecutionHandler(this);
+    setThreadFactory(new TFac(id));
+    _trace=trace;
     _id=id;
+    _paused=true;
+    if (trace) {
+      TLOG.debug("TCore#{} created with threads = {}",
+          id , "" + getCorePoolSize());
+    }
   }
 
+  /**
+   */
+  public TCore(String id, int tds, boolean trace) {
+    this(id, tds, 5000L, trace);
+  }
+
+  /**
+   */
   public TCore(String id, int tds) {
     this(id, tds, true);
   }
 
+  @Override
   public void start() {
-    activate();
     _paused=false;
   }
 
+  @Override
   public void stop() {
     _paused=true;
   }
 
+  @Override
   public void dispose() {
     stop();
-    //_scd.shutdownNow()
-    _scd.shutdown();
+    shutdown();
     if (_trace) {
-      TLOG.debug("Core \"{}\"  disposed and shut down." , _id );
+      TLOG.debug("TCore#{} disposed and shut down", _id);
     }
   }
 
-  public void schedule(Runnable work) {
+  /**
+   */
+  public void schedule(Runnable r) {
+    execute(r);
+  }
+
+  @Override
+  public void execute(Runnable r) {
     if (! _paused) {
-      _scd.execute(work);
+      super.execute(r);
     }
   }
 
+  @Override
   public void rejectedExecution(Runnable r, ThreadPoolExecutor x) {
     //TODO: deal with too much work for the core...
-    TLOG.error("\"{}\" rejected work - threads/queue are max'ed out" , _id);
+    TLOG.error("TCore#{} rejecting work!", _id);
   }
 
+  @Override
   public String toString() {
-    return "Core \"" + _id + "\" with threads = " + _tds;
-  }
-
-  private void activate() {
-    _scd= new ThreadPoolExecutor( _tds, _tds, 5000L,
-        TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
-        new TFac(_id),
-        this );
-    if (_trace) {
-      TLOG.debug("Core \"{}\" activated with threads = {}" , _id , "" + _tds, "");
-    }
+    return new StringBuilder("TCore#")
+      .append(_id)
+      .append(" with threads = ")
+      .append(_tds)
+      .toString();
   }
 
 }
