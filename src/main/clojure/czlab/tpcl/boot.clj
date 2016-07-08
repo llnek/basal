@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Helper functions for boot-clj."
+(ns ^{:doc "Helper functions for boot-clj"
       :author "Kenneth Leung" }
 
   czlab.tpcl.boot
@@ -24,8 +24,9 @@
     [boot.task.built-in
      :refer [install
              pom
-             target
-             uber aot]]
+             aot
+             uber
+             target]]
     [clojure.data.json :as js]
     [clojure.java.io :as io]
     [clojure.string :as cs]
@@ -44,46 +45,36 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro lsfs
-
-  "List files in a folder"
+  ""
+  {:private true}
   [& args]
-
   `(.listFiles (apply io/file ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ficp
-
-  "Get the canonical path of this file"
-  [f]
-
-  `(.getCanonicalPath (io/file ~f)))
+  ""
+  {:private true}
+  [& args]
+  `(.getCanonicalPath (apply io/file ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn se!
-
   "Set a local var"
   [k v]
-
   (swap! D-VARS assoc k v))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn getDVars
-
-  "Get all the local vars"
-  []
-
-  @D-VARS)
+(defn getDVars "return the local vars" [] @D-VARS)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn replaceFile
+(defn replaceFile!
 
   "Replace content of a file"
   [file work]
-
   {:pre [(fn? work)]}
 
   (spit file
@@ -857,7 +848,7 @@
 
   (bc/with-pre-wrap fileset
     (let [p (str (ge :project))]
-      (replaceFile
+      (replaceFile!
         (fp! (ge :jzzDir)
              p
              "version.properties")
