@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "General utilities."
+(ns ^{:doc "Useful helpers"
       :author "Kenneth Leung" }
 
   czlab.xlib.core
@@ -32,7 +32,10 @@
     [java.util.concurrent TimeUnit]
     [java.security SecureRandom]
     [czlab.xlib BadDataError]
-    [clojure.lang Keyword]
+    [clojure.lang
+     PersistentList
+     Keyword
+     APersistentVector]
     [java.net URL]
     [java.nio.charset Charset]
     [java.io
@@ -62,19 +65,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti ^String fpath
-  "Convert the path into nice format (no) backslash" class)
+(defmulti fpath
+  "Convert path into nice format (no) backslash" ^String class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti ^Properties loadJavaProps
-  "Load java properties from input-stream" class)
+(defmulti loadJavaProps
+  "Load java properties from input-stream" ^Properties class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private _BOOLS #{ "true" "yes"  "on"  "ok"  "active"  "1"})
-(def ^:private _PUNCS #{ \_ \- \. \( \) \space })
-
+(defonce ^:private _BOOLS #{ "true" "yes"  "on"  "ok"  "active"  "1"})
+(defonce ^:private _PUNCS #{ \_ \- \. \( \) \space })
 (deftype TypeNichts [])
 (ns-unmap *ns* '->TypeNichts)
 
@@ -109,23 +111,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro tryc
-
-  "Catch exception and log it, returns nil"
-
-  [& exprs]
-
-  `(trycr nil ~@exprs))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro try!
 
   "Eat all exceptions"
 
   [& exprs]
 
-  `(try ~@exprs (catch Throwable e# nil )))
+  `(trycr nil ~@exprs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -145,7 +137,7 @@
 
   [bindings & body]
 
-  `(tryc (let ~bindings ~@body)))
+  `(trycr nil (let ~bindings ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -160,6 +152,24 @@
        ~@(map (fn [f]
                 (if (seq? f)
                   `(~@f ~gx)
+                  `(~f ~gx)))
+              forms)
+       ~gx)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro doto->
+
+  "Combine doto and ->"
+
+  [x & forms]
+
+  (let [gx (gensym)]
+    `(let [~gx ~x]
+       ~@(map (fn [f]
+                (if (seq? f)
+                  (let [z (first f) r (rest f)]
+                    `(~z ~gx ~@r))
                   `(~f ~gx)))
               forms)
        ~gx)))
@@ -184,9 +194,7 @@
 
   [e & args]
 
-  (if (empty? args)
-    `(throw (new ~e))
-    `(throw (new ~e ~@args))))
+  (throw (exp! ~e ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -214,7 +222,7 @@
   [someType obj]
 
   `(let [x# ~obj]
-     (if (instance? ~someType x#) x#)))
+     (if (instance? ~someType x#) x# nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -244,12 +252,11 @@
 (defonce MegaBytes (* 1024 1024))
 (defonce NICHTS (TypeNichts.))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn newMonoFlop
 
-  ""
+  "Flip on first call, useful for one-time logic"
   []
 
   (let [toggled (atom false)]
@@ -269,7 +276,7 @@
 ;;
 (defn newWatch
 
-  ""
+  "Use to mark elapsed time"
 
   ^Watch
   []
@@ -293,41 +300,43 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ternary
+(defmacro trio
 
   "The ternary operator"
 
-  [x y]
+  [c x y]
 
-  `(let [x# ~x]
-     (if (nil? x#) ~y x#)))
+  `(if ~c ~x ~y))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; local hack
-(defn- get-czldr ""
+(defn- get-czldr
 
-  (^ClassLoader [] (get-czldr nil) )
+  ""
 
-  (^ClassLoader [^ClassLoader cl]
+  (^ClassLoader [] (get-czldr nil))
+
+  (^ClassLoader [cl]
     (or cl (.getContextClassLoader (Thread/currentThread)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ^:no-doc nilNichts
+(defn nilNichts
 
   "If object is nil, return a NICHTS"
 
-  ^Object
+  {:tag Object :no-doc true}
   [obj]
 
   (or obj NICHTS))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ^:no-doc isNichts?
+(defn isNichts?
 
-  "Returns true if the object is the NICHTS"
+  "true if the object is the NICHTS"
 
+  ^:no-doc
   [obj]
 
   (identical? obj NICHTS))
@@ -360,6 +369,8 @@
 ;;
 (defmulti throwIOE "Throw an IO Exception" (fn [a & xs] (class a)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmethod throwIOE
 
   Throwable
@@ -368,6 +379,8 @@
 
   (trap! java.io.IOException t))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmethod throwIOE
 
   String
@@ -396,7 +409,7 @@
 
   "Get rid of any nil(s) in a sequence"
 
-  ;; a vector
+  ^APersistentVector
   [somesequence]
 
   `(into [] (remove nil? ~somesequence)))
@@ -407,6 +420,7 @@
 
   "Get rid of any nil(s) in a sequence"
 
+  ^PersistentList
   [somesequence]
 
   `(remove nil? ~somesequence))
@@ -416,11 +430,12 @@
 (defn interject
 
   "Run the function on the current field value,
-   replacing the key with the returned value"
+   replacing the key with the returned value.
+  function(pojo oldvalue) -> newvalue"
 
   [pojo field func]
 
-  {:pre [(fn? func)]}
+  {:pre [(map? pojo)(fn? func)]}
 
   (let [nv (apply func pojo field [])]
     (assoc pojo field nv)))
@@ -438,66 +453,25 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro bool!
-
-  "Make this into a real boolean value"
-  [e]
-
-  `(if-some [e# ~e] (not (false? e#)) false))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn toJavaInt
-
-  "Make this into a java int"
-
-  ^java.lang.Integer
-  [n]
-
-  (int n))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn ndz
+(defmacro ndz
 
   "0.0 if param is nil"
 
   ^double
   [d]
 
-  (or d 0.0))
+  `(or ~d 0.0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn nnz
+(defmacro nnz
 
   "0 is param is nil"
 
   ^long
   [n]
 
-  (or n 0))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn nbf
-
-  "false if param is nil"
-
-  ;; boolean
-  [b]
-
-  (or b false))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn matchChar?
-
-  "true if this char is inside this set of chars"
-
-  [ch setOfChars]
-
-  (if (set? setOfChars) (ccore/contains? setOfChars ch) false))
+  `(or ~n 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -525,7 +499,7 @@
 ;;
 (defn asFQKeyword
 
-  "Scope a name as keyword"
+  "Scope name as a fully-qualified keyword"
 
   ^Keyword
   [^String t]
@@ -545,23 +519,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn randomSign
+(defn randSign
 
   "Randomly choose a sign, positive or negative"
 
   []
 
-  (if (even? (rand-int 1000000)) 1 -1))
+  (if (even? (rand-int Integer/MAX_VALUE)) 1 -1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn randomBoolValue
+(defn randBool
 
   "Randomly choose a boolean value"
 
   []
 
-  (if (> (randomSign) 0) true false))
+  (if (> (randSign) 0) true false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -570,7 +544,7 @@
   "A new random object"
 
   ^SecureRandom
-  [ & [numBytes] ]
+  [& [numBytes]]
 
   (-> (long (or numBytes 4))
       (SecureRandom/getSeed )
@@ -578,25 +552,25 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn nowJTstamp
+(defmacro nowJTstamp
 
   "A java sql Timestamp"
 
   ^Timestamp
   []
 
-  (Timestamp. (.getTime (Date.))))
+  `(java.sql.Timestamp. (.getTime (java.util.Date.))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn nowDate
+(defmacro nowDate
 
   "A java Date"
 
   ^Date
   []
 
-  (Date.) )
+  `(java.util.Date.))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -605,15 +579,17 @@
   "A Gregorian Calendar"
 
   ^Calendar
-  []
+  [& [tz]]
 
-  (GregorianCalendar. ))
+  (if (nil? tz)
+    (GregorianCalendar. )
+    (GregorianCalendar. ^TimeZone tz)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn toCharset
 
-  "a java Charset of the encoding"
+  "A java Charset of the encoding"
 
   (^Charset [^String enc] (Charset/forName enc))
 
@@ -621,9 +597,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod fpath String
+(defmethod fpath
 
-  ^String
+  String
+
   [^String fp]
 
   (if-not (nil? fp)
@@ -632,9 +609,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod fpath File
+(defmethod fpath
 
-  ^String
+  File
+
   [^File aFile]
 
   (if (nil? aFile)

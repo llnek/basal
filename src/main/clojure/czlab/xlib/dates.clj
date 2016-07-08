@@ -12,13 +12,13 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Date related utilities."
+(ns ^{:doc "Helper functions for Date handling"
       :author "Kenneth Leung" }
 
   czlab.xlib.dates
 
   (:require
-    [czlab.xlib.str :refer [has? hasAny? indexAny]]
+    [czlab.xlib.str :refer [hgl? has? hasAny? indexAny]]
     [czlab.xlib.core :refer [try!]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs])
@@ -43,7 +43,7 @@
 ;;
 (defn leapYear?
 
-  "Is this a leap year"
+  "true if it's leap year"
 
   [year]
 
@@ -115,8 +115,8 @@
   ^Date
   [^String tstr ^String fmt]
 
-  (when-not (or (empty? tstr)
-                (empty? fmt))
+  (when (and (hgl? tstr)
+             (hgl? fmt))
     (.parse (SimpleDateFormat. fmt) tstr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -128,7 +128,7 @@
   ^Date
   [^String tstr]
 
-  (when-not (empty? tstr)
+  (when (hgl? tstr)
     (let [fmt (if (has? tstr \:)
                 (if (has? tstr \.) DT_FMT_MICRO DT_FMT )
                 DATE_FMT ) ]

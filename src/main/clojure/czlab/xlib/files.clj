@@ -13,7 +13,7 @@
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
 
-(ns ^{:doc "File related utilities."
+(ns ^{:doc "Helper functions for handling files"
       :author "Kenneth Leung" }
 
   czlab.xlib.files
@@ -44,6 +44,29 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
+
+(defonce ^:private BUF_SZ 4096)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro slurpUTF8
+
+  "Read contents of f with utf8 encoding"
+
+  ^String
+  [f]
+
+  `(slurp ~f :encoding "utf-8"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro spitUTF8
+
+  "Write data to f with utf8 encoding"
+
+  [f c]
+
+  `(spit ~f ~c :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -148,7 +171,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn changeFileContent
+(defn changeContent
 
   "Pass file content to the work function,
   returning new content"
@@ -158,12 +181,11 @@
 
   {:pre [(fn? work)]}
 
-  (-> (slurp file :encoding "utf-8")
-      (work)))
+  (work (slurpUTF8 file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn replaceFile
+(defn replaceFile!
 
   "Update file with new content"
 
@@ -171,23 +193,22 @@
 
   {:pre [(fn? work)]}
 
-  (spit file
-        (changeFileContent file work)
-        :encoding "utf-8"))
+  (spitUTF8 file
+            (changeContent file work)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn writeOneFile
+(defn writeFile
 
   "Write data to file"
 
-  [^File fout ^Object data & [enc] ]
+  [fout data & [enc]]
 
   (io/copy data fout :encoding (or enc "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- jiggleZipEntryName
+(defn- cleanZEName
 
   "Remove leading separators from name"
 
@@ -198,12 +219,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- doOneEntry ""
+(defn- doOneEntry
+
+  ""
 
   [^ZipFile src ^File des ^ZipEntry en]
 
-  (let [f (->> (jiggleZipEntryName en)
-               (io/file des)) ]
+  (let [f (->> (cleanZEName en)
+               (io/file des))]
     (if (.isDirectory en)
       (.mkdirs f)
       (do
@@ -216,51 +239,52 @@
 ;;
 (defn unzipToDir
 
-  "Unzip contents of zip file to a target folder"
+  "Unzip zip file to a target folder"
 
-  [^File src ^File des]
+  [^File srcZip ^File desDir]
 
-  (let [fpz (ZipFile. src)
-        ents (.entries fpz) ]
-    (.mkdirs des)
+  (let [z (ZipFile. srcZip)
+        es (.entries z)]
+    (.mkdirs desDir)
     (while
-      (.hasMoreElements ents)
-      (doOneEntry fpz des (.nextElement ents)))))
+      (.hasMoreElements es)
+      (-> (.nextElement es)
+          (doOneEntry z desDir )))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn readFileBytes
+(defn slurpBytes
 
   "Read bytes from a file"
 
   ^bytes
   [^File fp]
 
-  (with-open [out (ByteArrayOutputStream. 4096)]
-    (io/copy fp out :buffer-size 4096)
+  (with-open [out (ByteArrayOutputStream. BUF_SZ)]
+    (io/copy fp out :buffer-size BUF_SZ)
     (.toByteArray out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn readOneFile
+(defmacro readFile
 
-  "Read data from a file"
+  "Read data from a file as string"
 
   ^String
-  [^File fp & [enc] ]
+  [fp & [enc]]
 
-  (slurp fp :encoding (or enc "utf-8")))
+  `(slurp ~fp :encoding (or ~enc "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn readOneUrl
+(defmacro readUrl
 
-  "Read data from a URL"
+  "Read data from a URL as string"
 
   ^String
-  [^URL url & [enc] ]
+  [url & [enc]]
 
-  (slurp url :encoding  (or enc "utf-8")))
+  `(slurp ~url :encoding  (or ~enc "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -268,18 +292,19 @@
 
   "Save a file to a directory"
 
-  [^File dir ^String fname ^XData xdata]
+  [^File dir ^String fname ^XData stuff]
 
   ;;(log/debug "saving file: %s" fname)
-  (let [fp (io/file dir fname) ]
+  (let [fp (io/file dir fname)]
     (io/delete-file fp true)
-    (if-not (.isFile xdata)
-      (writeOneFile fp (.getBytes xdata))
+    (if-not (.isFile stuff)
+      (writeFile fp (.getBytes stuff))
       (let [opts (make-array CopyOption 1)]
         (aset #^"[Ljava.nio.file.CopyOption;"
               opts
               0 StandardCopyOption/REPLACE_EXISTING)
-        (Files/move (.toPath (.fileRef xdata))
+        (.setDeleteFlag stuff false)
+        (Files/move (.toPath (.fileRef stuff))
                     (.toPath fp)
                     opts)))))
 
@@ -303,22 +328,24 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti mkdirs "Make directories" class)
+(defmulti mkdirs "Make directories" ^File class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod mkdirs String
+(defmethod mkdirs
 
-  ^File
+  String
+
   [^String f]
 
   (doto (io/file f) (.mkdirs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod mkdirs File
+(defmethod mkdirs
 
-  ^File
+  File
+
   [^File f]
 
   (doto f (.mkdirs)))
@@ -327,7 +354,7 @@
 ;;
 (defmacro listFiles
 
-  "Look for files with certain extension, without the dot"
+  "List files with certain extension, without the dot"
 
   [dir ext &[recurse?]]
 
@@ -348,7 +375,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- grep-paths ""
+(defn- grep-paths
+
+  "Find folders containing files with this extension"
 
   [top out fext]
 

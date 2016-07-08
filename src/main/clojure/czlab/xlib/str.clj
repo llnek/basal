@@ -256,6 +256,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn matchChar?
+
+  "true if this char is inside this set of chars"
+
+  [ch setOfChars]
+
+  (if (set? setOfChars) (ccore/contains? setOfChars ch) false))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn same?
 
   "true if these 2 strings are the same"

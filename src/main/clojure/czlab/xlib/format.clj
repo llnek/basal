@@ -18,7 +18,7 @@
   czlab.xlib.format
 
   (:require
-    [czlab.xlib.files :refer [readOneUrl]]
+    [czlab.xlib.files :refer [readUrl]]
     [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.edn :as edn]
@@ -73,7 +73,7 @@
 
   [^URL url]
 
-  (edn/read-string (readOneUrl url)))
+  (edn/read-string (readUrl url)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

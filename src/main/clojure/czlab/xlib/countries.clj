@@ -12,12 +12,13 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Maps country-codes to the country-names."
+(ns ^{:doc "Country-codes and country-names"
       :author "Kenneth Leung" }
 
   czlab.xlib.countries
 
   (:require
+    [czlab.xlib.str :refer [ucase lcase]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs]))
 
@@ -274,7 +275,7 @@
   ^String
   [^String code]
 
-  (get _CCODES (cs/upper-case code)))
+  (get _CCODES (ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -294,7 +295,7 @@
 
   [^String code]
 
-  (= "US" (cs/upper-case code)))
+  (= "US" (ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -386,7 +387,7 @@
   ^String
   [^String code]
 
-  (get _STATES (cs/upper-case code)))
+  (get _STATES (ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

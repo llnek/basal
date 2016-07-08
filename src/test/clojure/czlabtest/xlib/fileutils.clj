@@ -45,9 +45,12 @@
 (is (= "/tmp/a/b" (FU/parentPath "/tmp/a/b/c")))
 (is (nil?  (FU/parentPath nil)))
 
-(is (= "heeloo" (let [ fp (str (CU/juid) ".txt") ]
-                    (FU/saveFile ^File TMP_DIR fp (FU/getFile ^File TMP_DIR (.getName ^File TMP_FP)))
-                    (slurp (File. ^File TMP_DIR fp) :encoding "utf-8")) ))
+(is (= "heeloo" (let [fp (str (CU/juid) ".txt")]
+                    (FU/saveFile TMP_DIR
+                                 fp
+                                 (FU/getFile TMP_DIR
+                                             (.getName ^File TMP_FP)))
+                    (slurp (io/file TMP_DIR fp) :encoding "utf-8")) ))
 
 
 )
