@@ -19,6 +19,7 @@
 
   (:require
     [czlab.xlib.logging :as log]
+    [clojure.core :as ccore]
     [clojure.string :as cs])
 
   (:import

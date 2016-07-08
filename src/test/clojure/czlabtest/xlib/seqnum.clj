@@ -12,14 +12,14 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns czlabtest.xlib.seqnumgen
+(ns czlabtest.xlib.seqnum
 
   (:require [czlab.xlib.core :as SN])
   (:use [clojure.test]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftest czlabtestxlib-seqnumgen
+(deftest czlabtestxlib-seqnum
 
   (is (> (SN/nextLong) 0))
   (is (> (SN/nextInt) 0))
@@ -27,5 +27,5 @@
 )
 
 
-;;(clojure.test/run-tests 'czlabtest.xlib.seqnumgen)
+;;(clojure.test/run-tests 'czlabtest.xlib.seqnum)
 

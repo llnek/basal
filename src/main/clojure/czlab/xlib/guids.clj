@@ -25,7 +25,7 @@
      :refer [nextInt
              nowMillis
              tryletc
-             tryc
+             try!
              newRandom]])
 
   (:import

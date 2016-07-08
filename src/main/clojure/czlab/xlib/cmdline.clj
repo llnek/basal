@@ -12,21 +12,22 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Functions to enable console interactions."
+(ns ^{:doc "Enable console interactions"
       :author "Kenneth Leung" }
 
   czlab.xlib.cmdline
 
   (:require
-    [czlab.xlib.core :refer [isWindows?] ]
+    [czlab.xlib.core :refer [isWindows? do->nil]]
     [czlab.xlib.str :refer [strim has?] ]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs])
 
   (:import
-    [java.io BufferedOutputStream
+    [java.io
      InputStreamReader
-     OutputStreamWriter]
+     OutputStreamWriter
+     BufferedOutputStream]
     [java.io Reader Writer]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,24 +44,31 @@
 
   ;; windows has '\r\n' linux has '\n'
 
-  (let [buf (StringBuilder.)
+  (let [bf (StringBuilder.)
         ms (loop [c (.read cin)]
              (let [m (cond
-                       (or (= c -1)(= c 4)) #{ :quit :break }
-                       (= c (int \newline)) #{ :break }
-                       (or (= c (int \backspace))
-                           (= c (int \return)) (= c 27))
+                       (or (== c -1)
+                           (== c 4))
+                       #{:quit :break}
+
+                       (== c (int \newline))
+                       #{:break}
+
+                       (or (== c (int \backspace))
+                           (== c (int \return))
+                           (== c 27))
                        #{}
+
                        :else
                        (do
-                         (.append buf (char c))
+                         (.append bf (char c))
                          #{}))]
                (if (contains? m :break)
                  m
                  (recur (.read cin)))))]
     (if (contains? ms :quit)
       nil
-      (strim buf))))
+      (strim bf))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -78,9 +86,7 @@
         must (:must cmdQ)
         nxt (:next cmdQ)]
     (if (nil? answer)
-      (do
-        (.write cout "\n")
-        nil)
+      (do->nil (.write cout "\n"))
       ;;else
       (let [rc (if (empty? answer)
                  dft
@@ -118,7 +124,7 @@
         dft (strim (:default cmdQ))
         q (strim (:question cmdQ))
         must (:must cmdQ)]
-    (.write cout (str q (if must "*" "" ) " ? "))
+    (.write cout (str q (if must "*" "") " ? "))
     ;; choices ?
     (when-not (empty? chs)
       (if (has? chs \n)
@@ -126,11 +132,11 @@
                             "[" "[\n")
                           chs
                           (if (.endsWith chs "\n")
-                            "]" "\n]" ) ))
+                            "]" "\n]" )))
         (.write cout (str "[" chs "]"))))
     ;; defaults ?
     (when-not (empty? dft)
-      (.write cout (str "(" dft ")")) )
+      (.write cout (str "(" dft ")")))
     (doto cout (.write " ")(.flush))
     ;; get the input from user
     ;; return the next question, :end ends it
@@ -183,7 +189,8 @@
         cin (InputStreamReader. (System/in))
         func (partial cycleQ cout cin)]
     (.write cout (str ">>> Press "
-                      kp "<Enter> to cancel...\n"))
+                      kp
+                      "<Enter> to cancel...\n"))
     (->
       (reduce
         (fn [memo k]

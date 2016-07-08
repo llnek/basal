@@ -21,6 +21,9 @@
 ;;
 (deftest czlabtestxlib-strutils
 
+  (is (not (SU/matchChar? \space #{ \a \b \x })))
+  (is (SU/matchChar? \x #{ \a \b \x }))
+
   (is (= "ABC" (SU/ucase "abc")))
   (is (= "abc" (SU/lcase "ABC")))
 

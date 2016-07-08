@@ -18,8 +18,8 @@
   czlab.xlib.process
 
   (:require
-    [czlab.xlib.core :refer [try! tryc]]
     [czlab.xlib.meta :refer [getCldr]]
+    [czlab.xlib.core :refer [try!]]
     [czlab.xlib.logging :as log]
     [czlab.xlib.str :refer [hgl?]])
 

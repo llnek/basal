@@ -46,9 +46,6 @@
   (is (= (CU/nilNichts nil) CU/NICHTS))
   (is (= (CU/nilNichts "") ""))
 
-  (is (not (CU/matchChar? \space #{ \a \b \x })))
-  (is (CU/matchChar? \x #{ \a \b \x }))
-
   (is (not (nil? (CU/juid))))
   (is (< (.indexOf (CU/juid) ":\\-") 0))
 
@@ -128,7 +125,6 @@
   (is (= 3 (count (CU/flattenNil [1 nil 2 nil 3]))))
   (is (= 0.0 (CU/ndz nil)))
   (is (= 0 (CU/nnz nil)))
-  (is (false? (CU/nbf nil)))
 
   (is (thrown? IllegalArgumentException (CU/throwBadArg "a")))
 

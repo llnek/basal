@@ -41,6 +41,7 @@
     [java.io
      Serializable
      InputStream
+     PrintStream
      File
      FileInputStream
      ObjectOutputStream
@@ -63,6 +64,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
+(defonce ^:private BUF_SZ 4096)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti fpath
@@ -76,7 +79,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defonce ^:private _BOOLS #{ "true" "yes"  "on"  "ok"  "active"  "1"})
-(defonce ^:private _PUNCS #{ \_ \- \. \( \) \space })
 (deftype TypeNichts [])
 (ns-unmap *ns* '->TypeNichts)
 
@@ -194,7 +196,7 @@
 
   [e & args]
 
-  (throw (exp! ~e ~@args)))
+  `(throw (exp! ~e ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -475,17 +477,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro sysVar
-
-  "Get value for this system property"
-
-  ^String
-  [propname]
-
-  `(when-some [p# ~propname] (System/getProperty p#)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro envVar
 
   "Get value for this env var"
@@ -621,47 +612,47 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn sysProp
+(defmacro sysProp
 
   "Get the value of a system property"
 
   ^String
   [prop]
 
-  (System/getProperty (str prop) ""))
+  `(System/getProperty (str ~prop) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn homeDir
+(defmacro homeDir
 
   "Get the user's home directory"
 
   ^File
   []
 
-  (io/file (sysProp "user.home")) )
+  `(io/file (sysProp "user.home")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn getUser
+(defmacro getUser
 
   "Get the current user login name"
 
   ^String
   []
 
-  (sysProp "user.name"))
+  `(sysProp "user.name"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn getCwd
+(defmacro getCwd
 
   "Get the current dir"
 
   ^File
   []
 
-  (io/file (sysProp "user.dir")))
+  `(io/file (sysProp "user.dir")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -685,7 +676,7 @@
 
   {:pre [(some? obj)]}
 
-  (with-open [out (ByteArrayOutputStream. 4096)
+  (with-open [out (ByteArrayOutputStream. BUF_SZ)
               oos (ObjectOutputStream. out)]
     (.writeObject oos obj)
     (.toByteArray out)))
@@ -720,14 +711,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn filePath
+(defmacro filePath
 
   "Get the file path"
 
   ^String
   [aFile]
 
-  (fpath aFile))
+  `(fpath aFile))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -737,7 +728,9 @@
 
   []
 
-  (>= (.indexOf (cs/lower-case (sysProp "os.name")) "windows") 0 ))
+  (>= (.indexOf (cs/lower-case
+                  (sysProp "os.name"))
+                "windows") 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -811,28 +804,34 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod loadJavaProps InputStream
+(defmethod loadJavaProps
 
-  [^InputStream inp]
+  InputStream
 
-  (doto (Properties.) (.load inp)))
+  [inp]
+
+  (doto (Properties.) (.load ^InputStream inp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod loadJavaProps File
+(defmethod loadJavaProps
 
-  [^File aFile]
+  File
+
+  [aFile]
 
   (loadJavaProps (io/as-url aFile)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod loadJavaProps URL
+(defmethod loadJavaProps
 
-  [^URL aFile]
+  URL
+
+  [aFile]
 
   (with-open
-    [inp (.openStream aFile)]
+    [inp (.openStream ^URL aFile)]
     (loadJavaProps inp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -880,7 +879,7 @@
   (^InputStream
     [^String rcPath
      ^ClassLoader czLoader]
-    (when (some? rcPath)
+    (when-not (empty? rcPath)
       (-> (get-czldr czLoader)
           (.getResourceAsStream  rcPath)))))
 
@@ -897,9 +896,9 @@
   (^URL
     [^String rcPath
      ^ClassLoader czLoader]
-    (when (some? rcPath)
+    (when-not (empty? rcPath)
       (-> (get-czldr czLoader)
-          (.getResource rcPath))) ))
+          (.getResource rcPath)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -921,11 +920,11 @@
      ^String encoding
      ^ClassLoader czLoader]
     (with-open
-      [out (ByteArrayOutputStream. 4096)
+      [out (ByteArrayOutputStream. BUF_SZ)
        inp (resStream rcPath czLoader)]
-      (io/copy inp out :buffer-size 4096)
+      (io/copy inp out :buffer-size BUF_SZ)
       (-> (.toByteArray out)
-          (stringify  encoding))) ))
+          (stringify encoding)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -941,9 +940,9 @@
     [^String rcPath
      ^ClassLoader czLoader]
     (with-open
-      [out (ByteArrayOutputStream. 4096)
+      [out (ByteArrayOutputStream. BUF_SZ)
        inp (resStream rcPath czLoader) ]
-      (io/copy inp out :buffer-size 4096)
+      (io/copy inp out :buffer-size BUF_SZ)
       (.toByteArray out))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -956,14 +955,14 @@
   [^bytes bits]
 
   (when (some? bits)
-    (let [buf (byte-array 1024)
-          cpz (Deflater.) ]
+    (let [buf (byte-array BUF_SZ)
+          cpz (Deflater.)]
       (doto cpz
         (.setLevel (Deflater/BEST_COMPRESSION))
         (.setInput bits)
         (.finish))
       (with-open
-        [baos (ByteArrayOutputStream. (alength bits)) ]
+        [baos (ByteArrayOutputStream. (alength bits))]
         (loop []
           (if (.finished cpz)
             (.toByteArray baos)
@@ -984,7 +983,7 @@
   [^bytes bits]
 
   (when (some? bits)
-    (let [buf (byte-array 1024)
+    (let [buf (byte-array BUF_SZ)
           decr (Inflater.)
           baos (ByteArrayOutputStream. (alength bits)) ]
       (.setInput decr bits)
@@ -1009,25 +1008,25 @@
 
   (->> (reduce (fn [^StringBuilder buf ^Character ch]
                  (if (or (java.lang.Character/isLetterOrDigit ch)
-                         (ccore/contains? _PUNCS ch))
+                         (ccore/contains? #{\_ \- \.} ch))
                    (.append buf ch)
                    (.append buf
                             (str "0x"
                                  (Integer/toString (int ch) 16)))))
                (StringBuilder.)
-               (seq fname))
-       (str "" )))
+               (.toCharArray fname))
+       (str )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn nowMillis
+(defmacro nowMillis
 
   "the current time in milliseconds"
 
   ^long
   []
 
-  (java.lang.System/currentTimeMillis))
+  `(System/currentTimeMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1038,7 +1037,7 @@
   ^String
   [^String fileUrlPath]
 
-  (if (nil? fileUrlPath)
+  (if (empty? fileUrlPath)
     ""
     (.getPath (io/as-url fileUrlPath))) )
 
@@ -1051,7 +1050,7 @@
   ^URL
   [^String path]
 
-  (when (some? path)
+  (when-not (empty? path)
     (io/as-url (if (.startsWith "file:" path)
                  path
                  (str "file://" path)))))
@@ -1069,23 +1068,29 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod test-isa :class
+(defmethod test-isa
+
+  :class
 
   [^String param ^Class childz ^Class parz]
 
   (assert (and (some? childz)
+               (some? parz)
                (.isAssignableFrom parz childz))
-          (str "" param " not-isa " (.getName parz))))
+          (str param " not-isa " (.getName parz))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod test-isa :object
+(defmethod test-isa
+
+  :object
 
   [^String param ^Object obj ^Class parz]
 
-  (assert (and (some? obj)
+  (assert (and (some? parz)
+               (some? obj)
                (.isAssignableFrom parz (.getClass obj)))
-          (str "" param " not-isa " (.getName parz))))
+          (str param " not-isa " (.getName parz))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1093,10 +1098,10 @@
 
   "Assert object is not null"
 
-  [^String param obj]
+  [^String param ^Object obj]
 
   (assert (some? obj)
-          (str "" param " is null")))
+          (str param " is null")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1104,7 +1109,7 @@
 
   "Assert a condition"
 
-  [^String msg cnd ]
+  [^String msg cnd]
 
   (assert cnd (str msg)))
 
@@ -1116,8 +1121,8 @@
 
   [^String param ^String v]
 
-  (assert (and (notnil? v)(> (.length v) 0))
-          (str "" param " is empty")))
+  (assert (not (empty? v))
+          (str param " is empty")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1149,39 +1154,47 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod test-nonegnum :double
+(defmethod test-nonegnum
+
+  :double
 
   [^String param v]
 
   (assert (>= v 0.0)
-          (str "" param " must be >= 0")))
+          (str param " must be >= 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod test-nonegnum :long
+(defmethod test-nonegnum
+
+  :long
 
   [^String param v]
 
   (assert (>= v 0)
-          (str "" param " must be >= 0")))
+          (str param " must be >= 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod test-posnum :double
+(defmethod test-posnum
+
+  :double
 
   [^String param v]
 
   (assert (> v 0.0)
-          (str "" param " must be > 0")))
+          (str param " must be > 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod test-posnum :long
+(defmethod test-posnum
+
+  :long
 
   [^String param v]
 
   (assert (> v 0)
-          (str "" param " must be > 0")))
+          (str param " must be > 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1191,8 +1204,8 @@
 
   [^String param v]
 
-  (assert (not (nil? (not-empty v)))
-          (str  param  " must be non empty")))
+  (assert (> (count v) 0)
+          (str param  " must be non empty")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1205,7 +1218,7 @@
 
   (loop [r root
          t (if (some? root)
-             (.getCause ^Throwable root)) ]
+             (.getCause ^Throwable root))]
     (if (nil? t)
       r
       (recur t (.getCause t)))))
@@ -1218,10 +1231,11 @@
 
   [root]
 
-  (let [e (rootCause root) ]
-    (if (nil? e)
-      ""
-      (str (.getName (.getClass e)) ": " (.getMessage e)))))
+  (if-some [e (rootCause root)]
+    (str (.getName (.getClass e))
+         ": "
+         (.getMessage e))
+    ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1229,21 +1243,21 @@
 
   "A list of random int numbers between a range"
 
-  ^clojure.lang.IPersistentCollection
+  ^APersistentVector
   [start end howMany]
 
   (if (or (>= start end)
-          (< (- end start) howMany) )
+          (< (- end start) howMany))
     []
     (loop [_end (if (< end Integer/MAX_VALUE)
                   (+ end 1)
                   end)
            r (newRandom)
            rc []
-           cnt howMany ]
+           cnt howMany]
       (if (<= cnt 0)
         rc
-        (let [n (.nextInt r _end) ]
+        (let [n (.nextInt r _end)]
           (if (and (>= n start)
                    (not (ccore/contains? rc n)))
             (recur _end r (conj rc n) (dec cnt))
@@ -1259,7 +1273,7 @@
    (sortJoin "" ss))
 
   ([sep ss]
-   (if (nil? ss)
+   (if (empty? ss)
      ""
      (cs/join sep (sort ss)))))
 
@@ -1275,13 +1289,13 @@
     (reduce (fn [sum k]
               (assoc! sum (keyword k) (.get props k)))
             (transient {})
-            (seq (.keySet props)))))
+            (.keySet props))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftype UnsynchedMObj
 
-  [ ^:unsynchronized-mutable data ]
+  [^:unsynchronized-mutable data]
 
   Muble
 
@@ -1290,14 +1304,14 @@
   (toEDN [_] (pr-str data))
   (seq [_] (seq data))
   (getv [_ k] (get data k))
-  (clear [_ ] (set! data {} )))
+  (clear [_ ] (set! data {})))
 (ns-unmap *ns* '->UnsynchedMObj)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftype VolatileMObj
 
-  [ ^:volatile-mutable data ]
+  [^:volatile-mutable data]
 
   Muble
 
@@ -1316,7 +1330,7 @@
   "Create a volatile, mutable object"
 
   ^Muble
-  [ & [opts] ]
+  [& [opts]]
 
   (let [m (VolatileMObj. {})
         opts (or opts {})]
@@ -1331,7 +1345,7 @@
   "Create a unsynchronized, mutable object"
 
   ^Muble
-  [ & [opts] ]
+  [& [opts]]
 
   (let [m (UnsynchedMObj. {})
         opts (or opts {})]
@@ -1341,15 +1355,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn printMutableObj
+(defn printMubleObj
 
   "Print out this mutable object"
 
-  [^Muble ctx & [dbg] ]
+  [^Muble ctx & [dbg]]
 
-  (let [buf (StringBuilder.) ]
+  (let [buf (StringBuilder.)]
     (.append buf "\n")
-    (doseq [[k v] (.seq ctx) ]
+    (doseq [[k v] (.seq ctx)]
       (.append buf (str k " = " v "\n")))
     (.append buf "\n")
     (let [s (str buf)]
@@ -1364,6 +1378,20 @@
   [^Throwable e]
 
   (.printStackTrace e))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn dumpStk
+
+  "Dump stack trace to string"
+
+  ^String
+  [^Throwable e]
+
+  (with-open [out (ByteArrayOutputStream. BUF_SZ)
+              ps (PrintStream. out true "utf-8")]
+    (.printStackTrace e ps)
+    (String. (.toByteArray out) "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1400,7 +1428,7 @@
 
     :else
     (let [ss (.split email "@") ]
-      (if (= 2 (alength ss))
+      (if (== 2 (alength ss))
         (str (aget ss 0) "@" (cs/lower-case (aget ss 1)))
         (throwBadData (str "Bad email address " email))))))
 
@@ -1485,8 +1513,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private _numInt (AtomicInteger. 1))
-(def ^:private  _numLong (AtomicLong. 1))
+(defonce ^:private _numInt (AtomicInteger. 1))
+(defonce ^:private  _numLong (AtomicLong. 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1512,7 +1540,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro prn!! ""
+(defmacro prn!!
+
+  ""
 
   [fmt & args]
 
@@ -1520,7 +1550,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro prn! ""
+(defmacro prn!
+
+  ""
 
   [fmt & args]
 

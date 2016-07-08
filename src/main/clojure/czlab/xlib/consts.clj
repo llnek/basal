@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Some useful constants."
+(ns ^{:doc "Some useful constants"
       :author "Kenneth Leung" }
 
   czlab.xlib.consts)
