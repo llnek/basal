@@ -12,8 +12,8 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Wrapper for Apache Ant tasks."
-      :author "Kenneth Leung" }
+(ns ^{:doc "Apache Ant project & task wrappers"
+      :author "Kenneth Leung"}
 
   czlab.xlib.antlib
 
@@ -64,8 +64,10 @@
      JUnitTest
      BatchTest
      FormatterElement]
-    [org.apache.tools.ant.util FileNameMapper
-     GlobPatternMapper ChainedMapper]
+    [org.apache.tools.ant.util
+     FileNameMapper
+     ChainedMapper
+     GlobPatternMapper]
     [org.apache.tools.ant.taskdefs
      Javadoc$AccessType
      Replace$Replacefilter
@@ -128,7 +130,8 @@
 
   [^Target target]
 
-  (.executeTarget (.getProject target) (.getName target)))
+  (-> (.getProject target)
+      (.executeTarget (.getName target))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -143,14 +146,14 @@
          (reduce (fn [memo pd]
                    (assoc! memo
                            (keyword (.getName pd)) pd))
-                 (transient {} )))))
+                 (transient {}) ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;create a default project.
-(def ^:private dftprj (atom (antProject)))
+(defonce ^:private dftprj (atom (antProject)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;cache ant task names as symbols, and cache bean-info of class.
+;;cache ant task names as symbols, and cache bean-info of class
 (let [beans (atom {})
       syms (atom [])]
   (doseq [[k v] (.getTaskDefinitions @dftprj)]
@@ -198,11 +201,12 @@
        java.lang.Integer
        Long/TYPE
        java.lang.Long
-       org.apache.tools.ant.types.Path ])))
+       org.apache.tools.ant.types.Path])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti ^:private koerce "Best attempt to convert a value." (fn [_ a b] [a (class b)]))
+(defmulti koerce
+  "Converter" {:private true} (fn [_ a b] [a (class b)]))
 
 (defmethod koerce [Integer/TYPE String] [_ _ ^String v] (Integer/parseInt v (int 10)))
 (defmethod koerce [Integer String] [_ _ ^String v] (Integer/parseInt v (int 10)))
@@ -248,8 +252,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- setProp! ""
+(defn- setProp!
 
+  ""
   [^Method wm pojo k arr]
 
   (try
@@ -266,7 +271,6 @@
 (defn- setOptions
 
   "Use reflection and invoke setters"
-
   [pj pojo options & [skips]]
 
   (let [arr (object-array 1)
@@ -274,27 +278,31 @@
         cz (.getClass pojo)
         ps (or (get @props cz)
                (maybeListProps cz))]
-    (doseq [[k v] options]
-      (when-not (contains? skips k)
-        (if-some [pd (get ps k)]
-          (if-some [wm (.getWriteMethod pd)]
-            ;;some cases the beaninfo is erroneous
-            ;;so fall back to use *best-try*
-            (let [pt (.getPropertyType pd)
-                  m (.getName wm)]
-              (aset arr 0 (coerce pj pt v))
-              (setProp! wm pojo k arr))
-            ;;else
-            (let [m (str "set" (capstr (name k)))
-                  rc (method? cz m)]
-              (when (nil? rc)
-                (throw (Exception. (str m " not-found in " pojo))))
-              (aset arr 0 (coerce pj (last rc) v))
-              (setProp! (first rc) pojo k arr)))
+    (doseq [[k v] options
+            :when (not (contains? skips k))]
+      (if-some [pd (get ps k)]
+        (if-some [wm (.getWriteMethod pd)]
+          ;;some cases the beaninfo is erroneous
+          ;;so fall back to use *best-try*
+          (let [pt (.getPropertyType pd)
+                m (.getName wm)]
+            (aset arr 0 (coerce pj pt v))
+            (setProp! wm pojo k arr))
           ;;else
-          (throw (Exception. (str "property "
-                                  (name k)
-                                  " not-found in task " cz))))))))
+          (let [m (str "set" (capstr (name k)))
+                rc (method? cz m)]
+            (when (nil? rc)
+              (-> (str m " not-found in " pojo)
+                  (Exception. )
+                  (throw )))
+            (aset arr 0 (coerce pj (last rc) v))
+            (setProp! (first rc) pojo k arr)))
+        ;;else
+        (-> (str "property "
+                 (name k)
+                 " not-found in task " cz)
+            (Exception. )
+            (throw ))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -307,7 +315,6 @@
 
   (let [options (or options {})
         nested (or nested [])]
-
     (setOptions pj fs options)
     (.setProject fs pj)
     (maybeCfgNested pj fs nested)
