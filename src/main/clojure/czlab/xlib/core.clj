@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Useful helpers"
+(ns ^{:doc "Lots of useful helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.core
@@ -24,6 +24,8 @@
     [clojure.string :as cs]
     [clojure.core :as ccore]
     [clojure.edn :as edn])
+
+  (:use [czlab.xlib.consts])
 
   (:import
     [java.util.concurrent.atomic AtomicLong AtomicInteger]
@@ -74,11 +76,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti loadJavaProps
-  "Load java properties from input-stream" ^Properties class)
+  "Load java properties from source" ^Properties class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defonce ^:private _BOOLS #{ "true" "yes"  "on"  "ok"  "active"  "1"})
 (deftype TypeNichts [])
 (ns-unmap *ns* '->TypeNichts)
 
@@ -93,17 +94,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro tryclr
+(defmacro trylog!
 
   "Catch exception,log it and return a default value"
-
   [defv & exprs]
 
-  `(try ~@exprs (catch Throwable e# (log/warn e# "") ~defv )) )
+  `(try ~@exprs (catch Throwable e# (log/warn e# "") ~defv )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro trycr
+(defmacro tryc!
 
   "Catch exception, and return a default value"
 
@@ -119,7 +119,7 @@
 
   [& exprs]
 
-  `(trycr nil ~@exprs))
+  `(tryc! nil ~@exprs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -175,6 +175,11 @@
                   `(~f ~gx)))
               forms)
        ~gx)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro in?
+  "Shorthand for contains?" [coll k] `(clojure.core/contains? ~coll ~k))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -800,7 +805,7 @@
   ^Boolean
   [^String s]
 
-  (ccore/contains? _BOOLS (cs/lower-case (str s))))
+  (ccore/contains? BOOLS (cs/lower-case (str s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

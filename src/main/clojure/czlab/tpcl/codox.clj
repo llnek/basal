@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Execute the codox document generator"
+(ns ^{:doc "Execute the codox document generator."
       :author "Kenneth Leung" }
 
   czlab.tpcl.codox
@@ -30,7 +30,6 @@
 (defn -main
 
   "Run the codox document generator"
-
   [& args]
 
   (require 'codox.main)

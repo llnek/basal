@@ -12,7 +12,11 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Apache Ant project & task wrappers"
+(ns ^{:doc "Apache Ant project & task wrappers.
+           The anatomy of an ant task is a xml construct,
+           where the attributes are termed as options and
+           nested elements are treated as vectors of
+           vectors or maps."
       :author "Kenneth Leung"}
 
   czlab.xlib.antlib
@@ -95,6 +99,11 @@
 ;;
 (defmacro trap!
   "" {:private true} [s] `(throw (Exception. ~s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro fopt
+  "" {:private true} [o t] `(find ~o ~t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -286,9 +295,9 @@
         (->
           ;;some cases the beaninfo is erroneous
           ;;so fall back to use *best-try*
-          (let [wm (.getWriteMethod pd)
-                pt (.getPropertyType pd)
-                mn (str "set" (capstr kn))]
+          (let [mn (str "set" (capstr kn))
+                wm (.getWriteMethod pd)
+                pt (.getPropertyType pd)]
             (if (some? wm)
               (do (aset arr 0 (coerce pj pt v)) wm)
               (let [rc (method? cz mn)]
@@ -303,7 +312,6 @@
 (defn antTarFileSet
 
   "Configure a TarFileSet Object"
-
   ^Tar$TarFileSet
   [^Project pj ^Tar$TarFileSet fs & [options nested]]
 
@@ -327,7 +335,8 @@
         fs (FileSet.)]
     (setOptions pj
                 fs
-                (merge {:errorOnMissingDir false} options))
+                (-> {:errorOnMissingDir false}
+                    (merge options)))
     (.setProject fs pj)
     (maybeCfgNested pj fs nested)
     fs))
@@ -385,11 +394,10 @@
 (defn- fmtr-preopts
 
   ""
-  [tk options]
+  [^FormatterElement tk options]
 
   (when-some [[k v] (find options :type)]
-    (.setType ^FormatterElement
-              tk
+    (.setType tk
               (doto (FormatterElement$TypeAttribute.)
                 (.setValue (str v)))))
   [options #{:type}])
@@ -422,7 +430,7 @@
       (doto (.createPath root)
         (.setLocation (io/file (str (last p)))))
       :refid
-      (throw (Exception. "path:refid not supported."))
+      (trap! "path:refid not supported")
       ;;(doto (.createPath root) (.setRefid (last p)))
       :fileset
       (->> (antFileSet pj
@@ -444,9 +452,9 @@
     (case (first p)
 
       :compilerarg
-      (when-some [line (:line (last p))]
+      (when-some [n (:line (last p))]
         (-> (.createCompilerArg tk)
-            (.setLine ^String line)))
+            (.setLine ^String n)))
 
       :classpath
       (setClassPath pj
@@ -562,21 +570,21 @@
   ""
   [^JUnitTask tk options]
 
-  (when-some [[k v] (find options :printsummary)]
+  (when-some [v (:printsummary options)]
     (.setPrintsummary
       tk
       (doto
         (JUnitTask$SummaryAttribute.)
         (.setValue (str v)))))
 
-  (when-some [[k v] (find options :forkMode)]
+  (when-some [v (:forkMode options)]
     (.setForkMode
       tk
       (doto
         (JUnitTask$ForkMode.)
         (.setValue (str v)))))
 
-  [options #{:forkMode :printsummary}])
+  [options #{:printsummary :forkMode}])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -585,7 +593,7 @@
   ""
   [^Javadoc tk options]
 
-  (when-some [[k v] (find options :access)]
+  (when-some [v (:access options)]
     (.setAccess
       tk
       (doto
@@ -600,7 +608,7 @@
   ""
   [^Tar tk options]
 
-  (when-some [[k v] (find options :compression)]
+  (when-some [v (:compression options)]
     (.setCompression
       tk
       (doto
@@ -620,7 +628,8 @@
                 tname
                 task
                 options
-                nested]} tobj
+                nested]}
+        tobj
         pre-options (or pre-options
                         xxx-preopts)]
     ;;(log/info "task name: %s" tname)
@@ -714,7 +723,9 @@
         tm (cs/lower-case
              (.substring s (+ 1 (.lastIndexOf s "."))))]
     ;;(println "task---- " s)
-    `(defn ~sym ~docstr {:no-doc true} [& [options# nested#]]
+    `(defn ~sym ~docstr
+       {:no-doc true}
+       [& [options# nested#]]
        (let [tk# (doto (.createTask ~pj ~s)
                      (.setTaskName ~tm))
              o# (or options# {})
@@ -740,7 +751,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro decl-ant-tasks
+(defmacro declAntTasks
 
   "Introspect the default project and cache all registered ant-tasks"
   {:private true}
@@ -752,7 +763,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(decl-ant-tasks @dftprj)
+(declAntTasks @dftprj)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

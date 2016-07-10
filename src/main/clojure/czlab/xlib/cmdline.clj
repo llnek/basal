@@ -12,14 +12,14 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Enable console interactions"
+(ns ^{:doc "Console interactions."
       :author "Kenneth Leung" }
 
   czlab.xlib.cmdline
 
   (:require
-    [czlab.xlib.core :refer [isWindows? do->nil]]
-    [czlab.xlib.str :refer [strim has?] ]
+    [czlab.xlib.core :refer [isWindows? in? do->nil]]
+    [czlab.xlib.str :refer [stror strim has?]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs])
 
@@ -38,44 +38,32 @@
 (defn- readData
 
   "Read user input"
-
   ^String
   [^Writer cout ^Reader cin]
 
   ;; windows has '\r\n' linux has '\n'
-
-  (let [bf (StringBuilder.)
-        ms (loop [c (.read cin)]
-             (let [m (cond
-                       (or (== c -1)
-                           (== c 4))
-                       #{:quit :break}
-
-                       (== c (int \newline))
-                       #{:break}
-
-                       (or (== c (int \backspace))
-                           (== c (int \return))
-                           (== c 27))
-                       #{}
-
-                       :else
-                       (do
-                         (.append bf (char c))
-                         #{}))]
-               (if (contains? m :break)
-                 m
-                 (recur (.read cin)))))]
-    (if (contains? ms :quit)
-      nil
-      (strim bf))))
+  (let
+    [bf (StringBuilder.)
+     ms (loop [c (.read cin)]
+          (let [m (cond
+                    (or (== c -1) (== c 4))
+                    #{:quit :break}
+                    (== c (int \newline))
+                    #{:break}
+                    (or (== c (int \backspace))
+                        (== c (int \return))
+                        (== c 27))
+                    nil
+                    :else
+                    (do->nil (.append bf (char c))))]
+            (if (in? m :break) m (recur (.read cin)))))]
+    (if (in? ms :quit) nil (strim bf))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onAnswer
 
   "Process the answer, returning the next question"
-
   [^Writer cout
    cmdQ
    props
@@ -88,22 +76,17 @@
     (if (nil? answer)
       (do->nil (.write cout "\n"))
       ;;else
-      (let [rc (if (empty? answer)
-                 dft
-                 answer)]
+      (let [rc (stror answer dft)]
         (cond
           ;;if required to answer, repeat the question
-          (and (empty? rc)
-               must)
+          (and (empty? rc) must)
           (:id cmdQ)
 
           (keyword? res)
-          (do
-            (swap! props assoc res rc)
-            nxt)
+          (do (swap! props assoc res rc) nxt)
 
           (fn? res)
-          (let [[n p] (res rc @props)]
+          (let [[_ p] (res rc @props)]
             (reset! props p)
             n)
 
@@ -114,7 +97,6 @@
 (defn- popQQ
 
   "Pop the question"
-
   [^Writer cout
    ^Reader cin
    cmdQ
@@ -124,15 +106,13 @@
         dft (strim (:default cmdQ))
         q (strim (:question cmdQ))
         must (:must cmdQ)]
-    (.write cout (str q (if must "*" "") " ? "))
+    (.write cout (str q (if must "*" "") "? "))
     ;; choices ?
     (when-not (empty? chs)
       (if (has? chs \n)
-        (.write cout (str (if (.startsWith chs "\n")
-                            "[" "[\n")
+        (.write cout (str (if (.startsWith chs "\n") "[" "[\n")
                           chs
-                          (if (.endsWith chs "\n")
-                            "]" "\n]" )))
+                          (if (.endsWith chs "\n") "]" "\n]" )))
         (.write cout (str "[" chs "]"))))
     ;; defaults ?
     (when-not (empty? dft)
@@ -148,19 +128,15 @@
 (defn- popQ
 
   "Pop the question"
-
   [cout cin cmdQ props]
 
-  (if (some? cmdQ)
-    (popQQ cout cin cmdQ props)
-    :end))
+  (if (some? cmdQ) (popQQ cout cin cmdQ props) :end))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- cycleQ
 
   "Cycle through the questions"
-
   [cout cin cmdQNs start props]
 
   (loop [rc (popQ cout
@@ -178,7 +154,6 @@
 (defn cliConverse
 
   "Prompt a sequence of questions via console"
-
   [cmdQs question1]
 
   {:pre [(map? cmdQs)]}
@@ -193,8 +168,7 @@
                       "<Enter> to cancel...\n"))
     (->
       (reduce
-        (fn [memo k]
-          (assoc memo k (assoc (get cmdQs k) :id k)))
+        #(assoc %1 %2 (assoc (get cmdQs %2) :id %2))
         {}
         (keys cmdQs))
       (func question1 (atom {})))))

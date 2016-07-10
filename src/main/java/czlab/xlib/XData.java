@@ -79,7 +79,7 @@ public class XData implements Serializable {
 
   /**
    */
-  private void destroy() {
+  public void destroy() {
     if (_data instanceof File && _cls) {
       try { ((File) _data).delete(); }
       catch (Throwable t) {}

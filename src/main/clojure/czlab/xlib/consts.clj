@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Some useful constants"
+(ns ^{:doc "Some useful constants."
       :author "Kenneth Leung" }
 
   czlab.xlib.consts)
@@ -36,7 +36,7 @@
 (defonce ^String UTF16 "UTF-16" )
 (defonce ^String UTF8 "UTF-8" )
 (defonce ^String SLASH   "/" )
-(defonce ^String PATHSEP   SLASH )
+(defonce ^String PATHSEP (System/getProperty "file.separator"))
 
 (defonce EV_OPTS :____eventoptions)
 (defonce JS_LAST :____lastresult)

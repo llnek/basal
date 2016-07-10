@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc    "boot-clj related helpers"
+(ns ^{:doc    "boot-clj related helpers."
       :author "Kenneth Leung" }
 
   czlab.tpcl.boot
@@ -94,8 +94,7 @@
   {:pre [(fn? work)]}
 
   (spitutf8 file
-            (-> (slurputf8 file)
-                (work ))))
+            (-> (slurputf8 file) (work ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -158,9 +157,7 @@
   [k]
 
   (let [v (get @L-VARS k)]
-    (if (fn? v)
-      (v k)
-      v)))
+    (if (fn? v) (v k) v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -171,7 +168,7 @@
 
   (or (if local?
         (glocal k)
-        (if-let [v (get @U-VARS k)]
+        (if-some [v (get @U-VARS k)]
           (if (fn? v) (v k) v)
           (glocal k)))
       (bc/get-env k)))
@@ -701,7 +698,6 @@
 (defn bootEnv!
 
   "Setup env-vars and paths, must be called by the user"
-
   [& [options]]
 
   (reset! U-VARS (merge {} options))
@@ -714,7 +710,6 @@
 (defmacro bootSpit
 
   "Write to file"
-
   [^String data file]
 
   `(spitutf8 ~file ~data))
@@ -724,7 +719,6 @@
 (defn bootSpitJson
 
   "Write JSON object to file"
-
   [json file]
 
   (bootSpit (js/write-str json) file))
@@ -734,7 +728,6 @@
 (defmacro bootSlurp
 
   "Read file content as string"
-
   ^String
   [file]
 
@@ -745,7 +738,6 @@
 (defn bootSlurpJson
 
   "Read file content as JSON"
-
   [file]
 
   (-> (bootSlurp file)
@@ -774,7 +766,6 @@
 (bc/deftask testClj
 
   "Test clojure"
-
   []
 
   (bc/with-pre-wrap fileset
@@ -815,7 +806,6 @@
 (bc/deftask nullfs
 
   "Return a empty fileset"
-
   []
 
   (bc/with-pre-wrap fileset
@@ -826,7 +816,6 @@
 (bc/deftask libjars
 
   "Resolve all dependencies (jars)"
-
   []
 
   (a/cleanDir (io/file (ge :libDir)))
@@ -849,7 +838,6 @@
 (bc/deftask buildr
 
   "Compile all source files"
-
   []
 
   (bc/with-pre-wrap fileset
@@ -862,7 +850,6 @@
 (bc/deftask jar!
 
   "Create final jar file"
-
   []
 
   (bc/with-pre-wrap fileset
@@ -969,11 +956,7 @@
       (a/runTarget*
         "pack/all"
         (a/antTar
-          {:destFile
-           (fp! dist (str (artifactID)
-                          "-"
-                          ver
-                          ".tar.gz"))
+          {:destFile (fp! dist (str (idAndVer) ".tar.gz"))
            :compression "gzip"}
           [[:tarfileset {:dir root
                          :excludes "bin/**"}]
@@ -992,10 +975,7 @@
 
   (comp
         (install :file
-                 (str (ge :distDir)
-                      "/"
-                      (idAndVer)
-                      ".jar"))))
+                 (str (ge :distDir) "/" (idAndVer) ".jar"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
