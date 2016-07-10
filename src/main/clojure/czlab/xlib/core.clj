@@ -94,59 +94,36 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro trylog!
+(defmacro try!!
 
-  "Catch exception,log it and return a default value"
+  "Eat the exception and return a default value"
   [defv & exprs]
 
   `(try ~@exprs (catch Throwable e# (log/warn e# "") ~defv )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro tryc!
-
-  "Catch exception, and return a default value"
-
-  [defv & exprs]
-
-  `(try ~@exprs (catch Throwable _# ~defv )) )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro try!
 
-  "Eat all exceptions"
-
+  "Eat the exception and return nil"
   [& exprs]
 
-  `(tryc! nil ~@exprs))
+  `(try!! nil ~@exprs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro trylet!
 
-  "Try and eat the error"
-
+  "Try and let combo, eat the error"
   [bindings & body]
 
-  `(try! (let ~bindings ~@body)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro tryletc
-
-  "Try and eat(log) the error"
-
-  [bindings & body]
-
-  `(trycr nil (let ~bindings ~@body)))
+  `(try!! nil (let ~bindings ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro doto->>
 
   "Combine doto and ->>"
-
   [x & forms]
 
   (let [gx (gensym)]
@@ -163,7 +140,7 @@
 (defmacro doto->
 
   "Combine doto and ->"
-
+  {:private true}
   [x & forms]
 
   (let [gx (gensym)]
@@ -186,7 +163,7 @@
 (defmacro exp!
 
   "Create an exception instance"
-
+  ^Throwable
   [e & args]
 
   (if (empty? args)
@@ -198,7 +175,6 @@
 (defmacro trap!
 
   "Throw this exception"
-
   [e & args]
 
   `(throw (exp! ~e ~@args)))
@@ -214,7 +190,6 @@
 (defmacro inst?
 
   "Same as clojure's instance?"
-
   [theType theObj]
 
   `(instance? ~theType ~theObj))
@@ -225,7 +200,6 @@
 
   "If object is an instance of this type,
    return it else nil"
-
   [someType obj]
 
   `(let [x# ~obj]
@@ -236,7 +210,6 @@
 (defn cexp?
 
   "Try to cast into an exception"
-
   ^Throwable
   [e]
 
@@ -247,7 +220,6 @@
 (defmacro notnil?
 
   "is x not nil"
-
   [x]
 
   `(not (nil? ~x)))
@@ -264,56 +236,37 @@
 (defn newMonoFlop
 
   "Flip on first call, useful for one-time logic"
+  ^MonoFlop
   []
 
   (let [toggled (atom false)]
     (reify
-
       MonoFlop
-
       (firstCall [_]
-        (not
-          (if @toggled
-            true
-            (do
-              (reset! toggled true)
-              false)))))))
+        (if @toggled
+          false
+          (do->true (reset! toggled true)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn newWatch
 
   "Use to mark elapsed time"
-
   ^Watch
   []
 
   (let [start (atom (System/nanoTime))]
     (reify
-
       Watch
-
       (reset [_] (reset! start (System/nanoTime)))
-
       (elapsedMillis [_]
         (-> TimeUnit/MILLISECONDS
             (.convert (- (System/nanoTime) @start)
                       TimeUnit/NANOSECONDS)))
-
       (elapsedNanos [_]
         (-> TimeUnit/NANOSECONDS
             (.convert (- (System/nanoTime) @start)
                       TimeUnit/NANOSECONDS))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro trio
-
-  "The ternary operator"
-
-  [c x y]
-
-  `(if ~c ~x ~y))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; local hack
@@ -322,7 +275,6 @@
   ""
 
   (^ClassLoader [] (get-czldr nil))
-
   (^ClassLoader [cl]
     (or cl (.getContextClassLoader (Thread/currentThread)))))
 
@@ -331,7 +283,6 @@
 (defn nilNichts
 
   "If object is nil, return a NICHTS"
-
   {:tag Object :no-doc true}
   [obj]
 
@@ -342,7 +293,6 @@
 (defn isNichts?
 
   "true if the object is the NICHTS"
-
   ^:no-doc
   [obj]
 
@@ -353,7 +303,6 @@
 (defn throwUOE
 
   "Force throw an unsupported operation exception"
-
   [^String fmt & xs]
 
   (->> ^String
@@ -365,7 +314,6 @@
 (defn throwBadArg
 
   "Force throw a bad parameter exception"
-
   [^String fmt & xs]
 
   (->> ^String
@@ -403,7 +351,6 @@
 (defn throwBadData
 
   "Throw an Bad Data Exception"
-
   [^String fmt & xs]
 
   (->> ^String
@@ -415,7 +362,6 @@
 (defmacro flattenNil
 
   "Get rid of any nil(s) in a sequence"
-
   ^APersistentVector
   [somesequence]
 
@@ -426,7 +372,6 @@
 (defmacro rnil
 
   "Get rid of any nil(s) in a sequence"
-
   ^PersistentList
   [somesequence]
 
@@ -438,21 +383,18 @@
 
   "Run the function on the current field value,
    replacing the key with the returned value.
-  function(pojo oldvalue) -> newvalue"
-
+   function(pojo oldvalue) -> newvalue"
   [pojo field func]
-
   {:pre [(map? pojo)(fn? func)]}
 
-  (let [nv (apply func pojo field [])]
-    (assoc pojo field nv)))
+  (->> (apply func pojo field [])
+       (assoc pojo field )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro spos?
 
   "Safely test positive number"
-
   [e]
 
   `(let [e# ~e]
@@ -463,7 +405,6 @@
 (defmacro ndz
 
   "0.0 if param is nil"
-
   ^double
   [d]
 
@@ -474,7 +415,6 @@
 (defmacro nnz
 
   "0 is param is nil"
-
   ^long
   [n]
 
@@ -485,7 +425,6 @@
 (defmacro envVar
 
   "Get value for this env var"
-
   ^String
   [envname]
 
@@ -496,7 +435,6 @@
 (defn asFQKeyword
 
   "Scope name as a fully-qualified keyword"
-
   ^Keyword
   [^String t]
 
@@ -507,7 +445,6 @@
 (defn juid
 
   "Generate a unique id using std java"
-
   ^String
   []
 
@@ -518,7 +455,7 @@
 (defn randSign
 
   "Randomly choose a sign, positive or negative"
-
+  ^long
   []
 
   (if (even? (rand-int Integer/MAX_VALUE)) 1 -1))
@@ -528,7 +465,6 @@
 (defn randBool
 
   "Randomly choose a boolean value"
-
   []
 
   (if (> (randSign) 0) true false))
@@ -538,7 +474,6 @@
 (defn newRandom
 
   "A new random object"
-
   ^SecureRandom
   [& [numBytes]]
 
@@ -551,7 +486,6 @@
 (defmacro nowJTstamp
 
   "A java sql Timestamp"
-
   ^Timestamp
   []
 
@@ -562,7 +496,6 @@
 (defmacro nowDate
 
   "A java Date"
-
   ^Date
   []
 
@@ -599,9 +532,7 @@
 
   [^String fp]
 
-  (if-not (nil? fp)
-    (cs/replace fp #"\\" "/")
-    fp))
+  (if-not (empty? fp) (cs/replace fp #"\\" "/") fp))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -620,7 +551,6 @@
 (defmacro sysProp
 
   "Get the value of a system property"
-
   ^String
   [prop]
 
@@ -631,7 +561,6 @@
 (defmacro homeDir
 
   "Get the user's home directory"
-
   ^File
   []
 
@@ -642,7 +571,6 @@
 (defmacro getUser
 
   "Get the current user login name"
-
   ^String
   []
 
@@ -653,7 +581,6 @@
 (defmacro getCwd
 
   "Get the current dir"
-
   ^File
   []
 
@@ -664,7 +591,6 @@
 (defn trimLastPathSep
 
   "Get rid of trailing dir paths"
-
   ^String
   [path]
 
@@ -675,15 +601,13 @@
 (defn serialize
 
   "Object serialization"
-
   ^bytes
-  [^Serializable obj]
-
+  [obj]
   {:pre [(some? obj)]}
 
   (with-open [out (ByteArrayOutputStream. BUF_SZ)
               oos (ObjectOutputStream. out)]
-    (.writeObject oos obj)
+    (.writeObject oos ^Serializable obj)
     (.toByteArray out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -691,13 +615,11 @@
 (defn deserialize
 
   "Object deserialization"
-
   ^Serializable
-  [^bytes bits]
-
+  [bits]
   {:pre [(some? bits)]}
 
-  (with-open [in (ByteArrayInputStream. bits)
+  (with-open [in (ByteArrayInputStream. ^bytes bits)
               ois (ObjectInputStream. in)]
     (.readObject ois)))
 
@@ -706,7 +628,6 @@
 (defn getClassname
 
   "Get the object's class name"
-
   ^String
   [^Object obj]
 
@@ -719,7 +640,6 @@
 (defmacro filePath
 
   "Get the file path"
-
   ^String
   [aFile]
 
@@ -730,7 +650,6 @@
 (defn isWindows?
 
   "true if platform is windows"
-
   []
 
   (>= (.indexOf (cs/lower-case
@@ -742,7 +661,6 @@
 (defn isUnix?
 
   "true if platform is *nix"
-
   []
 
   (not (isWindows?)))
@@ -753,15 +671,10 @@
 
   "Parse string as a long value"
 
-  (^long
-    [^String s dftLongVal]
-    (trycr
-      dftLongVal
-      (Long/parseLong s) ))
+  (^long [^String s dftLongVal]
+    (try!! dftLongVal (Long/parseLong s) ))
 
-  (^long
-    [^String s]
-    (convLong s 0)))
+  (^long [^String s] (convLong s 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -769,15 +682,10 @@
 
   "Parse string as an int value"
 
-  (^java.lang.Integer
-    [^String s dftIntVal]
-    (trycr
-      (int dftIntVal)
-      (Integer/parseInt s)))
+  (^java.lang.Integer [^String s dftIntVal]
+    (try!! (int dftIntVal) (Integer/parseInt s)))
 
-  (^java.lang.Integer
-    [^String s]
-    (convInt s 0)))
+  (^java.lang.Integer [^String s] (convInt s 0)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -786,26 +694,20 @@
 
   "Parse string as a double value"
 
-  (^double
-    [^String s dftDblVal]
-    (trycr
-      dftDblVal
-      (Double/parseDouble s) ))
+  (^double [^String s dftDblVal]
+    (try!! dftDblVal (Double/parseDouble s) ))
 
-  (^double
-    [^String s]
-    (convDouble s 0.0)))
+  (^double [^String s] (convDouble s 0.0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convBool
 
   "Parse string as a boolean value"
-
   ^Boolean
   [^String s]
 
-  (ccore/contains? BOOLS (cs/lower-case (str s))))
+  (in? BOOLS (cs/lower-case (str s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -845,15 +747,10 @@
 
   "Make a string from bytes"
 
-  (^String
-    [^bytes bits]
-    (stringify bits "utf-8"))
+  (^String [^bytes bits] (stringify bits "utf-8"))
 
-  (^String
-    [^bytes bits
-     ^String encoding]
-    (when (some? bits)
-      (String. bits encoding))))
+  (^String [^bytes bits ^String encoding]
+    (when (some? bits) (String. bits encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -861,15 +758,10 @@
 
   "Get bytes with the right encoding"
 
-  (^bytes
-    [^String s]
-    (bytesify s "utf-8"))
+  (^bytes [^String s] (bytesify s "utf-8"))
 
-  (^bytes
-    [^String s
-     ^String encoding]
-    (when (some? s)
-      (.getBytes s encoding))))
+  (^bytes [^String s ^String encoding]
+    (when (some? s) (.getBytes s encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -877,13 +769,9 @@
 
   "Load the resource as stream"
 
-  (^InputStream
-    [^String rcPath]
-    (resStream rcPath nil))
+  (^InputStream [^String rcPath] (resStream rcPath nil))
 
-  (^InputStream
-    [^String rcPath
-     ^ClassLoader czLoader]
+  (^InputStream [^String rcPath ^ClassLoader czLoader]
     (when-not (empty? rcPath)
       (-> (get-czldr czLoader)
           (.getResourceAsStream  rcPath)))))
@@ -894,13 +782,9 @@
 
   "Load the resource as URL"
 
-  (^URL
-    [^String rcPath]
-    (resUrl rcPath nil))
+  (^URL [^String rcPath] (resUrl rcPath nil))
 
-  (^URL
-    [^String rcPath
-     ^ClassLoader czLoader]
+  (^URL [^String rcPath ^ClassLoader czLoader]
     (when-not (empty? rcPath)
       (-> (get-czldr czLoader)
           (.getResource rcPath)))))
@@ -911,19 +795,13 @@
 
   "Load the resource as string"
 
-  (^String
-    [^String rcPath
-     ^String encoding]
+  (^String [^String rcPath ^String encoding]
     (resStr rcPath encoding nil))
 
-  (^String
-    [^String rcPath]
+  (^String [^String rcPath]
     (resStr rcPath "utf-8" nil))
 
-  (^String
-    [^String rcPath
-     ^String encoding
-     ^ClassLoader czLoader]
+  (^String [^String rcPath ^String encoding ^ClassLoader czLoader]
     (with-open
       [out (ByteArrayOutputStream. BUF_SZ)
        inp (resStream rcPath czLoader)]
@@ -937,13 +815,9 @@
 
   "Load the resource as byte[]"
 
-  (^bytes
-    [^String rcPath]
-    (resBytes rcPath nil))
+  (^bytes [^String rcPath] (resBytes rcPath nil))
 
-  (^bytes
-    [^String rcPath
-     ^ClassLoader czLoader]
+  (^bytes [^String rcPath ^ClassLoader czLoader]
     (with-open
       [out (ByteArrayOutputStream. BUF_SZ)
        inp (resStream rcPath czLoader) ]
@@ -955,7 +829,6 @@
 (defn deflate
 
   "Compress the given byte[]"
-
   ^bytes
   [^bytes bits]
 
@@ -983,7 +856,6 @@
 (defn inflate
 
   "Decompress the given byte[]"
-
   ^bytes
   [^bytes bits]
 
@@ -1007,7 +879,6 @@
 (defn normalize
 
   "Normalize a filepath, hex-code all non-alpha characters"
-
   ^String
   [^String fname]
 
@@ -1027,7 +898,6 @@
 (defmacro nowMillis
 
   "the current time in milliseconds"
-
   ^long
   []
 
@@ -1038,7 +908,6 @@
 (defn getFPath
 
   "the file path only"
-
   ^String
   [^String fileUrlPath]
 
@@ -1051,7 +920,6 @@
 (defn fmtFileUrl
 
   "the file path as URL"
-
   ^URL
   [^String path]
 
@@ -1102,7 +970,6 @@
 (defn test-nonil
 
   "Assert object is not null"
-
   [^String param ^Object obj]
 
   (assert (some? obj)
@@ -1113,7 +980,6 @@
 (defn test-cond
 
   "Assert a condition"
-
   [^String msg cnd]
 
   (assert cnd (str msg)))
@@ -1123,7 +989,6 @@
 (defn test-nestr
 
   "Assert string is not empty"
-
   [^String param ^String v]
 
   (assert (not (empty? v))
@@ -1206,7 +1071,6 @@
 (defn test-neseq
 
   "Assert sequence is not empty"
-
   [^String param v]
 
   (assert (> (count v) 0)
@@ -1217,7 +1081,6 @@
 (defn rootCause
 
   "Dig into error and find the root exception"
-
   ^Throwable
   [root]
 
@@ -1233,7 +1096,6 @@
 (defn rootCauseMsg
 
   "Dig into error and find the root exception message"
-
   [root]
 
   (if-some [e (rootCause root)]
@@ -1244,38 +1106,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn genNumbers
-
-  "A list of random int numbers between a range"
-
-  ^APersistentVector
-  [start end howMany]
-
-  (if (or (>= start end)
-          (< (- end start) howMany))
-    []
-    (loop [_end (if (< end Integer/MAX_VALUE)
-                  (+ end 1)
-                  end)
-           r (newRandom)
-           rc []
-           cnt howMany]
-      (if (<= cnt 0)
-        rc
-        (let [n (.nextInt r _end)]
-          (if (and (>= n start)
-                   (not (ccore/contains? rc n)))
-            (recur _end r (conj rc n) (dec cnt))
-            (recur _end r rc cnt) ))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn sortJoin
 
   "Sort a list of strings and then concatenate them"
 
-  ([ss]
-   (sortJoin "" ss))
+  ([ss] (sortJoin "" ss))
 
   ([sep ss]
    (if (empty? ss)
@@ -1291,8 +1126,7 @@
   [^java.util.Map props]
 
   (persistent!
-    (reduce (fn [sum k]
-              (assoc! sum (keyword k) (.get props k)))
+    (reduce #(assoc! %1 (keyword %2) (.get props %2))
             (transient {})
             (.keySet props))))
 
@@ -1333,7 +1167,6 @@
 (defn mubleObj!!
 
   "Create a volatile, mutable object"
-
   ^Muble
   [& [opts]]
 
@@ -1348,7 +1181,6 @@
 (defn mubleObj!
 
   "Create a unsynchronized, mutable object"
-
   ^Muble
   [& [opts]]
 
@@ -1363,7 +1195,6 @@
 (defn printMubleObj
 
   "Print out this mutable object"
-
   [^Muble ctx & [dbg]]
 
   (let [buf (StringBuilder.)]
@@ -1379,7 +1210,6 @@
 (defn prtStk
 
   "Print stack trace"
-
   [^Throwable e]
 
   (.printStackTrace e))
@@ -1389,7 +1219,6 @@
 (defn dumpStk
 
   "Dump stack trace to string"
-
   ^String
   [^Throwable e]
 
@@ -1403,7 +1232,6 @@
 (defn stripNSPath
 
   "Remove the leading colon"
-
   ^String
   [path]
 
@@ -1417,7 +1245,6 @@
 (defn normalizeEmail
 
   "Normalize an email address"
-
   ^String
   [^String email]
 
@@ -1446,7 +1273,6 @@
 (defn- convList
 
   "Convert sequence to Java List"
-
   ^ArrayList
   [obj]
 
@@ -1460,7 +1286,6 @@
 (defn- convSet
 
   "Convert to Java Set"
-
   ^HashSet
   [obj]
 
@@ -1474,7 +1299,6 @@
 (defn- convMap
 
   "Convert to Java Map"
-
   ^HashMap
   [obj]
 
@@ -1488,7 +1312,6 @@
 (defn- toJava
 
   "Convert a clojure collection to its Java equivalent"
-
   ^Object
   [obj]
 
@@ -1510,7 +1333,6 @@
 (defn convToJava
 
   "Convert a clojure object to a Java object"
-
   ^Object
   [obj]
 
@@ -1526,7 +1348,6 @@
 (defn nextInt
 
   "A sequence number (integer)"
-
   ^Integer
   []
 
@@ -1537,7 +1358,6 @@
 (defn nextLong
 
   "A sequence number (long)"
-
   ^long
   []
 
@@ -1548,7 +1368,6 @@
 (defmacro prn!!
 
   ""
-
   [fmt & args]
 
   `(println (apply format ~fmt ~@args [])))
@@ -1558,7 +1377,6 @@
 (defmacro prn!
 
   ""
-
   [fmt & args]
 
   `(print (apply format ~fmt ~@args [])))

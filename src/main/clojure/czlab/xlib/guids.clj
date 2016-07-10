@@ -24,7 +24,7 @@
     [czlab.xlib.core
      :refer [nextInt
              nowMillis
-             tryletc
+             trylet!
              try!
              newRandom]])
 
@@ -109,7 +109,7 @@
   ^long
   []
 
-  (tryletc [neta (InetAddress/getLocalHost)
+  (trylet! [neta (InetAddress/getLocalHost)
             b (.getAddress neta) ]
     (if (.isLoopbackAddress neta)
       (.nextLong (newRandom))

@@ -86,7 +86,7 @@
           (do (swap! props assoc res rc) nxt)
 
           (fn? res)
-          (let [[_ p] (res rc @props)]
+          (let [[n p] (res rc @props)]
             (reset! props p)
             n)
 
