@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "String operations."
+(ns ^{:doc "Useful string functions."
       :author "Kenneth Leung" }
 
   czlab.xlib.str

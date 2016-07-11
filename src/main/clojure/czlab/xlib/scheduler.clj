@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "A Scheduler with pooled threads."
+(ns ^{:doc "Implementation of a scheduler with pooled threads."
       :author "Kenneth Leung" }
 
   czlab.xlib.scheduler
@@ -20,7 +20,7 @@
   (:require
     [czlab.xlib.core :refer [cast? juid]]
     [czlab.xlib.logging :as log]
-    [czlab.xlib.str :refer [toKW hgl?]])
+    [czlab.xlib.str :refer [hgl?]])
 
   (:import
     [java.util.concurrent ConcurrentHashMap]
@@ -42,7 +42,6 @@
 (defn- xrefPID
 
   ""
-
   ^Object
   [r]
 
@@ -55,27 +54,26 @@
 (defn- preRun
 
   ""
-  [hQ w]
+  [^Map hQ w]
 
-  (when-some [pid (xrefPID w)]
-    (.remove ^Map hQ pid)))
+  (when-some
+    [pid (xrefPID w)]
+    (.remove hQ pid)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- addTimer
 
   ""
+  [^Timer timer ^TimerTask task delayMillis]
 
-  [^Timer timer ^TimerTask task ^long delayMillis]
-
-  (.schedule timer task delayMillis))
+  (.schedule timer task ^long delayMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- mkSCD
 
   ""
-
   ^Schedulable
   [^String named]
 
@@ -127,8 +125,6 @@
           (when (some? w)
             (.run this w)))
 
-        Disposable
-
         (dispose [_]
           (let [^TCore c @cpu]
             (.cancel ^Timer @timer)
@@ -149,7 +145,7 @@
           (.clear holdQ)
           (.stop ^TCore @cpu)))
 
-      {:typeid ::Scheduler } )))
+      {:typeid ::Scheduler })))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -157,7 +153,7 @@
 
   "Make a Scheduler"
 
-  (^Schedulable [] (mkScheduler (juid) ))
+  (^Schedulable [] (mkScheduler (juid)))
   (^Schedulable [^String named] (mkSCD named)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

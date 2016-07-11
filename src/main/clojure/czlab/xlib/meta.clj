@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Class & reflection related operations"
+(ns ^{:doc "Useful class & reflection functions."
       :author "Kenneth Leung" }
 
   czlab.xlib.meta
@@ -63,11 +63,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bytesClass "Java class for byte[]" ^Class [] (Class/forName "[B"))
+(defn bytesClass
+  "Java class for byte[]"
+  ^Class [] (Class/forName "[B"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn charsClass "Java class for char[]" ^Class [] (Class/forName "[C"))
+(defn charsClass
+  "Java class for char[]"
+  ^Class [] (Class/forName "[C"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -78,9 +82,7 @@
 (defn- isXXX?
 
   ""
-
   [classObj classes]
-
   {:pre [(instance? Class classObj)]}
 
   (eqAny? (gcn classObj) classes))
@@ -90,7 +92,6 @@
 (defn isBoolean?
 
   "If class is Boolean"
-
   [classObj]
 
   (isXXX? classObj ["boolean" "Boolean" "java.lang.Boolean"] ))
@@ -100,7 +101,6 @@
 (defn isVoid?
 
   "If class is Void"
-
   [classObj]
 
   (isXXX? classObj ["void" "Void" "java.lang.Void"] ))
@@ -110,7 +110,6 @@
 (defn isChar?
 
   "If class is Char"
-
   [classObj]
 
   (isXXX? classObj [ "char" "Char" "java.lang.Character" ] ))
@@ -120,7 +119,6 @@
 (defn isInt?
 
   "If class is Int"
-
   [classObj]
 
   (isXXX? classObj [ "int" "Int" "java.lang.Integer" ] ))
@@ -130,7 +128,6 @@
 (defn isLong?
 
   "If class is Long"
-
   [classObj]
 
   (isXXX? classObj [ "long" "Long" "java.lang.Long" ] ))
@@ -140,7 +137,6 @@
 (defn isFloat?
 
   "If class is Float"
-
   [classObj]
 
   (isXXX? classObj [ "float" "Float" "java.lang.Float" ]))
@@ -150,7 +146,6 @@
 (defn isDouble?
 
   "If class is Double"
-
   [classObj]
 
   (isXXX? classObj [ "double" "Double" "java.lang.Double" ]))
@@ -160,7 +155,6 @@
 (defn isByte?
 
   "If class is Byte"
-
   [classObj]
 
   (isXXX? classObj [ "byte" "Byte" "java.lang.Byte" ]))
@@ -170,7 +164,6 @@
 (defn isShort?
 
   "If class is Short"
-
   [classObj]
 
   (isXXX? classObj [ "short" "Short" "java.lang.Short" ]))
@@ -180,7 +173,6 @@
 (defn isString?
 
   "If class is String"
-
   [classObj]
 
   (isXXX? classObj [ "String" "java.lang.String" ]))
@@ -190,7 +182,6 @@
 (defn isObject?
 
   "If class is Object"
-
   [classObj]
 
   (isXXX? classObj [ "Object" "java.lang.Object" ]))
@@ -200,7 +191,6 @@
 (defn isBytes?
 
   "If class is byte[]"
-
   [classObj]
 
   (= classObj (bytesClass)) )
@@ -210,7 +200,6 @@
 (defn forname
 
   "Load a java class by name"
-
   ^Class
   [^String z & [cl]]
 
@@ -224,9 +213,8 @@
 (defn getCldr
 
   "Get the current classloader"
-
   ^ClassLoader
-  [ & [cl] ]
+  [& [cl]]
 
   (or cl (.getContextClassLoader (Thread/currentThread))))
 
@@ -235,9 +223,7 @@
 (defn setCldr
 
   "Set current classloader"
-
   [^ClassLoader cl]
-
   {:pre [(some? cl)]}
 
   (.setContextClassLoader (Thread/currentThread) cl))
@@ -247,7 +233,6 @@
 (defn loadClass
 
   "Load this class by name"
-
   ^Class
   [^String clazzName & [cl]]
 
@@ -260,9 +245,7 @@
 (defmulti newObjArgN
 
   "Instantiate object with arity-n constructor"
-
   ^Object
-
   (fn [a & xs] (class a)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -299,10 +282,8 @@
 (defn ctorObj
 
   "Call the default contructor"
-
   ^Object
   [^Class cz]
-
   {:pre [(some? cz)]}
 
   (-> (.getDeclaredConstructor cz (make-array Class 0))
@@ -313,7 +294,6 @@
 (defn newObj
 
   "Make an object of this class by calling the default constructor"
-
   ^Object
   [^String clazzName & [cl]]
 
@@ -326,10 +306,8 @@
 (defn listParents
 
   "List all parent classes"
-
   ^APersistentVector
   [^Class javaClass]
-
   {:pre [(some? javaClass)]}
 
   (let
@@ -348,7 +326,6 @@
 (defn- iterXXX
 
   ""
-
   [cz level getDeclXXX bin]
 
   (reduce (fn [sum ^Member m]
@@ -366,7 +343,6 @@
 (defn- listMtds
 
   ""
-
   [^Class cz level]
 
   (let [par (.getSuperclass cz)]
@@ -382,7 +358,6 @@
 (defn- listFlds
 
   ""
-
   [^Class cz level]
 
   (let [par (.getSuperclass cz) ]
@@ -398,9 +373,7 @@
 (defn listMethods
 
   "List all methods belonging to this class, including inherited ones"
-
   [^Class javaClass]
-
   {:pre [(some? javaClass)]}
 
   (vals (if (nil? javaClass)
@@ -412,9 +385,7 @@
 (defn listFields
 
   "List all fields belonging to this class, including inherited ones"
-
   [^Class javaClass]
-
   {:pre [(some? javaClass)]}
 
   (vals (if (nil? javaClass)

@@ -12,14 +12,14 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "OS process related helper functions"
+(ns ^{:doc "Usefule os process & runtime functions."
       :author "Kenneth Leung" }
 
   czlab.xlib.process
 
   (:require
+    [czlab.xlib.core :refer [runnable try!]]
     [czlab.xlib.meta :refer [getCldr]]
-    [czlab.xlib.core :refer [try!]]
     [czlab.xlib.logging :as log]
     [czlab.xlib.str :refer [hgl?]])
 
@@ -38,19 +38,13 @@
 (defn threadFunc
 
   "Run this function in a separate thread"
-
   ^Thread
   [func start? & [arg]]
-
   {:pre [(fn? func)]}
 
-  (let
-    [t (-> (reify
-             Runnable
-             (run [_] (func)))
-           (Thread. ))]
-    (with-local-vars
-      [daemon false cl nil]
+  (let [t (Thread. (runnable func))]
+    (with-local-vars [cl nil
+                      daemon false]
       (when
         (instance? ClassLoader arg)
         (var-set cl arg))
@@ -73,8 +67,8 @@
 (defn syncBlockExec
 
   "Run this function synchronously"
-
   [^Object lock func & args]
+  {:pre [(fn? func)]}
 
   (CU/syncExec
     lock
@@ -89,9 +83,7 @@
 (defn async!
 
   "Run this function asynchronously"
-
   [func & [arg]]
-
   {:pre [(fn? func)]}
 
   (threadFunc func true arg))
@@ -101,7 +93,6 @@
 (defn safeWait
 
   "Block current thread for some millisecs"
-
   [millisecs]
 
   (try! (when (> millisecs 0)
@@ -112,7 +103,6 @@
 (defn processPid
 
   "Get the current process pid"
-
   ^String
   []
 
@@ -120,18 +110,14 @@
                (.getName)
                str
                (.split "@"))]
-    (if (empty ss)
-      ""
-      (first ss))))
+    (if (empty ss) "" (first ss))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn delayExec
 
   "Run this function after some delay"
-
   [func delayMillis]
-
   {:pre [(fn? func)]}
 
   (-> (Timer. true)

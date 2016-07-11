@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Locale resources"
+(ns ^{:doc "Useful NLS functions."
       :author "Kenneth Leung" }
 
   czlab.xlib.resources
@@ -46,7 +46,7 @@
 
   File
 
-  [^File aFile]
+  [aFile]
 
   (loadResource (io/as-url aFile)))
 
@@ -91,7 +91,7 @@
     [^String baseName
      ^Locale locale
      ^ClassLoader cl]
-    (if (or (nil? baseName)
+    (if (or (empty? baseName)
             (nil? locale))
       nil
       (ResourceBundle/getBundle baseName
@@ -103,7 +103,6 @@
 
   "The string value for this key,
    pms may contain values for positional substitutions"
-
   ^String
   [^ResourceBundle bundle ^String pkey & pms]
 
@@ -126,7 +125,6 @@
 
   "Handle a bunch of resource keys
   (rstr bundle [\"k1\" p1 p2] [\"k2\" p3 p4] )"
-
   ^String
   [^ResourceBundle bundle & pms]
 

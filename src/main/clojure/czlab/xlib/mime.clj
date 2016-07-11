@@ -12,8 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "This is a utility class that provides
-           various MIME related functionality"
+(ns ^{:doc "Useful mime functions."
       :author "Kenneth Leung" }
 
   czlab.xlib.mime
@@ -22,6 +21,7 @@
     [czlab.xlib.core :refer [bytesify try! intoMap]]
     [czlab.xlib.str
      :refer [indexAny
+             stror
              lcase
              ucase
              hgl?
@@ -133,7 +133,6 @@
 (defn- isPkcs7Mime?
 
   ""
-
   [^String s]
 
   (>= (.indexOf s "application/x-pkcs7-mime") 0))
@@ -143,12 +142,11 @@
 (defn getCharset
 
   "charset from this content-type"
-
   ^String
   [^String cType]
 
   (let [pos (-> (str cType)
-                (lcase )
+                lcase
                 (.indexOf "charset="))
         rc "utf-8"]
          ;;rc "ISO-8859-1" ]
@@ -163,7 +161,6 @@
 (defn isSigned?
 
   "true if this content-type indicates signed"
-
   [^String cType]
 
   (let [ct (lcase cType)]
@@ -176,7 +173,6 @@
 (defn isEncrypted?
 
   "true if this content-type indicates encrypted"
-
   [^String cType]
 
   (let [ct (lcase cType)]
@@ -188,7 +184,6 @@
 (defn isCompressed?
 
   "true if this content-type indicates compressed"
-
   [^String cType]
 
   (let [ct (lcase cType)]
@@ -200,7 +195,6 @@
 (defn isMDN?
 
   "true if this content-type indicates MDN"
-
   [^String cType]
 
   (let [ct (lcase cType)]
@@ -212,7 +206,6 @@
 (defn maybeStream
 
   "Convert object into some form of stream, if possible"
-
   ^InputStream
   [obj]
 
@@ -227,7 +220,6 @@
 (defn guessMimeType
 
   "Guess the MIME type of file"
-
   ^String
   [^File file & [dft]]
 
@@ -238,7 +230,7 @@
              (.matches mc)
              (.group mc 1) "")
         p (if (hgl? ex)
-            (get (mimeCache) (keyword ex) )) ]
+            ((keyword ex) (mimeCache) ))]
    (if (hgl? p) p (str dft))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -246,12 +238,11 @@
 (defn guessContentType
 
   "Guess the content-type of file"
-
   ^String
   [^File file & [enc dft]]
 
-  (let [dft (or dft "application/octet-stream")
-        enc (or enc "utf-8")
+  (let [dft (stror dft "application/octet-stream")
+        enc (stror enc "utf-8")
         mt (guessMimeType file)
         ^String ct (if (hgl? mt) mt dft)]
     (if-not (.startsWith ct "text/")
@@ -263,7 +254,6 @@
 (defn setupCache
 
   "Load file mime-types as a map"
-
   [^URL fileUrl]
 
   (with-open [inp (.openStream fileUrl)]
