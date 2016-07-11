@@ -35,7 +35,7 @@ public class ClojureJUnit extends ClojureTest {
       "czlabtest.xlib.metautils",
       "czlabtest.xlib.mimeutils",
       "czlabtest.xlib.procutils",
-      "czlabtest.xlib.seqnumgen",
+      "czlabtest.xlib.seqnum",
       "czlabtest.xlib.strutils",
       "czlabtest.xlib.win32ini",
       "czlabtest.xlib.i18nstuff"
