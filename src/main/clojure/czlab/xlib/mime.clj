@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Useful mime functions."
+(ns ^{:doc "Various mime helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.mime

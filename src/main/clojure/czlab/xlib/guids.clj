@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Ways to generate an unique id"
+(ns ^{:doc "Ways to generate an unique id."
       :author "Kenneth Leung" }
 
   czlab.xlib.guids
@@ -55,7 +55,6 @@
 (defn- fmt
 
   ""
-
   ^String
   [^String pad ^String mask]
 
@@ -63,14 +62,13 @@
         plen (.length pad) ]
     (if (>= mlen plen)
       (.substring mask 0 plen)
-      (str (.replace (StringBuilder. pad) (- plen mlen) plen mask ) ))))
+      (str (.replace (StringBuilder. pad) (- plen mlen) plen mask )))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- fmtInt
 
   ""
-
   ^String
   [nm]
 
@@ -81,7 +79,6 @@
 (defn- fmtLong
 
   ""
-
   ^String
   [nm]
 
@@ -92,7 +89,6 @@
 (defn- splitTime
 
   ""
-
   []
 
   (let [s (fmtLong (nowMillis))
@@ -105,7 +101,6 @@
 (defn- maybeSetIP
 
   ""
-
   ^long
   []
 
@@ -126,7 +121,6 @@
 (defn newUUid
 
   "RFC4122, version 4 form"
-
   ^String
   []
 
@@ -137,7 +131,6 @@
 (defn myOwnNewUUid
 
   "RFC4122, version 4 form"
-
   {:tag String :no-doc true}
   []
 
@@ -163,7 +156,6 @@
 (defn newWWid
 
   "A new guid based on time and ip-address"
-
   ^String
   []
 

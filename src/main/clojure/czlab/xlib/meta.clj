@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Useful class & reflection functions."
+(ns ^{:doc "Class & reflection helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.meta
@@ -255,7 +255,6 @@
   Class
 
   [^Class cz & args]
-
   {:pre [(some? cz)(> (count args) 0)]}
 
   (let [len (count args)

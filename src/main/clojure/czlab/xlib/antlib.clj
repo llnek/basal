@@ -113,8 +113,10 @@
   ^String
   [^String s]
 
-  (str (.toUpperCase (.substring s 0 1))
-       (.substring s 1)))
+  (if-not (empty? s)
+    (str (.toUpperCase (.substring s 0 1))
+         (.substring s 1))
+    s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -131,7 +133,7 @@
              (.setMessageOutputLevel Project/MSG_INFO))]
     (doto (Project.)
       (.init)
-      (.setName "project-x")
+      (.setName "projx")
       (.addBuildListener lg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -166,19 +168,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;create a default project.
 (defonce ^:private dftprj (atom (antProject)))
+(defonce ^:private beansCooked (atom false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;cache ant task names as symbols, and cache bean-info of class
-(let [beans (atom {})
-      syms (atom [])]
-  (doseq [[k v] (.getTaskDefinitions @dftprj)]
-    (when (.isAssignableFrom Task v)
-      (swap! syms
-             conj
-             (str "ant" (capstr k)) k)
-      (swap! beans assoc v (getBeanInfo v))))
-  (def ^:private _TASKS (atom (partition 2 (map #(symbol %) @syms))))
-  (def ^:private _PROPS (atom @beans)))
+(when-not @beansCooked
+  (let [beans (atom {})
+        syms (atom [])]
+    (doseq [[k v] (.getTaskDefinitions @dftprj)]
+      (when (.isAssignableFrom Task v)
+        (swap! syms
+               conj
+               (str "ant" (capstr k)) k)
+        (swap! beans assoc v (getBeanInfo v))))
+    (def ^:private _TASKS (atom (partition 2 (map #(symbol %) @syms))))
+    (def ^:private _PROPS (atom @beans))
+    (reset! beansCooked true)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -204,7 +209,7 @@
         (aset #^"[Ljava.lang.Class;" arr 0 z)
         (try
           [(.getMethod cz m arr) z]
-          (catch Exception _)))
+          (catch Throwable _)))
       ;;add more types when needed
       [java.lang.String
        java.io.File
@@ -272,7 +277,7 @@
   (try
     (.invoke wm pojo arr)
   (catch Throwable e#
-    (println "failed to set " k " for " (.getClass pojo))
+    (log/error (str "failed to set " k " for " (.getClass pojo)))
     (throw e#))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -705,7 +710,6 @@
 (defn runTasks*
 
   "Run ant tasks"
-
   [& tasks]
 
   ;;(log/info "running tasks count = %d" (count tasks))

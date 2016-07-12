@@ -151,7 +151,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn cliConverse
+(defn consoleIO
 
   "Prompt a sequence of questions via console"
   [cmdQs question1]

@@ -12,16 +12,18 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Util functions related to stream/io"
+(ns ^{:doc "Various stream/io helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.io
 
   (:require
-    [czlab.xlib.core :refer [spos? try!]]
+    [czlab.xlib.core :refer [sysProp spos? try!]]
     [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.string :as cs])
+
+  (:use [czlab.xlib.consts])
 
   (:import
     [java.util.zip GZIPInputStream GZIPOutputStream]
@@ -54,18 +56,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(defonce ^:private ^chars HEX_CHS (.toCharArray "0123456789abcdef"))
-(defonce ^:private _slimit (atom (* 4 1024 1024)))
-(defonce ^:private BUF_SZ (* 4 1024))
-(defonce ^:private _wd
-  (atom (io/file (System/getProperty "java.io.tmpdir"))))
+(defonce ^:private _wd (atom (io/file (sysProp "java.io.tmpdir"))))
+(defonce ^:private _slimit (atom (* 4 MegaBytes)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- copyAll
 
   ""
-
   ^long
   [^InputStream input ^OutputStream output]
 
@@ -86,7 +84,6 @@
 (defn copyBytes
 
   "Copy certain number of bytes to output"
-
   ^long
   [^InputStream input ^OutputStream output ^long numToRead]
 
@@ -109,7 +106,6 @@
 (defn copy
 
   "Copy bytes to output"
-
   ^long
   [^InputStream input ^OutputStream output]
 
@@ -123,7 +119,6 @@
 (defn toBytes
 
   ""
-
   ^bytes
   [^InputStream input]
 
@@ -136,7 +131,6 @@
 (defn streamLimit
 
   "Beyond this limit, data will be swapped out to disk (temp file)"
-
   ^long
   []
   @_slimit)
@@ -146,7 +140,6 @@
 (defn setStreamLimit!
 
   "Set the limit to flush to disk"
-
   ^long
   [limit]
 
@@ -163,7 +156,6 @@
 (defn setWorkDir!
 
   "Set the working directory"
-
   ^File
   [dir]
 
@@ -178,7 +170,6 @@
 (defn byteOS
 
   "Make a byte array output stream"
-
   ^ByteArrayOutputStream
   [ & [size] ]
 
@@ -193,7 +184,6 @@
 (defn charsToBytes
 
   "Convert char[] to byte[]"
-
   ^bytes
   [^chars chArray ^String encoding]
 
@@ -206,7 +196,6 @@
 (defn toChars
 
   "Convert byte[] to char[]"
-
   ^chars
   [^bytes byteArray ^String encoding]
 
@@ -219,7 +208,6 @@
 (defn readLong
 
   "A long by scanning the byte[]"
-
   [^bytes byteArray]
 
   (-> (ByteArrayInputStream. byteArray)
@@ -231,7 +219,6 @@
 (defn readInt
 
   "An int by scanning the byte[]"
-
   [^bytes byteArray]
 
   (-> (ByteArrayInputStream. byteArray)
@@ -244,7 +231,6 @@
 
   Integer
 
-  ^bytes
   [nnum]
 
   (with-open [baos (byteOS)]
@@ -260,7 +246,6 @@
 
   Long
 
-  ^bytes
   [nnum]
 
   (with-open [baos (byteOS) ]
@@ -275,7 +260,6 @@
 (defn streamify
 
   "Wrapped these bytes in an input-stream"
-
   ^InputStream
   [^bytes bits]
 
@@ -287,7 +271,6 @@
 (defn closeQ
 
   "Quietly close this object"
-
   [obj]
 
   (when
@@ -299,19 +282,19 @@
 (defn hexifyChars
 
   "Turn bytes into hex chars"
-
   ^chars
   [^bytes bits]
 
   (let [len (if (nil? bits) 0 (* 2 (alength bits)))
+        hx (.toCharArray HEX_CHS)
         out (char-array len)]
     (loop [k 0 pos 0]
       (when-not (>= pos len)
         (let [n (bit-and (aget ^bytes bits k) 0xff) ]
           (aset-char out pos
-                     (aget ^chars HEX_CHS (unsigned-bit-shift-right n 4))) ;; high 4 bits
+                     (aget hx (unsigned-bit-shift-right n 4))) ;; high 4 bits
           (aset-char out (+ pos 1)
-                     (aget ^chars HEX_CHS (bit-and n 0xf))) ;; low 4 bits
+                     (aget hx (bit-and n 0xf))) ;; low 4 bits
           (recur (inc k) (+ 2 pos)) )))
     out))
 
@@ -320,7 +303,6 @@
 (defn hexifyString
 
   "Turn bytes into hex string"
-
   ^String
   [^bytes bits]
 
@@ -351,7 +333,6 @@
 (defn gunzip
 
   "Gunzip these bytes"
-
   ^bytes
   [^bytes bits]
 
@@ -363,7 +344,6 @@
 (defn resetStream!
 
   "Call reset on this input stream"
-
   [^InputStream inp]
 
   (try! (when (some? inp) (.reset inp)) ))
@@ -396,7 +376,6 @@
 (defn fromGZB64
 
   "Unzip content which is base64 encoded + gziped"
-
   ^bytes
   [^String gzb64]
 
@@ -410,7 +389,6 @@
 (defn toGZB64
 
   "Zip content and then base64 encode it"
-
   ^String
   [^bytes bits]
 
@@ -423,7 +401,6 @@
 (defn available
 
   "Get the available bytes in this stream"
-
   ^Integer
   [^InputStream inp]
 
@@ -434,7 +411,6 @@
 (defn tempFile
 
   "Create a temporary file"
-
   ^File
   [ & [pfx sux] ]
 
@@ -447,7 +423,6 @@
 (defn openTempFile
 
   "A Tuple(2) [ File, OutputStream? ]"
-
   ^APersistentVector
   []
 
@@ -459,7 +434,6 @@
 (defn copyStream
 
   "Copy content from this input-stream to a temp file"
-
   ^File
   [^InputStream inp]
 
@@ -476,7 +450,6 @@
 (defn resetSource!
 
   "Reset an input source"
-
   [^InputSource inpsrc]
 
   (when (some? inpsrc)
@@ -490,7 +463,6 @@
 (defn newXData
 
   "A newly created XData"
-
   ^XData
   [ & [usefile] ]
 
@@ -503,7 +475,6 @@
 (defn- swapBytes
 
   "Swap bytes in buffer to file, returning a [File,OStream] tuple"
-
   [^ByteArrayOutputStream baos]
 
   (let [[^File fp ^OutputStream os]
@@ -519,7 +490,6 @@
 (defn- swapChars
 
   "Swap chars in writer to file, returning a [File,OWriter] tuple"
-
   [^CharArrayWriter wtr]
 
   (let [[^File fp ^OutputStream out]
@@ -536,7 +506,6 @@
 (defn- slurpBytes
 
   "Read bytes from the stream"
-
   ^XData
   [^InputStream inp limit]
 
@@ -571,7 +540,6 @@
 (defn- slurpChars
 
   "Read chars from the reader"
-
   ^XData
   [^Reader rdr limit]
 
@@ -607,7 +575,6 @@
 (defn readBytes
 
   "Read bytes and return a XData"
-
   ^XData
   [^InputStream inp & [usefile]]
 
@@ -618,7 +585,6 @@
 (defn readChars
 
   "Read chars and return a XData"
-
   ^XData
   [^Reader rdr & [usefile]]
 

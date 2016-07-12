@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Country-codes and country-names"
+(ns ^{:doc "Country-codes and country-names."
       :author "Kenneth Leung" }
 
   czlab.xlib.countries
@@ -271,7 +271,6 @@
 (defn findCountry
 
   "The full country name"
-
   ^String
   [^String code]
 
@@ -282,7 +281,6 @@
 (defn listCodes
 
   "List all the country codes"
-
   []
 
   (keys _CCODES))
@@ -292,7 +290,6 @@
 (defn isUSA?
 
   "true if the code is US"
-
   [^String code]
 
   (= "US" (ucase code)))
@@ -302,7 +299,6 @@
 (defn findCountryCode
 
   "the country code"
-
   ^String
   [^String country]
 
@@ -373,7 +369,6 @@
 (defn listStates
 
   "List all the abbreviated states"
-
   []
 
   (keys _STATES))
@@ -383,7 +378,6 @@
 (defn findState
 
   "The full state name"
-
   ^String
   [^String code]
 
@@ -394,7 +388,6 @@
 (defn findStateCode
 
   "The abbreviated state code"
-
   ^String
   [^String state]
 

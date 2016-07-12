@@ -13,18 +13,20 @@
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
 
-(ns ^{:doc "Helper functions for handling files"
+(ns ^{:doc "Various file handling helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.files
 
   (:require
     [czlab.xlib.meta :refer [isBytes?]]
+    [czlab.xlib.str :refer [stror]]
     [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.string :as cs])
 
-  (:use [czlab.xlib.io])
+  (:use [czlab.xlib.consts]
+        [czlab.xlib.io])
 
   (:import
     [java.nio.file Files CopyOption StandardCopyOption]
@@ -45,14 +47,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(defonce ^:private BUF_SZ 4096)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro slurpUTF8
 
   "Read contents of f with utf8 encoding"
-
   ^String
   [f]
 
@@ -63,7 +63,6 @@
 (defmacro spitUTF8
 
   "Write data to f with utf8 encoding"
-
   [f c]
 
   `(spit ~f ~c :encoding "utf-8"))
@@ -73,7 +72,6 @@
 (defn fileReadWrite?
 
   "true if file is readable & writable"
-
   [^File fp]
 
   (and (some? fp)
@@ -87,7 +85,6 @@
 (defn fileOK?
 
   "true if file exists"
-
   [^File fp]
 
   (and (some? fp)
@@ -98,7 +95,6 @@
 (defn fileRead?
 
   "true if file is readable"
-
   [^File fp]
 
   (and (some? fp)
@@ -111,7 +107,6 @@
 (defn dirReadWrite?
 
   "true if directory is readable and writable"
-
   [^File dir]
 
   (and (some? dir)
@@ -125,7 +120,6 @@
 (defn dirRead?
 
   "true if directory is readable"
-
   [^File dir]
 
   (and (some? dir)
@@ -138,7 +132,6 @@
 (defn canExec?
 
   "true if file or directory is executable"
-
   [^File fp]
 
   (and (some? fp)
@@ -150,7 +143,6 @@
 (defn parentFile
 
   "Parent file"
-
   ^File
   [^File f]
 
@@ -161,7 +153,6 @@
 (defn parentPath
 
   "Path to the parent file"
-
   ^String
   [^String path]
 
@@ -175,10 +166,8 @@
 
   "Pass file content to the work function,
   returning new content"
-
   ^String
   [file work]
-
   {:pre [(fn? work)]}
 
   (work (slurpUTF8 file)))
@@ -188,9 +177,7 @@
 (defn replaceFile!
 
   "Update file with new content"
-
   [file work]
-
   {:pre [(fn? work)]}
 
   (spitUTF8 file
@@ -201,17 +188,15 @@
 (defn writeFile
 
   "Write data to file"
-
   [fout data & [enc]]
 
-  (io/copy data fout :encoding (or enc "utf-8")))
+  (io/copy data fout :encoding (stror enc "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- cleanZEName
 
   "Remove leading separators from name"
-
   ^String
   [^ZipEntry en]
 
@@ -222,7 +207,6 @@
 (defn- doOneEntry
 
   ""
-
   [^ZipFile src ^File des ^ZipEntry en]
 
   (let [f (->> (cleanZEName en)
@@ -240,7 +224,6 @@
 (defn unzipToDir
 
   "Unzip zip file to a target folder"
-
   [^File srcZip ^File desDir]
 
   (let [z (ZipFile. srcZip)
@@ -256,7 +239,6 @@
 (defn slurpBytes
 
   "Read bytes from a file"
-
   ^bytes
   [^File fp]
 
@@ -269,29 +251,26 @@
 (defmacro readFile
 
   "Read data from a file as string"
-
   ^String
   [fp & [enc]]
 
-  `(slurp ~fp :encoding (or ~enc "utf-8")))
+  `(slurp ~fp :encoding (stror ~enc "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro readUrl
 
   "Read data from a URL as string"
-
   ^String
   [url & [enc]]
 
-  `(slurp ~url :encoding  (or ~enc "utf-8")))
+  `(slurp ~url :encoding  (stror ~enc "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn saveFile
 
   "Save a file to a directory"
-
   [^File dir ^String fname ^XData stuff]
 
   ;;(log/debug "saving file: %s" fname)
@@ -313,7 +292,6 @@
 (defn getFile
 
   "Get a file from a directory"
-
   ^XData
   [^File dir ^String fname]
 
@@ -355,7 +333,6 @@
 (defmacro listFiles
 
   "List files with certain extension, without the dot"
-
   [dir ext &[recurse?]]
 
   `(listAnyFiles ~dir [~ext] ~recurse?))
@@ -365,7 +342,6 @@
 (defn listDirs
 
   "List sub-directories"
-
   [dir]
 
   (->> (reify FileFilter
@@ -378,7 +354,6 @@
 (defn- grep-paths
 
   "Find folders containing files with this extension"
-
   [top out fext]
 
   (doseq [^File f (.listFiles (io/file top))]
@@ -414,7 +389,6 @@
 (defn- scan-tree
 
   "Walk down folder hierarchies"
-
   [^Stack stk ext out seed]
 
   (let [^File top (or seed (.peek stk))]
@@ -440,7 +414,6 @@
 (defn grepFilePaths
 
   "Recurse a folder, picking out files with the given extension"
-
   [rootDir ext]
 
   (let [out (atom [])]

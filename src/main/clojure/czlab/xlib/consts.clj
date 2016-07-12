@@ -49,6 +49,14 @@
 (defonce MONTHS ["JAN" "FEB" "MAR" "APR" "MAY" "JUN"
              "JUL" "AUG" "SEP" "OCT" "NOV" "DEC" ] )
 
+(defonce ^String HEX_CHARS "0123456789ABCDEF")
+(defonce ^String HEX_CHS "0123456789abcdef")
+
+(defonce KiloBytes 1024)
+(defonce BUF_SZ (* 4 KiloBytes))
+(defonce MegaBytes (* KiloBytes KiloBytes))
+(defonce GigaBytes (* 1024 MegaBytes))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
 

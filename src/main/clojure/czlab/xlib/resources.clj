@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Useful NLS functions."
+(ns ^{:doc "Various NLS helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.resources

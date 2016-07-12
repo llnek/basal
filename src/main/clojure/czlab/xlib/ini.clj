@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Access to a win32 .ini file"
+(ns ^{:doc "Access to a win32 .ini file."
       :author "Kenneth Leung" }
 
   czlab.xlib.ini
@@ -55,7 +55,6 @@
 (defn- throwBadIni
 
   ""
-
   [^LineNumberReader rdr]
 
   (throwBadData (format "Bad ini line: %s" (.getLineNumber rdr))))
@@ -65,7 +64,6 @@
 (defn- throwBadKey
 
   ""
-
   [k]
 
   (throwBadData (format "No such property %s" k)))
@@ -75,7 +73,6 @@
 (defn- throwBadMap
 
   ""
-
   [s]
 
   (throwBadData (format "No such section %s" s)))
@@ -85,7 +82,6 @@
 (defn- maybeSection
 
   "Look for a section, store the actual section name in metadata"
-
   [^LineNumberReader rdr
    ncmap
    ^String line]
@@ -106,7 +102,6 @@
 (defn- maybeLine
 
   "Parse a line (name=value) under a section"
-
   [^LineNumberReader rdr
    ncmap
    section
@@ -122,7 +117,7 @@
       (when (empty? nm)
         (throwBadIni rdr))
       (let [k (keyword (lcase nm))]
-        (->> (assoc kvs k [ nm  (strim (.substring line (+ pos 1))) ])
+        (->> (assoc kvs k [nm  (strim (.substring line (inc pos)))])
              (swap! ncmap assoc section)))
       section)))
 
@@ -131,7 +126,6 @@
 (defn- evalOneLine
 
   "Parse a line in the file"
-
   [^LineNumberReader rdr
    ncmap
    curSec
@@ -154,7 +148,6 @@
 (defn- getKV
 
   ""
-
   ^String
   [sects s k err]
 
@@ -172,7 +165,6 @@
 (defn- makeWinini
 
   ""
-
   [sects]
 
   (reify
@@ -270,6 +262,7 @@
 ;;
 (defn- parseFile
 
+  ""
   ^IWin32Conf
   [^URL fUrl]
 

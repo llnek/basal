@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Lots of useful helpers."
+(ns ^{:doc "Various general helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.core
@@ -66,8 +66,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(defonce ^:private BUF_SZ 4096)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti fpath
@@ -96,10 +94,21 @@
 ;;
 (defmacro try!!
 
-  "Eat the exception and return a default value"
+  "Eat the exception, log and return a default value"
   [defv & exprs]
 
   `(try ~@exprs (catch Throwable e# (log/warn e# "") ~defv )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro trye!
+
+  "Eat the exception and return a default value"
+  [defv & exprs]
+
+  `(try ~@exprs
+        (catch Throwable e#
+          (log/warn "Just ate a %s, yummy" (.toString e#)) ~defv )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -108,7 +117,9 @@
   "Eat the exception and return nil"
   [& exprs]
 
-  `(try!! nil ~@exprs))
+  `(try ~@exprs
+        (catch Throwable e#
+          (log/warn "Just ate a %s, yummy" (.toString e#)) nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -236,9 +247,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defonce GigaBytes (* 1024 1024 1024))
-(defonce KiloBytes 1024)
-(defonce MegaBytes (* 1024 1024))
 (defonce NICHTS (TypeNichts.))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -682,7 +690,7 @@
   "Parse string as a long value"
 
   (^long [^String s dftLongVal]
-    (try!! dftLongVal (Long/parseLong s) ))
+    (trye! dftLongVal (Long/parseLong s) ))
 
   (^long [^String s] (convLong s 0)))
 
@@ -693,7 +701,7 @@
   "Parse string as an int value"
 
   (^java.lang.Integer [^String s dftIntVal]
-    (try!! (int dftIntVal) (Integer/parseInt s)))
+    (trye! (int dftIntVal) (Integer/parseInt s)))
 
   (^java.lang.Integer [^String s] (convInt s 0)))
 
@@ -705,7 +713,7 @@
   "Parse string as a double value"
 
   (^double [^String s dftDblVal]
-    (try!! dftDblVal (Double/parseDouble s) ))
+    (trye! dftDblVal (Double/parseDouble s) ))
 
   (^double [^String s] (convDouble s 0.0)))
 

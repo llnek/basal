@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Handlers for common file formats such as JSON, EDN"
+(ns ^{:doc "Handlers for common file formats such as JSON, EDN."
       :author "Kenneth Leung" }
 
   czlab.xlib.format
@@ -35,7 +35,6 @@
 (defn writeEdnString
 
   "Convert clojure object into EDN format"
-
   ^String
   [obj]
 
@@ -80,7 +79,6 @@
 (defn writeJson
 
   "Convert into JSON"
-
   ^String
   [data]
 
@@ -91,7 +89,6 @@
 (defn readJsonKW
 
   "Parse JSON into object with keys mapped to keywords"
-
   [^String data]
 
   (js/read-str data :key-fn keyword))

@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Helper functions for Date handling"
+(ns ^{:doc "Various Date helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.dates
@@ -44,7 +44,6 @@
 (defn leapYear?
 
   "true if it's leap year"
-
   [year]
 
   (cond
@@ -57,7 +56,6 @@
 (defn- hastzpart?
 
   "Does the string contain time zone info"
-
   [^String s]
 
   (let [pos (indexAny s ",; \t\r\n\f")
@@ -72,7 +70,6 @@
 (defn- hastz?
 
   "Does the string contain time zone info"
-
   [^String dateStr]
 
   (let [p1 (.lastIndexOf dateStr (int \.))
@@ -100,7 +97,6 @@
 
   "Convert string into a valid Timestamp object
   *tstr* conforming to the format \"yyyy-mm-dd hh:mm:ss.[fff...]\""
-
   ^Timestamp
   [^String s]
 
@@ -111,7 +107,6 @@
 (defn parseDate
 
   "Convert string into a Date object"
-
   ^Date
   [^String tstr ^String fmt]
 
@@ -124,7 +119,6 @@
 (defn- parseIso8601
 
   "Parses datetime in ISO8601 format"
-
   ^Date
   [^String tstr]
 
@@ -139,7 +133,6 @@
 (defn fmtTimestamp
 
   "Convert Timestamp into a string value"
-
   ^String
   [^Timestamp ts]
 
@@ -150,7 +143,6 @@
 (defn fmtDate
 
   "Convert Date into string value"
-
   (^String
     [^Date dt]
     (fmtDate dt DT_FMT_MICRO nil))
@@ -174,7 +166,6 @@
 (defn fmtGMT
 
   "Convert Date object into a string - GMT timezone"
-
   ^String
   [^Date dt]
 
@@ -185,7 +176,6 @@
 (defn- add
 
   "Add some amount to the current date"
-
   ^Calendar
   [^Calendar cal calendarField amount]
 
@@ -199,7 +189,6 @@
 (defn gcal
 
   "Make a Calendar"
-
   ^Calendar
   [date]
 
@@ -210,7 +199,6 @@
 (defn addYears
 
   "Add n more years to the calendar"
-
   ^Calendar
   [^Calendar cal yrs]
 
@@ -221,7 +209,6 @@
 (defn addMonths
 
   "Add n more months to the calendar"
-
   ^Calendar
   [^Calendar cal mts]
 
@@ -232,7 +219,6 @@
 (defn addDays
 
   "Add n more days to the calendar"
-
   ^Calendar
   [^Calendar cal days]
 
@@ -243,7 +229,6 @@
 (defn plusMonths
 
   "Add n months"
-
   ^Date
   [months]
 
@@ -256,7 +241,6 @@
 (defn plusYears
 
   "Add n years"
-
   ^Date
   [years]
 
@@ -269,7 +253,6 @@
 (defn plusDays
 
   "Add n days"
-
   ^Date
   [days]
 
@@ -295,7 +278,6 @@
 (defn fmtCal
 
   "Formats time to yyyy-MM-ddThh:mm:ss"
-
   ^String
   [^Calendar cal]
 
@@ -315,7 +297,6 @@
 (defn gmtCal
 
   "Make a Calendar (GMT)"
-
   ^GregorianCalendar
   []
 
@@ -326,7 +307,6 @@
 (defn dtime
 
   "Get the time in millis"
-
   [^Date d]
 
   (.getTime d))
@@ -336,7 +316,6 @@
 (defn debugCal
 
   "Debug show a calendar's internal data"
-
   ^String
   [^Calendar cal]
 

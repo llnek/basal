@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc    "boot-clj related helpers."
+(ns ^{:doc    "Various boot-clj helpers."
       :author "Kenneth Leung" }
 
   czlab.tpcl.boot
