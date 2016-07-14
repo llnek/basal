@@ -68,6 +68,86 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defmacro exp!
+
+  "Create an exception instance"
+  ^Throwable
+  [e & args]
+
+  (if (empty? args)
+    `(new ~e)
+    `(new ~e ~@args)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro trap!
+
+  "Throw this exception"
+  [e & args]
+
+  `(throw (exp! ~e ~@args)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn throwUOE
+
+  "Force throw an unsupported operation exception"
+  [^String fmt & xs]
+
+  (->> ^String
+       (apply format fmt xs)
+       (trap! UnsupportedOperationException )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn throwBadArg
+
+  "Force throw a bad parameter exception"
+  [^String fmt & xs]
+
+  (->> ^String
+       (apply format fmt xs)
+       (trap! IllegalArgumentException )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmulti throwIOE "Throw an IO Exception" (fn [a & xs] (class a)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmethod throwIOE
+
+  Throwable
+
+  [^Throwable t & xs]
+
+  (trap! java.io.IOException t))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmethod throwIOE
+
+  String
+
+  [^String fmt & xs]
+
+  (->> ^String
+       (apply format fmt xs)
+       (trap! java.io.IOException )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn throwBadData
+
+  "Throw an Bad Data Exception"
+  [^String fmt & xs]
+
+  (->> ^String
+       (apply format fmt xs)
+       (trap! BadDataError )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmulti fpath
   "Convert path into nice format (no) backslash" ^String class)
 
@@ -140,6 +220,22 @@
   `(reify Runnable (run [_] (~func))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro when-some+
+  "bindings => binding-form test
+   When test is not empty, evaluates body with binding-form bound to the
+   value of test"
+  [bindings & body]
+
+  (let [form (bindings 0)
+        tst (bindings 1)]
+    `(let [temp# ~tst]
+       (if (empty? temp#)
+         nil
+         (let [~form temp#]
+           ~@body)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro doto->>
@@ -181,27 +277,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro exp!
-
-  "Create an exception instance"
-  ^Throwable
-  [e & args]
-
-  (if (empty? args)
-    `(new ~e)
-    `(new ~e ~@args)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro trap!
-
-  "Throw this exception"
-  [e & args]
-
-  `(throw (exp! ~e ~@args)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro do->false "Do and return false" [& exprs] `(do ~@exprs false))
 (defmacro do->nil "Do and return nil" [& exprs] `(do ~@exprs nil))
 (defmacro do->true "Do and return true" [& exprs] `(do ~@exprs true))
@@ -217,7 +292,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro whenTry
+(defmacro when-try
 
   ""
   [kond & forms]
@@ -226,7 +301,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro letWhenDo
+(defmacro let-when
 
   ""
   [bindings kond & forms]
@@ -333,65 +408,6 @@
   [obj]
 
   (identical? obj NICHTS))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn throwUOE
-
-  "Force throw an unsupported operation exception"
-  [^String fmt & xs]
-
-  (->> ^String
-       (apply format fmt xs)
-       (trap! UnsupportedOperationException )))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn throwBadArg
-
-  "Force throw a bad parameter exception"
-  [^String fmt & xs]
-
-  (->> ^String
-       (apply format fmt xs)
-       (trap! IllegalArgumentException )))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmulti throwIOE "Throw an IO Exception" (fn [a & xs] (class a)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod throwIOE
-
-  Throwable
-
-  [^Throwable t & xs]
-
-  (trap! java.io.IOException t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod throwIOE
-
-  String
-
-  [^String fmt & xs]
-
-  (->> ^String
-       (apply format fmt xs)
-       (trap! java.io.IOException )))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn throwBadData
-
-  "Throw an Bad Data Exception"
-  [^String fmt & xs]
-
-  (->> ^String
-       (apply format fmt xs)
-       (trap! BadDataError )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -981,7 +997,7 @@
 
 (defmulti test-isa
 
-  "Tests if object is subclass of parent"
+  "Check object is subclass of parent"
 
   (fn [a b c]
     (if (instance? Class b) :class :object)))
@@ -1016,7 +1032,7 @@
 ;;
 (defn test-nonil
 
-  "Assert object is not null"
+  "Check object is not null"
   [^String param ^Object obj]
 
   (assert (some? obj)
@@ -1026,7 +1042,7 @@
 ;;
 (defn test-cond
 
-  "Assert a condition"
+  "Check a condition"
   [^String msg cnd]
 
   (assert cnd (str msg)))
@@ -1035,7 +1051,7 @@
 ;;
 (defn test-nestr
 
-  "Assert string is not empty"
+  "Check string is not empty"
   [^String param ^String v]
 
   (assert (not (empty? v))
@@ -1045,7 +1061,7 @@
 ;;
 (defmulti test-nonegnum
 
-  "Assert number is not negative"
+  "Check number is not negative"
 
   (fn [a b]
     (condp instance? b
@@ -1059,7 +1075,7 @@
 ;;
 (defmulti test-posnum
 
-  "Assert number is positive"
+  "Check number is positive"
 
   (fn [a b]
     (condp instance? b
@@ -1117,7 +1133,7 @@
 ;;
 (defn test-neseq
 
-  "Assert sequence is not empty"
+  "Check sequence is not empty"
   [^String param v]
 
   (assert (> (count v) 0)
