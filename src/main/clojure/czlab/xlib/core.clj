@@ -217,6 +217,24 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defmacro whenTry
+
+  ""
+  [kond & forms]
+
+  `(when ~kond (try ~@forms)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro letWhenDo
+
+  ""
+  [bindings kond & forms]
+
+  `(let ~bindings (when ~kond ~@forms)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro cast?
 
   "If object is an instance of this type,
@@ -640,6 +658,17 @@
   (with-open [in (ByteArrayInputStream. ^bytes bits)
               ois (ObjectInputStream. in)]
     (.readObject ois)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro gczn
+
+  "The basename of this class"
+  ^String
+  [c]
+
+  `(let [x# ~c]
+     (when (instance? Class x#) (.getSimpleName x#))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
