@@ -127,6 +127,18 @@
                  (long delayMillis))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn exitHook
+
+  "Add this as a shutdown hook"
+  [func]
+
+  {:pre [(fn? func)]}
+
+  (-> (Runtime/getRuntime)
+      (.addShutdownHook (Thread. (runnable func)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
 
 
