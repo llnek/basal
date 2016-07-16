@@ -17,11 +17,11 @@ package czlab.xlib;
 /**
  * @author Kenneth Leung
  */
-@FunctionalInterface public interface Initializable {
+@FunctionalInterface public interface Initable {
 
   /**
    */
-  public void initialize();
+  public void init(Object obj);
 
 }
 
