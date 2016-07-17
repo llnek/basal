@@ -134,7 +134,9 @@
         Activable
 
         (activate [_ options]
-          (let [^long t (or (:threads options) 4)
+          (let [^long t (->> (Runtime/getRuntime)
+                             (.availableProcessors)
+                             (or (:threads options) ))
                 b (not (false? (:trace options)))
                 c (TCore. named t b)]
             (reset! cpu c)
