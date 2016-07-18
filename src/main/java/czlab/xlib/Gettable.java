@@ -17,11 +17,15 @@ package czlab.xlib;
 /**
  * @author Kenneth Leung
  */
-@FunctionalInterface public interface Gettable {
+public interface Gettable {
+
+  /**/
+  public boolean contains(Object key);
 
   /**
    */
   public Object getv(Object key);
+
 
 }
 
