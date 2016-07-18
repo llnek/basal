@@ -131,8 +131,6 @@
             (.clear holdQ)
             (when (some? c) (.dispose c))))
 
-        Activable
-
         (activate [_ options]
           (let [^long t (->> (Runtime/getRuntime)
                              (.availableProcessors)

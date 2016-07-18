@@ -17,7 +17,7 @@ package czlab.xlib;
 /**
  * @author Kenneth Leung
  */
-public interface Schedulable extends Disposable {
+public interface Schedulable extends Disposable, Activable {
 
   /**
    * delay x millis before running
