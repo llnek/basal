@@ -30,7 +30,6 @@
      Disposable
      Activable
      Identifiable
-     Named
      RunnableWithId]
     [java.util Map Properties Timer TimerTask]))
 

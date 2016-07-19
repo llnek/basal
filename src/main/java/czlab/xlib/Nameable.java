@@ -17,7 +17,7 @@ package czlab.xlib;
 /**
  * @author Kenneth Leung
  */
-@FunctionalInterface public interface Named {
+@FunctionalInterface public interface Nameable {
 
   /**
    */
