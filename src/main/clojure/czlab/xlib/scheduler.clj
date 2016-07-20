@@ -18,7 +18,11 @@
   czlab.xlib.scheduler
 
   (:require
-    [czlab.xlib.core :refer [cast? juid]]
+    [czlab.xlib.core
+     :refer [do->nil
+             spos?
+             cast?
+             juid]]
     [czlab.xlib.logging :as log]
     [czlab.xlib.str :refer [hgl?]])
 
@@ -84,6 +88,19 @@
 
         Schedulable
 
+        (alarm [me w arg delayMillis]
+          (if (spos? delayMillis)
+            (let
+              [tt
+               (proxy [TimerTask][]
+                 (run [] (.interrupt w arg)))]
+              (addTimer @timer tt delayMillis)
+              tt)
+            nil))
+
+        (purge [_]
+          (.purge ^Timer @timer))
+
         (dequeue [_ w] )
 
         (run [this w]
@@ -96,14 +113,17 @@
 
         (postpone [me w delayMillis]
           (cond
-            (< delayMillis 0) (.hold me w)
-            (== delayMillis 0) (.run me w)
+            (== delayMillis 0)
+            (do->nil (.run me w))
+            (< delayMillis 0)
+            (do->nil (.hold me w))
             :else
-            (addTimer @timer
-                      (proxy
-                        [TimerTask][]
-                        (run [] (.wakeup me w)))
-                      delayMillis)))
+            (let [tt
+                  (proxy
+                    [TimerTask][]
+                    (run [] (.wakeup me w)))]
+              (addTimer @timer tt delayMillis)
+              tt)))
 
         (hold [this w]
           (.hold this (xrefPID w) w))
@@ -124,10 +144,9 @@
           (when (some? w)
             (.run this w)))
 
-        (dispose [_]
+        (dispose [this]
           (let [^TCore c @cpu]
-            (.cancel ^Timer @timer)
-            (.clear holdQ)
+            (.deactivate this)
             (when (some? c) (.dispose c))))
 
         (activate [_ options]
@@ -140,9 +159,12 @@
             (.start c)))
 
         (deactivate [_]
-          (.cancel ^Timer @timer)
-          (.clear holdQ)
-          (.stop ^TCore @cpu)))
+          (let [^TCore c @cpu]
+            (doto ^Timer @timer
+              (.cancel)
+              (.purge))
+            (.clear holdQ)
+            (when (some? c) (.stop c)))))
 
       {:typeid ::Scheduler })))
 

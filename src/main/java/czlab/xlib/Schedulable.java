@@ -20,9 +20,16 @@ package czlab.xlib;
 public interface Schedulable extends Disposable, Activable {
 
   /**
+   * delay x millis set alarm
+   */
+  public Object alarm(Interruptable w, Object arg, long delayMillis);
+
+  /**
    * delay x millis before running
    */
-  public void postpone(Runnable w, long delayMillis);
+  public Object postpone(Runnable w, long delayMillis);
+
+  public void purge();
 
   /**
    */
