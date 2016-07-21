@@ -35,19 +35,19 @@ public enum I18N {
    */
   public static void setBundle(Object bkey, ResourceBundle b) {
     TLOG.info("setting a resource bundle, bkey = {}", bkey);
-    _bs .put(bkey,b);
+    _bs.put(bkey,b);
   }
 
   /**
    */
   public static ResourceBundle getBundle(Object bkey) {
-    return _bs .get(bkey);
+    return _bs.get(bkey);
   }
 
   /**
    */
   public static void unsetBundle(String bkey) {
-    _bs .remove(bkey);
+    _bs.remove(bkey);
   }
 
   /**

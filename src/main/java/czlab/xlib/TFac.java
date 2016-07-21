@@ -49,8 +49,9 @@ public class TFac implements ThreadFactory {
   public Thread newThread(Runnable r) {
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
     Thread t = _fac.newThread(r);
-    t.setName(mkTname());
+    //
     t.setPriority(Thread.NORM_PRIORITY);
+    t.setName(mkTname());
     t.setDaemon(false);
     t.setContextClassLoader(cl);
     return t;
