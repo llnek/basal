@@ -136,7 +136,7 @@
   "true if sub-str is inside the big str"
   [^String bigs ^String s]
 
-  `(>= (.indexOf ~bigs ~s) 0))
+  `(>= (.indexOf (str ~bigs) (str ~s)) 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
