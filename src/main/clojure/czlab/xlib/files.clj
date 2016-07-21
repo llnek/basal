@@ -13,7 +13,7 @@
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
 
-(ns ^{:doc "Various file handling helpers."
+(ns ^{:doc "File handling helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.files

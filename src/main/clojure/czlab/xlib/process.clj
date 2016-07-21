@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Usefule os process & runtime functions."
+(ns ^{:doc "Useful os process & runtime functions."
       :author "Kenneth Leung" }
 
   czlab.xlib.process
@@ -24,8 +24,12 @@
     [czlab.xlib.str :refer [hgl?]])
 
   (:import
-    [java.lang.management ManagementFactory]
     [czlab.xlib CU CallableWithArgs]
+    [clojure.lang APersistentMap]
+    [java.lang.management
+     RuntimeMXBean
+     ManagementFactory
+     OperatingSystemMXBean ]
     [java.util.concurrent Callable]
     [java.util TimerTask Timer]
     [java.lang Thread Runnable]))
@@ -98,6 +102,29 @@
   (try! (when (> millisecs 0)
           (Thread/sleep millisecs))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn jvmInfo
+
+  "Get info on the jvm"
+  ^APersistentMap
+  []
+
+  (let [os (ManagementFactory/getOperatingSystemMXBean)
+        rt (ManagementFactory/getRuntimeMXBean)]
+    {:spec-version (.getSpecVersion rt)
+     :vm-version (.getVmVersion rt)
+     :spec-vendor (.getSpecVendor rt)
+     :vm-vendor (.getVmVendor rt)
+     :spec-name (.getSpecName rt)
+     :vm-name (.getVmName rt)
+     :name (.getName rt)
+     :arch (.getArch os)
+     :processors (.getAvailableProcessors os)
+     :os-name (.getName os)
+     :os-version (.getVersion os) }))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn processPid

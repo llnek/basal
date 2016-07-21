@@ -131,12 +131,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn embeds?
+(defmacro embeds?
 
   "true if sub-str is inside the big str"
   [^String bigs ^String s]
 
-  (>= (.indexOf bigs s) 0))
+  `(>= (.indexOf ~bigs ~s) 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -149,12 +149,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn has?
+(defmacro has?
 
   "true if the char is inside the big str"
   [^String bigs ^Character ch]
 
-  (>= (.indexOf bigs (int (.charValue ch))) 0))
+  (let [c (int (.charValue ch))]
+    `(>= (.indexOf  ~bigs ~c) 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -316,7 +317,7 @@
 
   (when (some? item)
     (when (and (> (.length buf) 0)
-               (some? delim))
+               (hgl? delim))
       (.append buf delim))
     (.append buf item))
   buf)

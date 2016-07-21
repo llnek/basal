@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Various stream/io helpers."
+(ns ^{:doc "IO & stream helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.io

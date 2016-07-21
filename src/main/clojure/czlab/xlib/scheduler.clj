@@ -45,7 +45,6 @@
 (defn- xrefPID
 
   ""
-  ^Object
   [r]
 
   (when
@@ -59,9 +58,7 @@
   ""
   [^Map hQ w]
 
-  (when-some
-    [pid (xrefPID w)]
-    (.remove hQ pid)))
+  (when-some [pid (xrefPID w)] (.remove hQ pid)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -103,7 +100,7 @@
 
         (dequeue [_ w] )
 
-        (run [this w]
+        (run [_ w]
           (when-some [^Runnable
                       r (cast? Runnable w)]
             (preRun holdQ r)
@@ -137,12 +134,10 @@
 
         (wakeAndRun [this pid w]
           (when (some? pid)
-            (.remove holdQ pid)
-            (.run this w)))
+            (.remove holdQ pid))
+          (.run this w))
 
-        (reschedule [this w]
-          (when (some? w)
-            (.run this w)))
+        (reschedule [this w] (.run this w))
 
         (dispose [this]
           (let [^TCore c @cpu]
