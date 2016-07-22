@@ -120,12 +120,35 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(def ^:private ANSI-COLORS
+  (cs/join "\n"
+           ["AnsiColorLogger.ERROR_COLOR=0;31"
+            "AnsiColorLogger.WARNING_COLOR=0;35"
+            "AnsiColorLogger.INFO_COLOR=0;36"
+            "AnsiColorLogger.VERBOSE_COLOR=0;32"
+            "AnsiColorLogger.DEBUG_COLOR=0;34"]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- hackAnsiColors
+  ""
+  []
+  (let [tmp (System/getProperty "java.io.tmpdir")
+        f (io/file tmp "42antlogansi.colors")]
+    (if-not (.exists f)
+      (spit f ANSI-COLORS :encoding "utf-8"))
+    (System/setProperty "ant.logger.defaults"
+                        (.getCanonicalPath f))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn antProject
 
   "Create a new ant project"
   ^Project
   []
 
+  (hackAnsiColors)
   (let [lg (doto
              (AnsiColorLogger.)
              (.setOutputPrintStream System/out)
