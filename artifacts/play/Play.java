@@ -51,7 +51,7 @@ public enum CU {
   public static void main(String[] args) {
     try {
 /*
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
       "`~!@#$%^&*()-_+={}[]|\:;',.<>?/'"
 */
 //      String script = "(fn [_] {:a 1} )";
