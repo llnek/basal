@@ -411,7 +411,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro flattenNil
+(defmacro flatnil
 
   "Get rid of any nil(s) in a sequence"
   ^APersistentVector

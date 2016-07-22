@@ -120,9 +120,9 @@
 
   (is (false? (CU/notnil? nil)))
   (is (true? (CU/notnil? "")))
-  (is (= 3 (count (CU/flattenNil '(1 2 nil nil 3)))))
-  (is (= 3 (count (CU/flattenNil '(1 2 3)))))
-  (is (= 3 (count (CU/flattenNil [1 nil 2 nil 3]))))
+  (is (= 3 (count (CU/flatnil '(1 2 nil nil 3)))))
+  (is (= 3 (count (CU/flatnil '(1 2 3)))))
+  (is (= 3 (count (CU/flatnil [1 nil 2 nil 3]))))
   (is (= 0.0 (CU/ndz nil)))
   (is (= 0 (CU/nnz nil)))
 
