@@ -19,11 +19,11 @@
     [czlab.xlib.ini :as WI])
   (:use [clojure.test])
   (:import
-    [czlab.xlib IWin32Conf]))
+    [czlab.xlib Win32Conf]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^IWin32Conf ^:private INIFILE (WI/parseInifile (CU/resUrl "czlab/xlib/sample.ini")))
+(def ^Win32Conf ^:private INIFILE (WI/w32ini<> (CU/resUrl "czlab/xlib/sample.ini")))
 
 ;;(println "->>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 ;;(.dbgShow INIFILE)

@@ -18,8 +18,8 @@
   czlab.xlib.cmdline
 
   (:require
+    [czlab.xlib.str :refer [strbf<> stror strim has?]]
     [czlab.xlib.core :refer [isWindows? in? do->nil]]
-    [czlab.xlib.str :refer [stror strim has?]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs])
 
@@ -43,7 +43,7 @@
 
   ;; windows has '\r\n' linux has '\n'
   (let
-    [bf (StringBuilder.)
+    [bf (strbf<>)
      ms (loop [c (.read cin)]
           (let [m (cond
                     (or (== c -1) (== c 4))

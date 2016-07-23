@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Various string helpers."
+(ns ^{:doc "String helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.str
@@ -478,21 +478,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn makeString
+(defmacro strbf<> "StringBuilder.new" ^StringBuilder [] `(StringBuilder.))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn str<>
 
   "Make a string of certain length"
 
   ^String
   [^Character ch cnt]
 
-  (let [buf (StringBuilder.)]
+  (let [buf (strbf<>)]
     (dotimes [n cnt]
       (.append buf ch))
     (.toString buf)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro strbf "StringBuilder.new" ^StringBuilder [] `(StringBuilder.))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

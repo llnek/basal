@@ -34,7 +34,7 @@
   (:use [flatland.ordered.map])
 
   (:import
-    [czlab.xlib IWin32Conf]
+    [czlab.xlib Win32Conf]
     [java.net URL]
     [java.io
      File
@@ -48,7 +48,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti parseInifile "Parse a INI config file"  ^IWin32Conf class)
+(defmulti w32ini<> "Parse a INI config file"  ^Win32Conf class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -66,7 +66,7 @@
   ""
   [k]
 
-  (throwBadData (format "No such property %s" k)))
+  (throwBadData (format "No such item %s" k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -75,7 +75,7 @@
   ""
   [s]
 
-  (throwBadData (format "No such section %s" s)))
+  (throwBadData (format "No such heading %s" s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -169,7 +169,7 @@
 
   (reify
 
-    IWin32Conf
+    Win32Conf
 
     (headings [_]
       (persistent!
@@ -236,56 +236,57 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod parseInifile
+(defmethod w32ini<>
 
   String
 
-  ^IWin32Conf
+  ^Win32Conf
   [fpath]
 
   (when (some? fpath)
-    (parseInifile (io/file fpath))))
+    (w32ini<> (io/file fpath))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod parseInifile
+(defmethod w32ini<>
 
   File
 
-  ^IWin32Conf
+  ^Win32Conf
   [file]
 
   (when (fileRead? file)
-    (parseInifile (io/as-url file))))
+    (w32ini<> (io/as-url file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- parseFile
 
   ""
-  ^IWin32Conf
+  ^Win32Conf
   [^URL fUrl]
 
-  (with-open [inp (.openStream fUrl) ]
-    (loop [rdr (->> (io/reader inp :encoding "utf-8")
-                    (LineNumberReader. ))
-           total (atom (sorted-map))
+  (with-open [inp (-> (.openStream fUrl)
+                      (io/reader :encoding "utf8")
+                      (LineNumberReader. ))]
+    (loop [total (atom (sorted-map))
+           rdr inp
            line (.readLine rdr)
            curSec nil]
       (if (nil? line)
         (makeWinini @total)
-        (recur rdr
-               total
+        (recur total
+               rdr
                (.readLine rdr)
                (evalOneLine rdr total curSec line))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod parseInifile
+(defmethod w32ini<>
 
   URL
 
-  ^IWin32Conf
+  ^Win32Conf
   [^URL fileUrl]
 
   (when (some? fileUrl)

@@ -48,7 +48,7 @@
 
   (is (instance? InputStream (IO/streamify (byte-array 10))))
 
-  (is (instance? OutputStream (IO/byteOS)))
+  (is (instance? OutputStream (IO/baos<>)))
 
   (is (= "616263" (IO/hexifyString (CU/bytesify "abc"))))
 
@@ -78,8 +78,8 @@
                       (IO/copyBytes inp os 4)))
                   (>= (.length ^File v) 4))))
 
-  (is (true? (.isFile (IO/newXData true))))
-  (is (false? (.isFile (IO/newXData))))
+  (is (true? (.isFile (IO/xdata<> true))))
+  (is (false? (.isFile (IO/xdata<>))))
 
   (is (true? (let [ x (with-open [^InputStream inp (IO/openFile TMP_FP)] (IO/readBytes inp true))]
                 (and (instance? XData x)

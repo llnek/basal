@@ -212,7 +212,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro runnable
+(defmacro runnable<>
 
   "Create a Runnable wrapper"
   [func]
@@ -344,7 +344,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn newMonoFlop
+(defn monoFlop<>
 
   "Flip on first call, useful for one-time logic"
   ^MonoFlop
@@ -360,7 +360,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn newWatch
+(defn watch<>
 
   "Use to mark elapsed time"
   ^Watch
@@ -489,6 +489,8 @@
   "Scope name as a fully-qualified keyword"
   ^Keyword
   [^String t]
+  {:pre [(not (empty? t))
+         (< (.indexOf t "/") 0)]}
 
   (keyword (str *ns* "/" t)))
 
@@ -535,36 +537,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro nowJTstamp
-
-  "A java sql Timestamp"
-  ^Timestamp
-  []
-
-  `(java.sql.Timestamp. (.getTime (java.util.Date.))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro nowDate
+(defmacro now<date>
 
   "A java Date"
   ^Date
   []
 
   `(java.util.Date.))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn nowCal
-
-  "A Gregorian Calendar"
-
-  ^Calendar
-  [& [tz]]
-
-  (if (nil? tz)
-    (GregorianCalendar. )
-    (GregorianCalendar. ^TimeZone tz)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -945,20 +924,22 @@
   ^String
   [^String fname]
 
-  (->> (reduce (fn [^StringBuilder buf ^Character ch]
-                 (if (or (java.lang.Character/isLetterOrDigit ch)
-                         (ccore/contains? #{\_ \- \.} ch))
-                   (.append buf ch)
-                   (.append buf
-                            (str "0x"
-                                 (Integer/toString (int ch) 16)))))
-               (StringBuilder.)
-               (.toCharArray fname))
-       (str )))
+  (->>
+    (reduce
+      (fn [^StringBuilder buf ^Character ch]
+        (if (or (java.lang.Character/isLetterOrDigit ch)
+                (contains? #{\_ \- \.} ch))
+          (.append buf ch)
+          (.append buf
+                   (str "0x"
+                        (Integer/toString (int ch) 16)))))
+      (StringBuilder.)
+      (.toCharArray fname))
+    (str )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro nowMillis
+(defmacro now<>
 
   "the current time in milliseconds"
   ^long
@@ -1182,7 +1163,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn intoMap
+(defn pmap<>
 
   "Convert Java Map into Clojure Map"
 
@@ -1408,23 +1389,40 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn nextInt
+(defn seqnext
+
+  "Get the next atomic number"
+  [n]
+
+  (cond
+    (inst? AtomicInteger n)
+    (.getAndIncrement ^AtomicInteger n)
+
+    (inst? AtomicLong n)
+    (.getAndIncrement ^AtomicLong n)
+
+    :else
+    (throwBadArg "expecting atomic-number type")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn seqint
 
   "A sequence number (integer)"
   ^Integer
   []
 
-  (.getAndIncrement ^AtomicInteger _numInt))
+  (seqnext _numInt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn nextLong
+(defn seqlong
 
   "A sequence number (long)"
   ^long
   []
 
-  (.getAndIncrement ^AtomicLong _numLong))
+  (seqnext _numLong))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

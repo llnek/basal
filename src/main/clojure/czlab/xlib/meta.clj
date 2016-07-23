@@ -242,7 +242,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti newObjArgN
+(defmulti objArgs<>
 
   "Instantiate object with arity-n constructor"
   ^Object
@@ -250,7 +250,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod newObjArgN
+(defmethod objArgs<>
 
   Class
 
@@ -268,17 +268,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod newObjArgN
+(defmethod objArgs<>
 
   String
 
   [^String cz & args]
 
-  (apply newObjArgN (loadClass cz) args))
+  (apply objArgs<> (loadClass cz) args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ctorObj
+(defn ctor<>
 
   "Call the default contructor"
   ^Object
@@ -290,7 +290,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn newObj
+(defn new<>
 
   "Make an object of this class by calling the default constructor"
   ^Object
@@ -298,7 +298,7 @@
 
   (if-not (hgl? clazzName)
     nil
-    (ctorObj (loadClass clazzName cl))))
+    (ctor<> (loadClass clazzName cl))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

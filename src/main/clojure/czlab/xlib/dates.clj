@@ -19,7 +19,7 @@
 
   (:require
     [czlab.xlib.str :refer [hgl? has? hasAny? indexAny]]
-    [czlab.xlib.core :refer [try!]]
+    [czlab.xlib.core :refer [inst? try!]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs])
 
@@ -186,13 +186,25 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn gcal
+(defn gcal<>
 
   "Make a Calendar"
   ^Calendar
-  [date]
+  [& [arg]]
 
-  (doto (GregorianCalendar.) (.setTime date)))
+  (cond
+    (inst? TimeZone arg)
+    (GregorianCalendar. ^TimeZone arg)
+
+    (inst? Date arg)
+    (doto
+      (GregorianCalendar.)
+      (.setTime ^Date arg))
+
+    :else
+    (doto
+      (GregorianCalendar.)
+      (.setTime (Date.)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -232,7 +244,7 @@
   ^Date
   [months]
 
-  (-> (gcal (Date.))
+  (-> (gcal<> (Date.))
       (addMonths  months)
       (.getTime)))
 
@@ -244,7 +256,7 @@
   ^Date
   [years]
 
-  (-> (gcal (Date.))
+  (-> (gcal<> (Date.))
       (addYears years)
       (.getTime)))
 
@@ -256,7 +268,7 @@
   ^Date
   [days]
 
-  (-> (gcal (Date.))
+  (-> (gcal<> (Date.))
       (addDays days)
       (.getTime)))
 
@@ -294,7 +306,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn gmtCal
+(defn gcal<gmt>
 
   "Make a Calendar (GMT)"
   ^GregorianCalendar

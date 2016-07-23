@@ -22,7 +22,7 @@ import java.util.Set;
  *
  * @author Kenneth Leung
  */
-public interface IWin32Conf {
+public interface Win32Conf {
 
   /**
    */
@@ -38,43 +38,43 @@ public interface IWin32Conf {
 
   /**
    */
-  public String strValue(String heading, String prop, String dft);
+  public String strValue(String heading, String item, String dft);
 
   /**
    */
-  public String strValue(String heading, String prop);
+  public String strValue(String heading, String item);
 
   /**
    */
-  public long longValue(String heading, String prop, long dft);
+  public long longValue(String heading, String item, long dft);
 
   /**
    */
-  public long longValue(String heading, String prop);
+  public long longValue(String heading, String item);
 
   /**
    */
-  public int intValue(String heading, String prop, int dft);
+  public int intValue(String heading, String item, int dft);
 
   /**
    */
-  public int intValue(String heading, String prop);
+  public int intValue(String heading, String item);
 
   /**
    */
-  public boolean boolValue(String heading, String prop, boolean dft);
+  public boolean boolValue(String heading, String item, boolean dft);
 
   /**
    */
-  public boolean boolValue(String heading, String prop);
+  public boolean boolValue(String heading, String item);
 
   /**
    */
-  public double doubleValue(String heading, String prop, double dft);
+  public double doubleValue(String heading, String item, double dft);
 
   /**
    */
-  public double doubleValue(String heading, String prop);
+  public double doubleValue(String heading, String item);
 
 }
 

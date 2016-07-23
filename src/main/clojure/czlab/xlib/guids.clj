@@ -22,8 +22,8 @@
     [czlab.xlib.str :refer [lefts rights]]
     [czlab.xlib.logging :as log]
     [czlab.xlib.core
-     :refer [nextInt
-             nowMillis
+     :refer [seqint
+             now<>
              trylet!
              try!
              srandom<>]])
@@ -41,12 +41,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;pre-shuffle the chars in string
 ;;"0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz"
-(defonce ^:private ^String _SS "YcQnPuzVAvpi7taGj1XwoJbIK3smye96NlHrR2DZS0CUxkLF5O4g8fBTqMEdhW")
-(defonce ^:private ^chars  _CHARS (.toCharArray _SS))
-(defonce ^:private _UUIDLEN (.length _SS))
+(def ^:private ^String _SS "YcQnPuzVAvpi7taGj1XwoJbIK3smye96NlHrR2DZS0CUxkLF5O4g8fBTqMEdhW")
+(def ^:private ^chars  _CHARS (.toCharArray _SS))
+(def ^:private _UUIDLEN (.length _SS))
 
-(defonce ^:private ^String LONG_MASK "0000000000")
-(defonce ^:private ^String INT_MASK "00000")
+(def ^:private ^String LONG_MASK "0000000000")
+(def ^:private ^String INT_MASK "00000")
 ;;(def ^:private LONG_MASK "0000000000000000")
 ;;(def ^:private INT_MASK "00000000")
 
@@ -91,7 +91,7 @@
   ""
   []
 
-  (let [s (fmtLong (nowMillis))
+  (let [s (fmtLong (now<>))
         n (.length s) ]
     [ (lefts s (/ n 2))
       (rights s (max 0 (- n (/ n 2 )) ))]))
@@ -164,7 +164,7 @@
     (str (nth ts 0)
          (fmtLong _IP)
          (fmtInt seed)
-         (fmtInt (nextInt))
+         (fmtInt (seqint))
          (nth ts 1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

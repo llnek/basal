@@ -18,7 +18,7 @@
   czlab.xlib.process
 
   (:require
-    [czlab.xlib.core :refer [runnable try!]]
+    [czlab.xlib.core :refer [runnable<> try!]]
     [czlab.xlib.meta :refer [getCldr]]
     [czlab.xlib.logging :as log]
     [czlab.xlib.str :refer [hgl?]])
@@ -39,14 +39,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn threadFunc
+(defn thread<>
 
   "Run this function in a separate thread"
   ^Thread
   [func start? & [arg]]
   {:pre [(fn? func)]}
 
-  (let [t (Thread. (runnable func))]
+  (let [t (Thread. (runnable<> func))]
     (with-local-vars [cl nil
                       daemon false]
       (when
@@ -61,7 +61,7 @@
         (.setContextClassLoader t ^ClassLoader @cl))
       (.setDaemon t (true? @daemon))
       (when start? (.start t))
-      (log/debug "threadFunc: thread#%s%s%s"
+      (log/debug "thread<>: thread#%s%s%s"
                  (.getName t)
                  ", daemon = " (.isDaemon t)))
     t))
@@ -90,7 +90,7 @@
   [func & [arg]]
   {:pre [(fn? func)]}
 
-  (threadFunc func true arg))
+  (thread<> func true arg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -163,7 +163,7 @@
   {:pre [(fn? func)]}
 
   (-> (Runtime/getRuntime)
-      (.addShutdownHook (Thread. (runnable func)))))
+      (.addShutdownHook (Thread. (runnable<> func)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

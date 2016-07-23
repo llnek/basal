@@ -51,9 +51,7 @@
 
   (is (not (nil? (CU/srandom<>))))
 
-  (is (instance? Timestamp (CU/nowJTstamp)))
-  (is (instance? Date (CU/nowDate)))
-  (is (instance? Calendar (CU/nowCal)))
+  (is (instance? Date (CU/now<date>)))
 
   (is (instance? Charset (CU/toCharset "utf-16")))
   (is (instance? Charset (CU/toCharset)))
@@ -96,7 +94,7 @@
 
   (is (= "0x24A0x3cb0x3eZ0x21" (CU/normalize "$A<b>Z!")))
 
-  (is (> (CU/nowMillis) 0))
+  (is (> (CU/now<>) 0))
 
   (is (= "/tmp/abc.txt" (CU/getFPath "file:/tmp/abc.txt")))
 
@@ -134,8 +132,8 @@
 
   (is (= "ACZ" (CU/sortJoin [ "Z" "C" "A"])))
 
-  (is (false? (nil? (:1 (CU/intoMap dummyProperties)))))
-  (is (= 3 (count (CU/intoMap dummyProperties))))
+  (is (false? (nil? (:1 (CU/pmap<> dummyProperties)))))
+  (is (= 3 (count (CU/pmap<> dummyProperties))))
 
   (is (= 100 (.getv (doto (CU/mubleObj!) (.setv :1 100)) :1)))
 

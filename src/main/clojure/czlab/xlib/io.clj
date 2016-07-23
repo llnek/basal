@@ -18,8 +18,12 @@
   czlab.xlib.io
 
   (:require
-    [czlab.xlib.core :refer [sysProp spos? try!]]
     [czlab.xlib.logging :as log]
+    [czlab.xlib.core
+     :refer [sysProp
+             trap!
+             spos?
+             try!]]
     [clojure.java.io :as io]
     [clojure.string :as cs])
 
@@ -56,8 +60,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(defonce ^:private _wd (atom (io/file (sysProp "java.io.tmpdir"))))
-(defonce ^:private _slimit (atom (* 4 MegaBytes)))
+(def ^:private _wd (atom (io/file (sysProp "java.io.tmpdir"))))
+(def ^:private _slimit (atom (* 4 MegaBytes)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -111,7 +115,7 @@
 
   (let [cnt (copyAll input output)]
     (if (> cnt Integer/MAX_VALUE)
-      (throw (IOException. "size too large"))
+      (trap! IOException "size too large")
       cnt)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -159,15 +163,12 @@
   ^File
   [dir]
 
-  (->> (doto
-         (io/file dir)
-         (.mkdirs))
-       (reset! _wd))
+  (->> (doto (io/file dir) (.mkdirs)) (reset! _wd))
   @_wd)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn byteOS
+(defn baos<>
 
   "Make a byte array output stream"
   ^ByteArrayOutputStream
@@ -233,7 +234,7 @@
 
   [nnum]
 
-  (with-open [baos (byteOS)]
+  (with-open [baos (baos<>)]
     (doto
       (DataOutputStream. baos)
       (.writeInt (int nnum))
@@ -248,7 +249,7 @@
 
   [nnum]
 
-  (with-open [baos (byteOS) ]
+  (with-open [baos (baos<>) ]
     (doto
       (DataOutputStream. baos)
       (.writeLong ^long nnum)
@@ -323,7 +324,7 @@
   [^bytes bits]
 
   (when (some? bits)
-    (let [baos (byteOS)]
+    (let [baos (baos<>)]
       (with-open [g (GZIPOutputStream. baos)]
         (.write g bits 0 (alength bits)))
       (.toByteArray baos))))
@@ -460,7 +461,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn newXData
+(defn xdata<>
 
   "A newly created XData"
   ^XData
@@ -510,7 +511,7 @@
   [^InputStream inp limit]
 
   (with-local-vars
-    [os (byteOS) fout nil]
+    [os (baos<>) fout nil]
     (loop [bits (byte-array BUF_SZ)
            cnt 0
            c (.read inp bits)]

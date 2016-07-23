@@ -12,7 +12,7 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Implementation of a scheduler with pooled threads."
+(ns ^{:doc "A scheduler with pooled threads."
       :author "Kenneth Leung" }
 
   czlab.xlib.scheduler

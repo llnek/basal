@@ -21,8 +21,8 @@
 ;;
 (deftest czlabtestxlib-seqnum
 
-  (is (> (SN/nextLong) 0))
-  (is (> (SN/nextInt) 0))
+  (is (> (SN/seqlong) 0))
+  (is (> (SN/seqint) 0))
 
 )
 
