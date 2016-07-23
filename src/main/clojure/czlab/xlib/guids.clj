@@ -26,7 +26,7 @@
              nowMillis
              trylet!
              try!
-             newRandom]])
+             srandom<>]])
 
   (:import
     [java.lang StringBuilder]
@@ -107,7 +107,7 @@
   (trylet! [neta (InetAddress/getLocalHost)
             b (.getAddress neta) ]
     (if (.isLoopbackAddress neta)
-      (.nextLong (newRandom))
+      (.nextLong (srandom<>))
       (if (== 4 (alength b))
         (long (readInt b))
         (readLong b)))))
@@ -118,7 +118,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn newUUid
+(defn uuid<>
 
   "RFC4122, version 4 form"
   ^String
@@ -136,7 +136,7 @@
 
   ;; At i==19 set the high bits of clock sequence as per rfc4122, sec. 4.1.5
   (let [rc (char-array _UUIDLEN)
-        rnd (newRandom) ]
+        rnd (srandom<>) ]
     (dotimes [n (alength rc) ]
       (aset-char rc
                  n
@@ -153,13 +153,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn newWWid
+(defn wwid<>
 
   "A new guid based on time and ip-address"
   ^String
   []
 
-  (let [seed (.nextInt (newRandom) (Integer/MAX_VALUE))
+  (let [seed (.nextInt (srandom<>) (Integer/MAX_VALUE))
         ts (splitTime) ]
     (str (nth ts 0)
          (fmtLong _IP)

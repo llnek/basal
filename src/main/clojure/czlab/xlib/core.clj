@@ -523,7 +523,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn newRandom
+(defn srandom<>
 
   "A new random object"
   ^SecureRandom

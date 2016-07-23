@@ -165,11 +165,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn mkScheduler
+(defn scheduler<>
 
   "Make a Scheduler"
 
-  (^Schedulable [] (mkScheduler (juid)))
+  (^Schedulable [] (scheduler<> (juid)))
   (^Schedulable [^String named] (mkSCD named)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

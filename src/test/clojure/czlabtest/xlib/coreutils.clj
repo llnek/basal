@@ -49,7 +49,7 @@
   (is (not (nil? (CU/juid))))
   (is (< (.indexOf (CU/juid) ":\\-") 0))
 
-  (is (not (nil? (CU/newRandom))))
+  (is (not (nil? (CU/srandom<>))))
 
   (is (instance? Timestamp (CU/nowJTstamp)))
   (is (instance? Date (CU/nowDate)))

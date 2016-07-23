@@ -26,11 +26,11 @@
 ;;
 (deftest czlabtestxlib-guids
 
-  (is (not (= (GU/newWWid) (GU/newWWid))))
-  (is (not (= (GU/newUUid) (GU/newUUid))))
+  (is (not (= (GU/wwid<>) (GU/wwid<>))))
+  (is (not (= (GU/uuid<>) (GU/uuid<>))))
 
-  (is (> (.length (GU/newWWid)) 0))
-  (is (> (.length (GU/newUUid)) 0))
+  (is (> (.length (GU/wwid<>)) 0))
+  (is (> (.length (GU/uuid<>)) 0))
 
 )
 
