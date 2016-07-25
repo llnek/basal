@@ -78,8 +78,8 @@
                       (IO/copyBytes inp os 4)))
                   (>= (.length ^File v) 4))))
 
-  (is (true? (.isFile (IO/xdata<> true))))
   (is (false? (.isFile (IO/xdata<>))))
+  (is (true? (.isFile (IO/xdata<f>))))
 
   (is (true? (let [ x (with-open [^InputStream inp (IO/openFile TMP_FP)] (IO/readBytes inp true))]
                 (and (instance? XData x)

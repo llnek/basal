@@ -461,15 +461,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn xdata<>
+(defmacro xdata<> "Create XData with content" ^XData [& [c]] `(XData. ~c))
 
-  "A newly created XData"
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro xdata<f>
+
+  "Create XData with temp-file"
   ^XData
-  [ & [usefile] ]
-
-  (if usefile
-    (XData. (tempFile))
-    (XData.)))
+  []
+  `(XData. (tempFile)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
