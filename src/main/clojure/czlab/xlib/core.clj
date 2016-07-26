@@ -529,11 +529,14 @@
 
   "A new random object"
   ^SecureRandom
-  [& [numBytes]]
+  [& [strong?]]
 
-  (-> (long (or numBytes 4))
-      (SecureRandom/getSeed )
-      (SecureRandom.)))
+  (let [r (if strong?
+            (SecureRandom/getStrongInstance)
+            (SecureRandom.))]
+    (->> (SecureRandom/getSeed 4)
+         (.setSeed r))
+    r))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
