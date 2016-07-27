@@ -532,7 +532,7 @@
   [& [strong?]]
 
   (let [r (if strong?
-            (SecureRandom/getStrongInstance)
+            (SecureRandom/getInstanceStrong)
             (SecureRandom.))]
     (->> (SecureRandom/getSeed 4)
          (.setSeed r))
