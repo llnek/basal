@@ -1179,6 +1179,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(declare mubleObj!!)
+(declare mubleObj!)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (deftype UnsynchedMObj
 
   [^:unsynchronized-mutable data]
@@ -1188,11 +1192,15 @@
   (setv [_ k v] (set! data (assoc data k v)))
   (unsetv [_ k] (set! data (dissoc data k)))
   (toEDN [_] (pr-str data))
+  (copy [this x]
+    (doseq [[k v] (.seq this)] (.setv x k v)))
+  (clone [this]
+    (doto->> (mubleObj!) (.copy this )))
   (seq [_] (seq data))
   (getv [_ k] (get data k))
   (clear [_ ] (set! data {})))
-(ns-unmap *ns* '->UnsynchedMObj)
 
+(ns-unmap *ns* '->UnsynchedMObj)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftype VolatileMObj
@@ -1204,6 +1212,10 @@
   (setv [_ k v] (set! data (assoc data k v)))
   (unsetv [_ k] (set! data (dissoc data k)))
   (toEDN [_] (pr-str data))
+  (copy [this x]
+    (doseq [[k v] (.seq this)] (.setv x k v)))
+  (clone [this]
+    (doto->> (mubleObj!) (.copy this )))
   (seq [_] (seq data))
   (getv [_ k] (get data k))
   (clear [_ ] (set! data {} )))

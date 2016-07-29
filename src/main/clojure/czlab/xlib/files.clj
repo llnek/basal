@@ -19,6 +19,7 @@
   czlab.xlib.files
 
   (:require
+    [czlab.xlib.core :refer [throwIOE]]
     [czlab.xlib.meta :refer [isBytes?]]
     [czlab.xlib.str :refer [stror]]
     [czlab.xlib.logging :as log]
@@ -159,6 +160,20 @@
   (if (empty? path)
     path
     (.getParent (io/file path))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn touch!
+
+  "Touch a file"
+  [file]
+
+  (let [f (io/file file)]
+    (if-not (.exists f)
+      (with-open [os (FileOutputStream. f)])
+      (when-not
+        (.setLastModified f (System/currentTimeMillis))
+        (throwIOE "Unable to set the lastmodtime: %s" f)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
