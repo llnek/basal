@@ -1181,6 +1181,7 @@
 ;;
 (declare mubleObj!!)
 (declare mubleObj!)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftype UnsynchedMObj
@@ -1193,10 +1194,12 @@
   (unsetv [_ k] (set! data (dissoc data k)))
   (toEDN [_] (pr-str data))
   (copy [this x]
-    (doseq [[k v] (.seq ^Muble x)]
-      (.setv this k v)))
+    (when (and (some? x)
+               (not (identical? this x)))
+      (doseq [[k v] (.seq ^Muble x)]
+        (.setv this k v))))
   (clone [this]
-    (doto->> (mubleObj!) (.copy this )))
+    (let [^Muble m (mubleObj!)] (.copy m this)))
   (seq [_] (seq data))
   (getv [_ k] (get data k))
   (clear [_ ] (set! data {})))
@@ -1207,17 +1210,18 @@
 (deftype VolatileMObj
 
   [^:volatile-mutable data]
-
   Muble
 
   (setv [_ k v] (set! data (assoc data k v)))
   (unsetv [_ k] (set! data (dissoc data k)))
   (toEDN [_] (pr-str data))
   (copy [this x]
-    (doseq [[k v] (.seq ^Muble x)]
-      (.setv this k v)))
+    (when (and (some? x)
+               (not (identical? this x)))
+      (doseq [[k v] (.seq ^Muble x)]
+        (.setv this k v))))
   (clone [this]
-    (doto->> (mubleObj!) (.copy this )))
+    (let [^Muble m (mubleObj!)] (.copy m this)))
   (seq [_] (seq data))
   (getv [_ k] (get data k))
   (clear [_ ] (set! data {} )))
