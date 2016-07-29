@@ -1193,7 +1193,8 @@
   (unsetv [_ k] (set! data (dissoc data k)))
   (toEDN [_] (pr-str data))
   (copy [this x]
-    (doseq [[k v] (.seq this)] (.setv x k v)))
+    (doseq [[k v] (.seq ^Muble x)]
+      (.setv this k v)))
   (clone [this]
     (doto->> (mubleObj!) (.copy this )))
   (seq [_] (seq data))
@@ -1213,7 +1214,8 @@
   (unsetv [_ k] (set! data (dissoc data k)))
   (toEDN [_] (pr-str data))
   (copy [this x]
-    (doseq [[k v] (.seq this)] (.setv x k v)))
+    (doseq [[k v] (.seq ^Muble x)]
+      (.setv this k v)))
   (clone [this]
     (doto->> (mubleObj!) (.copy this )))
   (seq [_] (seq data))
