@@ -135,7 +135,7 @@
   (is (false? (nil? (:1 (CU/pmap<> dummyProperties)))))
   (is (= 3 (count (CU/pmap<> dummyProperties))))
 
-  (is (= 100 (.getv (doto (CU/mubleObj!) (.setv :1 100)) :1)))
+  (is (= 100 (.getv (doto (CU/muble<>) (.setv :1 100)) :1)))
 
 )
 

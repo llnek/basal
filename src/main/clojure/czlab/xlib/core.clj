@@ -68,6 +68,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defprotocol GetSetClr
+  (s [_ x])
+  (c [_])
+  (g [_]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro exp!
 
   "Create an exception instance"
@@ -1179,30 +1186,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(declare mubleObj!!)
-(declare mubleObj!)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (deftype UnsynchedMObj
 
   [^:unsynchronized-mutable data]
+  GetSetClr
 
-  Muble
-
-  (setv [_ k v] (set! data (assoc data k v)))
-  (unsetv [_ k] (set! data (dissoc data k)))
-  (toEDN [_] (pr-str data))
-  (copy [this x]
-    (when (and (some? x)
-               (not (identical? this x)))
-      (doseq [[k v] (.seq ^Muble x)]
-        (.setv this k v))))
-  (clone [this]
-    (let [^Muble m (mubleObj!)] (.copy m this)))
-  (seq [_] (seq data))
-  (getv [_ k] (get data k))
-  (clear [_ ] (set! data {})))
+  (s [_ x] (set! data x))
+  (c [_] (set! data {}))
+  (g [_] data))
 
 (ns-unmap *ns* '->UnsynchedMObj)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1210,50 +1201,42 @@
 (deftype VolatileMObj
 
   [^:volatile-mutable data]
-  Muble
+  GetSetClr
 
-  (setv [_ k v] (set! data (assoc data k v)))
-  (unsetv [_ k] (set! data (dissoc data k)))
-  (toEDN [_] (pr-str data))
-  (copy [this x]
-    (when (and (some? x)
-               (not (identical? this x)))
-      (doseq [[k v] (.seq ^Muble x)]
-        (.setv this k v))))
-  (clone [this]
-    (let [^Muble m (mubleObj!)] (.copy m this)))
-  (seq [_] (seq data))
-  (getv [_ k] (get data k))
-  (clear [_ ] (set! data {} )))
+  (s [_ x] (set! data x))
+  (c [_] (set! data {}))
+  (g [_] data))
+
 (ns-unmap *ns* '->VolatileMObj)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn mubleObj!!
+(defn muble<>
 
-  "Create a volatile, mutable object"
+  "Create a (unsynced/volatile), mutable object"
   ^Muble
-  [& [opts]]
+  [& [seed volatile??]]
 
-  (let [m (VolatileMObj. {})
-        opts (or opts {})]
-    (doseq [[k v] (seq opts)]
-      (.setv m k v))
-    m))
+  (let [^czlab.xlib.core.GetSetClr
+        data (if volatile??
+               (VolatileMObj. (or seed {}))
+               (UnsynchedMObj. (or seed {})))]
+    (reify
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn mubleObj!
+      Muble
 
-  "Create a unsynchronized, mutable object"
-  ^Muble
-  [& [opts]]
-
-  (let [m (UnsynchedMObj. {})
-        opts (or opts {})]
-    (doseq [[k v] (seq opts)]
-      (.setv m k v))
-    m))
+      (setv [_ k v] (->> (assoc (.g data) k v)
+                         (.s data)))
+      (unsetv [_ k] (->> (dissoc (.g data) k)
+                         (.s data)))
+      (toEDN [_] (pr-str (.g data)))
+      (copy [this x]
+        (when (and (some? x)
+                   (not (identical? this x)))
+          (doseq [[k v] (.seq ^Muble x)]
+            (.setv this k v))))
+      (seq [_] (seq (.g data)))
+      (getv [_ k] (get (.g data) k))
+      (clear [_ ] (.c data)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

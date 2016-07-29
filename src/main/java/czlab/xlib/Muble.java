@@ -36,10 +36,6 @@ public interface Muble extends Gettable, Settable {
 
   /**
    */
-  public Muble clone();
-
-  /**
-   */
   public void copy(Muble des);
 
 }
