@@ -162,8 +162,8 @@
 
   {:pre [(fn? func)]}
 
-  (-> (Runtime/getRuntime)
-      (.addShutdownHook (Thread. (runnable<> func)))))
+  (->> (thread<> func false {:daemon true})
+       (.addShutdownHook (Runtime/getRuntime))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

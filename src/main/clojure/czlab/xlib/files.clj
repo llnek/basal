@@ -436,6 +436,19 @@
     (scan-tree (Stack.) ext out (io/file rootDir))
     @out))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn basename
+
+  "Get the name of file without extension"
+  [file]
+
+  (let [n (.getName (io/file file))
+        p (.lastIndexOf n ".")]
+    (if (>= p 0)
+      (.substring n 0 p)
+      n)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
