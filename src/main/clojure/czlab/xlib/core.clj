@@ -51,6 +51,7 @@
      ByteArrayInputStream
      ByteArrayOutputStream]
     [java.util
+     TimerTask
      Map
      Properties
      Date
@@ -1237,6 +1238,18 @@
       (seq [_] (seq (.g data)))
       (getv [_ k] (get (.g data) k))
       (clear [_ ] (.c data)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn tmtask<>
+
+  ""
+  [func]
+  {:pre [(fn? func)]}
+
+  (proxy [TimerTask][]
+    (run []
+      (try! (func)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
