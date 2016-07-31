@@ -40,7 +40,7 @@ public enum I18N {
 
   /**
    */
-  public static ResourceBundle getBundle(Object bkey) {
+  public static ResourceBundle bundle(Object bkey) {
     return _bs.get(bkey);
   }
 
@@ -58,7 +58,7 @@ public enum I18N {
 
   /**
    */
-  public static ResourceBundle getBase() {
+  public static ResourceBundle base() {
     return _base;
   }
 

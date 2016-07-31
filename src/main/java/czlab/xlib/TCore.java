@@ -34,7 +34,6 @@ public class TCore extends ThreadPoolExecutor implements RejectedExecutionHandle
   private boolean _paused;
   private boolean _trace;
   private String _id ="";
-  private int _tds = 4;
 
   /**
    */
@@ -112,7 +111,7 @@ public class TCore extends ThreadPoolExecutor implements RejectedExecutionHandle
     return new StringBuilder("TCore#")
       .append(_id)
       .append(" with threads = ")
-      .append(_tds)
+      .append(getCorePoolSize())
       .toString();
   }
 
