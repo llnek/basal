@@ -301,7 +301,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn hexifyString
+(defn hexify
 
   "Turn bytes into hex string"
   ^String

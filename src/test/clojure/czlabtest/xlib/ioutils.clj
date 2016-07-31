@@ -50,7 +50,7 @@
 
   (is (instance? OutputStream (IO/baos<>)))
 
-  (is (= "616263" (IO/hexifyString (CU/bytesify "abc"))))
+  (is (= "616263" (IO/hexify (CU/bytesify "abc"))))
 
   (is (= "heeloo world!" (CU/stringify (IO/gunzip (IO/gzip (CU/bytesify "heeloo world!"))))))
 
