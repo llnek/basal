@@ -487,7 +487,7 @@
   "Make a string of certain length"
 
   ^String
-  [^Character ch cnt]
+  [cnt ^Character ch]
 
   (let [buf (strbf<>)]
     (dotimes [n cnt]

@@ -1230,6 +1230,8 @@
       (unsetv [_ k] (->> (dissoc (.g data) k)
                          (.s data)))
       (toEDN [_] (pr-str (.g data)))
+      (copyEx [_ m]
+        (if (map? m) (.s data m)))
       (copy [this x]
         (when (and (some? x)
                    (not (identical? this x)))
@@ -1433,7 +1435,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn seqlong
+(defn seqint2
 
   "A sequence number (long)"
   ^long

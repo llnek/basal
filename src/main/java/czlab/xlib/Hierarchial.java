@@ -17,7 +17,11 @@ package czlab.xlib;
 /**
  * @author Kenneth Leung
  */
-@FunctionalInterface public interface Hierarchial {
+public interface Hierarchial {
+
+  /**
+   */
+  public void setParent(Object p);
 
   /**
    */

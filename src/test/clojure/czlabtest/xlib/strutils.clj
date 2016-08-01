@@ -130,8 +130,8 @@
   (is (not (SU/eqic? "abc" "AbCd")))
   (is (SU/eqic? "abc" "AbC"))
 
-  (is (= 10 (.length (SU/str<> \x 10))))
-  (is (= "xxx" (SU/str<> \x 3)))
+  (is (= 10 (.length (SU/str<> 10 \x))))
+  (is (= "xxx" (SU/str<> 3 \x)))
   (is (= "ori" (SU/rights "Hallowed are the ori" 3)))
   (is (= "Hal" (SU/lefts "Hallowed are the ori" 3)))
 
