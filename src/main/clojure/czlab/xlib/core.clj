@@ -1238,6 +1238,7 @@
           (doseq [[k v] (.seq ^Muble x)]
             (.setv this k v))))
       (seq [_] (seq (.g data)))
+      (contains [_ k] (contains? (.g data) k))
       (getv [_ k] (get (.g data) k))
       (clear [_ ] (.c data)))))
 
