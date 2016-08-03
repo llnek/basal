@@ -543,7 +543,9 @@
   ^String
   [^String s & [enc]]
 
-  (URLDecoder/decode s ^String (or enc "utf-8")))
+  (if (hgl? s)
+    (URLDecoder/decode s ^String (or enc "utf-8"))
+    s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -554,7 +556,9 @@
   ^String
   [^String s & [enc]]
 
-  (URLEncoder/encode s ^String (or enc "utf-8")))
+  (if (hgl? s)
+    (URLEncoder/encode s ^String (or enc "utf-8"))
+    s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

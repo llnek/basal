@@ -43,7 +43,7 @@ public class XData implements Serializable {
   /**
    */
   public XData(Object p) {
-    reset(p);
+     reset(p);
   }
 
   /**
@@ -98,6 +98,14 @@ public class XData implements Serializable {
    */
   public XData reset(Object obj, boolean del) {
     destroy();
+    if (obj instanceof XData) {
+      XData src= (XData) obj;
+      this._encoding = src._encoding;
+      this._data = src._data;
+      this._cls= src._cls;
+      src._data=null;
+    }
+    else
     if (obj instanceof CharArrayWriter) {
       _data = new String( ((CharArrayWriter) obj).toCharArray() );
     }
