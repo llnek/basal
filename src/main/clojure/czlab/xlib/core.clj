@@ -1247,6 +1247,7 @@
 (defn tmtask<>
 
   ""
+  ^TimerTask
   [func]
   {:pre [(fn? func)]}
 
