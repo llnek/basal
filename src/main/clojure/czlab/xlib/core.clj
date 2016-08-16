@@ -1256,7 +1256,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn printMubleObj
+(defn prnMuble
 
   "Print out this mutable object"
   [^Muble ctx & [dbg]]
