@@ -345,12 +345,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro listFiles
+(defn listFiles
 
   "List files with certain extension, without the dot"
-  [dir ext &[recurse?]]
+  [dir ^String ext]
 
-  `(listAnyFiles ~dir [~ext] ~recurse?))
+  (->> (reify FileFilter
+         (accept [_ f] (.endsWith (.getName f) ext)))
+       (.listFiles (io/file dir))
+       (into [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -363,6 +366,42 @@
          (accept [_ f] (.isDirectory f)))
        (.listFiles (io/file dir))
        (into [])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- listXXX
+
+  ""
+  [^File root ^String ext dirs res]
+
+  (->> (reify FileFilter
+         (accept [_ f]
+           (cond
+             (.isDirectory f)
+             (swap! dirs conj f)
+             (.endsWith (.getName f) ext)
+             (swap! res conj f)
+             :else nil)
+           false))
+       (.listFiles root)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn listAnyFiles
+
+  "List files with certain extension, without the dot"
+  [dir ^String ext]
+
+  (let [dirs (atom [])
+        res (atom [])]
+    (listXXX dir ext dirs res)
+    (while (not-empty @dirs)
+      (listXXX
+        (first @dirs)
+        ext
+        (do (swap! dirs next ) dirs)
+        res))
+    @res))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
