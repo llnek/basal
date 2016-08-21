@@ -18,6 +18,8 @@
   czlab.xlib.format
 
   (:require
+    [clojure.pprint :refer [pprint with-pprint-dispatch]]
+    [czlab.xlib.indent :refer [indent-dispatch]]
     [czlab.xlib.files :refer [readUrl]]
     [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
@@ -25,7 +27,7 @@
     [clojure.data.json :as js])
 
   (:import  [java.net URL]
-            [java.io File]))
+            [java.io File StringWriter]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -38,7 +40,10 @@
   ^String
   [obj]
 
-  (when (some? obj) (pr-str obj)))
+  (when (some? obj)
+    (let [sw (StringWriter.)]
+      (with-pprint-dispatch indent-dispatch (pprint obj sw))
+      (str sw))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
