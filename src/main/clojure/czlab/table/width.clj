@@ -46,8 +46,8 @@
   (if (integer? arg)
     (if (> arg 0) arg 100)
     arg))
-(defn- stty-detect [] 80)
-(defn- XXstty-detect []
+(defn- XXstty-detect [] 80)
+(defn- stty-detect []
   (->> (clojure.java.shell/sh "/bin/sh" "-c" "stty -a < /dev/tty")
        :out
        (re-find #" (\d+) columns")
