@@ -53,7 +53,8 @@
         (instance? ClassLoader arg)
         (var-set cl arg))
       (when (map? arg)
-        (var-set cl (:classLoader arg))
+        (var-set cl (or (:cl arg)
+                        (:classLoader arg)))
         (when
           (true? (:daemon arg))
           (var-set daemon true)))
