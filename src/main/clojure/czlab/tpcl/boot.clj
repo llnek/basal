@@ -853,14 +853,16 @@
   []
 
   (bc/with-pre-wrap fileset
-    (let [p (str (ge :project))]
-      (replaceFile!
-        (fp! (ge :jzzDir)
-             p
-             "version.properties")
-        #(cs/replace %
-                     "@@pom.version@@"
-                     (ge :version))))
+    (let [p (str (ge :project))
+          v (fp! (ge :jzzDir)
+                 p
+                 "version.properties")]
+      (if (.exists (io/file v))
+        (replaceFile!
+          v
+          #(cs/replace %
+                       "@@pom.version@@"
+                       (ge :version)))))
     (jarFiles)
   fileset))
 

@@ -1239,6 +1239,7 @@
       (unsetv [_ k] (->> (dissoc (.g data) k)
                          (.s data)))
       (toEDN [_] (pr-str (.g data)))
+      (impl [_] (.g data))
       (copyEx [_ m]
         (if (map? m) (.s data m)))
       (copy [this x]
