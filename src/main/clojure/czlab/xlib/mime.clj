@@ -96,6 +96,12 @@
 (def ORIGINAL_RECIPIENT   "original-recipient")
 (def RECV_CONTENT_MIC   "received-content-mic")
 
+(def MULTIPART_FORM_DATA "multipart/form-data")
+(def FORM_DATA  "form-data")
+(def ATTACHMENT "attachment")
+(def MULTIPART "multipart/")
+(def MULTIPART_MIXED "multipart/mixed")
+
 (def RFC822 "rfc822")
 (def RFC822_PFX (str RFC822 "; "))
 
