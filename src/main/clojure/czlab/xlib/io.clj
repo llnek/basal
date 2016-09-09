@@ -18,6 +18,7 @@
   czlab.xlib.io
 
   (:require
+    [czlab.xlib.str :refer [hgl?]]
     [czlab.xlib.logging :as log]
     [czlab.xlib.core
      :refer [sysProp
@@ -280,6 +281,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn deleteQ
+
+  ""
+  [file]
+
+  (try! (.delete (io/file file))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn hexifyChars
 
   "Turn bytes into hex chars"
@@ -413,11 +423,12 @@
 
   "Create a temporary file"
   ^File
-  [ & [pfx sux] ]
+  [ & [^String pfx ^String sux] ]
 
   (File/createTempFile
     (if (> (count pfx) 2) pfx "tmp")
-    (if (> (count sux) 2) sux ".dat")))
+    (if (> (count sux) 2) sux ".dat")
+    (workDir)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
