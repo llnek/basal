@@ -19,6 +19,9 @@ package czlab.xlib;
  */
 public interface Muble extends Gettable, Settable {
 
+  /**/
+  public Object getOrSet(Object k, Object v);
+
   /**
    * get list of attrributes
    */
@@ -44,7 +47,7 @@ public interface Muble extends Gettable, Settable {
 
   /**
    */
-  public void copyEx(Object obj);
+  public void copyEx(Map<?,?> obj);
 
 }
 

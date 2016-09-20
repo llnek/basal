@@ -1241,6 +1241,12 @@
                          (.s data)))
       (unsetv [_ k] (->> (dissoc (.g data) k)
                          (.s data)))
+      (getOrSet [this k v]
+        (when-not
+          (.contains this k)
+          (.setv this k v))
+        (.getv this k))
+
       (toEDN [_] (pr-str (.g data)))
       (impl [_] (.g data))
       (copyEx [_ m]
