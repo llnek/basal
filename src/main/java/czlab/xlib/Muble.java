@@ -14,6 +14,8 @@
 
 package czlab.xlib;
 
+import java.util.Map;
+
 /**
  * @author Kenneth Leung
  */
