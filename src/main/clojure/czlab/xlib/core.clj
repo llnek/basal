@@ -322,10 +322,13 @@
 
   "If object is an instance of this type,
    return it else nil"
-  [someType obj]
+  [^Class someType obj]
 
-  `(let [x# ~obj]
-     (if (instance? ~someType x#) x# nil)))
+  `^{:tag ~someType}
+  ((fn []
+    (let [x# ~obj]
+    (when (instance? ~someType x#)
+      (.cast ~someType x#))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
