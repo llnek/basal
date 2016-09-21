@@ -23,6 +23,7 @@
     [czlab.xlib.core
      :refer [sysProp
              trap!
+             fpath
              spos?
              try!]]
     [clojure.java.io :as io]
@@ -602,6 +603,10 @@
   [^Reader rdr & [usefile]]
 
   (slurpChars rdr (if usefile 1 (streamLimit))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn workDirPath "The working directory" ^String [] (fpath @_wd))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
