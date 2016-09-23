@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author kenl
+ * @author Kenneth Leung
  */
 public class ClojureJUnit extends ClojureTest {
   @Override

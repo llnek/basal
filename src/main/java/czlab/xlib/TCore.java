@@ -14,12 +14,13 @@
 
 package czlab.xlib;
 
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ExecutorService;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import static org.slf4j.LoggerFactory.getLogger;
+
 import org.slf4j.Logger;
 
 
@@ -59,7 +60,7 @@ public class TCore extends ThreadPoolExecutor implements RejectedExecutionHandle
   /**
    */
   public TCore(String id, int tds, boolean trace) {
-    this(id, tds, 5000L, trace);
+    this(id, tds, 60000L, trace);
   }
 
   /**

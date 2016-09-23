@@ -157,12 +157,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti fpath
-  "Convert path into nice format (no) backslash" ^String class)
+  "Nice format a path, no-backslash" ^{:tag String} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti loadJavaProps
-  "Load java properties from source" ^Properties class)
+  "Load java properties from source" ^{:tag Properties} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -213,7 +213,7 @@
 ;;
 (defmacro trylet!
 
-  "Try and let combo, eat the error"
+  "Try & let combo, eat the error"
   [bindings & body]
 
   `(try!! nil (let ~bindings ~@body)))
@@ -327,8 +327,8 @@
   `^{:tag ~someType}
   ((fn []
     (let [x# ~obj]
-    (when (instance? ~someType x#)
-      (.cast ~someType x#))))))
+      (if (instance? ~someType x#)
+        (.cast ~someType x#))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -405,7 +405,7 @@
 (defn nilNichts
 
   "If object is nil, return a NICHTS"
-  {:tag Object :no-doc true}
+  ^{:tag Object :no-doc true}
   [obj]
 
   (or obj NICHTS))

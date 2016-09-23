@@ -15,8 +15,6 @@
 package czlabtest.xlib;
 
 import static org.junit.Assert.assertEquals;
-import java.util.concurrent.atomic.AtomicInteger;
-import junit.framework.JUnit4TestAdapter;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -24,6 +22,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import junit.framework.JUnit4TestAdapter;
+
+/**
+ * 
+ * @author Kenneth Leung
+ *
+ */
 public class JUnit {
 
   public static junit.framework.Test suite() {
