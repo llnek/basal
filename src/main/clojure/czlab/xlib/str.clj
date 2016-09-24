@@ -53,6 +53,7 @@
 (defmacro stror
 
   "If not s then s2"
+  ^{:tag String}
   [s s2]
 
   `(let [s# ~s] (if (empty? s#) ~s2 s#)))
@@ -62,6 +63,7 @@
 (defmacro lcase
 
   "Lowercase string, handling nil"
+  ^{:tag String}
   [s]
 
   `(if-some [s# ~s] (cs/lower-case s#) ""))
@@ -71,6 +73,7 @@
 (defmacro ucase
 
   "Uppercase string, handling nil"
+  ^{:tag String}
   [s]
 
   `(if-some [s# ~s] (cs/upper-case s#) ""))
@@ -118,8 +121,13 @@
 (defn splitTokens
 
   "String tokenizer"
-  ^APersistentVector
-  [^String s ^String sep & [incSep?]]
+
+  (^APersistentVector
+   [^String s ^String sep]
+   (splitTokens s sep false))
+
+  (^APersistentVector
+   [^String s ^String sep incSep?]
 
   (let [t (StringTokenizer. s
                             sep
@@ -127,7 +135,7 @@
     (loop [rc (transient [])]
       (if-not (.hasMoreTokens t)
         (persistent! rc)
-        (recur (conj! rc (.nextToken t)))))))
+        (recur (conj! rc (.nextToken t))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -207,7 +215,7 @@
 (defmacro sname
 
   "Safely get the name of this object"
-  ^String
+  ^{:tag String}
   [n]
 
   `(when-some [n# ~n] (name n#)))
@@ -298,13 +306,17 @@
 (defn strimAny
 
   "Strip source string of these unwanted chars"
-  ^String
-  [^String src ^String unwantedChars & [whitespace?]]
 
-  (let [s (-> (if whitespace? (strim src) src)
-              (triml unwantedChars)
-              (trimr unwantedChars))]
-    (if whitespace? (strim s) s)))
+  (^String
+   [^String src ^String unwantedChars]
+   (strimAny src unwantedChars false))
+
+  (^String
+   [^String src ^String unwantedChars whitespace?]
+   (let [s (-> (if whitespace? (strim src) src)
+               (triml unwantedChars)
+               (trimr unwantedChars))]
+     (if whitespace? (strim s) s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -343,7 +355,6 @@
 
   "true if bigs contains any one of these strs - ignore case"
   [^String bigs substrs]
-
   {:pre [(coll? substrs)]}
 
   (if (or (empty? substrs)
@@ -360,7 +371,6 @@
 
   "true if bigs contains any one of these strs"
   [^String bigs substrs]
-
   {:pre [(coll? substrs)]}
 
   (if (or (empty? substrs)
@@ -374,9 +384,7 @@
 (defn ewicAny?
 
   "true if bigs endsWith any one of the strs - ignore-case"
-
   [^String bigs substrs]
-
   {:pre [(coll? substrs)]}
 
   (if (or (empty? substrs)
@@ -391,9 +399,7 @@
 (defn ewAny?
 
   "true if bigs endsWith any one of the strs"
-
   [^String bigs substrs]
-
   {:pre [(coll? substrs)]}
 
   (if (or (empty? substrs)
@@ -407,9 +413,7 @@
 (defn swicAny?
 
   "true if bigs startWith any one of the strs - ignore case"
-
   [^String bigs substrs]
-
   {:pre [(coll? substrs)]}
 
   (if (or (empty? substrs)
@@ -424,9 +428,7 @@
 (defn swAny?
 
   "true if bigs startWith any one of the strs"
-
   [^String bigs substrs]
-
   {:pre [(coll? substrs)]}
 
   (if (or (empty? substrs)
@@ -449,9 +451,7 @@
 (defn eqicAny?
 
   "String.equalIgnoreCase() on any one of the strs"
-
   [^String src substrs]
-
   {:pre [(coll? substrs)]}
 
   (if (or (empty? substrs)
@@ -466,9 +466,7 @@
 (defn eqAny?
 
   "true if String.equals() on any one of the strs"
-
   [^String src substrs]
-
   {:pre [(coll? substrs)]}
 
   (if (empty? substrs)
@@ -478,7 +476,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro strbf<> "StringBuilder.new" ^StringBuilder [] `(StringBuilder.))
+(defmacro strbf<>
+  "StringBuilder.new"
+  (^{:tag StringBuilder} [] `(StringBuilder.))
+  (^{:tag StringBuilder} [s] `(StringBuilder. ~s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -499,7 +500,6 @@
 (defn rights
 
   "Get the rightmost len characters of a String"
-
   ^String
   [^String src len]
 
@@ -515,7 +515,6 @@
 (defn lefts
 
   "Get the leftmost len characters of a String"
-
   ^String
   [^String src len]
 
@@ -540,12 +539,14 @@
 (defn urlDecode
 
   "HTML decode"
-  ^String
-  [^String s & [enc]]
 
-  (if (hgl? s)
-    (URLDecoder/decode s ^String (or enc "utf-8"))
-    s))
+  (^String [^String s] (urlDecode s "utf8"))
+
+  (^String
+   [^String s enc]
+   (if (hgl? s)
+     (URLDecoder/decode s (stror enc "utf-8"))
+     s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -553,12 +554,13 @@
 
   "HTML encode"
 
-  ^String
-  [^String s & [enc]]
+  (^String [^String s] (urlEncode s "utf-8"))
 
-  (if (hgl? s)
-    (URLEncoder/encode s ^String (or enc "utf-8"))
-    s))
+  (^String
+   [^String s enc]
+   (if (hgl? s)
+     (URLEncoder/encode s (stror enc "utf-8"))
+     s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

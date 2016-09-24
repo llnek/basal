@@ -102,19 +102,19 @@
 
   (is (true? (do (CU/test-isa "" (Class/forName "java.lang.Long") (Class/forName "java.lang.Number")) true)))
   (is (true? (do (CU/test-isa "" "" (Class/forName "java.lang.Object")) true)))
-  (is (true? (do (CU/test-nonil "" (Object.)) true)))
+  (is (true? (do (CU/test-some "" (Object.)) true)))
   (is (true? (do (CU/test-cond "" true) true)))
-  (is (true? (do (CU/test-nestr "" "heeloo") true)))
+  (is (true? (do (CU/test-hgl "" "heeloo") true)))
 
-  (is (true? (do (CU/test-nonegnum "" 23.0) true)))
-  (is (true? (do (CU/test-nonegnum "" 23) true)))
-  (is (true? (do (CU/test-nonegnum "" 0.0) true)))
-  (is (true? (do (CU/test-nonegnum "" 0) true)))
+  (is (true? (do (CU/test-pos0 "" 23.0) true)))
+  (is (true? (do (CU/test-pos0 "" 23) true)))
+  (is (true? (do (CU/test-pos0 "" 0.0) true)))
+  (is (true? (do (CU/test-pos0 "" 0) true)))
 
-  (is (true? (do (CU/test-posnum "" 23.0) true)))
-  (is (true? (do (CU/test-posnum "" 23) true)))
+  (is (true? (do (CU/test-pos "" 23.0) true)))
+  (is (true? (do (CU/test-pos "" 23) true)))
 
-  (is (true? (do (CU/test-neseq "" [ 1 2]) true)))
+  (is (true? (do (CU/test-seq+ "" [ 1 2]) true)))
 
   (is (false? (CU/notnil? nil)))
   (is (true? (CU/notnil? "")))

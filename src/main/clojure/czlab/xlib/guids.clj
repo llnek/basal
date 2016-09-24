@@ -24,7 +24,6 @@
     [czlab.xlib.core
      :refer [seqint
              now<>
-             trylet!
              try!
              srandom<>]])
 
@@ -104,13 +103,14 @@
   ^long
   []
 
-  (trylet! [neta (InetAddress/getLocalHost)
-            b (.getAddress neta) ]
-    (if (.isLoopbackAddress neta)
-      (.nextLong (srandom<>))
-      (if (== 4 (alength b))
-        (long (readInt b))
-        (readLong b)))))
+  (try!
+    (let [neta (InetAddress/getLocalHost)
+          b (.getAddress neta)]
+      (if (.isLoopbackAddress neta)
+        (.nextLong (srandom<>))
+        (if (== 4 (alength b))
+          (long (readInt b))
+          (readLong b))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

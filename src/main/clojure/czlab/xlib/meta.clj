@@ -20,7 +20,7 @@
   (:require
     [czlab.xlib.str :refer [eqAny? hgl?]]
     [czlab.xlib.logging :as log]
-    [czlab.xlib.core :refer [test-nonil]])
+    [czlab.xlib.core :refer [test-some]])
 
   (:import
     [clojure.lang APersistentVector]

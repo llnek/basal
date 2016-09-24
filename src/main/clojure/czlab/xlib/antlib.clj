@@ -98,12 +98,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro trap!
-  "" {:private true} [s] `(throw (Exception. ~s)))
+  "" ^{:private true} [s] `(throw (Exception. ~s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro fopt
-  "" {:private true} [o t] `(find ~o ~t))
+  "" ^{:private true} [o t] `(find ~o ~t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -134,7 +134,7 @@
   ""
   []
   (let [tmp (System/getProperty "java.io.tmpdir")
-        f (io/file tmp "42antlogansi.colors")]
+        f (io/file tmp "czlab-antlogansi.colors")]
     (if-not (.exists f)
       (spit f ANSI-COLORS :encoding "utf-8"))
     (System/setProperty "ant.logger.defaults"
@@ -172,7 +172,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro gpdn
-  "" {:private true} [^PropertyDescriptor pd] `(.getName ~pd))
+  "" ^{:private true} [^PropertyDescriptor pd] `(.getName ~pd))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -195,7 +195,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;cache ant task names as symbols, and cache bean-info of class
-(when-not @beansCooked
+(if-not @beansCooked
   (let [beans (atom {})
         syms (atom [])]
     (doseq [[k v] (.getTaskDefinitions @dftprj)]
@@ -210,7 +210,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- maybeListProps
+(defn- maybeProps
 
   "Add bean info for non-task classes"
   [cz]
@@ -223,7 +223,8 @@
 ;;
 (defn- method?
 
-  "Find this setter method via best match"
+  "Find this setter method via best match,
+   if found, returns a tuple [method classofarg]"
   [^Class cz ^String m]
 
   (let [arr (make-array java.lang.Class 1)]
@@ -246,7 +247,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti koerce "Converter" {:private true} (fn [_ a b] [a (class b)]))
+(defmulti koerce "Converter" ^{:private true} (fn [_ a b] [a (class b)]))
 
 (defmethod koerce [Integer/TYPE String] [_ _ ^String v] (Integer/parseInt v (int 10)))
 
@@ -300,7 +301,10 @@
   (try
     (.invoke wm pojo arr)
   (catch Throwable e#
-    (log/error (str "failed to set " k " for " (.getClass pojo)))
+    (log/error (str "failed to set "
+                    k
+                    " for "
+                    (.getClass pojo)))
     (throw e#))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -309,31 +313,37 @@
 
   "Use reflection and invoke setters to set options
   on the pojo"
-  [pj pojo options & [skips]]
 
-  (let [arr (object-array 1)
-        skips (or skips #{})
-        cz (.getClass pojo)
-        ps (or (get @_PROPS cz)
-               (maybeListProps cz))]
-    (doseq [[k v] options
-            :let [kn (name k)]
-            :when (not (contains? skips k))]
-      (if-some [pd (get ps k)]
-        (->
-          ;;some cases the beaninfo is erroneous
-          ;;so fall back to use *best-try*
-          (let [mn (str "set" (capstr kn))
-                wm (.getWriteMethod pd)
-                pt (.getPropertyType pd)]
-            (if (some? wm)
-              (do (aset arr 0 (coerce pj pt v)) wm)
-              (let [rc (method? cz mn)]
-                (when (nil? rc) (trap! (str mn " not in " cz)))
-                (aset arr 0 (coerce pj (last rc) v))
-                (first rc))))
-          (setProp! pojo k arr))
-        (trap! (str "property " kn " not in " cz))))))
+  ([pj pojo options]
+   (setOptions pj pojo options nil))
+
+  ([pj pojo options skips]
+   (let [arr (object-array 1)
+         skips (or skips #{})
+         cz (class pojo)
+         ps (or (get @_PROPS cz)
+                (maybeProps cz))]
+     (doseq [[k v] options
+             :when (not (contains? skips k))]
+       (if-some [pd (get ps k)]
+         (->
+           ;;some cases the beaninfo is erroneous
+           ;;so fall back to use *best-try*
+           (let [mn (str "set" (capstr (name k)))
+                 wm (.getWriteMethod pd)
+                 pt (.getPropertyType pd)]
+             (if (some? wm)
+               (do (->> (coerce pj pt v)
+                        (aset arr 0)) wm)
+               (let [[wm pt]
+                     (method? cz mn)]
+                 (if (nil? wm)
+                   (trap! (str mn " not in " cz)))
+                 (->> (coerce pj pt v)
+                      (aset arr 0))
+                 wm)))
+           (setProp! pojo k arr))
+         (trap! (str "prop['" k "'] not in " cz)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
