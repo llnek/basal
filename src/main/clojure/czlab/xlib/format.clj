@@ -20,7 +20,7 @@
   (:require
     [clojure.pprint :refer [pprint with-pprint-dispatch]]
     [czlab.xlib.indent :refer [indent-dispatch]]
-    [czlab.xlib.files :refer [readUrl]]
+    [czlab.xlib.files :refer [readAsStr]]
     [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.edn :as edn]
@@ -40,7 +40,7 @@
   ^String
   [obj]
 
-  (when (some? obj)
+  (if (some? obj)
     (let [sw (StringWriter.)]
       (with-pprint-dispatch indent-dispatch (pprint obj sw))
       (str sw))))
@@ -54,7 +54,6 @@
 (defmethod readEdn
 
   File
-
   [^File fp]
 
   (readEdn (io/as-url fp)))
@@ -64,7 +63,6 @@
 (defmethod readEdn
 
   String
-
   [^String s]
 
   (edn/read-string s))
@@ -74,10 +72,9 @@
 (defmethod readEdn
 
   URL
-
   [^URL url]
 
-  (edn/read-string (readUrl url)))
+  (edn/read-string (readAsStr url)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

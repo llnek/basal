@@ -18,12 +18,12 @@
   czlab.xlib.dates
 
   (:require
-    [czlab.xlib.str :refer [hgl? has? hasAny? indexAny]]
-    [czlab.xlib.core :refer [inst? try!]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs])
 
-  (:use [czlab.xlib.consts])
+  (:use [czlab.xlib.consts]
+        [czlab.xlib.core]
+        [czlab.xlib.str])
 
   (:import
     [java.text ParsePosition SimpleDateFormat]
@@ -100,7 +100,7 @@
   ^Timestamp
   [^String s]
 
-  (try! (Timestamp/valueOf s) ))
+  (trye! nil (Timestamp/valueOf s) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -130,13 +130,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn fmtTimestamp
+(defmacro fmtTimestamp
 
   "Convert Timestamp into a string value"
-  ^String
-  [^Timestamp ts]
-
-  (str ts))
+  ^{:tag String}
+  [^Timestamp ts] `(str ts))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -189,22 +187,21 @@
 (defn gcal<>
 
   "Make a Calendar"
-  ^Calendar
-  [& [arg]]
 
-  (cond
-    (inst? TimeZone arg)
-    (GregorianCalendar. ^TimeZone arg)
+  (^Calendar [] (doto (GregorianCalendar.) (.setTime (Date.))))
 
-    (inst? Date arg)
-    (doto
+  (^Calendar
+   [arg]
+   (cond
+     (inst? TimeZone arg)
+     (GregorianCalendar. ^TimeZone arg)
+
+     (inst? Date arg)
+     (doto
       (GregorianCalendar.)
       (.setTime ^Date arg))
 
-    :else
-    (doto
-      (GregorianCalendar.)
-      (.setTime (Date.)))))
+     :else (gcal<>))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -278,6 +275,7 @@
 (defn fmtTime
 
   "Format current time"
+  ^String
   [^String fmt]
 
   (-> (SimpleDateFormat. fmt)
@@ -316,12 +314,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn dtime
+(defmacro dtime
 
   "Get the time in millis"
-  [^Date d]
+  [d]
 
-  (.getTime d))
+  `(.getTime ^java.util.Date ~d))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -18,10 +18,11 @@
   czlab.xlib.cmdline
 
   (:require
-    [czlab.xlib.str :refer [strbf<> stror strim has?]]
-    [czlab.xlib.core :refer [isWindows? in? do->nil]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs])
+
+  (:use [czlab.xlib.core]
+        [czlab.xlib.str])
 
   (:import
     [java.io
@@ -44,20 +45,25 @@
   ;; windows has '\r\n' linux has '\n'
   (let
     [bf (strbf<>)
-     ms (loop [c (.read cin)]
-          (let [m (cond
-                    (or (== c -1) (== c 4))
-                    #{:quit :break}
-                    (== c (int \newline))
-                    #{:break}
-                    (or (== c (int \backspace))
-                        (== c (int \return))
-                        (== c 27))
-                    nil
-                    :else
-                    (do->nil (.append bf (char c))))]
-            (if (in? m :break) m (recur (.read cin)))))]
-    (if (in? ms :quit) nil (strim bf))))
+     ms (loop
+          [c (.read cin)]
+          (let
+            [m (cond
+                 (or (== c -1) (== c 4))
+                 #{:quit :break}
+                 (== c (int \newline))
+                 #{:break}
+                 (or (== c (int \backspace))
+                     (== c (int \return))
+                     (== c 27))
+                 nil
+                 :else
+                 (do->nil
+                   (.append bf (char c))))]
+            (if (in? m :break)
+              m
+              (recur (.read cin)))))]
+    (if-not (in? ms :quit) (strim bf))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -69,24 +75,29 @@
    props
    answer]
 
-  (let [dft (strim (:default cmdQ))
-        res (:result cmdQ)
-        must (:must cmdQ)
-        nxt (:next cmdQ)]
+  (let [{:keys [default
+                result
+                id
+                must
+                next]}
+        cmdQ]
     (if (nil? answer)
       (do->nil (.write cout "\n"))
-      ;;else
-      (let [rc (stror answer dft)]
+      (let [rc (stror answer default)]
         (cond
           ;;if required to answer, repeat the question
-          (and (empty? rc) must)
-          (:id cmdQ)
+          (and (empty? rc)
+               must)
+          id
 
-          (keyword? res)
-          (do (swap! props assoc res rc) nxt)
+          (keyword? result)
+          (do (swap! props
+                     assoc result rc)
+              next)
 
-          (fn? res)
-          (let [[n p] (res rc @props)]
+          (fn? result)
+          (let [[n p]
+                (result rc @props)]
             (reset! props p)
             n)
 
@@ -102,21 +113,24 @@
    cmdQ
    props]
 
-  (let [chs (strim (:choices cmdQ))
-        dft (strim (:default cmdQ))
-        q (strim (:question cmdQ))
-        must (:must cmdQ)]
-    (.write cout (str q (if must "*" "") "? "))
+  (let [{:keys [^String question
+                ^String choices
+                ^String default]}
+        cmdQ]
+    (.write cout
+            (str question
+                 (if (:must cmdQ) "*" "") "? "))
     ;; choices ?
-    (when-not (empty? chs)
-      (if (has? chs \n)
-        (.write cout (str (if (.startsWith chs "\n") "[" "[\n")
-                          chs
-                          (if (.endsWith chs "\n") "]" "\n]" )))
-        (.write cout (str "[" chs "]"))))
+    (when-not (empty? choices)
+      (if (has? choices \n)
+        (.write cout
+                (str (if (.startsWith choices "\n") "[" "[\n")
+                     choices
+                     (if (.endsWith choices "\n") "]" "\n]" )))
+        (.write cout (str "[" choices "]"))))
     ;; defaults ?
-    (when-not (empty? dft)
-      (.write cout (str "(" dft ")")))
+    (when-not (empty? default)
+      (.write cout (str "(" default ")")))
     (doto cout (.write " ")(.flush))
     ;; get the input from user
     ;; return the next question, :end ends it
@@ -155,7 +169,6 @@
 
   "Prompt a sequence of questions via console"
   [cmdQs question1]
-
   {:pre [(map? cmdQs)]}
 
   (let [cout (->> (BufferedOutputStream. (System/out))

@@ -18,9 +18,10 @@
   czlab.xlib.countries
 
   (:require
-    [czlab.xlib.str :refer [ucase lcase]]
     [czlab.xlib.logging :as log]
-    [clojure.string :as cs]))
+    [clojure.string :as cs])
+
+  (:use [czlab.xlib.str]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)

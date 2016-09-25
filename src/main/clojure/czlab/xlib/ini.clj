@@ -19,19 +19,13 @@
 
   (:require
     [czlab.xlib.files :refer [fileRead?]]
-    [czlab.xlib.core
-     :refer [throwBadData
-             throwIOE
-             convBool
-             convInt
-             convLong
-             convDouble]]
     [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
-    [clojure.string :as cs]
-    [czlab.xlib.str :refer [strim strimAny lcase]])
+    [clojure.string :as cs])
 
-  (:use [flatland.ordered.map])
+  (:use [flatland.ordered.map]
+        [czlab.xlib.core]
+        [czlab.xlib.str])
 
   (:import
     [czlab.xlib Win32Conf]
@@ -48,7 +42,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti w32ini<> "Parse a INI config file"  ^Win32Conf class)
+(defmulti w32ini<>
+  "Parse a INI config file"  ^{:tag Win32Conf} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -61,21 +56,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- throwBadKey
+(defmacro throwBadKey
 
   ""
+  {:private true}
   [k]
 
-  (throwBadData (format "No such item %s" k)))
+  `(throwBadData (format "No such item %s" ~k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- throwBadMap
+(defmacro throwBadMap
 
   ""
+  {:private true}
   [s]
 
-  (throwBadData (format "No such heading %s" s)))
+  `(throwBadData (format "No such heading %s" ~s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -86,16 +83,15 @@
    ncmap
    ^String line]
 
-  (let [s (strimAny line "[]" true) ]
-    (when (empty? s)
-      (throwBadIni rdr))
+  (if-some+ [s (strimAny line "[]" true) ]
     (let [k (keyword (lcase s))]
-      (when-not (contains? @ncmap k)
+      (if-not (contains? @ncmap k)
         (->> (assoc @ncmap
                     k
                     (with-meta (sorted-map) {:name s}))
              (reset! ncmap)))
-      k)))
+      k)
+    (throwBadIni rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -107,19 +103,18 @@
    section
    ^String line]
 
-  (let [kvs (get @ncmap section) ]
-    (when (nil? kvs)
-      (throwBadIni rdr))
+  (if-some [kvs (get @ncmap section) ]
     (let [pos (.indexOf line (int \=))
           nm (if (> pos 0)
                (strim (.substring line 0 pos))
                "" ) ]
-      (when (empty? nm)
+      (if (empty? nm)
         (throwBadIni rdr))
       (let [k (keyword (lcase nm))]
         (->> (assoc kvs k [nm  (strim (.substring line (inc pos)))])
              (swap! ncmap assoc section)))
-      section)))
+      section)
+    (throwBadIni rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -131,7 +126,7 @@
    curSec
    ^String line]
 
-  (let [ln (strim line) ]
+  (let [ln (strim line)]
     (cond
       (or (empty? ln)
           (.startsWith ln "#"))
@@ -155,9 +150,9 @@
         kn (keyword (lcase k))
         mp (get sects sn)]
     (cond
-      (nil? mp) (when err (throwBadMap s))
-      (nil? k) (when err (throwBadKey k))
-      (not (contains? mp kn)) (when err (throwBadKey k))
+      (nil? mp) (if err (throwBadMap s))
+      (nil? k) (if err (throwBadKey k))
+      (notin? mp kn) (if err (throwBadKey k))
       :else (str (last (get mp kn))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -167,9 +162,7 @@
   ""
   [sects]
 
-  (reify
-
-    Win32Conf
+  (reify Win32Conf
 
     (headings [_]
       (persistent!
@@ -226,7 +219,7 @@
       (convBool (getKV sects section prop true) ))
 
     (dbgShow [_]
-      (let [buf (StringBuilder.)]
+      (let [buf (strbf<>)]
         (doseq [v (vals sects)]
           (.append buf (str "[" (:name (meta v)) "]\n"))
           (doseq [[x y] (vals v)]
@@ -239,8 +232,6 @@
 (defmethod w32ini<>
 
   String
-
-  ^Win32Conf
   [fpath]
 
   (when (some? fpath)
@@ -251,8 +242,6 @@
 (defmethod w32ini<>
 
   File
-
-  ^Win32Conf
   [file]
 
   (when (fileRead? file)
@@ -263,30 +252,28 @@
 (defn- parseFile
 
   ""
-  ^Win32Conf
-  [^URL fUrl]
-
-  (with-open [inp (-> (.openStream fUrl)
-                      (io/reader :encoding "utf8")
-                      (LineNumberReader. ))]
-    (loop [total (atom (sorted-map))
-           rdr inp
-           line (.readLine rdr)
-           curSec nil]
-      (if (nil? line)
-        (makeWinini @total)
-        (recur total
-               rdr
-               (.readLine rdr)
-               (evalOneLine rdr total curSec line))))))
+  (^Win32Conf [^URL fUrl] (parseFile fUrl "utf-8"))
+  (^Win32Conf
+    [^URL fUrl enc]
+    (with-open [inp (-> (.openStream fUrl)
+                        (io/reader :encoding (stror enc "utf8"))
+                        (LineNumberReader. ))]
+      (loop [total (atom (sorted-map))
+             rdr inp
+             line (.readLine rdr)
+             curSec nil]
+        (if (nil? line)
+          (makeWinini @total)
+          (recur total
+                 rdr
+                 (.readLine rdr)
+                 (evalOneLine rdr total curSec line)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod w32ini<>
 
   URL
-
-  ^Win32Conf
   [^URL fileUrl]
 
   (when (some? fileUrl)

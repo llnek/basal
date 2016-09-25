@@ -238,6 +238,17 @@
          (let [~form temp#] ~@body)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro if-some+
+  ([bindings then] `(if-some+ ~bindings ~then nil))
+  ([bindings then else & oldform]
+   (let [form (bindings 0) tst (bindings 1)]
+     `(let [temp# ~tst]
+        (if (empty? temp#)
+          ~else
+          (let [~form temp#] ~then))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro doto->>
@@ -274,6 +285,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defmacro notin?
+  "Shorthand for not contains?" [coll k] `(not (contains? ~coll ~k)))
 (defmacro in?
   "Shorthand for contains?" [coll k] `(contains? ~coll ~k))
 

@@ -18,9 +18,10 @@
   czlab.xlib.meta
 
   (:require
-    [czlab.xlib.str :refer [eqAny? hgl?]]
-    [czlab.xlib.logging :as log]
-    [czlab.xlib.core :refer [test-some]])
+    [czlab.xlib.logging :as log])
+
+  (:use [czlab.xlib.core]
+        [czlab.xlib.str])
 
   (:import
     [clojure.lang APersistentVector]
@@ -40,7 +41,6 @@
 (defmethod isChild?
 
   :class
-
   [^Class basz ^Class cz]
 
   (if (or (nil? basz)
@@ -53,13 +53,12 @@
 (defmethod isChild?
 
   :object
-
   [^Class basz ^Object obj]
 
   (if (or (nil? basz)
           (nil? obj))
     false
-    (isChild? basz (.getClass obj))))
+    (instance? basz obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -200,23 +199,25 @@
 (defn forname
 
   "Load a java class by name"
-  ^Class
-  [^String z & [cl]]
 
-  (if (nil? cl)
-    (java.lang.Class/forName z)
-    (->> ^ClassLoader cl
-         (java.lang.Class/forName z true))))
+  (^Class [^String z] (forname z nil))
+  (^Class
+    [^String z cl]
+    (if (nil? cl)
+      (java.lang.Class/forName z)
+      (->> ^ClassLoader cl
+           (java.lang.Class/forName z true)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn getCldr
 
   "Get the current classloader"
-  ^ClassLoader
-  [& [cl]]
 
-  (or cl (.getContextClassLoader (Thread/currentThread))))
+  (^ClassLoader [] (getCldr nil))
+  (^ClassLoader
+    [cl]
+    (or cl (.getContextClassLoader (Thread/currentThread)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -233,19 +234,20 @@
 (defn loadClass
 
   "Load this class by name"
-  ^Class
-  [^String clazzName & [cl]]
 
-  (if-not (hgl? clazzName)
-    nil
-    (.loadClass (getCldr cl) clazzName)))
+  (^Class [^String clazzName] (loadClass clazzName nil))
+
+  (^Class
+    [^String clazzName cl]
+    (if (hgl? clazzName)
+      (.loadClass (getCldr cl) clazzName))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti objArgs<>
 
   "Instantiate object with arity-n constructor"
-  ^Object
+  ^{:tag Object}
   (fn [a & xs] (class a)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -253,7 +255,6 @@
 (defmethod objArgs<>
 
   Class
-
   [^Class cz & args]
   {:pre [(some? cz)(> (count args) 0)]}
 
@@ -271,7 +272,6 @@
 (defmethod objArgs<>
 
   String
-
   [^String cz & args]
 
   (apply objArgs<> (loadClass cz) args))
@@ -293,12 +293,13 @@
 (defn new<>
 
   "Make an object of this class by calling the default constructor"
-  ^Object
-  [^String clazzName & [cl]]
 
-  (if-not (hgl? clazzName)
-    nil
-    (ctor<> (loadClass clazzName cl))))
+  (^Object [^String clazzName] (new<> clazzName nil))
+
+  (^Object
+    [^String clazzName cl]
+    (if (hgl? clazzName)
+      (ctor<> (loadClass clazzName cl)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -327,15 +328,16 @@
   ""
   [cz level getDeclXXX bin]
 
-  (reduce (fn [sum ^Member m]
-            (let [x (.getModifiers m) ]
-              (if (and (> level 0)
-                       (or (Modifier/isStatic x)
-                           (Modifier/isPrivate x)) )
-                sum
-                (assoc! sum (.getName m) m))))
-          bin
-          (getDeclXXX cz)))
+  (reduce
+    (fn [sum ^Member m]
+      (let [x (.getModifiers m)]
+        (if (and (> level 0)
+                 (or (Modifier/isStatic x)
+                     (Modifier/isPrivate x)))
+          sum
+          (assoc! sum (.getName m) m))))
+    bin
+    (getDeclXXX cz)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -359,7 +361,7 @@
   ""
   [^Class cz level]
 
-  (let [par (.getSuperclass cz) ]
+  (let [par (.getSuperclass cz)]
     (iterXXX cz
              level
              #(.getDeclaredFields ^Class %)

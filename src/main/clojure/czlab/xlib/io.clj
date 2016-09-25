@@ -18,18 +18,13 @@
   czlab.xlib.io
 
   (:require
-    [czlab.xlib.str :refer [hgl?]]
     [czlab.xlib.logging :as log]
-    [czlab.xlib.core
-     :refer [sysProp
-             trap!
-             fpath
-             spos?
-             try!]]
     [clojure.java.io :as io]
     [clojure.string :as cs])
 
-  (:use [czlab.xlib.consts])
+  (:use [czlab.xlib.consts]
+        [czlab.xlib.core]
+        [czlab.xlib.str])
 
   (:import
     [java.util.zip GZIPInputStream GZIPOutputStream]
@@ -62,8 +57,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(def ^:private _wd (atom (io/file (sysProp "java.io.tmpdir"))))
-(def ^:private _slimit (atom (* 4 MegaBytes)))
+(def ^:dynamic *TEMPFILE_REPO* (io/file (sysProp "java.io.tmpdir")))
+(def ^:dynamic *MEMBUF_LIMIT* (* 4 MegaBytes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -134,53 +129,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn streamLimit
-
-  "Beyond this limit, data will be swapped out to disk (temp file)"
-  ^long
-  []
-  @_slimit)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn setStreamLimit!
-
-  "Set the limit to flush to disk"
-  ^long
-  [limit]
-
-  (when (spos? limit)
-    (reset! _slimit limit))
-  @_slimit)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn workDir "The working directory" ^File [] @_wd)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn setWorkDir!
-
-  "Set the working directory"
-  ^File
-  [dir]
-
-  (->> (doto (io/file dir) (.mkdirs)) (reset! _wd))
-  @_wd)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn baos<>
 
   "Make a byte array output stream"
-  ^ByteArrayOutputStream
-  [ & [size] ]
 
-  (ByteArrayOutputStream. (int (or size BUF_SZ))))
+  (^ByteArrayOutputStream [] (baos<> BUF_SZ))
+
+  (^ByteArrayOutputStream
+    [size]
+    (ByteArrayOutputStream. (int (or size BUF_SZ)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti writeBytes "Write this long value out as byte[]" ^bytes class)
+(defmulti writeBytes
+  "Write this long value out as byte[]" ^{:tag bytes} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -233,7 +195,6 @@
 (defmethod writeBytes
 
   Integer
-
   [nnum]
 
   (with-open [baos (baos<>)]
@@ -248,7 +209,6 @@
 (defmethod writeBytes
 
   Long
-
   [nnum]
 
   (with-open [baos (baos<>) ]
@@ -266,7 +226,7 @@
   ^InputStream
   [^bytes bits]
 
-  (when (some? bits)
+  (if (some? bits)
     (ByteArrayInputStream. bits)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -276,9 +236,10 @@
   "Quietly close this object"
   [obj]
 
-  (when
-    (instance? Closeable obj)
-    (try! (.close ^Closeable obj))))
+  (trye!
+    nil
+    (some-> (cast? Closeable obj)
+            (.close))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -318,12 +279,12 @@
   ^String
   [^bytes bits]
 
-  (when (some? bits)
+  (if (some? bits)
     (String. (hexifyChars bits))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti openFile "Open this file path" ^XStream class)
+(defmulti openFile "Open this file path" ^{:tag XStream} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -334,7 +295,7 @@
   ^bytes
   [^bytes bits]
 
-  (when (some? bits)
+  (if (some? bits)
     (let [baos (baos<>)]
       (with-open [g (GZIPOutputStream. baos)]
         (.write g bits 0 (alength bits)))
@@ -348,7 +309,7 @@
   ^bytes
   [^bytes bits]
 
-  (when (some? bits)
+  (if (some? bits)
     (toBytes (GZIPInputStream. (streamify bits)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -358,18 +319,16 @@
   "Call reset on this input stream"
   [^InputStream inp]
 
-  (try! (when (some? inp) (.reset inp)) ))
+  (trye! nil (some-> inp (.reset))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod openFile
 
   String
-
-  ^XStream
   [^String fp]
 
-  (when (some? fp)
+  (if (some? fp)
     (XStream. (io/file fp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -377,11 +336,9 @@
 (defmethod openFile
 
   File
-
-  ^XStream
   [^File f]
 
-  (when (some? f) (XStream. f)))
+  (if (some? f) (XStream. f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -391,7 +348,7 @@
   ^bytes
   [^String gzb64]
 
-  (when (some? gzb64)
+  (if (some? gzb64)
     (-> (Base64/getDecoder)
         (.decode gzb64)
         (gunzip ))))
@@ -404,7 +361,7 @@
   ^String
   [^bytes bits]
 
-  (when (some? bits)
+  (if (some? bits)
     (-> (Base64/getEncoder)
         (.encodeToString (gzip bits)))))
 
@@ -423,24 +380,34 @@
 (defn tempFile
 
   "Create a temporary file"
-  ^File
-  [ & [^String pfx ^String sux] ]
 
-  (File/createTempFile
-    (if (> (count pfx) 2) pfx "tmp")
-    (if (> (count sux) 2) sux ".dat")
-    (workDir)))
+  (^File
+    [^String pfx ^String sux ^File dir]
+    (File/createTempFile
+      (if (> (count pfx) 2) pfx "czlab")
+      (if (> (count sux) 2) sux ".dat")
+      dir))
+
+  (^File [] (tempFile "" ""))
+
+  (^File [pfx sux] (tempFile pfx sux *TEMPFILE_REPO*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn openTempFile
 
   "A Tuple(2) [ File, OutputStream? ]"
-  ^APersistentVector
-  []
 
-  (let [fp (tempFile)]
-    [fp (FileOutputStream. fp)]))
+  (^APersistentVector
+    [pfx sux]
+    (openTempFile pfx sux *TEMPFILE_REPO*))
+
+  (^APersistentVector
+    [^String pfx ^String sux ^File dir]
+    (let [fp (tempFile pfx sux dir)]
+      [fp (FileOutputStream. fp)]))
+
+  (^APersistentVector [] (openTempFile "" "")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -465,24 +432,26 @@
   "Reset an input source"
   [^InputSource inpsrc]
 
-  (when (some? inpsrc)
+  (if (some? inpsrc)
     (let [rdr (.getCharacterStream inpsrc)
           ism (.getByteStream inpsrc) ]
-      (try! (when (some? ism) (.reset ism)) )
-      (try! (when (some? rdr) (.reset rdr)) ))))
+      (trye! nil (some-> ism (.reset)))
+      (trye! nil (some-> rdr (.reset))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro xdata<> "Create XData with content" ^XData [& [c]] `(XData. ~c))
+(defmacro xdata<>
+  "Create XData with content"
+  (^{:tag XData} [c] `(XData. ~c))
+  (^{:tag XData} [] `(XData. )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro xdata<f>
 
   "Create XData with temp-file"
-  ^XData
-  []
-  `(XData. (tempFile)))
+  (^{:tag XData} [dir] `(XData. (tempFile "" "" ~dir)))
+  (^{:tag XData} [] `(XData. (tempFile))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -517,70 +486,65 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- slurpBytes
+(defn- slurpb
 
   "Read bytes from the stream"
   ^XData
   [^InputStream inp limit]
 
-  (with-local-vars
-    [os (baos<>) fout nil]
-    (loop [bits (byte-array BUF_SZ)
-           cnt 0
-           c (.read inp bits)]
-      (if
-        (< c 0)
-        (try
-          (if (some? @fout)
-            (XData. @fout)
-            (XData. @os))
-          (finally
-            (closeQ @os)))
-        ;;else
-        (do
-          (when (> c 0)
-            (.write ^OutputStream @os bits 0 c)
-            (if (and (nil? @fout)
-                     (> (+ c cnt) limit))
-              (let [[f o] (swapBytes @os)]
-                (var-set fout f)
-                (var-set os o))))
+  (loop [bits (byte-array BUF_SZ)
+         os (baos<>)
+         fout nil
+         cnt 0
+         c (.read inp bits)]
+    (if (< c 0)
+      (try
+        (xdata<> (or fout os))
+        (finally
+          (closeQ os)))
+      (do
+        (if (> c 0)
+          (.write ^OutputStream os bits 0 c))
+        (let
+          [[f o]
+           (if (and (nil? fout)
+                    (> (+ c cnt) limit))
+             (swapBytes os)
+             [fout os])]
           (recur bits
+                 o
+                 f
                  (+ c cnt)
                  (.read inp bits)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- slurpChars
+(defn- slurpc
 
   "Read chars from the reader"
   ^XData
   [^Reader rdr limit]
 
-  (with-local-vars
-    [wtr (CharArrayWriter. (int BUF_SZ))
-     fout nil]
-    (loop [carr (char-array BUF_SZ)
-           cnt 0
-           c (.read rdr carr)]
-      (if
-        (< c 0)
-        (try
-          (if (some? @fout)
-            (XData. @fout)
-            (XData. @wtr))
-          (finally
-            (closeQ @wtr)))
-        ;;else
-        (do
-          (when (> c 0)
-            (.write ^Writer @wtr carr 0 c)
-            (if (and (nil? @fout)
-                     (> (+ c cnt) limit))
-              (let [[f w] (swapChars @wtr)]
-                (var-set fout f)
-                (var-set wtr w))))
-          (recur carr
+  (loop [wtr (CharArrayWriter. (int BUF_SZ))
+         carr (char-array BUF_SZ)
+         fout nil
+         cnt 0
+         c (.read rdr carr)]
+    (if (< c 0)
+      (try
+        (xdata<> (or fout wtr))
+        (finally
+          (closeQ wtr)))
+      (do
+        (if (> c 0)
+          (.write ^Writer wtr carr 0 c))
+        (let
+          [[f w]
+           (if (and (nil? fout)
+                    (> (+ c cnt) limit))
+             (swapChars wtr)
+             [fout wtr])]
+          (recur w carr f
                  (+ c cnt)
                  (.read rdr carr)))))))
 
@@ -588,25 +552,28 @@
 ;;
 (defn readBytes
 
-  "Read bytes and return a XData"
-  ^XData
-  [^InputStream inp & [usefile]]
+  "Read bytes from stream"
 
-  (slurpBytes inp (if usefile 1 (streamLimit))))
+  (^XData [^InputStream inp] (readBytes inp false))
+  (^XData
+    [^InputStream inp usefile?]
+    (slurpb inp (if usefile? 1 *MEMBUF_LIMIT*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn readChars
 
   "Read chars and return a XData"
-  ^XData
-  [^Reader rdr & [usefile]]
 
-  (slurpChars rdr (if usefile 1 (streamLimit))))
+  (^XData [^Reader rdr] (readChars rdr false))
+  (^XData
+    [^Reader rdr usefile?]
+    (slurpc rdr (if usefile? 1 *MEMBUF_LIMIT*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn workDirPath "The working directory" ^String [] (fpath @_wd))
+(defn workDirPath
+  "The working directory" ^String [] (fpath *TEMPFILE_REPO*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

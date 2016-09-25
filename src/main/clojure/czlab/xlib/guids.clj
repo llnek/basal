@@ -19,13 +19,10 @@
 
   (:require
     [czlab.xlib.io :refer [readInt readLong]]
-    [czlab.xlib.str :refer [lefts rights]]
-    [czlab.xlib.logging :as log]
-    [czlab.xlib.core
-     :refer [seqint
-             now<>
-             try!
-             srandom<>]])
+    [czlab.xlib.logging :as log])
+
+  (:use [czlab.xlib.core]
+        [czlab.xlib.str])
 
   (:import
     [java.lang StringBuilder]
@@ -40,8 +37,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;pre-shuffle the chars in string
 ;;"0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz"
-(def ^:private ^String _SS "YcQnPuzVAvpi7taGj1XwoJbIK3smye96NlHrR2DZS0CUxkLF5O4g8fBTqMEdhW")
-(def ^:private ^chars  _CHARS (.toCharArray _SS))
+(def ^{:private true
+       :tag String}
+  _SS "YcQnPuzVAvpi7taGj1XwoJbIK3smye96NlHrR2DZS0CUxkLF5O4g8fBTqMEdhW")
+(def ^{:private true
+       :tag chars}
+  _CHARS (.toCharArray _SS))
 (def ^:private _UUIDLEN (.length _SS))
 
 (def ^:private ^String LONG_MASK "0000000000")
@@ -61,7 +62,7 @@
         plen (.length pad) ]
     (if (>= mlen plen)
       (.substring mask 0 plen)
-      (str (.replace (StringBuilder. pad) (- plen mlen) plen mask )))))
+      (str (.replace (strbf<> pad) (- plen mlen) plen mask )))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -103,14 +104,14 @@
   ^long
   []
 
-  (try!
-    (let [neta (InetAddress/getLocalHost)
-          b (.getAddress neta)]
-      (if (.isLoopbackAddress neta)
-        (.nextLong (srandom<>))
-        (if (== 4 (alength b))
-          (long (readInt b))
-          (readLong b))))))
+  (let [neta (InetAddress/getLocalHost)
+        b (.getAddress neta)]
+    (cond
+      (.isLoopbackAddress neta)
+      (.nextLong (srandom<>))
+      (== 4 (alength b))
+      (long (readInt b))
+      :else (readLong b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

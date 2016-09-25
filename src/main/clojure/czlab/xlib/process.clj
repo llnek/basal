@@ -18,10 +18,11 @@
   czlab.xlib.process
 
   (:require
-    [czlab.xlib.core :refer [runnable<> try!]]
     [czlab.xlib.meta :refer [getCldr]]
-    [czlab.xlib.logging :as log]
-    [czlab.xlib.str :refer [hgl?]])
+    [czlab.xlib.logging :as log])
+
+  (:use [czlab.xlib.core]
+        [czlab.xlib.str])
 
   (:import
     [czlab.xlib CU CallableWithArgs]
@@ -42,21 +43,24 @@
 (defn thread<>
 
   "Run this function in a separate thread"
-  ^Thread
-  [func start? & [arg]]
-  {:pre [(fn? func)(or (nil? arg)(map? arg))]}
 
-  (let [t (Thread. (runnable<> func))
-        c (or (:cl arg)
-              (:classLoader arg))]
-    (if (some? c)
-      (.setContextClassLoader t ^ClassLoader c))
-    (.setDaemon t (true? (:daemon arg)))
-    (if start? (.start t))
-    (log/debug "thread<>: thread#%s%s%s"
-               (.getName t)
-               ", daemon = " (.isDaemon t))
-    t))
+  (^Thread [func start?] (thread<> func start? nil))
+
+  (^Thread
+    [func start? arg]
+    {:pre [(fn? func)(or (nil? arg)(map? arg))]}
+
+    (let [t (Thread. (runnable<> func))
+          c (or (:cl arg)
+                (:classLoader arg))]
+      (some->> (cast? ClassLoader c)
+               (.setContextClassLoader t ))
+      (.setDaemon t (true? (:daemon arg)))
+      (if start? (.start t))
+      (log/debug "thread<>: thread#%s%s%s"
+                 (.getName t)
+                 ", daemon = " (.isDaemon t))
+      t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -79,10 +83,12 @@
 (defn async!
 
   "Run this function asynchronously"
-  [func & [arg]]
-  {:pre [(fn? func) (or (nil? arg)(map? arg))]}
 
-  (thread<> func true arg))
+  ([func] (async! func nil))
+
+  ([func arg]
+   {:pre [(fn? func) (or (nil? arg)(map? arg))]}
+   (thread<> func true arg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -91,8 +97,8 @@
   "Block current thread for some millisecs"
   [millisecs]
 
-  (try! (when (> millisecs 0)
-          (Thread/sleep millisecs))))
+  (trye! nil
+         (if (> millisecs 0) (Thread/sleep millisecs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -151,7 +157,6 @@
 
   "Add this as a shutdown hook"
   [func]
-
   {:pre [(fn? func)]}
 
   (->> (thread<> func false {:daemon true})

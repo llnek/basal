@@ -23,22 +23,22 @@
 ;;(set! *warn-on-reflection* true)
 
 (defmacro trace "" [& args]
-  `(when (log/enabled? :trace) (log/logf :trace ~@args)))
+  `(if (log/enabled? :trace) (log/logf :trace ~@args)))
 
 (defmacro debug "" [& args]
-  `(when (log/enabled? :debug) (log/logf :debug ~@args)))
+  `(if (log/enabled? :debug) (log/logf :debug ~@args)))
 
 (defmacro info "" [& args]
-  `(when (log/enabled? :info) (log/logf :info ~@args)))
+  `(if (log/enabled? :info) (log/logf :info ~@args)))
 
 (defmacro warn "" [& args]
-  `(when (log/enabled? :warn) (log/logf :warn ~@args)))
+  `(if (log/enabled? :warn) (log/logf :warn ~@args)))
 
 (defmacro error "" [& args]
-  `(when (log/enabled? :error) (log/logf :error ~@args)))
+  `(if (log/enabled? :error) (log/logf :error ~@args)))
 
 (defmacro fatal "" [& args]
-  `(when (log/enabled? :fatal) (log/logf :fatal ~@args)))
+  `(if (log/enabled? :fatal) (log/logf :fatal ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

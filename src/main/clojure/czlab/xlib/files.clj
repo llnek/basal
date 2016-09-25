@@ -12,21 +12,20 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-
 (ns ^{:doc "File handling helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.files
 
   (:require
-    [czlab.xlib.core :refer [throwIOE]]
     [czlab.xlib.meta :refer [isBytes?]]
-    [czlab.xlib.str :refer [stror]]
     [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.string :as cs])
 
   (:use [czlab.xlib.consts]
+        [czlab.xlib.core]
+        [czlab.xlib.str]
         [czlab.xlib.io])
 
   (:import
@@ -51,17 +50,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro slurpUTF8
+(defmacro slurpUtf8
 
   "Read contents of f with utf8 encoding"
-  ^String
+  ^{:tag String}
   [f]
 
   `(slurp ~f :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro spitUTF8
+(defmacro spitUtf8
 
   "Write data to f with utf8 encoding"
   [f c]
@@ -83,13 +82,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn fileOK?
+(defmacro fileOK?
 
   "true if file exists"
-  [^File fp]
+  [fp]
 
-  (and (some? fp)
-       (.exists fp)))
+  (boolean (some-> ^java.io.File ~fp (.exists))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -141,13 +139,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn parentFile
+(defmacro parentFile
 
   "Parent file"
-  ^File
-  [^File f]
+  ^{:tag File}
+  [f]
 
-  (when (some? f) (.getParentFile f)))
+  (some-> ^java.io.File ~f (.getParentFile )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -185,7 +183,7 @@
   [file work]
   {:pre [(fn? work)]}
 
-  (work (slurpUTF8 file)))
+  (work (slurpUtf8 file)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -195,7 +193,7 @@
   [file work]
   {:pre [(fn? work)]}
 
-  (spitUTF8 file
+  (spitUtf8 file
             (changeContent file work)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -203,9 +201,11 @@
 (defn writeFile
 
   "Write data to file"
-  [fout data & [enc]]
 
-  (io/copy data fout :encoding (stror enc "utf-8")))
+  ([fout data] (writeFile fout data "utf-8"))
+
+  ([fout data enc]
+   (io/copy data fout :encoding (stror enc "utf-8"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -263,44 +263,46 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro readFile
+(defmacro readAsStr
 
-  "Read data from a file as string"
-  ^String
-  [fp & [enc]]
+  "Read data from source as string"
 
-  `(slurp ~fp :encoding (stror ~enc "utf-8")))
+  (^{:tag String}
+   [s]
+   `(slurp ~s :encoding "utf-8"))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro readUrl
-
-  "Read data from a URL as string"
-  ^String
-  [url & [enc]]
-
-  `(slurp ~url :encoding  (stror ~enc "utf-8")))
+  (^{:tag String}
+   [s enc]
+   `(slurp ~s :encoding (stror ~enc "utf-8"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn saveFile
 
   "Save a file to a directory"
-  [^File dir ^String fname ^XData stuff]
 
-  ;;(log/debug "saving file: %s" fname)
-  (let [fp (io/file dir fname)]
-    (io/delete-file fp true)
-    (if-not (.isFile stuff)
-      (writeFile fp (.getBytes stuff))
-      (let [opts (make-array CopyOption 1)]
-        (aset #^"[Ljava.nio.file.CopyOption;"
-              opts
-              0 StandardCopyOption/REPLACE_EXISTING)
-        (.setDeleteFlag stuff false)
-        (Files/move (.toPath (.fileRef stuff))
-                    (.toPath fp)
-                    opts)))))
+  ([^File dir ^String fname ^XData stuff]
+   (saveFile dir fname stuff false))
+
+  ([^File dir ^String fname ^XData stuff del?]
+   ;;(log/debug "saving file: %s" fname)
+   (let [fp (io/file dir fname)]
+     (if del?
+       (io/delete-file fp true)
+       (if (.exists fp)
+         (throwIOE "file %s exists" fp)))
+     (if-not (.isFile stuff)
+       (writeFile fp (.getBytes stuff))
+       (let [opts (make-array CopyOption 1)]
+         (aset #^"[Ljava.nio.file.CopyOption;"
+               opts
+               0 StandardCopyOption/REPLACE_EXISTING)
+         (Files/move (.toPath (.fileRef stuff))
+                     (.toPath fp)
+                     opts)
+         ;;since file has moved, update stuff
+         (.setDeleteFlag stuff false)
+         (.reset stuff fp false))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -312,16 +314,14 @@
 
   ;;(log/debug "getting file: %s" fname)
   (let [fp (io/file dir fname)
-        xs (XData.) ]
-    (when (fileRead? fp)
-      (doto xs
-        (.setDeleteFlag false)
-        (.reset fp)))
+        xs (xdata<> )]
+    (if (fileRead? fp)
+      (.reset xs fp false))
     xs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti mkdirs "Make directories" {:tag File} class)
+(defmulti mkdirs "Make directories" ^{:tag File} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -351,7 +351,7 @@
   [dir ^String ext]
 
   (->> (reify FileFilter
-         (accept [_ f] (.endsWith (.getName f) ext)))
+         (accept [_ f] (.endsWith (.getName ^File f) ext)))
        (.listFiles (io/file dir))
        (into [])))
 
@@ -363,7 +363,7 @@
   [dir]
 
   (->> (reify FileFilter
-         (accept [_ f] (.isDirectory f)))
+         (accept [_ f] (.isDirectory ^File f)))
        (.listFiles (io/file dir))
        (into [])))
 
@@ -487,7 +487,6 @@
     (if (>= p 0)
       (.substring n 0 p)
       n)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
