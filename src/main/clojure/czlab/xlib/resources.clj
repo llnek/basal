@@ -40,7 +40,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti loadResource
-  "Load properties file with localized strings" ^{:tag ResourceBundle} class)
+  "Load properties file with localized strings" {:tag ResourceBundle} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -67,7 +67,6 @@
 (defmethod loadResource
 
   String
-
   [^String path]
 
   (with-open [inp (some-> (getCldr)
@@ -79,25 +78,23 @@
 (defn getResource
 
   "A resource bundle"
+  {:tag ResourceBundle}
 
-  (^ResourceBundle
-    [^String baseName]
-    (getResource baseName (Locale/getDefault) nil))
+  ([^String baseName]
+   (getResource baseName (Locale/getDefault) nil))
 
-  (^ResourceBundle
-    [^String baseName
-     ^Locale locale]
-    (getResource baseName locale nil))
+  ([^String baseName
+    ^Locale locale]
+   (getResource baseName locale nil))
 
-  (^ResourceBundle
-    [^String baseName
-     ^Locale locale
-     ^ClassLoader cl]
-    (if (or (empty? baseName)
-            (nil? locale))
-      nil
-      (ResourceBundle/getBundle baseName
-                                locale (getCldr cl)))))
+  ([^String baseName
+    ^Locale locale
+    ^ClassLoader cl]
+   (if (or (empty? baseName)
+           (nil? locale))
+     nil
+     (ResourceBundle/getBundle baseName
+                               locale (getCldr cl)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

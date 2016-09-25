@@ -43,7 +43,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti w32ini<>
-  "Parse a INI config file"  ^{:tag Win32Conf} class)
+  "Parse a INI config file"  {:tag Win32Conf} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -56,20 +56,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro throwBadKey
+(defmacro ^:private throwBadKey
 
   ""
-  {:private true}
   [k]
 
   `(throwBadData (format "No such item %s" ~k)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro throwBadMap
+(defmacro ^:private throwBadMap
 
   ""
-  {:private true}
   [s]
 
   `(throwBadData (format "No such heading %s" ~s)))
@@ -234,7 +232,7 @@
   String
   [fpath]
 
-  (when (some? fpath)
+  (if (some? fpath)
     (w32ini<> (io/file fpath))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -244,7 +242,7 @@
   File
   [file]
 
-  (when (fileRead? file)
+  (if (fileRead? file)
     (w32ini<> (io/as-url file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -252,22 +250,23 @@
 (defn- parseFile
 
   ""
-  (^Win32Conf [^URL fUrl] (parseFile fUrl "utf-8"))
-  (^Win32Conf
-    [^URL fUrl enc]
-    (with-open [inp (-> (.openStream fUrl)
-                        (io/reader :encoding (stror enc "utf8"))
-                        (LineNumberReader. ))]
-      (loop [total (atom (sorted-map))
-             rdr inp
-             line (.readLine rdr)
-             curSec nil]
-        (if (nil? line)
-          (makeWinini @total)
-          (recur total
-                 rdr
-                 (.readLine rdr)
-                 (evalOneLine rdr total curSec line)))))))
+  {:tag Win32Conf}
+
+  ([^URL fUrl] (parseFile fUrl "utf-8"))
+  ([^URL fUrl enc]
+   (with-open [inp (-> (.openStream fUrl)
+                       (io/reader :encoding (stror enc "utf8"))
+                       (LineNumberReader. ))]
+     (loop [total (atom (sorted-map))
+            rdr inp
+            line (.readLine rdr)
+            curSec nil]
+       (if (nil? line)
+         (makeWinini @total)
+         (recur total
+                rdr
+                (.readLine rdr)
+                (evalOneLine rdr total curSec line)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -276,7 +275,7 @@
   URL
   [^URL fileUrl]
 
-  (when (some? fileUrl)
+  (if (some? fileUrl)
     (parseFile fileUrl)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

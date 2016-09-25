@@ -199,25 +199,25 @@
 (defn forname
 
   "Load a java class by name"
+  {:tag Class}
 
-  (^Class [^String z] (forname z nil))
-  (^Class
-    [^String z cl]
-    (if (nil? cl)
-      (java.lang.Class/forName z)
-      (->> ^ClassLoader cl
-           (java.lang.Class/forName z true)))))
+  ([^String z] (forname z nil))
+  ([^String z cl]
+   (if (nil? cl)
+     (java.lang.Class/forName z)
+     (->> ^ClassLoader cl
+          (java.lang.Class/forName z true)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn getCldr
 
   "Get the current classloader"
+  {:tag ClassLoader}
 
-  (^ClassLoader [] (getCldr nil))
-  (^ClassLoader
-    [cl]
-    (or cl (.getContextClassLoader (Thread/currentThread)))))
+  ([] (getCldr nil))
+  ([cl]
+   (or cl (.getContextClassLoader (Thread/currentThread)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -234,20 +234,20 @@
 (defn loadClass
 
   "Load this class by name"
+  {:tag Class}
 
-  (^Class [^String clazzName] (loadClass clazzName nil))
-
-  (^Class
-    [^String clazzName cl]
-    (if (hgl? clazzName)
-      (.loadClass (getCldr cl) clazzName))))
+  ([^String clazzName] (loadClass clazzName nil))
+  ([^String clazzName cl]
+   (if (hgl? clazzName)
+     (.loadClass (getCldr cl) clazzName))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti objArgs<>
 
   "Instantiate object with arity-n constructor"
-  ^{:tag Object}
+  {:tag Object}
+
   (fn [a & xs] (class a)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -293,13 +293,12 @@
 (defn new<>
 
   "Make an object of this class by calling the default constructor"
+  {:tag Object}
 
-  (^Object [^String clazzName] (new<> clazzName nil))
-
-  (^Object
-    [^String clazzName cl]
-    (if (hgl? clazzName)
-      (ctor<> (loadClass clazzName cl)))))
+  ([^String clazzName] (new<> clazzName nil))
+  ([^String clazzName cl]
+   (if (hgl? clazzName)
+     (ctor<> (loadClass clazzName cl)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

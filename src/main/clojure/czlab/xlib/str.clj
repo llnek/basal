@@ -53,7 +53,7 @@
 (defmacro stror
 
   "If not s then s2"
-  ^{:tag String}
+  {:tag String}
   [s s2]
 
   `(let [s# ~s] (if (empty? s#) ~s2 s#)))
@@ -63,7 +63,7 @@
 (defmacro lcase
 
   "Lowercase string, handling nil"
-  ^{:tag String}
+  {:tag String}
   [s]
 
   `(if-some [s# ~s] (cs/lower-case s#) ""))
@@ -73,7 +73,7 @@
 (defmacro ucase
 
   "Uppercase string, handling nil"
-  ^{:tag String}
+  {:tag String}
   [s]
 
   `(if-some [s# ~s] (cs/upper-case s#) ""))
@@ -121,21 +121,19 @@
 (defn splitTokens
 
   "String tokenizer"
+  {:tag APersistentVector}
 
-  (^APersistentVector
-   [^String s ^String sep]
+  ([^String s ^String sep]
    (splitTokens s sep false))
 
-  (^APersistentVector
-   [^String s ^String sep incSep?]
-
-  (let [t (StringTokenizer. s
-                            sep
-                            (boolean incSep?))]
-    (loop [rc (transient [])]
-      (if-not (.hasMoreTokens t)
-        (persistent! rc)
-        (recur (conj! rc (.nextToken t))))))))
+  ([^String s ^String sep incSep?]
+   (let [t (StringTokenizer. s
+                             sep
+                             (boolean incSep?))]
+     (loop [rc (transient [])]
+       (if-not (.hasMoreTokens t)
+         (persistent! rc)
+         (recur (conj! rc (.nextToken t))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -215,7 +213,7 @@
 (defmacro sname
 
   "Safely get the name of this object"
-  ^{:tag String}
+  {:tag String}
   [n]
 
   `(when-some [n# ~n] (name n#)))
@@ -306,13 +304,12 @@
 (defn strimAny
 
   "Strip source string of these unwanted chars"
+  {:tag String}
 
-  (^String
-   [^String src ^String unwantedChars]
+  ([^String src ^String unwantedChars]
    (strimAny src unwantedChars false))
 
-  (^String
-   [^String src ^String unwantedChars whitespace?]
+  ([^String src ^String unwantedChars whitespace?]
    (let [s (-> (if whitespace? (strim src) src)
                (triml unwantedChars)
                (trimr unwantedChars))]
@@ -477,16 +474,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro strbf<>
+
   "StringBuilder.new"
-  (^{:tag StringBuilder} [] `(StringBuilder.))
-  (^{:tag StringBuilder} [s] `(StringBuilder. ~s)))
+  {:tag StringBuilder}
+
+  ([] `(StringBuilder.))
+  ([s] `(StringBuilder. ~s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn str<>
 
   "Make a string of certain length"
-
   ^String
   [cnt ^Character ch]
 
@@ -539,11 +538,10 @@
 (defn urlDecode
 
   "HTML decode"
+  {:tag String}
 
-  (^String [^String s] (urlDecode s "utf8"))
-
-  (^String
-   [^String s enc]
+  ([^String s] (urlDecode s "utf8"))
+  ([^String s enc]
    (if (hgl? s)
      (URLDecoder/decode s (stror enc "utf-8"))
      s)))
@@ -553,11 +551,10 @@
 (defn urlEncode
 
   "HTML encode"
+  {:tag String}
 
-  (^String [^String s] (urlEncode s "utf-8"))
-
-  (^String
-   [^String s enc]
+  ([^String s] (urlEncode s "utf-8"))
+  ([^String s enc]
    (if (hgl? s)
      (URLEncoder/encode s (stror enc "utf-8"))
      s)))

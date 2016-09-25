@@ -162,10 +162,12 @@
 (defn scheduler<>
 
   "Make a Scheduler"
+  {:tag Schedulable }
 
-  (^Schedulable [] (scheduler<> (juid)))
-  (^Schedulable [^String named] (mkSCD named)))
+  ([] (scheduler<> (juid)))
+  ([^String named] (mkSCD named)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

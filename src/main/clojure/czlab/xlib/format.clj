@@ -100,11 +100,11 @@
 (defn readJson
 
   "Parse JSON into object"
+  {:tag String}
 
-  (^String [^String data] (js/read-str data))
-
-  (^String [^String data keyfn]
-           (js/read-str data :key-fn keyfn)))
+  ([^String data] (js/read-str data))
+  ([^String data keyfn]
+   (js/read-str data :key-fn keyfn)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

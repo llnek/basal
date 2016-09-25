@@ -130,34 +130,25 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro fmtTimestamp
-
-  "Convert Timestamp into a string value"
-  ^{:tag String}
-  [^Timestamp ts] `(str ts))
+(defmacro fmtTimestamp "Timestamp as stringvalue" [ts] `(str ts))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn fmtDate
 
   "Convert Date into string value"
-  (^String
-    [^Date dt]
-    (fmtDate dt DT_FMT_MICRO nil))
+  {:tag String}
 
-  (^String
-    [^Date dt fmt]
-    (fmtDate dt fmt nil))
-
-  (^String
-    [^Date dt fmt ^TimeZone tz]
-    (if (or (nil? dt)
-            (empty? fmt))
-      ""
-      (let [df (SimpleDateFormat. fmt) ]
-        (when (some? tz)
-          (.setTimeZone df tz))
-        (.format df dt)))))
+  ([^Date dt] (fmtDate dt DT_FMT_MICRO nil))
+  ([^Date dt fmt] (fmtDate dt fmt nil))
+  ([^Date dt fmt ^TimeZone tz]
+   (if (or (nil? dt)
+           (empty? fmt))
+     ""
+     (let [df (SimpleDateFormat. fmt) ]
+       (when (some? tz)
+         (.setTimeZone df tz))
+       (.format df dt)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -187,11 +178,10 @@
 (defn gcal<>
 
   "Make a Calendar"
+  {:tag Calendar}
 
-  (^Calendar [] (doto (GregorianCalendar.) (.setTime (Date.))))
-
-  (^Calendar
-   [arg]
+  ([] (doto (GregorianCalendar.) (.setTime (Date.))))
+  ([arg]
    (cond
      (inst? TimeZone arg)
      (GregorianCalendar. ^TimeZone arg)

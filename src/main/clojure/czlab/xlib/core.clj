@@ -83,8 +83,7 @@
 (defmacro exp!
 
   "Create an exception instance"
-
-  ^{:tag Throwable}
+  {:tag Throwable}
   [e & args]
 
   (if (empty? args)
@@ -132,7 +131,6 @@
 (defmethod throwIOE
 
   Throwable
-
   [^Throwable t & xs]
 
   (trap! java.io.IOException t))
@@ -142,7 +140,6 @@
 (defmethod throwIOE
 
   String
-
   [^String fmt & xs]
 
   (->> ^String
@@ -163,12 +160,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti loadJavaProps
-  "Load java properties from source" ^{:tag Properties} class)
+  "Load java properties from source" {:tag Properties} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti fpath
-  "Nice format a path, no-backslash" ^{:tag String} class)
+  "Nice format a path, no-backslash" {:tag String} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -218,7 +215,7 @@
 (defmacro runnable<>
 
   "Create a Runnable wrapper"
-  ^{:tag Runnable}
+  {:tag Runnable}
   [func]
 
   `(reify Runnable (run [_] (~func))))
@@ -226,6 +223,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro when-some+
+
   "bindings => binding-form test
    When test is not empty, evaluates body with binding-form bound to the
    value of test"
@@ -240,6 +238,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro if-some+
+
+  "bindings => binding-form test
+   When test is not empty, evaluates body with binding-form bound to the
+   value of test"
+
   ([bindings then] `(if-some+ ~bindings ~then nil))
   ([bindings then else & oldform]
    (let [form (bindings 0) tst (bindings 1)]
@@ -267,10 +270,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro doto->
+(defmacro ^:private doto->
 
   "Combine doto and ->"
-  {:private true}
   [x & forms]
 
   (let [gx (gensym)]
@@ -323,7 +325,7 @@
 
   "If object is an instance of this type,
    return it else nil"
-  [^Class someType obj]
+  [someType obj]
 
   `^{:tag ~someType}
   ((fn []
@@ -336,7 +338,7 @@
 (defmacro cexp?
 
   "Try to cast into an exception"
-  ^{:tag Throwable}
+  {:tag Throwable}
   [e]
 
   (cast? Throwable e))
@@ -396,9 +398,10 @@
 (defn- get-czldr
 
   ""
+  {:tag ClassLoader}
 
-  (^ClassLoader [] (get-czldr nil))
-  (^ClassLoader [cl]
+  ([] (get-czldr nil))
+  ([cl]
     (or cl (.getContextClassLoader (Thread/currentThread)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -406,7 +409,7 @@
 (defn nilNichts
 
   "If object is nil, return a NICHTS"
-  ^{:tag Object :no-doc true}
+  {:tag Object :no-doc true}
   [obj]
 
   (or obj NICHTS))
@@ -540,24 +543,23 @@
 (defn srandom<>
 
   "A new random object"
+  {:tag SecureRandom }
 
-  (^SecureRandom [] (srandom<> false))
-
-  (^SecureRandom
-    [strong?]
-    (let [r (if strong?
-              (SecureRandom/getInstanceStrong)
-              (SecureRandom.))]
-      (->> (SecureRandom/getSeed 4)
-           (.setSeed r))
-      r)))
+  ([] (srandom<> false))
+  ([strong?]
+   (let [r (if strong?
+             (SecureRandom/getInstanceStrong)
+             (SecureRandom.))]
+     (->> (SecureRandom/getSeed 4)
+          (.setSeed r))
+     r)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro now<date>
 
   "A java Date"
-  ^{:tag java.util.Date}
+  {:tag java.util.Date}
   []
 
   `(java.util.Date.))
@@ -567,17 +569,16 @@
 (defn toCharset
 
   "A java Charset of the encoding"
+  {:tag Charset}
 
-  (^Charset [^String enc] (Charset/forName enc))
-
-  (^Charset [] (toCharset "utf-8")) )
+  ([^String enc] (Charset/forName enc))
+  ([] (toCharset "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod fpath
 
   String
-
   [^String fp]
 
   (if-not (empty? fp) (cs/replace fp #"\\" "/") fp))
@@ -587,7 +588,6 @@
 (defmethod fpath
 
   File
-
   [^File aFile]
 
   (if (nil? aFile)
@@ -608,7 +608,7 @@
 (defmacro sysProp
 
   "Get the value of a system property"
-  ^String
+  {:tag String}
   [prop]
 
   `(System/getProperty (str ~prop) ""))
@@ -618,7 +618,7 @@
 (defmacro homeDir
 
   "Get the user's home directory"
-  ^File
+  {:tag File}
   []
 
   `(io/file (sysProp "user.home")))
@@ -628,7 +628,7 @@
 (defmacro getUser
 
   "Get the current user login name"
-  ^String
+  {:tag String}
   []
 
   `(sysProp "user.name"))
@@ -638,7 +638,7 @@
 (defmacro getCwd
 
   "Get the current dir"
-  ^File
+  {:tag File}
   []
 
   `(io/file (sysProp "user.dir")))
@@ -687,7 +687,7 @@
 (defmacro gczn
 
   "The basename of this class"
-  ^String
+  {:tag String}
   [c]
 
   `(let [x# ~c]
@@ -710,7 +710,7 @@
 (defmacro filePath
 
   "Get the file path"
-  ^String
+  {:tag String}
   [aFile]
 
   `(fpath aFile))
@@ -750,41 +750,39 @@
 (defn convLong
 
   "Parse string as a long value"
+  {:tag long}
 
-  (^long [^String s dftLongVal]
-    (trye! dftLongVal (Long/parseLong s) ))
-
-  (^long [^String s] (convLong s 0)))
+  ([^String s] (convLong s 0))
+  ([^String s dftLongVal]
+   (trye! dftLongVal (Long/parseLong s) )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convInt
 
   "Parse string as an int value"
+  {:tag Integer}
 
-  (^Integer [^String s dftIntVal]
-    (trye! (int dftIntVal) (Integer/parseInt s)))
-
-  (^Integer [^String s] (convInt s 0)))
-
+  ([^String s] (convInt s 0))
+  ([^String s dftIntVal]
+   (trye! (int dftIntVal) (Integer/parseInt s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convDouble
 
   "Parse string as a double value"
+  {:tag double}
 
-  (^double [^String s dftDblVal]
-    (trye! dftDblVal (Double/parseDouble s) ))
-
-  (^double [^String s] (convDouble s 0.0)))
+  ([^String s] (convDouble s 0.0))
+  ([^String s dftDblVal]
+   (trye! dftDblVal (Double/parseDouble s) )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convBool
 
   "Parse string as a boolean value"
-  ^Boolean
   [^String s]
 
   (contains? BOOLS (cs/lower-case (str s))))
@@ -794,7 +792,6 @@
 (defmethod loadJavaProps
 
   InputStream
-
   [^InputStream inp]
 
   (doto (Properties.) (.load inp)))
@@ -804,7 +801,6 @@
 (defmethod loadJavaProps
 
   File
-
   [^File aFile]
 
   (loadJavaProps (io/as-url aFile)))
@@ -814,7 +810,6 @@
 (defmethod loadJavaProps
 
   URL
-
   [^URL aFile]
 
   (with-open
@@ -826,10 +821,10 @@
 (defn stringify
 
   "Make a string from bytes"
+  {:tag String}
 
-  (^String [^bytes bits] (stringify bits "utf-8"))
-
-  (^String [^bytes bits ^String encoding]
+  ([^bytes bits] (stringify bits "utf-8"))
+  ([^bytes bits ^String encoding]
     (when (some? bits) (String. bits encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -837,10 +832,10 @@
 (defn bytesify
 
   "Get bytes with the right encoding"
+  {:tag bytes}
 
-  (^bytes [^String s] (bytesify s "utf-8"))
-
-  (^bytes [^String s ^String encoding]
+  ([^String s] (bytesify s "utf-8"))
+  ([^String s ^String encoding]
     (when (some? s) (.getBytes s encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -848,10 +843,10 @@
 (defn resStream
 
   "Load the resource as stream"
+  {:tag InputStream}
 
-  (^InputStream [^String rcPath] (resStream rcPath nil))
-
-  (^InputStream [^String rcPath ^ClassLoader czLoader]
+  ([^String rcPath] (resStream rcPath nil))
+  ([^String rcPath ^ClassLoader czLoader]
     (when-not (empty? rcPath)
       (-> (get-czldr czLoader)
           (.getResourceAsStream  rcPath)))))
@@ -861,49 +856,50 @@
 (defn resUrl
 
   "Load the resource as URL"
+  {:tag URL}
 
-  (^URL [^String rcPath] (resUrl rcPath nil))
-
-  (^URL [^String rcPath ^ClassLoader czLoader]
-    (when-not (empty? rcPath)
-      (-> (get-czldr czLoader)
-          (.getResource rcPath)))))
+  ([^String rcPath] (resUrl rcPath nil))
+  ([^String rcPath ^ClassLoader czLoader]
+   (when-not (empty? rcPath)
+     (-> (get-czldr czLoader)
+         (.getResource rcPath)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn resStr
 
   "Load the resource as string"
+  {:tag String}
 
-  (^String [^String rcPath ^String encoding]
-    (resStr rcPath encoding nil))
+  ([^String rcPath ^String encoding]
+   (resStr rcPath encoding nil))
 
-  (^String [^String rcPath]
-    (resStr rcPath "utf-8" nil))
+  ([^String rcPath]
+   (resStr rcPath "utf-8" nil))
 
-  (^String [^String rcPath
-            ^String encoding ^ClassLoader czLoader]
-    (with-open
-      [out (ByteArrayOutputStream. BUF_SZ)
-       inp (resStream rcPath czLoader)]
-      (io/copy inp out :buffer-size BUF_SZ)
-      (-> (.toByteArray out)
-          (stringify encoding)))))
+  ([^String rcPath
+    ^String encoding ^ClassLoader czLoader]
+   (with-open
+     [out (ByteArrayOutputStream. BUF_SZ)
+      inp (resStream rcPath czLoader)]
+     (io/copy inp out :buffer-size BUF_SZ)
+     (-> (.toByteArray out)
+         (stringify encoding)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn resBytes
 
   "Load the resource as byte[]"
+  {:tag bytes}
 
-  (^bytes [^String rcPath] (resBytes rcPath nil))
-
-  (^bytes [^String rcPath ^ClassLoader czLoader]
-    (with-open
-      [out (ByteArrayOutputStream. BUF_SZ)
-       inp (resStream rcPath czLoader) ]
-      (io/copy inp out :buffer-size BUF_SZ)
-      (.toByteArray out))))
+  ([^String rcPath] (resBytes rcPath nil))
+  ([^String rcPath ^ClassLoader czLoader]
+   (with-open
+     [out (ByteArrayOutputStream. BUF_SZ)
+      inp (resStream rcPath czLoader) ]
+     (io/copy inp out :buffer-size BUF_SZ)
+     (.toByteArray out))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -981,9 +977,7 @@
 (defmacro now<>
 
   "the current time in milliseconds"
-  ^{:tag long}
   []
-
   `(System/currentTimeMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1027,7 +1021,6 @@
 (defmethod test-isa
 
   :class
-
   [^String reason ^Class childz ^Class parz]
 
   (assert (and (some? childz)
@@ -1040,7 +1033,6 @@
 (defmethod test-isa
 
   :object
-
   [^String reason ^Object obj ^Class parz]
 
   (assert (and (some? parz)
@@ -1119,7 +1111,6 @@
 (defmethod test-pos0
 
   :double
-
   [^String reason v]
 
   (assert (>= v 0.0)
@@ -1130,7 +1121,6 @@
 (defmethod test-pos0
 
   :long
-
   [^String reason v]
 
   (assert (>= v 0)
@@ -1141,7 +1131,6 @@
 (defmethod test-pos
 
   :double
-
   [^String reason v]
 
   (assert (> v 0.0)
@@ -1152,7 +1141,6 @@
 (defmethod test-pos
 
   :long
-
   [^String reason v]
 
   (assert (> v 0)
@@ -1251,40 +1239,38 @@
 (defn muble<>
 
   "Create a (unsynced/volatile), mutable object"
+  {:tag Muble}
 
-  (^Muble [seed] (muble<> seed false))
-
-  (^Muble [] (muble<> {} false))
-
-  (^Muble
-    [seed volatile??]
-    (let [^czlab.xlib.core.GetSetClr
-          data (if volatile??
-                 (VolatileMObj. (or seed {}))
-                 (UnsynchedMObj. (or seed {})))]
-      (reify Muble
-        (setv [_ k v] (->> (assoc (.g data) k v)
-                           (.s data)))
-        (unsetv [_ k] (->> (dissoc (.g data) k)
-                           (.s data)))
-        (getOrSet [this k v]
-          (when-not
-            (.contains this k)
-            (.setv this k v))
-          (.getv this k))
-        (toEDN [_] (pr-str (.g data)))
-        (impl [_] (.g data))
-        (copyEx [_ m]
-          (if (map? m) (.s data m)))
-        (copy [this x]
-          (when (and (some? x)
-                     (not (identical? this x)))
-            (doseq [[k v] (.seq ^Muble x)]
-              (.setv this k v))))
-        (seq [_] (seq (.g data)))
-        (contains [_ k] (contains? (.g data) k))
-        (getv [_ k] (get (.g data) k))
-        (clear [_ ] (.c data))))))
+  ([seed] (muble<> seed false))
+  ([] (muble<> {} false))
+  ([seed volatile??]
+   (let [^czlab.xlib.core.GetSetClr
+         data (if volatile??
+                (VolatileMObj. (or seed {}))
+                (UnsynchedMObj. (or seed {})))]
+     (reify Muble
+       (setv [_ k v] (->> (assoc (.g data) k v)
+                          (.s data)))
+       (unsetv [_ k] (->> (dissoc (.g data) k)
+                          (.s data)))
+       (getOrSet [this k v]
+         (when-not
+           (.contains this k)
+           (.setv this k v))
+         (.getv this k))
+       (toEDN [_] (pr-str (.g data)))
+       (impl [_] (.g data))
+       (copyEx [_ m]
+         (if (map? m) (.s data m)))
+       (copy [this x]
+         (when (and (some? x)
+                    (not (identical? this x)))
+           (doseq [[k v] (.seq ^Muble x)]
+             (.setv this k v))))
+       (seq [_] (seq (.g data)))
+       (contains [_ k] (contains? (.g data) k))
+       (getv [_ k] (get (.g data) k))
+       (clear [_ ] (.c data))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

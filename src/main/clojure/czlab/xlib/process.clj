@@ -43,24 +43,22 @@
 (defn thread<>
 
   "Run this function in a separate thread"
+  {:tag Thread}
 
-  (^Thread [func start?] (thread<> func start? nil))
-
-  (^Thread
-    [func start? arg]
-    {:pre [(fn? func)(or (nil? arg)(map? arg))]}
-
-    (let [t (Thread. (runnable<> func))
-          c (or (:cl arg)
-                (:classLoader arg))]
-      (some->> (cast? ClassLoader c)
-               (.setContextClassLoader t ))
-      (.setDaemon t (true? (:daemon arg)))
-      (if start? (.start t))
-      (log/debug "thread<>: thread#%s%s%s"
-                 (.getName t)
-                 ", daemon = " (.isDaemon t))
-      t)))
+  ([func start?] (thread<> func start? nil))
+  ([func start? arg]
+   {:pre [(fn? func)(or (nil? arg)(map? arg))]}
+   (let [t (Thread. (runnable<> func))
+         c (or (:cl arg)
+               (:classLoader arg))]
+     (some->> (cast? ClassLoader c)
+              (.setContextClassLoader t ))
+     (.setDaemon t (true? (:daemon arg)))
+     (if start? (.start t))
+     (log/debug "thread<>: thread#%s%s%s"
+                (.getName t)
+                ", daemon = " (.isDaemon t))
+     t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -85,7 +83,6 @@
   "Run this function asynchronously"
 
   ([func] (async! func nil))
-
   ([func arg]
    {:pre [(fn? func) (or (nil? arg)(map? arg))]}
    (thread<> func true arg)))

@@ -53,7 +53,7 @@
 (defmacro slurpUtf8
 
   "Read contents of f with utf8 encoding"
-  ^{:tag String}
+  {:tag String}
   [f]
 
   `(slurp ~f :encoding "utf-8"))
@@ -142,10 +142,11 @@
 (defmacro parentFile
 
   "Parent file"
-  ^{:tag File}
+  {:tag File}
   [f]
 
-  (some-> ^java.io.File ~f (.getParentFile )))
+  `(some->
+     ~(with-meta ~f {:tag 'java.io.File})  (.getParentFile )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -266,13 +267,10 @@
 (defmacro readAsStr
 
   "Read data from source as string"
+  {:tag String}
 
-  (^{:tag String}
-   [s]
-   `(slurp ~s :encoding "utf-8"))
-
-  (^{:tag String}
-   [s enc]
+  ([s] `(slurp ~s :encoding "utf-8"))
+  ([s enc]
    `(slurp ~s :encoding (stror ~enc "utf-8"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -321,14 +319,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti mkdirs "Make directories" ^{:tag File} class)
+(defmulti mkdirs "Make directories" {:tag File} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod mkdirs
 
   String
-
   [^String f]
 
   (doto (io/file f) (.mkdirs)))
@@ -338,7 +335,6 @@
 (defmethod mkdirs
 
   File
-
   [^File f]
 
   (doto f (.mkdirs)))
@@ -351,7 +347,7 @@
   [dir ^String ext]
 
   (->> (reify FileFilter
-         (accept [_ f] (.endsWith (.getName ^File f) ext)))
+         (accept [_ f] (.endsWith (.getName f) ext)))
        (.listFiles (io/file dir))
        (into [])))
 
@@ -363,7 +359,7 @@
   [dir]
 
   (->> (reify FileFilter
-         (accept [_ f] (.isDirectory ^File f)))
+         (accept [_ f] (.isDirectory f)))
        (.listFiles (io/file dir))
        (into [])))
 

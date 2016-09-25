@@ -49,27 +49,25 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro spitutf8
-  "" {:private true} [f c] `(spit ~f ~c :encoding "utf-8"))
+(defmacro ^:private spitutf8
+  "" [f c] `(spit ~f ~c :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro slurputf8
-  "" {:private true} [f] `(slurp ~f :encoding "utf-8"))
+(defmacro ^:private slurputf8
+  "" [f] `(slurp ~f :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro lsfs
+(defmacro ^:private lsfs
   ""
-  {:private true}
   [a & args]
   `(.listFiles (apply io/file ~a ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ficp
+(defmacro ^:private ficp
   ""
-  {:private true}
   [a & args]
   `(.getCanonicalPath (apply io/file ~a ~@args [])))
 
@@ -164,14 +162,15 @@
 (defn ge
 
   "Get the value for this local var"
-  [k & [local?]]
 
-  (or (if local?
-        (glocal k)
-        (if-some [v (get @U-VARS k)]
-          (if (fn? v) (v k) v)
-          (glocal k)))
-      (bc/get-env k)))
+  ([k] (ge k false))
+  ([k local?]
+   (or (if local?
+         (glocal k)
+         (if-some [v (get @U-VARS k)]
+           (if (fn? v) (v k) v)
+           (glocal k)))
+       (bc/get-env k))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -698,12 +697,13 @@
 (defn bootEnv!
 
   "Setup env-vars and paths, must be called by the user"
-  [& [options]]
 
-  (reset! U-VARS (merge {} options))
-  (bootEnvVars!)
-  (bootEnvPaths!)
-  (bootSyncCPath (str (ge :jzzDir) "/")))
+  ([] (bootEnv! nil))
+  ([options]
+   (reset! U-VARS (merge {} options))
+   (bootEnvVars!)
+   (bootEnvPaths!)
+   (bootSyncCPath (str (ge :jzzDir) "/"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -728,7 +728,7 @@
 (defmacro bootSlurp
 
   "Read file content as string"
-  ^String
+  {:tag String}
   [file]
 
   `(slurputf8 ~file))

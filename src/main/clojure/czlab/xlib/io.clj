@@ -132,17 +132,16 @@
 (defn baos<>
 
   "Make a byte array output stream"
+  {:tag ByteArrayOutputStream }
 
-  (^ByteArrayOutputStream [] (baos<> BUF_SZ))
-
-  (^ByteArrayOutputStream
-    [size]
-    (ByteArrayOutputStream. (int (or size BUF_SZ)))))
+  ([] (baos<> BUF_SZ))
+  ([size]
+   (ByteArrayOutputStream. (int (or size BUF_SZ)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti writeBytes
-  "Write this long value out as byte[]" ^{:tag bytes} class)
+  "Write this long value out as byte[]" {:tag bytes} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -248,7 +247,7 @@
   ""
   [file]
 
-  (try! (.delete (io/file file))))
+  (trye! nil (.delete (io/file file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -284,14 +283,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti openFile "Open this file path" ^{:tag XStream} class)
+(defmulti openFile "Open this file path" {:tag XStream} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn gzip
 
   "Gzip these bytes"
-
   ^bytes
   [^bytes bits]
 
@@ -314,12 +312,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn resetStream!
+(defmacro resetStream!
 
   "Call reset on this input stream"
-  [^InputStream inp]
+  [inp]
 
-  (trye! nil (some-> inp (.reset))))
+  `(trye!
+     nil
+     (some->
+       ~(with-meta inp {:tag 'java.io.InputStream}) (.reset))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -380,34 +381,29 @@
 (defn tempFile
 
   "Create a temporary file"
+  {:tag File}
 
-  (^File
-    [^String pfx ^String sux ^File dir]
-    (File/createTempFile
-      (if (> (count pfx) 2) pfx "czlab")
-      (if (> (count sux) 2) sux ".dat")
-      dir))
-
-  (^File [] (tempFile "" ""))
-
-  (^File [pfx sux] (tempFile pfx sux *TEMPFILE_REPO*)))
+  ([^String pfx ^String sux ^File dir]
+   (File/createTempFile
+     (if (> (count pfx) 2) pfx "czlab")
+     (if (> (count sux) 2) sux ".dat")
+     dir))
+  ([] (tempFile "" ""))
+  ([pfx sux] (tempFile pfx sux *TEMPFILE_REPO*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn openTempFile
 
   "A Tuple(2) [ File, OutputStream? ]"
+  {:tag APersistentVector}
 
-  (^APersistentVector
-    [pfx sux]
-    (openTempFile pfx sux *TEMPFILE_REPO*))
-
-  (^APersistentVector
-    [^String pfx ^String sux ^File dir]
-    (let [fp (tempFile pfx sux dir)]
-      [fp (FileOutputStream. fp)]))
-
-  (^APersistentVector [] (openTempFile "" "")))
+  ([^String pfx ^String sux ^File dir]
+   (let [fp (tempFile pfx sux dir)]
+     [fp (FileOutputStream. fp)]))
+  ([] (openTempFile "" ""))
+  ([pfx sux]
+   (openTempFile pfx sux *TEMPFILE_REPO*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -441,17 +437,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro xdata<>
+
   "Create XData with content"
-  (^{:tag XData} [c] `(XData. ~c))
-  (^{:tag XData} [] `(XData. )))
+  {:tag XData}
+
+  ([c] `(XData. ~c))
+  ([] `(XData. )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro xdata<f>
 
   "Create XData with temp-file"
-  (^{:tag XData} [dir] `(XData. (tempFile "" "" ~dir)))
-  (^{:tag XData} [] `(XData. (tempFile))))
+  {:tag XData}
+
+  ([dir] `(XData. (tempFile "" "" ~dir)))
+  ([] `(XData. (tempFile))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -553,22 +554,22 @@
 (defn readBytes
 
   "Read bytes from stream"
+  {:tag XData}
 
-  (^XData [^InputStream inp] (readBytes inp false))
-  (^XData
-    [^InputStream inp usefile?]
-    (slurpb inp (if usefile? 1 *MEMBUF_LIMIT*))))
+  ([^InputStream inp] (readBytes inp false))
+  ([^InputStream inp usefile?]
+   (slurpb inp (if usefile? 1 *MEMBUF_LIMIT*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn readChars
 
   "Read chars and return a XData"
+  {:tag XData}
 
-  (^XData [^Reader rdr] (readChars rdr false))
-  (^XData
-    [^Reader rdr usefile?]
-    (slurpc rdr (if usefile? 1 *MEMBUF_LIMIT*))))
+  ([^Reader rdr] (readChars rdr false))
+  ([^Reader rdr usefile?]
+   (slurpc rdr (if usefile? 1 *MEMBUF_LIMIT*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

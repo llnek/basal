@@ -97,13 +97,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro trap!
-  "" ^{:private true} [s] `(throw (Exception. ~s)))
+(defmacro ^:private trap! "" [s] `(throw (Exception. ~s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro fopt
-  "" ^{:private true} [o t] `(find ~o ~t))
+(defmacro ^:private fopt "" [o t] `(find ~o ~t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -171,8 +169,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro gpdn
-  "" ^{:private true} [^PropertyDescriptor pd] `(.getName ~pd))
+(defmacro ^:private gpdn
+  ""
+  [pd]
+  `(.getName ~(with-meta pd {:tag 'PropertyDescriptor})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -245,7 +245,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti koerce "Converter" ^{:private true} (fn [_ a b] [a (class b)]))
+(defmulti ^:private koerce "Converter" (fn [_ a b] [a (class b)]))
 
 (defmethod koerce [Integer/TYPE String] [_ _ ^String v] (Integer/parseInt v (int 10)))
 
@@ -347,20 +347,18 @@
 (defn antTarFileSet
 
   "Configure a TarFileSet Object"
+  {:tag Tar$TarFileSet}
 
-  (^Tar$TarFileSet
-   [^Project pj ^Tar$TarFileSet fs options nested]
+  ([^Project pj ^Tar$TarFileSet fs options nested]
    (setOptions pj fs options)
    (.setProject fs pj)
    (maybeCfgNested pj fs nested)
    fs)
 
-  (^Tar$TarFileSet
-   [^Project pj ^Tar$TarFileSet fs options]
+  ([^Project pj ^Tar$TarFileSet fs options]
    (antTarFileSet pj fs options nil))
 
-  (^Tar$TarFileSet
-   [^Project pj ^Tar$TarFileSet fs]
+  ([^Project pj ^Tar$TarFileSet fs]
    (antTarFileSet pj fs nil nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -368,17 +366,15 @@
 (defn antFileSet
 
   "Create a FileSet Object"
+  {:tag FileSet}
 
-  (^FileSet
-   [^Project pj options]
+  ([^Project pj options]
    (antFileSet pj options nil))
 
-  (^FileSet
-   [^Project pj]
+  ([^Project pj]
    (antFileSet pj nil nil))
 
-  (^FileSet
-   [^Project pj options nested]
+  ([^Project pj options nested]
    (let [fs (FileSet.)]
      (setOptions pj
                  fs
@@ -393,35 +389,31 @@
 (defn antBatchTest
 
   "Configure a BatchTest Object"
+  {:tag BatchTest }
 
-  (^BatchTest
-   [^Project pj ^BatchTest bt options nested]
+  ([^Project pj ^BatchTest bt options nested]
    (setOptions pj bt options)
    (maybeCfgNested pj bt nested)
    bt)
 
-  (^BatchTest
-   [^Project pj ^BatchTest bt options]
+  ([^Project pj ^BatchTest bt options]
    (antBatchTest pj bt options nil))
 
-   (^BatchTest
-    [^Project pj ^BatchTest bt]
-    (antBatchTest pj bt nil nil)))
+  ([^Project pj ^BatchTest bt]
+   (antBatchTest pj bt nil nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn antJunitTest
 
   "Configure a single JUnit Test Object"
+  {:tag JUnitTask }
 
-  (^JUnitTask
-   [^Project pj options] (antJunitTest pj options nil))
+  ([^Project pj options] (antJunitTest pj options nil))
 
-  (^JUnitTask
-   [^Project pj] (antJunitTest pj nil nil))
+  ([^Project pj] (antJunitTest pj nil nil))
 
-  (^JUnitTask
-   [^Project pj options nested]
+  ([^Project pj options nested]
    (let [jt (JUnitTest.)]
      (setOptions pj jt options)
      (maybeCfgNested pj jt nested)
@@ -432,17 +424,15 @@
 (defn antChainedMapper
 
   "Handles glob only"
+  {:tag FileNameMapper }
 
-  (^FileNameMapper
-   [^Project pj options]
+  ([^Project pj options]
    (antChainedMapper pj options nil))
 
-  (^FileNameMapper
-   [^Project pj]
+  ([^Project pj]
    (antChainedMapper pj nil nil))
 
-  (^FileNameMapper
-   [^Project pj options nested]
+  ([^Project pj options nested]
    (let [cm (ChainedMapper.)]
      (setOptions pj cm options)
      (doseq [n nested]
@@ -473,15 +463,13 @@
 (defn antFormatter
 
   "Create a Formatter Object"
+  {:tag FormatterElement }
 
-  (^FormatterElement
-   [^Project pj options] (antFormatter pj options nil))
+  ([^Project pj options] (antFormatter pj options nil))
 
-  (^FormatterElement
-   [^Project pj] (antFormatter pj nil nil))
+  ([^Project pj] (antFormatter pj nil nil))
 
-  (^FormatterElement
-   [^Project pj options nested]
+  ([^Project pj options nested]
    (let [fe (FormatterElement.)]
      (apply setOptions pj fe (fmtr-preopts fe options))
      (.setProject fe pj)
@@ -783,17 +771,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ant-task
+(defmacro ^:private ant-task
 
   "Generate wrapper function for an ant task"
-  ^{:private true}
   [pj sym docstr func & [preopt]]
   (let [s (str func)
         tm (cs/lower-case
              (.substring s (+ 1 (.lastIndexOf s "."))))]
     ;;(println "task---- " s)
     `(defn ~sym ~docstr
-       ^{:no-doc true}
+       {:no-doc true}
        [& [options# nested#]]
        (let [tk# (doto (.createTask ~pj ~s)
                      (.setTaskName ~tm))
@@ -820,10 +807,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro declAntTasks
+(defmacro ^:private declAntTasks
 
   "Introspect the default project and cache all registered ant-tasks"
-  ^{:private true}
   [pj]
 
   `(do ~@(map (fn [[a b]]
