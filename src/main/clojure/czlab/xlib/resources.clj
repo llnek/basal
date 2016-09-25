@@ -19,10 +19,12 @@
 
   (:require
     [czlab.xlib.meta :refer [getCldr]]
-    [czlab.xlib.str :refer [hgl?]]
     [czlab.xlib.logging :as log]
     [clojure.string :as cs]
     [clojure.java.io :as io])
+
+  (:use [czlab.xlib.core]
+        [czlab.xlib.str])
 
   (:import
     [java.io File FileInputStream]
@@ -38,14 +40,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti loadResource
-  "Load properties file with localized strings" {:tag ResourceBundle} class)
+  "Load properties file with localized strings" ^{:tag ResourceBundle} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod loadResource
 
   File
-
   [aFile]
 
   (loadResource (io/as-url aFile)))
@@ -55,10 +56,11 @@
 (defmethod loadResource
 
   URL
-
   [^URL url]
 
-  (with-open [inp (.openStream url)] (PropertyResourceBundle. inp)))
+  (with-open
+    [inp (.openStream url)]
+    (PropertyResourceBundle. inp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -108,7 +110,7 @@
 
   (if (hgl? pkey)
     (let [kv (str (.getString bundle pkey))
-          pc (count pms) ]
+          pc (count pms)]
       ;;(log/debug "RStr key = %s, value = %s" pkey kv)
       (loop [src kv pos 0]
         (if (>= pos pc)

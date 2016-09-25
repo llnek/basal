@@ -18,13 +18,10 @@
   czlab.xlib.scheduler
 
   (:require
-    [czlab.xlib.core
-     :refer [do->nil
-             spos?
-             cast?
-             juid]]
-    [czlab.xlib.logging :as log]
-    [czlab.xlib.str :refer [hgl?]])
+    [czlab.xlib.logging :as log])
+
+  (:use [czlab.xlib.core]
+        [czlab.xlib.str])
 
   (:import
     [java.util.concurrent ConcurrentHashMap]
@@ -47,7 +44,7 @@
   ""
   [r]
 
-  (when
+  (if
     (instance? Identifiable r)
     (.id ^Identifiable r)))
 
@@ -58,7 +55,7 @@
   ""
   [^Map hQ w]
 
-  (when-some [pid (xrefPID w)] (.remove hQ pid)))
+  (if-some [pid (xrefPID w)] (.remove hQ pid)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -81,9 +78,7 @@
         holdQ (ConcurrentHashMap.)
         cpu (atom nil)]
     (with-meta
-      (reify
-
-        Schedulable
+      (reify Schedulable
 
         (alarm [me w arg delayMillis]
           (if (spos? delayMillis)
@@ -92,8 +87,7 @@
                (proxy [TimerTask][]
                  (run [] (.interrupt w arg)))]
               (addTimer @timer tt delayMillis)
-              tt)
-            nil))
+              tt)))
 
         (purge [_]
           (.purge ^Timer @timer))
@@ -101,8 +95,7 @@
         (dequeue [_ w] )
 
         (run [_ w]
-          (when-some [^Runnable
-                      r (cast? Runnable w)]
+          (when-some [r (cast? Runnable w)]
             (preRun holdQ r)
             (-> ^TCore
                 @cpu
@@ -126,30 +119,31 @@
           (.hold this (xrefPID w) w))
 
         (hold [_ pid w]
-          (when (some? pid)
+          (if (some? pid)
             (.put holdQ pid w)))
 
         (wakeup [this w]
           (.wakeAndRun this (xrefPID w) w))
 
         (wakeAndRun [this pid w]
-          (when (some? pid)
+          (if (some? pid)
             (.remove holdQ pid))
           (.run this w))
 
-        (reschedule [this w] (.run this w))
+        (reschedule [this w]
+          (.run this w))
 
         (dispose [this]
           (let [^TCore c @cpu]
             (.deactivate this)
-            (when (some? c) (.dispose c))))
+            (if (some? c) (.dispose c))))
 
         (activate [_ options]
-          (let [^long t (->> (Runtime/getRuntime)
-                             (.availableProcessors)
-                             (or (:threads options) ))
+          (let [t (->> (Runtime/getRuntime)
+                       (.availableProcessors)
+                       (or (:threads options) ))
                 b (not (false? (:trace options)))
-                c (TCore. named t b)]
+                c (TCore. named ^long t b)]
             (reset! cpu c)
             (.start c)))
 
@@ -159,7 +153,7 @@
               (.cancel)
               (.purge))
             (.clear holdQ)
-            (when (some? c) (.stop c)))))
+            (if (some? c) (.stop c)))))
 
       {:typeid ::Scheduler })))
 
