@@ -108,7 +108,7 @@
         b (.getAddress neta)]
     (cond
       (.isLoopbackAddress neta)
-      (.nextLong (srandom<>))
+      (.nextLong (rand<>))
       (== 4 (alength b))
       (long (readInt b))
       :else (readLong b))))
@@ -137,7 +137,7 @@
 
   ;; At i==19 set the high bits of clock sequence as per rfc4122, sec. 4.1.5
   (let [rc (char-array _UUIDLEN)
-        rnd (srandom<>) ]
+        rnd (rand<>) ]
     (dotimes [n (alength rc) ]
       (aset-char rc
                  n
@@ -160,7 +160,7 @@
   ^String
   []
 
-  (let [seed (.nextInt (srandom<>) (Integer/MAX_VALUE))
+  (let [seed (.nextInt (rand<>) (Integer/MAX_VALUE))
         ts (splitTime) ]
     (str (nth ts 0)
          (fmtLong _IP)

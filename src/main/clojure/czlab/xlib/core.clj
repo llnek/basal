@@ -540,12 +540,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn srandom<>
+(defn rand<>
 
   "A new random object"
   {:tag SecureRandom }
 
-  ([] (srandom<> false))
+  ([] (rand<> false))
   ([strong?]
    (let [r (if strong?
              (SecureRandom/getInstanceStrong)
