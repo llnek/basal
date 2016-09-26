@@ -535,19 +535,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn urlDecode
-
-  "HTML decode"
-  {:tag String}
-
-  ([^String s] (urlDecode s "utf8"))
-  ([^String s enc]
-   (if (hgl? s)
-     (URLDecoder/decode s (stror enc "utf-8"))
-     s)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn urlEncode
 
   "HTML encode"
@@ -557,6 +544,20 @@
   ([^String s enc]
    (if (hgl? s)
      (URLEncoder/encode s (stror enc "utf-8"))
+     s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn urlDecode
+
+  "HTML decode"
+  {:tag String}
+
+  ([^String s] (urlDecode s "utf8"))
+  ([^String s enc]
+   (if (hgl? s)
+     (-> s;;(cs/replace s "+" (urlEncode "+" enc))
+         (URLDecoder/decode (stror enc "utf-8")))
      s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

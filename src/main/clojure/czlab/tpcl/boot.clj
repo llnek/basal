@@ -929,7 +929,7 @@
           {:todir root}
           [[:fileset
             {:dir (ge :basedir)
-             :includes "*.md,LICENSE"}]]))
+             :includes "*.md,LICENSE,COPYING"}]]))
       ;; copy source
       (a/runTarget*
         "pack/src"
