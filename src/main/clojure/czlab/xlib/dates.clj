@@ -143,7 +143,7 @@
   ([^Date dt fmt] (fmtDate dt fmt nil))
   ([^Date dt fmt ^TimeZone tz]
    (if (or (nil? dt)
-           (empty? fmt))
+           (nichts? fmt))
      ""
      (let [df (SimpleDateFormat. fmt) ]
        (when (some? tz)

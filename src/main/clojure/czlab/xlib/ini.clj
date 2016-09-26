@@ -106,7 +106,7 @@
           nm (if (> pos 0)
                (strim (.substring line 0 pos))
                "" ) ]
-      (if (empty? nm)
+      (if (nichts? nm)
         (throwBadIni rdr))
       (let [k (keyword (lcase nm))]
         (->> (assoc kvs k [nm  (strim (.substring line (inc pos)))])
@@ -126,7 +126,7 @@
 
   (let [ln (strim line)]
     (cond
-      (or (empty? ln)
+      (or (nichts? ln)
           (.startsWith ln "#"))
       curSec
 

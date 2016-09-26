@@ -41,12 +41,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn nichts?
+
+  "true if this string is empty"
+  [s]
+
+  (or (nil? s)
+      (not (string? s))
+      (.isEmpty ^String s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro hgl?
 
   "true if string *has good length* - not empty or nil"
   [s]
 
-  `(not (empty? ~s)))
+  `(not (nichts? ~s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -56,7 +67,7 @@
   {:tag String}
   [s s2]
 
-  `(let [s# ~s] (if (empty? s#) ~s2 s#)))
+  `(let [s# ~s] (if (nichts? s#) ~s2 s#)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -280,14 +291,6 @@
     (Arrays/equals (.toCharArray a)
                    (.toCharArray b)) ))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro nichts?
-
-  "true if this string is empty"
-  [s]
-
-  `(empty? ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -503,7 +506,7 @@
   [^String src len]
 
   (if (or (<= len 0)
-          (empty? src))
+          (nichts? src))
     ""
     (if (< (.length src) len)
       src
@@ -518,7 +521,7 @@
   [^String src len]
 
   (if (or (<= len 0)
-          (empty? src))
+          (nichts? src))
     ""
     (if (< (.length src) len)
       src

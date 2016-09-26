@@ -111,7 +111,8 @@
   ^String
   [^String s]
 
-  (if-not (empty? s)
+  (if (and (some? s)
+           (not (.isEmpty s)))
     (str (.toUpperCase (.substring s 0 1))
          (.substring s 1))
     s))

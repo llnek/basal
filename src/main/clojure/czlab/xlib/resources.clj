@@ -90,7 +90,7 @@
   ([^String baseName
     ^Locale locale
     ^ClassLoader cl]
-   (if (or (empty? baseName)
+   (if (or (nichts? baseName)
            (nil? locale))
      nil
      (ResourceBundle/getBundle baseName

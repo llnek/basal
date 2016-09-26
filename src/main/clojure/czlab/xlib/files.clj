@@ -156,7 +156,7 @@
   ^String
   [^String path]
 
-  (if (empty? path)
+  (if (nichts? path)
     path
     (.getParent (io/file path))))
 

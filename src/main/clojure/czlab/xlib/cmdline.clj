@@ -86,7 +86,7 @@
       (let [rc (stror answer default)]
         (cond
           ;;if required to answer, repeat the question
-          (and (empty? rc)
+          (and (nichts? rc)
                must)
           id
 
@@ -121,7 +121,7 @@
             (str question
                  (if (:must cmdQ) "*" "") "? "))
     ;; choices ?
-    (when-not (empty? choices)
+    (when-not (nichts? choices)
       (if (has? choices \n)
         (.write cout
                 (str (if (.startsWith choices "\n") "[" "[\n")
@@ -129,7 +129,7 @@
                      (if (.endsWith choices "\n") "]" "\n]" )))
         (.write cout (str "[" choices "]"))))
     ;; defaults ?
-    (when-not (empty? default)
+    (when-not (nichts? default)
       (.write cout (str "(" default ")")))
     (doto cout (.write " ")(.flush))
     ;; get the input from user
