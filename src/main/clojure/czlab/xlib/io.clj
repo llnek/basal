@@ -23,6 +23,7 @@
     [clojure.string :as cs])
 
   (:use [czlab.xlib.consts]
+        [czlab.xlib.meta]
         [czlab.xlib.core]
         [czlab.xlib.str])
 
@@ -575,6 +576,20 @@
 ;;
 (defn workDirPath
   "The working directory" ^String [] (fpath *TEMPFILE_REPO*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn convBytes
+
+  ""
+  ^bytes
+  [data]
+
+  (condp = (class data)
+    InputStream (toBytes data)
+    String (bytesify data)
+    (bytesClass) data
+    nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
