@@ -832,7 +832,7 @@
 (defn bytesify
 
   "Get bytes with the right encoding"
-  {:tag bytes}
+  ^bytes
 
   ([^String s] (bytesify s "utf-8"))
   ([^String s ^String encoding]
@@ -891,7 +891,7 @@
 (defn resBytes
 
   "Load the resource as byte[]"
-  {:tag bytes}
+  ^bytes
 
   ([^String rcPath] (resBytes rcPath nil))
   ([^String rcPath ^ClassLoader czLoader]
