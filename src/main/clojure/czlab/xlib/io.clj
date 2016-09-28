@@ -442,6 +442,7 @@
   "Create XData with content"
   {:tag XData}
 
+  ([c b] `(XData. ~c ~b))
   ([c] `(XData. ~c))
   ([] `(XData. )))
 
