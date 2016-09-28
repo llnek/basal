@@ -42,6 +42,12 @@ public class XData implements Serializable {
 
   /**
    */
+  public XData(Object p, boolean delFlag) {
+     reset(p,delFlag);
+  }
+  
+  /**
+   */
   public XData(Object p) {
      reset(p);
   }
