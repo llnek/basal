@@ -754,7 +754,7 @@
 (defn convLong
 
   "Parse string as a long value"
-  {:tag long}
+  {:tag Long}
 
   ([^String s] (convLong s 0))
   ([^String s dftLongVal]
@@ -776,7 +776,7 @@
 (defn convDouble
 
   "Parse string as a double value"
-  {:tag double}
+  {:tag Double}
 
   ([^String s] (convDouble s 0.0))
   ([^String s dftDblVal]
