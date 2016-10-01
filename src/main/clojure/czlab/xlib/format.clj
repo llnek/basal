@@ -20,7 +20,7 @@
   (:require
     [clojure.pprint :refer [pprint with-pprint-dispatch]]
     [czlab.xlib.indent :refer [indent-dispatch]]
-    [czlab.xlib.files :refer [readAsStr]]
+    [czlab.xlib.io :refer [readAsStr]]
     [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.edn :as edn]

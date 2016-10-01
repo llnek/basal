@@ -14,7 +14,7 @@
 
 (ns czlabtest.xlib.fileutils
 
-  (:require [czlab.xlib.files :as FU]
+  (:require [czlab.xlib.io :as FU]
             [czlab.xlib.core :as CU]
             [clojure.java.io :as io])
 

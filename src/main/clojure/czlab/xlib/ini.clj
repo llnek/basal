@@ -18,7 +18,7 @@
   czlab.xlib.ini
 
   (:require
-    [czlab.xlib.files :refer [fileRead?]]
+    [czlab.xlib.io :refer [fileRead?]]
     [czlab.xlib.logging :as log]
     [clojure.java.io :as io]
     [clojure.string :as cs])
