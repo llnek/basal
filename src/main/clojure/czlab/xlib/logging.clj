@@ -34,6 +34,9 @@
 (defmacro warn "" [& args]
   `(if (log/enabled? :warn) (log/logf :warn ~@args)))
 
+(defmacro exception "" [e]
+  `(if (log/enabled? :error) (log/logf :error ~e "")))
+
 (defmacro error "" [& args]
   `(if (log/enabled? :error) (log/logf :error ~@args)))
 
