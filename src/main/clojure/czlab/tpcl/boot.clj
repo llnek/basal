@@ -33,6 +33,7 @@
     [czlab.xlib.antlib :as a])
 
   (:import
+    [java.util.regex Pattern]
     [clojure.lang
      APersistentMap
      APersistentVector]
@@ -254,20 +255,22 @@
   "Compile java files, copy resources to output dir"
   []
 
-  (a/runTarget*
-    "compile/java"
-    (a/antJavac
-      (ge :JAVAC_OPTS)
-      [[:compilerarg (ge :COMPILER_ARGS)]
-       [:include "**/*.java"]
-       [:classpath (ge :CPATH)]])
-    (a/antCopy
-      {:todir (ge :jzzDir)}
-      [[:fileset
-        {:dir (fp! (ge :srcDir) "java")
-         :excludes "**/*.java"}]
-       [:fileset
-        {:dir (fp! (ge :srcDir) "resources")}]])))
+  (let [ex (ge :exclude-java)]
+    (a/runTarget*
+      "compile/java"
+      (a/antJavac
+        (ge :JAVAC_OPTS)
+        [[:compilerarg (ge :COMPILER_ARGS)]
+         [:include "**/*.java"]
+         [:exclude ex]
+         [:classpath (ge :CPATH)]])
+      (a/antCopy
+        {:todir (ge :jzzDir)}
+        [[:fileset
+          {:dir (fp! (ge :srcDir) "java")
+           :excludes "**/*.java"}]
+         [:fileset
+          {:dir (fp! (ge :srcDir) "resources")}]]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -277,6 +280,7 @@
   []
 
   (let [root (io/file (ge :srcDir) "clojure")
+        ex (ge :exclude-clj)
         ps (grepFolderPaths root ".clj")
         out (atom '())]
     ;;figure out all files(namespaces)
@@ -287,7 +291,17 @@
                             (listCljNsps root p))))
     ;;compile each namespace
     (minitask "compile/clojure"
-      (doseq [p @out]
+      (doseq
+        [p @out
+         :let
+         [p (filter
+              #(cond
+                 (string? ex)
+                 (not (.matches %1 ^String ex))
+                 (instance? Pattern ex)
+                 (nil? (re-matches ex %1))
+                 :else true) p)]
+         :when (> (count p) 0)]
         (a/runTasks*
           (a/antJava
             (ge :CLJC_OPTS)

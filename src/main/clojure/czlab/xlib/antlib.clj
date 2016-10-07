@@ -531,12 +531,17 @@
            (.addFormatter tk))
 
       :include
-      (-> (.createInclude tk)
-          (.setName (str (last p))))
+      (let [v (cs/trim (str (last p)))]
+        (if-not (empty? v)
+          (-> (.createInclude tk)
+              (.setName v))))
 
       :exclude
-      (-> (.createExclude tk)
-          (.setName (str (last p))))
+      (let [v (cs/trim (str (last p)))]
+        (if-not (empty? v)
+          (-> (.createExclude tk)
+              (.setName v))))
+
 
       :fileset
       (let [s (antFileSet

@@ -21,11 +21,11 @@ public interface Settable {
 
   /**
    */
-  public void setv( Object key, Object p);
+  public Object setv( Object key, Object p);
 
   /**
    */
-  public void unsetv( Object key);
+  public Object unsetv( Object key);
 
 }
 

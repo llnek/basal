@@ -1254,10 +1254,16 @@
                 (VolatileMObj. (or seed {}))
                 (UnsynchedMObj. (or seed {})))]
      (reify Muble
-       (setv [_ k v] (->> (assoc (.g data) k v)
-                          (.s data)))
-       (unsetv [_ k] (->> (dissoc (.g data) k)
-                          (.s data)))
+       (setv [_ k v]
+         (->> (assoc (.g data) k v)
+                     (.s data))
+         v)
+       (unsetv [_ k]
+         (let [v (get (.g data) k)]
+           (->> (dissoc (.g data) k)
+                (.s data))
+           v))
+
        (getOrSet [this k v]
          (when-not
            (.contains this k)
