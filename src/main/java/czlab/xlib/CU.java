@@ -87,6 +87,14 @@ public enum CU {
   }
 
   /**
+   * 
+   */
+  public static boolean isEmpty(String s) {
+    return s==null || s.length() == 0;
+  }
+
+  
+  /**
    * shuffle characters in this string.
    */
   public static String shuffle(String s) {
