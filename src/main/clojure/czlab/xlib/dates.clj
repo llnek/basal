@@ -191,6 +191,11 @@
       (GregorianCalendar.)
       (.setTime ^Date arg))
 
+     (spos? arg)
+     (doto
+      (GregorianCalendar.)
+      (.setTimeInMillis ^long arg))
+
      :else (gcal<>))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -259,7 +264,6 @@
       (addDays days)
       (.getTime)))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn fmtTime
@@ -297,10 +301,17 @@
 (defn gcal<gmt>
 
   "Make a Calendar (GMT)"
-  ^GregorianCalendar
-  []
+  {:tag GregorianCalendar}
 
-  (GregorianCalendar. (TimeZone/getTimeZone "GMT")) )
+  ([] (GregorianCalendar. (TimeZone/getTimeZone "GMT")))
+  ([arg]
+   (let [^Calendar c (gcal<gmt>)]
+     (cond
+       (inst? Date arg)
+       (.setTime c ^Date arg)
+       (spos? arg)
+       (.setTimeInMillis c ^long arg))
+     c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
