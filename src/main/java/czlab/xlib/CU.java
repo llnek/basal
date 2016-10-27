@@ -15,6 +15,7 @@
 package czlab.xlib;
 
 import java.lang.reflect.InvocationTargetException;
+import java.text.SimpleDateFormat;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -24,9 +25,12 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 
 /**
@@ -40,6 +44,23 @@ public enum CU {
   private static final AtomicLong _sn= new AtomicLong(0L);
   public static final Logger TLOG=getLogger(CU.class);
 
+  public static void main(String[] args) {
+    try {
+      String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss zzz";
+      SimpleDateFormat fmt = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
+      fmt.setTimeZone(TimeZone.getTimeZone("GMT"));
+      GregorianCalendar c= new GregorianCalendar();
+      Date d1= c.getTime();
+      c= new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+      Date d2= c.getTime();
+      System.out.println("s2 = " + c.getTime());
+      
+      
+    } catch (Throwable t) {
+      t.printStackTrace();
+    }
+  }
+  
   /**
    * block and wait on this lock.
    */
