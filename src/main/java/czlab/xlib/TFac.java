@@ -25,23 +25,22 @@ import java.util.concurrent.ThreadFactory;
  *
  * @author Kenneth Leung
  */
-@SuppressWarnings("unused")
 public class TFac implements ThreadFactory {
 
   private ThreadFactory _fac = Executors.defaultThreadFactory();
   private AtomicInteger _seq= new AtomicInteger(0);
-  private ThreadGroup _group;
+//  private ThreadGroup _group;
   private String _pfx="";
 
   /**
    */
   public TFac(String pfx) {
-    SecurityManager sm = System.getSecurityManager();
-    if (sm == null) {
-      _group = Thread.currentThread().getThreadGroup();
-    } else {
-      _group = sm.getThreadGroup();
-    }
+//    SecurityManager sm = System.getSecurityManager();
+//    if (sm == null) {
+//      _group = Thread.currentThread().getThreadGroup();
+//    } else {
+//      _group = sm.getThreadGroup();
+//    }
     _pfx=pfx;
   }
 
@@ -50,19 +49,12 @@ public class TFac implements ThreadFactory {
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
     Thread t = _fac.newThread(r);
     //
-    t.setPriority(Thread.NORM_PRIORITY);
-    t.setName(mkTname());
-    t.setDaemon(false);
+    t.setName(_pfx + "-" + _seq.incrementAndGet());
     t.setContextClassLoader(cl);
+    //t.setPriority(Thread.NORM_PRIORITY);
+    //t.setDaemon(false);
     return t;
   }
-
-  /**
-   */
-  private String mkTname() {
-    return _pfx + "-" + _seq.incrementAndGet();
-  }
-
 
 }
 
