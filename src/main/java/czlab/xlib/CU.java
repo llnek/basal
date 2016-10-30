@@ -18,15 +18,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
 import static org.slf4j.LoggerFactory.getLogger;
+import java.util.GregorianCalendar;
 import org.slf4j.Logger;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
@@ -54,13 +52,13 @@ public enum CU {
       c= new GregorianCalendar(TimeZone.getTimeZone("GMT"));
       Date d2= c.getTime();
       System.out.println("s2 = " + c.getTime());
-      
-      
+
+
     } catch (Throwable t) {
       t.printStackTrace();
     }
   }
-  
+
   /**
    * block and wait on this lock.
    */
@@ -108,13 +106,13 @@ public enum CU {
   }
 
   /**
-   * 
+   *
    */
   public static boolean isEmpty(String s) {
     return s==null || s.length() == 0;
   }
 
-  
+
   /**
    * shuffle characters in this string.
    */

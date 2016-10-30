@@ -12,58 +12,55 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns ^{:doc "Various general helpers."
+(ns ^{:doc "General helpers."
       :author "Kenneth Leung" }
 
   czlab.xlib.core
 
-  (:require
-    [czlab.xlib.logging :as log]
-    [clojure.walk :refer :all]
-    [clojure.java.io :as io]
-    [clojure.string :as cs]
-    [clojure.core :as ccore]
-    [clojure.edn :as edn])
+  (:require [czlab.xlib.logging :as log]
+            [clojure.java.io :as io]
+            [clojure.string :as cs]
+            [clojure.edn :as edn])
 
-  (:use [czlab.xlib.consts])
+  (:use [czlab.xlib.consts]
+        [clojure.walk])
 
-  (:import
-    [java.util.concurrent.atomic AtomicLong AtomicInteger]
-    [java.util.zip DataFormatException Deflater Inflater]
-    [czlab.xlib MonoFlop Muble Watch]
-    [java.util.concurrent TimeUnit]
-    [java.security SecureRandom]
-    [czlab.xlib BadDataError]
-    [clojure.lang
-     PersistentList
-     Keyword
-     APersistentMap
-     APersistentVector]
-    [java.net URL]
-    [java.nio.charset Charset]
-    [java.io
-     Serializable
-     InputStream
-     PrintStream
-     File
-     FileInputStream
-     ObjectOutputStream
-     ObjectInputStream
-     ByteArrayInputStream
-     ByteArrayOutputStream]
-    [java.util
-     TimerTask
-     Map
-     Properties
-     Date
-     Calendar
-     HashMap
-     HashSet
-     ArrayList
-     GregorianCalendar
-     TimeZone]
-    [java.sql Timestamp]
-    [java.rmi.server UID]))
+  (:import [java.util.concurrent.atomic AtomicLong AtomicInteger]
+           [java.util.zip DataFormatException Deflater Inflater]
+           [czlab.xlib MonoFlop Muble Watch]
+           [java.util.concurrent TimeUnit]
+           [java.security SecureRandom]
+           [java.nio.charset Charset]
+           [czlab.xlib BadDataError]
+           [clojure.lang
+            PersistentList
+            Keyword
+            APersistentMap
+            APersistentVector]
+           [java.net URL]
+           [java.io
+            Serializable
+            InputStream
+            PrintStream
+            File
+            FileInputStream
+            ObjectOutputStream
+            ObjectInputStream
+            ByteArrayInputStream
+            ByteArrayOutputStream]
+           [java.util
+            TimerTask
+            Map
+            Properties
+            Date
+            Calendar
+            HashMap
+            HashSet
+            ArrayList
+            GregorianCalendar
+            TimeZone]
+           [java.sql Timestamp]
+           [java.rmi.server UID]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -80,7 +77,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro jarray "" [z c] `(into-array ~z ~c))
+(defmacro vargs "" [z c] `(into-array ~z ~c))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -101,14 +98,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro exp!
-
   "Create an exception instance"
-  {:tag Throwable}
   [e & args]
-
-  (if (empty? args)
-    `(new ~e)
-    `(new ~e ~@args)))
+  (if (empty? args) `(new ~e) `(new ~e ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -121,7 +113,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn tovargs "" [clazz & args] (into-array clazz args))
+(defn tovargs "" [clazz & args] (vargs clazz args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

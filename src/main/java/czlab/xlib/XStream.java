@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 
 /**
  * Wrapper on top of a File input stream such that it can
- * delete itself from the file system when necessary.
+ * delete itself from the file system when garbage collected.
  *
  * @author Kenneth Leung
  *
@@ -70,7 +70,7 @@ public class XStream extends InputStream implements Disposable {
     if (b == null) { return -1; } else {
       pre();
       int r = _inp.read(b, offset, len);
-      pos = (r== -1 ) ? -1 :  pos + r;
+      pos = (r== -1 ) ? -1 : pos + r;
       return r;
     }
   }
@@ -100,21 +100,12 @@ public class XStream extends InputStream implements Disposable {
 
   @Override
   public void mark(int readLimit) {
-    if (_inp != null) {
-      _inp.mark(readLimit);
-    }
+    if (_inp != null) { _inp.mark(readLimit); }
   }
 
   @Override
-  public void reset() {
-    close();
-    try {
-      _inp= new FileInputStream(_fn);
-    } catch (FileNotFoundException e) {
-      TLOG.error("",e);
-    }
-    _closed=false;
-    pos=0L;
+  public void reset() throws IOException {
+    if (_inp != null) { _inp.reset(); }
   }
 
   @Override
@@ -168,7 +159,14 @@ public class XStream extends InputStream implements Disposable {
   /**
    */
   private void ready() {
-    reset();
+    close();
+    try { _inp= new FileInputStream(_fn); }
+    catch (FileNotFoundException e) {
+      TLOG.error("",e);
+    }
+    _closed=false;
+    pos=0L;
+    mark(0);
   }
 
 }

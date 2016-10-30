@@ -32,7 +32,7 @@ import org.slf4j.Logger;
  * @author Kenneth Leung
  *
  */
-public class XData implements Serializable {
+public class XData implements Serializable, Disposable {
 
   private static final long serialVersionUID = -8637175588593032279L;
   public static final Logger TLOG= getLogger(XData.class);
@@ -43,13 +43,13 @@ public class XData implements Serializable {
   /**
    */
   public XData(Object p, boolean delFlag) {
-     reset(p,delFlag);
+    reset(p,delFlag);
   }
-  
+
   /**
    */
   public XData(Object p) {
-     reset(p);
+    reset(p);
   }
 
   /**
@@ -57,6 +57,10 @@ public class XData implements Serializable {
   public XData() {
     this(null);
   }
+
+  /**
+   */
+  public boolean isDeleteFile() { return _cls; }
 
   /**
    */
@@ -70,22 +74,17 @@ public class XData implements Serializable {
   }
 
   /**
-   */
-  public boolean isDeleteFile() { return _cls; }
-
-  /**
    * Control the internal file.
    *
-   * @param del true to delete, false ignore.
+   * @param del true to delete
    */
   public XData setDeleteFlag(boolean del) {
     _cls= del;
     return this;
   }
 
-  /**
-   */
-  public void destroy() {
+  @Override
+  public void dispose() {
     if (_data instanceof File && _cls) {
       try { ((File) _data).delete(); }
       catch (Throwable t) {}
@@ -103,26 +102,27 @@ public class XData implements Serializable {
   /**
    */
   public XData reset(Object obj, boolean del) {
-    destroy();
+    dispose();
+    if (obj instanceof ByteArrayOutputStream) {
+      _data = ((ByteArrayOutputStream) obj).toByteArray();
+    }
+    else
+    if (obj instanceof CharArrayWriter) {
+      _data = new String(
+              ((CharArrayWriter) obj).toCharArray());
+    }
+    else
+    if (obj instanceof File[]) {
+      File[] ff= (File[]) obj;
+      if (ff.length > 0) { _data = ff[0]; }
+    }
+    else
     if (obj instanceof XData) {
       XData src= (XData) obj;
       this._encoding = src._encoding;
       this._data = src._data;
       this._cls= src._cls;
       src._data=null;
-    }
-    else
-    if (obj instanceof CharArrayWriter) {
-      _data = new String( ((CharArrayWriter) obj).toCharArray() );
-    }
-    else
-    if (obj instanceof ByteArrayOutputStream) {
-      _data = ((ByteArrayOutputStream) obj).toByteArray();
-    }
-    else
-    if (obj instanceof File[]) {
-      File[] ff= (File[]) obj;
-      if (ff.length > 0) { _data = ff[0]; }
     }
     else {
       _data=obj;
@@ -148,14 +148,18 @@ public class XData implements Serializable {
   /**
    */
   public byte[] getBytes() throws IOException {
-    byte[] bits;
+    int limit= 1024 * 1024 * 10;//10meg!
+    byte[] bits=null;
 
     if (_data instanceof File) {
       File f= (File) _data;
       long n= f.length();
-      try (InputStream inp = new FileInputStream (f)) {
-        if (n > Integer.MAX_VALUE) {
-          throw new IOException("file too large");
+      try (InputStream inp = new FileInputStream(f)) {
+        //if (n > Integer.MAX_VALUE) {
+        if (n > limit) {
+          throw new IOException("file too large, " +
+                                "size= " +
+                                Long.toString(n));
         }
         bits= new byte[(int) n];
         inp.read(bits);
@@ -173,8 +177,9 @@ public class XData implements Serializable {
     if (_data instanceof byte[]) {
       bits = (byte[]) _data;
     }
-    else {
-      bits=new byte[0];
+    else
+    if (_data != null) {
+      throw new IOException("can't getBytes on content");
     }
 
     return bits;
@@ -193,8 +198,9 @@ public class XData implements Serializable {
   }
 
   /**
+   * @throws IOException
    */
-  public long size() {
+  public long size() throws IOException {
     long len=0L;
     if (_data instanceof File) {
       len= ((File) _data).length();
@@ -203,26 +209,32 @@ public class XData implements Serializable {
     if (_data instanceof byte[]) {
       len = ((byte[]) _data).length;
     }
-    else {
-      if (_data instanceof String) try {
+    else
+    if (_data instanceof String) {
+      try {
         len = ((String) _data).getBytes(_encoding).length;
       } catch (Exception e) {
         TLOG.error("", e);
       }
     }
+    else
+    if (_data != null) {
+      throw new IOException("can't getSize on content");
+    }
+
     return len;
   }
 
   @Override
   public void finalize() throws Throwable {
-    destroy();
+    dispose();
   }
 
   /**
    */
   public String stringify() throws IOException {
     return !hasContent()
-      ? ""
+      ? null
       : (_data instanceof String)
         ? _data.toString()
         : new String(getBytes(), _encoding);
@@ -233,7 +245,7 @@ public class XData implements Serializable {
   public InputStream stream() throws IOException {
     InputStream inp= null;
     if (_data instanceof File) {
-      inp = new XStream((File) _data);
+      inp = new XStream((File) _data, false);
     }
     else if (hasContent()) {
       inp= new ByteArrayInputStream(getBytes());

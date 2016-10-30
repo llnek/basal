@@ -42,19 +42,19 @@ public interface Config {
 
   /**
    */
-  public Date dateValue(String name);
-
-  /**
-   */
   public Iterable<?> sequence(String name);
 
   /**
    */
-  public Config child(String name);
+  public boolean contains(String name);
 
   /**
    */
-  public boolean contains(String name);
+  public Date dateValue(String name);
+
+  /**
+   */
+  public Config child(String name);
 
   /**
    */

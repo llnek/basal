@@ -14,13 +14,14 @@
 
 package czlab.xlib;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.slf4j.LoggerFactory.getLogger;
 import org.slf4j.Logger;
 
 
@@ -32,13 +33,14 @@ import org.slf4j.Logger;
 public class TCore extends ThreadPoolExecutor implements RejectedExecutionHandler, Startable, Disposable {
 
   public static final Logger TLOG = getLogger(TCore.class);
+  private AtomicInteger _seq= new AtomicInteger(0);
   private boolean _paused;
   private boolean _trace;
   private String _id ="";
 
   /**
    */
-  public TCore(String id,
+  public TCore(final String id,
                int tds,
                long keepAliveMillis, boolean trace) {
     super(Math.max(1,tds),
@@ -46,8 +48,18 @@ public class TCore extends ThreadPoolExecutor implements RejectedExecutionHandle
           keepAliveMillis,
           TimeUnit.MILLISECONDS,
           new LinkedBlockingQueue<Runnable>());
+    setThreadFactory(new ThreadFactory() {
+      public Thread newThread(Runnable r) {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        Thread t = new Thread(r);
+        t.setName(id + "#" + _seq.incrementAndGet());
+        t.setContextClassLoader(cl);
+        //t.setPriority(Thread.NORM_PRIORITY);
+        //t.setDaemon(false);
+        return t;
+      }
+    });
     setRejectedExecutionHandler(this);
-    setThreadFactory(new TFac(id));
     _trace=trace;
     _id=id;
     _paused=true;
@@ -67,6 +79,12 @@ public class TCore extends ThreadPoolExecutor implements RejectedExecutionHandle
    */
   public TCore(String id, int tds) {
     this(id, tds, true);
+  }
+
+  /**
+   */
+  public TCore(String id) {
+    this(id, Runtime.getRuntime().availableProcessors() * 2);
   }
 
   @Override
@@ -98,6 +116,8 @@ public class TCore extends ThreadPoolExecutor implements RejectedExecutionHandle
   public void execute(Runnable r) {
     if (! _paused) {
       super.execute(r);
+    } else {
+      TLOG.warn("Ignoring the runnable, core is not running");
     }
   }
 

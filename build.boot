@@ -13,8 +13,8 @@
     [org.slf4j/slf4j-api "1.7.21" ]
     ;;[ch.qos.logback/logback-classic "1.1.7" ]
     ;;[ch.qos.logback/logback-core "1.1.7" ]
-    [org.apache.logging.log4j/log4j-core "2.6.2"]
-    [org.apache.logging.log4j/log4j-slf4j-impl "2.6.2"]
+    [org.apache.logging.log4j/log4j-core "2.7"]
+    [org.apache.logging.log4j/log4j-slf4j-impl "2.7"]
 
     [org.apache.ant/ant-launcher "1.9.7" ]
     [org.apache.ant/ant-junit4 "1.9.7" ]
@@ -23,14 +23,14 @@
 
     [org.clojure/tools.logging "0.3.1" ]
     [org.clojure/data.json "0.2.6" ]
-    [org.flatland/ordered "1.5.3"]
+    [org.flatland/ordered "1.5.4"]
 
     [com.cemerick/pomegranate "0.3.1" :scope "provided"]
-    [codox/codox "0.9.5" :scope "provided"]
+    [codox/codox "0.10.1" :scope "provided"]
 
     [org.clojure/clojure "1.8.0" ]
 
-    [net.mikera/cljunit "0.4.1" :scope "provided"]
+    [net.mikera/cljunit "0.5.0" :scope "provided"]
     [junit/junit "4.12"  :scope "provided"]
 
     ;;[org.projectodd.shimdandy/shimdandy-impl "1.1.0"]
