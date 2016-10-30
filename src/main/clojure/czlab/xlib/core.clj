@@ -104,12 +104,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro trap!
-
-  "Throw this exception"
-  [e & args]
-
-  `(throw (exp! ~e ~@args)))
+(defmacro trap! "Throw this exception" [e & args] `(throw (exp! ~e ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -118,59 +113,41 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn throwUOE
-
-  "Force throw an unsupported operation exception"
-  [^String fmt & xs]
-
-  (->> ^String
-       (apply format fmt xs)
+  "Throw unsupported operation exception"
+  [fmt & xs]
+  (->> (apply format fmt xs)
        (trap! UnsupportedOperationException )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn throwBadArg
-
-  "Force throw a bad parameter exception"
-  [^String fmt & xs]
-
-  (->> ^String
-       (apply format fmt xs)
+  "Throw bad parameter exception"
+  [fmt & xs]
+  (->> (apply format fmt xs)
        (trap! IllegalArgumentException )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti throwIOE
-  "Throw an IO Exception" (fn [a & xs] (class a)))
+(defmulti throwIOE "Throw IO Exception" (fn [a & xs] (class a)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmethod throwIOE Throwable [t & xs] (trap! java.io.IOException t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod throwIOE
-
-  Throwable
-  [^Throwable t & xs]
-
-  (trap! java.io.IOException t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod throwIOE
-
   String
-  [^String fmt & xs]
-
-  (->> ^String
-       (apply format fmt xs)
+  [fmt & xs]
+  (->> (apply format fmt xs)
        (trap! java.io.IOException )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn throwBadData
-
-  "Throw an Bad Data Exception"
-  [^String fmt & xs]
-
-  (->> ^String
-       (apply format fmt xs)
+  "Throw Bad Data Exception"
+  [fmt & xs]
+  (->> (apply format fmt xs)
        (trap! BadDataError )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -191,59 +168,40 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (meta nil) is fine, so no need to worry
-(defmacro getTypeId
-
-  "Get the typeid from the metadata"
-  [m]
-
-  `(:typeid (meta ~m)))
+(defmacro getTypeId "typeId from metadata" [m] `(:typeid (meta ~m)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro try!!
-
   "Eat the exception, log and return a default value"
   [defv & exprs]
-
   `(try ~@exprs (catch Throwable e# (log/warn e# "") ~defv )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro trye!
-
   "Eat the exception and return a default value"
   [defv & exprs]
-
   `(try ~@exprs
         (catch Throwable e#
           (log/warn "Just ate a %s, yummy" (.toString e#)) ~defv )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro try!
-
-  "Eat the exception and return nil"
-  [& forms]
-
-  `(try!! nil ~@forms))
+(defmacro try! "Eat the exception, return nil" [& forms] `(try!! nil ~@forms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro runnable<>
-
   "Create a Runnable wrapper"
-  {:tag Runnable}
   [func]
-
   `(reify Runnable (run [_] (~func))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro when-some+
-
-  "bindings => binding-form test
-   When test is not empty, evaluates body with binding-form bound to the
-   value of test"
+  "bindings => binding-form test. When test is not empty, evaluates body
+  with binding-form bound to the value of test"
   [bindings & body]
 
   (let [form (bindings 0)
@@ -255,10 +213,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro if-some+
-
-  "bindings => binding-form test
-   When test is not empty, evaluates body with binding-form bound to the
-   value of test"
+  "bindings => binding-form test. When test is not empty, evaluates body
+  with binding-form bound to the value of test"
 
   ([bindings then] `(if-some+ ~bindings ~then nil))
   ([bindings then else & oldform]
@@ -311,26 +267,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro do->false
-  "Do and return false" [& forms] `(do ~@forms false))
-(defmacro do->nil
-  "Do and return nil" [& forms] `(do ~@forms nil))
-(defmacro do->true
-  "Do and return true" [& forms] `(do ~@forms true))
+(defmacro do->false "Do and return false" [& forms] `(do ~@forms false))
+(defmacro do->nil "Do and return nil" [& forms] `(do ~@forms nil))
+(defmacro do->true "Do and return true" [& forms] `(do ~@forms true))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro inst?
-
-  "Same as clojure's instance?"
-  [theType theObj]
-
-  `(instance? ~theType ~theObj))
+(defmacro inst? "instance?" [theType theObj] `(instance? ~theType ~theObj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro let-when
-
   ""
   [bindings kond & forms]
 
@@ -339,9 +286,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro cast?
-
-  "If object is an instance of this type,
-   return it else nil"
+  "If object is an instance of this type, return it (typed) else nil"
   [someType obj]
 
   `^{:tag ~someType}
@@ -352,22 +297,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro cexp?
-
-  "Try to cast into an exception"
-  {:tag Throwable}
-  [e]
-
-  (cast? Throwable e))
+(defmacro cexp? "Try casting to Throwable" [e] `(cast? Throwable ~e))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro notnil?
-
-  "is x not nil"
-  [x]
-
-  `(not (nil? ~x)))
+(defmacro notnil? "is x not nil" [x] `(not (nil? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -376,11 +310,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn monoFlop<>
-
   "Flip on first call, useful for one-time logic"
   ^MonoFlop
   []
-
   (let [toggled (atom false)]
     (reify
       MonoFlop
@@ -392,11 +324,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn watch<>
-
   "Use to mark elapsed time"
   ^Watch
   []
-
   (let [start (atom (System/nanoTime))]
     (reify
       Watch
@@ -413,7 +343,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; local hack
 (defn- get-czldr
-
   ""
   {:tag ClassLoader}
 
@@ -423,43 +352,22 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn nilNichts
-
-  "If object is nil, return a NICHTS"
-  {:tag Object :no-doc true}
-  [obj]
-
-  (or obj NICHTS))
+(defn nilNichts "If nil, return NICHTS" {:no-doc true} [obj] (or obj NICHTS))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn isNichts?
+(defn isNichts? "Is it NICHTS" ^:no-doc [obj] (identical? obj NICHTS))
 
-  "true if the object is the NICHTS"
-  ^:no-doc
-  [obj]
-
-  (identical? obj NICHTS))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro rnil "Get rid of nil(s) in seq" [someseq] `(remove nil? ~someseq))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro flatnil
-
-  "Get rid of any nil(s) in a sequence"
-  ^APersistentVector
-  [somesequence]
-
-  `(into [] (remove nil? ~somesequence)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro rnil
-
-  "Get rid of any nil(s) in a sequence"
-  ^PersistentList
-  [somesequence]
-
-  `(remove nil? ~somesequence))
+  "Get rid of nil(s) in seq"
+  [someseq]
+  `(into [] (remove nil? ~someseq)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
