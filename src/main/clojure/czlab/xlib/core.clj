@@ -115,7 +115,7 @@
 (defn throwUOE
   "Throw unsupported operation exception"
   [fmt & xs]
-  (->> (apply format fmt xs)
+  (->> ^String (apply format fmt xs)
        (trap! UnsupportedOperationException )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -123,7 +123,7 @@
 (defn throwBadArg
   "Throw bad parameter exception"
   [fmt & xs]
-  (->> (apply format fmt xs)
+  (->> ^String (apply format fmt xs)
        (trap! IllegalArgumentException )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -132,14 +132,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod throwIOE Throwable [t & xs] (trap! java.io.IOException t))
+(defmethod throwIOE
+  Throwable
+  [^Throwable t & xs] (trap! java.io.IOException t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod throwIOE
   String
   [fmt & xs]
-  (->> (apply format fmt xs)
+  (->> ^String (apply format fmt xs)
        (trap! java.io.IOException )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -147,8 +149,7 @@
 (defn throwBadData
   "Throw Bad Data Exception"
   [fmt & xs]
-  (->> (apply format fmt xs)
-       (trap! BadDataError )))
+  (->> ^String (apply format fmt xs) (trap! BadDataError )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -285,8 +286,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro cast?
-  "If object is an instance of this type, return it (typed) else nil"
+(defmacro XXcast?
+  ""
   [someType obj]
 
   `^{:tag ~someType}
@@ -294,6 +295,15 @@
     (let [x# ~obj]
       (if (instance? ~someType x#)
         (.cast ~someType x#))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro cast?
+  "If object is of this type else nil"
+  [someType obj]
+  `(let [x# ~obj]
+     (if (instance? ~someType x#)
+          ^{:tag ~someType} (identity (.cast ~someType x#)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -372,25 +382,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn interject
-
   "Run the function on the current field value,
    replacing the key with the returned value.
    function(pojo oldvalue) -> newvalue"
   [pojo field func]
-  {:pre [(map? pojo)(fn? func)]}
-
-  (->> (apply func pojo field [])
-       (assoc pojo field )))
+  {:pre [(map? pojo) (fn? func)]}
+  (assoc pojo
+         field
+         (func pojo field)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro spos?
-
-  "Safely test positive number"
-  [e]
-
-  `(let [e# ~e]
-     (and (number? e#)(pos? e#))))
+(defmacro szero? "Safe zero?" [e] `(let [e# ~e] (and (number? e#)(zero? e#))))
+(defmacro sneg? "Safe neg?" [e] `(let [e# ~e] (and (number? e#)(neg? e#))))
+(defmacro spos? "Safe pos?" [e] `(let [e# ~e] (and (number? e#)(pos? e#))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
