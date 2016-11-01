@@ -20,7 +20,15 @@
   (:use [czlab.xlib.core]
         [clojure.test])
 
-  (:import  [java.util Properties Date Calendar]
+  (:import  [java.util
+             ArrayList
+             HashMap
+             HashSet
+             Map
+             Properties
+             Date
+             Calendar
+             TimerTask]
             [java.sql Timestamp]
             [czlab.xlib Muble BadDataError]
             [java.security SecureRandom]
@@ -43,6 +51,7 @@
 (def ^:private dummyProperties (Properties.))
 (def ^:private VAR_USER (System/getProperty "user.name"))
 (def ^:private VAR_PATH (System/getenv "PATH"))
+(def ^:private MUBLE (muble<> {:a 1 :b 2}))
 (eval '(do
   (.put ^Properties dummyProperties "1" "hello${user.name}")
   (.put ^Properties dummyProperties "2" "hello${PATH}")
@@ -254,14 +263,99 @@
   (is (= "/tmp/a.txt"
          (.getPath (fmtFileUrl "file:/tmp/a.txt"))))
 
+  (is (thrown? Throwable (test-isa "reason" String InputStream)))
+  (is (thrown? Throwable (test-isa "reason" "" InputStream)))
+  (is (thrown? Throwable (test-some "reason" nil)))
+  (is (thrown? Throwable (test-cond "reason" (= 1 2))))
+  (is (thrown? Throwable (assert-not (= 1 1))))
+  (is (thrown? Throwable (test-hgl "reason" "")))
 
+  (is (do->true (test-pos0 "reason" 0)))
+  (is (do->true (test-pos0 "reason" 1)))
+  (is (thrown? Throwable (test-pos0 "reason" -1)))
 
+  (is (do->true (test-pos "reason" 1)))
+  (is (thrown? Throwable (test-pos "reason" 0)))
 
+  (is (do->true (test-seq+ "reason" [1 2 3])))
+  (is (thrown? Throwable (test-seq+ "reason" [])))
 
+  (is (let [a (Exception.) b (Exception. a)
+            c (Exception. b) r (rootCause c)]
+        (identical? a r)))
 
+  (is (= "a" (let [a (Exception. "a") b (Exception. a)
+                   c (Exception. b)]
+               (rootCauseMsg c))))
 
-;;
-)
+  (is (= "a,p,z" (sortJoin "," ["z" "p" "a"])))
+
+  (is (= "A" (let [m (doto (HashMap.)
+                       (.put "a" "A")
+                       (.put "z" "Z"))] (:a (pmap<> m)))))
+
+  (is (== 1 (:a (.g (czlab.xlib.core.UnsynchedMObj. {:a 1})))))
+
+  (is (== 1 (:a (.g (czlab.xlib.core.VolatileMObj. {:a 1})))))
+
+  (is (string? (dumpStk (Exception. "a"))))
+
+  (is (not= \: (.charAt (stripNSPath (str ::yo)) 0)))
+
+  (is (inst? TimerTask (tmtask<> #(let [] 1))))
+  (is (do->true (cancelTimerTask (tmtask<> #(let [] 1)))))
+
+  (is (== 9 (do (.setv MUBLE :a 9)
+                (.getv MUBLE :a))))
+
+  (is (nil? (do (.unsetv MUBLE :b)
+                (.getv MUBLE :b))))
+
+  (is (== 7 (do (.getOrSet MUBLE :b 7)
+                (.getv MUBLE :b))))
+
+  (is (== 7 (do (.getOrSet MUBLE :b 6)
+                (.getv MUBLE :b))))
+
+  (is (string? (.toEDN MUBLE)))
+
+  (is (== 9 (:a (.impl MUBLE))))
+
+  (is (== 1 (do (.copyEx MUBLE {:a 1 :y 4 :z 2})
+                (.getv MUBLE :a))))
+
+  (is (== 4 (count (.seq MUBLE))))
+
+  (is (== 2 (do (.copy MUBLE MUBLE)
+                (.getv MUBLE :z))))
+
+  (is (== 6 (do (.clear MUBLE)
+                (.copy MUBLE (muble<> {:p 1 :q 5}))
+                (+ (.getv MUBLE :p)
+                   (.getv MUBLE :q)))))
+
+  (is (not (.contains MUBLE :z)))
+  (is (== 2 (count (.seq MUBLE))))
+
+  (is (nil? (do (.clear MUBLE) (.getv MUBLE :q))))
+
+  (is (thrown? BadDataError (normalizeEmail "xxxx@@@ddddd")))
+  (is (thrown? BadDataError (normalizeEmail "xxxx")))
+  (is (= "abc@abc.com" (normalizeEmail "abc@ABC.cOm")))
+
+  (is (== 1 (.get (convToJava {:a 1}) "a")))
+  (is (== 3 (.get (convToJava [1 2 3]) 2)))
+  (is (== 3 (.size (convToJava #{1 2 3}))))
+
+  (is (== 1 (seqint2)))
+  (is (== 1 (seqint)))
+  (is (== 2 (seqint2)))
+  (is (== 2 (seqint)))
+
+  (is (= "23\n" (with-out-str (prn!! "%d%d" 2 3))))
+  (is (= "23" (with-out-str (prn! "%d%d" 2 3))))
+
+  (is (string? "that's all folks!")))
 
 ;;(clojure.test/run-tests 'czlabtest.xlib.coreutils)
 

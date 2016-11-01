@@ -815,12 +815,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod test-isa :class [^String reason
-                            ^Class childz
-                            ^Class parentz]
-  (assert (and (some? childz)
-               (some? parentz)) "NPE!")
-  (assert (.isAssignableFrom parentz childz)
-          (str reason " not-isa " (.getName parentz))))
+                            ^Class cz ^Class parz]
+  (assert (and (some? cz)
+               (some? parz)) "NPE!")
+  (assert (.isAssignableFrom parz cz)
+          (str reason " not-isa " (.getName parz))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -870,9 +869,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti test-pos
-
   "Check number is positive"
-
   (fn [a b]
     (condp instance? b
       Double  :double
@@ -884,61 +881,49 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod test-pos0
-
   :double
   [^String reason v]
-
   (assert (>= v 0.0)
           (str reason " must be >= 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod test-pos0
-
   :long
   [^String reason v]
-
   (assert (>= v 0)
           (str reason " must be >= 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod test-pos
-
   :double
   [^String reason v]
-
   (assert (> v 0.0)
           (str reason " must be > 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod test-pos
-
   :long
   [^String reason v]
-
   (assert (> v 0)
           (str reason " must be > 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn test-seq+
-
   "Check sequence is not empty"
   [^String reason v]
-
   (assert (> (count v) 0)
           (str reason  " must be non empty")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn rootCause
-
-  "Dig into error and find the root exception"
+  "Find the root error"
   ^Throwable
   [root]
-
   (loop [r root
          t (if (some? root)
              (.getCause ^Throwable root))]
@@ -949,24 +934,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn rootCauseMsg
-
-  "Dig into error and find the root exception message"
+  "Find the root error message"
   [root]
-
-  (if-some [e (rootCause root)]
-    (str (.getName (.getClass e))
-         ": "
-         (.getMessage e))
-    ""))
+  (if-some [e (rootCause root)] (.getMessage e) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn sortJoin
-
   "Sort a list of strings and then concatenate them"
-
   ([ss] (sortJoin "" ss))
-
   ([sep ss]
    (if (empty? ss)
      ""
@@ -975,20 +951,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn pmap<>
-
   "Convert Java Map into Clojure Map"
   ^APersistentMap
   [^java.util.Map props]
 
-  (persistent!
-    (reduce #(assoc! %1 (keyword %2) (.get props %2))
-            (transient {})
-            (.keySet props))))
+  (preduce<map>
+    #(assoc! %1 (keyword %2) (.get props %2))
+    (.keySet props)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftype UnsynchedMObj
-
   [^:unsynchronized-mutable data]
   GetSetClr
 
@@ -996,11 +969,12 @@
   (c [_] (set! data {}))
   (g [_] data))
 
-(ns-unmap *ns* '->UnsynchedMObj)
+;;(ns-unmap *ns* '->UnsynchedMObj)
+(alter-meta! #'->UnsynchedMObj assoc :private true)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftype VolatileMObj
-
   [^:volatile-mutable data]
   GetSetClr
 
@@ -1008,16 +982,17 @@
   (c [_] (set! data {}))
   (g [_] data))
 
-(ns-unmap *ns* '->VolatileMObj)
+;;(ns-unmap *ns* '->VolatileMObj)
+(alter-meta! #'->VolatileMObj assoc :private true)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn muble<>
-
   "Create a (unsynced/volatile), mutable object"
   {:tag Muble}
 
   ([seed] (muble<> seed false))
-  ([] (muble<> {} false))
+  ([] (muble<> {}))
   ([seed volatile??]
    (let [^czlab.xlib.core.GetSetClr
          data (if volatile??
@@ -1026,14 +1001,11 @@
      (reify Muble
        (setv [_ k v]
          (->> (assoc (.g data) k v)
-                     (.s data))
-         v)
+                     (.s data)) v)
        (unsetv [_ k]
          (let [v (get (.g data) k)]
            (->> (dissoc (.g data) k)
-                (.s data))
-           v))
-
+                (.s data)) v))
        (getOrSet [this k v]
          (when-not
            (.contains this k)
@@ -1042,7 +1014,10 @@
        (toEDN [_] (pr-str (.g data)))
        (impl [_] (.g data))
        (copyEx [_ m]
-         (if (map? m) (.s data m)))
+         (if (and (map? m)
+                  (not (identical? (.g data) m)))
+           (->> (merge (.g data) m)
+                (.s data ))))
        (copy [this x]
          (when (and (some? x)
                     (not (identical? this x)))
@@ -1056,22 +1031,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn tmtask<>
-
   "Create a new timer task"
   ^TimerTask
   [func]
   {:pre [(fn? func)]}
-
   (proxy [TimerTask][] (run [] (try! (func)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn prnMuble
-
   "Print out this mutable object"
 
-  ([^Muble ctx] (prnMuble ctx false))
-
+  ([ctx] (prnMuble ctx false))
   ([^Muble ctx dbg]
    (let
      [buf (StringBuilder. "\n")]
@@ -1083,21 +1054,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn prtStk
-
-  "Print stack trace"
-  [^Throwable e]
-
-  (some-> e (.printStackTrace)))
+(defn prtStk "Print stack" [^Throwable e] (some-> e (.printStackTrace)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn dumpStk
-
   "Dump stack trace to string"
   ^String
   [^Throwable e]
-
   (with-open
     [out (ByteArrayOutputStream. BUF_SZ)
      ps (PrintStream. out true "utf-8")]
@@ -1107,11 +1071,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn stripNSPath
-
   "Remove the leading colon"
   ^String
   [path]
-
   (let [s (str path)]
     (if (.startsWith s ":")
       (.substring s 1)
@@ -1120,13 +1082,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn normalizeEmail
-
   "Normalize an email address"
   ^String
   [^String email]
 
   (cond
-
     (empty? email)
     email
 
@@ -1148,11 +1108,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- convList
-
   "Convert sequence to Java List"
   ^ArrayList
   [obj]
-
   (let [rc (ArrayList.)]
     (doseq [v (seq obj)]
       (.add rc (toJava v)))
@@ -1161,11 +1119,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- convSet
-
   "Convert to Java Set"
   ^HashSet
   [obj]
-
   (let [rc (HashSet.)]
     (doseq [v (seq obj)]
       (.add rc (toJava v)))
@@ -1174,11 +1130,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- convMap
-
   "Convert to Java Map"
   ^HashMap
   [obj]
-
   (let [rc (HashMap.)]
     (doseq [[k v] (seq obj)]
       (.put rc (name k) (toJava v)))
@@ -1187,7 +1141,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- toJava
-
   "Convert a clojure collection to its Java equivalent"
   ^Object
   [obj]
@@ -1208,12 +1161,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convToJava
-
-  "Convert a clojure object to a Java object"
-  ^Object
-  [obj]
-
-  (toJava obj))
+  "Clojure to Java" ^Object [obj] (toJava obj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1222,11 +1170,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn seqnext
-
+(defn- seqnext
   "Get the next atomic number"
   [n]
-
   (cond
     (inst? AtomicInteger n)
     (.getAndIncrement ^AtomicInteger n)
@@ -1239,48 +1185,26 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn seqint
-
-  "A sequence number (integer)"
-  ^Integer
-  []
-
-  (seqnext _numInt))
+(defn seqint "A sequence number (integer)" ^Integer [] (seqnext _numInt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn seqint2
-
-  "A sequence number (long)"
-  ^long
-  []
-
-  (seqnext _numLng))
+(defn seqint2 "A sequence number (long)" ^long [] (seqnext _numLng))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro prn!!
-
-  ""
-  [fmt & args]
-
-  `(println (apply format ~fmt ~@args [])))
+  "" [fmt & args] `(println (apply format ~fmt ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro prn!
-
-  ""
-  [fmt & args]
-
-  `(print (apply format ~fmt ~@args [])))
+  "" [fmt & args] `(print (apply format ~fmt ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn cancelTimerTask
-  ""
-  [^TimerTask t]
-  (try! (do->nil (some-> t (.cancel)))))
+  "" [^TimerTask t] (try! (do->nil (some-> t (.cancel)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
