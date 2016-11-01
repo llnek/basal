@@ -14,24 +14,35 @@
 
 (ns czlabtest.xlib.coreutils
 
-  (:require [czlab.xlib.core :as CU])
+  (:require [clojure.string :as cs]
+            [clojure.java.io :as io])
 
-  (:use [clojure.test])
+  (:use [czlab.xlib.core]
+        [clojure.test])
 
   (:import  [java.util Properties Date Calendar]
             [java.sql Timestamp]
-            [czlab.xlib Muble]
+            [czlab.xlib Muble BadDataError]
+            [java.security SecureRandom]
             [java.net URL]
-            [java.io FileOutputStream File]
+            [java.io
+             File
+             InputStream
+             IOException
+             FileOutputStream
+             ByteArrayInputStream]
             [java.nio.charset Charset]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private VAR_USER (System/getProperty "user.name"))
-(def ^:private VAR_PATH (System/getenv "PATH"))
+(set! *warn-on-reflection* false)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (def ^:private dummyResourcePath "czlab/xlib/Resources_en.properties")
 (def ^:private dummyProperties (Properties.))
+(def ^:private VAR_USER (System/getProperty "user.name"))
+(def ^:private VAR_PATH (System/getenv "PATH"))
 (eval '(do
   (.put ^Properties dummyProperties "1" "hello${user.name}")
   (.put ^Properties dummyProperties "2" "hello${PATH}")
@@ -41,102 +52,215 @@
 ;;
 (deftest czlabtestxlib-coreutils
 
-  (is (CU/isNichts? CU/NICHTS))
-  (is (not (CU/isNichts? "")))
-  (is (= (CU/nilNichts nil) CU/NICHTS))
-  (is (= (CU/nilNichts "") ""))
+  (is (let [a (vargs String ["a" "b"])] (== 2 (alength a))))
 
-  (is (not (nil? (CU/juid))))
-  (is (< (.indexOf (CU/juid) ":\\-") 0))
+  (is (map? (pcoll! (transient {}))))
 
-  (is (not (nil? (CU/rand<>))))
+  (is (== 1 (:a (preduce<map> #(assoc! %1 :a %2) [1]))))
 
-  (is (instance? Date (CU/now<date>)))
+  (is (== 1 (last (preduce<vec> #(conj! %1 %2) [1]))))
 
-  (is (instance? Charset (CU/toCharset "utf-16")))
-  (is (instance? Charset (CU/toCharset)))
+  (is (= "a" (sreduce<> #(.append %1 %2) ["a"])))
 
-  (is (= "/c:/temp/abc.txt" (CU/fpath (File. "/c:\\temp\\abc.txt"))))
-  (is (= "/c:/temp/abc.txt" (CU/fpath "/c:\\temp\\abc.txt")))
+  (is (= "a" (.getMessage (exp! Exception "a"))))
 
-  (is (= "Java Virtual Machine Specification" (CU/sysProp "java.vm.specification.name")))
+  (is (thrown? IOException (trap! IOException "a")))
 
-  (is (= "/tmp/a/b/c" (CU/trimLastPathSep  "/tmp/a/b/c////")))
-  (is (= "c:\\temp" (CU/trimLastPathSep  "c:\\temp\\\\\\\\")))
+  (is (let [a (tovargs String "a" "b")] (== 2 (alength a))))
 
-  (is (= "heeloo" (CU/deserialize (CU/serialize "heeloo"))))
+  (is (thrown? UnsupportedOperationException (throwUOE "%s" "a")))
 
-  (is (= "java.lang.String" (CU/getClassname "")))
+  (is (thrown? IllegalArgumentException (throwBadArg "%s" "a")))
 
-;;(is (= "/tmp/a/b/c" (CU/filePath (File. "/tmp/a/b/c"))))
-;;(is (true? (CU/isUnix?)))
+  (is (thrown? IOException (throwIOE (Exception.))))
 
-  (is (= (double 100) (CU/convDouble  "xxxx" 100.0)))
-  (is (= 23.23 (CU/convDouble  "23.23" 100.0)))
-  (is (= 100 (CU/convLong "xxxx" 100)))
-  (is (= 23 (CU/convLong "23" 100)))
+  (is (thrown? IOException (throwIOE "%s" "a")))
 
-  (is (false? (CU/convBool "false")))
-  (is (true? (CU/convBool "true")))
-  (is (true? (CU/convBool "yes")))
-  (is (true? (CU/convBool "1")))
-  (is (false? (CU/convBool "no")))
-  (is (false? (CU/convBool "0")))
+  (is (thrown? BadDataError (throwBadData "bad")))
 
-  (is (= "heeloo" (CU/stringify (CU/bytesify "heeloo"))))
+  (is (= ::yo (getTypeId (with-meta {} {:typeid ::yo}))))
 
-  (is (instance? (class (byte-array 0))
-                 (CU/resBytes dummyResourcePath)))
-  (is (> (.length (CU/resStr dummyResourcePath)) 0))
-  (is (instance? java.net.URL (CU/resUrl dummyResourcePath)))
+  ;;(is (= "a" (try!! "a" (let [] (/ 1 0)))))
 
-  (is (= "heeloo" (CU/stringify (CU/inflate (CU/deflate (CU/bytesify "heeloo"))))))
+  ;;(is (= "a" (trye! "a" (let [] (/ 1 0)))))
 
-  (is (= "0x24A0x3cb0x3eZ0x21" (CU/normalize "$A<b>Z!")))
+  ;;(is (nil? (try! (let [] (/ 1 0)))))
 
-  (is (> (CU/now<>) 0))
+  (is (instance? Runnable (runnable<> #(let [] 0))))
 
-  (is (= "/tmp/abc.txt" (CU/getFPath "file:/tmp/abc.txt")))
+  (is (= "a" (when-some+ [a "a"] a)))
 
-  (is (instance? URL (CU/fmtFileUrl "/tmp/abc.txt")))
+  (is (nil? (when-some+ [a ""] a)))
 
-  (is (true? (do (CU/test-isa "" (Class/forName "java.lang.Long") (Class/forName "java.lang.Number")) true)))
-  (is (true? (do (CU/test-isa "" "" (Class/forName "java.lang.Object")) true)))
-  (is (true? (do (CU/test-some "" (Object.)) true)))
-  (is (true? (do (CU/test-cond "" true) true)))
-  (is (true? (do (CU/test-hgl "" "heeloo") true)))
+  (is (= "a" (if-some+ [a "a"] a)))
 
-  (is (true? (do (CU/test-pos0 "" 23.0) true)))
-  (is (true? (do (CU/test-pos0 "" 23) true)))
-  (is (true? (do (CU/test-pos0 "" 0.0) true)))
-  (is (true? (do (CU/test-pos0 "" 0) true)))
+  (is (= "b" (if-some+ [a ""] a "b")))
 
-  (is (true? (do (CU/test-pos "" 23.0) true)))
-  (is (true? (do (CU/test-pos "" 23) true)))
+  (is (notin? #{:a :b} :c))
 
-  (is (true? (do (CU/test-seq+ "" [ 1 2]) true)))
+  (is (in? #{:a :b} :a))
 
-  (is (false? (CU/notnil? nil)))
-  (is (true? (CU/notnil? "")))
-  (is (= 3 (count (CU/flatnil '(1 2 nil nil 3)))))
-  (is (= 3 (count (CU/flatnil '(1 2 3)))))
-  (is (= 3 (count (CU/flatnil [1 nil 2 nil 3]))))
-  (is (= 0.0 (CU/ndz nil)))
-  (is (= 0 (CU/nnz nil)))
+  (is (false? (do->false nil nil "")))
 
-  (is (thrown? IllegalArgumentException (CU/throwBadArg "a")))
+  (is (nil? (do->nil nil nil "")))
 
-  (is (true? (let [ x (IllegalArgumentException. "") ] (identical? x (CU/rootCause x)))))
+  (is (true? (do->true nil nil "")))
 
-  (is (= "java.lang.IllegalArgumentException: heeloo" (CU/rootCauseMsg (IllegalArgumentException. "heeloo"))))
+  (is (inst? String ""))
 
-  (is (= "ACZ" (CU/sortJoin [ "Z" "C" "A"])))
+  (is (== 3 (let-when [a 1 b 2] (pos? a) (+ a b))))
 
-  (is (false? (nil? (:1 (CU/pmap<> dummyProperties)))))
-  (is (= 3 (count (CU/pmap<> dummyProperties))))
+  (is (nil? (let-when [a 1 b 0] (pos? b) (+ a b))))
 
-  (is (= 100 (.getv (doto (CU/muble<>) (.setv :1 100)) :1)))
+  (is (inst? String (cast? String (.cast String "a"))))
 
+  (is (cexp? (Exception. "a")))
+
+  (is (false? (notnil? nil)))
+
+  (is (notnil? ""))
+
+  (is (false? (.firstCall (doto->> (monoFlop<>)
+                                   (.firstCall )
+                                   (.firstCall )))))
+
+  (is (.firstCall (monoFlop<>)))
+
+  (is (let [w (watch<>) _ (Thread/sleep 1000)
+            m (.elapsedMillis w) n (.elapsedNanos w)]
+        (and (>= m 1000) (>= n 1000000 ))))
+
+  (is (== 3 (count (rnil [1 2 nil 3]))))
+
+  (is (not (vector? (rnil [1 2 nil 3]))))
+
+  (is (== 3 (count (flatnil [1 2 nil 3]))))
+
+  (is (vector? (flatnil [1 2 nil 3])))
+
+  (is (== 2 (:a (interject {:a 1} :a #(inc (get %1 %2))))))
+
+  (is (identical? (nilNichts nil) NICHTS))
+
+  (is (not (szero? nil)))
+  (is (not (sneg? nil)))
+  (is (not (spos? nil)))
+  (is (snneg? 1))
+
+  (is (isNichts? NICHTS))
+
+  (is (not (isNichts? "")))
+
+  (is (= (nilNichts "") ""))
+
+  (is (> (.indexOf (envVar "PATH") "/bin") 0))
+
+  ;;(is (= ::yo (asFQKeyword "yo")))
+
+  (is (notnil? (juid)))
+
+  (is (< (.indexOf (juid) ":\\-") 0))
+
+  (is (let [r (randSign)] (or (pos? r)(neg? r))))
+
+  (is (let [b (randBool)] (or (false? b)(true? b))))
+
+  (is (inst? SecureRandom (rand<>)))
+  (is (inst? Date (now<date>)))
+
+  (is (inst? Charset (toCharset "utf-16")))
+  (is (> (.indexOf (fpath "/tmp/abc/def.txt") "/abc/") 0))
+  (is (> (.indexOf (fpath (io/file "/t/a/d.txt")) "/a/") 0))
+  (is (= "joe"
+         (do (sysProp! "hello" "joe") (sysProp "hello"))))
+
+  (is (inst? File (homeDir)))
+  (is (not-empty (getUser)))
+  (is (inst? File (getCwd)))
+
+  (is (= "a/b/c" (trimLastPathSep "a/b/c/")))
+  (is (= "a\\b" (trimLastPathSep "a\\b\\")))
+
+  (is (let [s (deserialize (serialize "a"))]
+        (and (string? s)
+             (= "a" s))))
+
+  (is (= "java.lang.String" (getClassname String)))
+  (is (= "java.lang.String" (getClassname "")))
+  (is (= "String" (gczn String)))
+
+  (is (> (.indexOf (filePath "c/tmp/a.txt") "/tmp/") 0))
+  (is (> (.indexOf
+           (filePath (io/file "c/tmp/a.txt")) "/tmp/") 0))
+
+  (is (if-not (isWindows?)
+        (or (isUnix?)(isMacOS?)) true))
+  (is (if (isMacOS?) (not (isWindows?)) true))
+  (is (if (isUnix?) (not (isWindows?)) true))
+
+  (is (and (== 911 (convLong "911"))
+           (== 111 (convLong nil 111))))
+
+  (is (and (== 911 (convInt "911"))
+           (== 111 (convInt nil 111))))
+
+  (is (and (> (convDouble "911.123") 911.0)
+           (> (convDouble nil 111.333) 111.0)))
+
+  (is (and (convBool "true")
+           (false? (convBool "false"))
+           (false? (convBool "555"))))
+
+  (is (= "AAA"
+         (let [p (-> (.getBytes "a=AAA")
+                     (ByteArrayInputStream. )
+                     (loadJavaProps ))]
+           (.getProperty p "a"))))
+
+  (is (= "AAA"
+         (let [p (-> (doto (io/file
+                             (sysProp "java.io.tmpdir")
+                             (juid))
+                       (spit "a=AAA"))
+                     (loadJavaProps))]
+           (.getProperty p "a"))))
+
+  (is (= "aaa"
+         (stringify (.getBytes "aaa" "utf-8") "utf-8")))
+
+  (is (== 97 (aget (bytesify "a" "utf-8") 0)))
+
+  (is (with-open
+        [s (resStream "czlab/xlib/sample.ini")]
+        (inst? InputStream s)))
+
+  (is (inst? URL (resUrl "czlab/xlib/sample.ini")))
+
+  (is (string? (resStr "czlab/xlib/sample.ini")))
+
+  (is (> (alength (resBytes "czlab/xlib/sample.ini")) 0))
+
+  (is (= "aaa"
+         (stringify (inflate (deflate (bytesify "aaa"))))))
+
+  (is (not (.endsWith
+             (normalize "/a/b/c!@#*.dat") "!@#*")))
+
+  (is (= (now<>)(now<>)))
+
+  (is (= "/tmp/a.txt" (getFPath "/tmp/a.txt")))
+  (is (= "/tmp/a.txt"
+         (.getPath (fmtFileUrl "/tmp/a.txt"))))
+  (is (= "/tmp/a.txt"
+         (.getPath (fmtFileUrl "file:/tmp/a.txt"))))
+
+
+
+
+
+
+
+;;
 )
 
 ;;(clojure.test/run-tests 'czlabtest.xlib.coreutils)

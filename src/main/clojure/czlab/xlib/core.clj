@@ -77,11 +77,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro vargs "" [z c] `(into-array ~z ~c))
+(defmacro vargs "Coerce into java vargs" [z c] `(into-array ~z ~c))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro pcoll! "" [t] `(persistent! ~t))
+(defmacro pcoll! "Persist a transient" [t] `(persistent! ~t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -396,82 +396,59 @@
 (defmacro szero? "Safe zero?" [e] `(let [e# ~e] (and (number? e#)(zero? e#))))
 (defmacro sneg? "Safe neg?" [e] `(let [e# ~e] (and (number? e#)(neg? e#))))
 (defmacro spos? "Safe pos?" [e] `(let [e# ~e] (and (number? e#)(pos? e#))))
+(defmacro snneg? "Safe not neg?" [e] `(not (sneg? ~e)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ndz
-
-  "0.0 if param is nil"
-  ^double
-  [d]
-
-  `(or ~d 0.0))
+;;(defmacro ndz "0.0 if param is nil" ^double [d] `(or ~d 0.0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro nnz
-
-  "0 is param is nil"
-  ^long
-  [n]
-
-  `(or ~n 0))
+;;(defmacro nnz "0 is param is nil" ^long [n] `(or ~n 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro envVar
-
   "Get value for this env var"
   ^String
   [envname]
-
   `(when-some+ [e# ~envname] (System/getenv e#)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn asFQKeyword
-
+(defmacro asFQKeyword
   "Scope name as a fully-qualified keyword"
-  ^Keyword
   [^String t]
   {:pre [(not (empty? t))
          (< (.indexOf t "/") 0)]}
-
-  (keyword (str *ns* "/" t)))
+  `(keyword (str *ns* "/" ~t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn juid
-
   "Generate a unique id using std java"
   ^String
   []
-
   (.replaceAll (str (UID.)) "[:\\-]+" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn randSign
-
   "Randomly choose a sign, positive or negative"
   ^long
   []
-
   (if (even? (rand-int Integer/MAX_VALUE)) 1 -1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn randBool
-
   "Randomly choose a boolean value"
   []
-
   (if (even? (rand-int Integer/MAX_VALUE)) true false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn rand<>
-
   "A new random object"
   {:tag SecureRandom }
 
@@ -486,18 +463,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro now<date>
-
-  "A java Date"
-  {:tag java.util.Date}
-  []
-
-  `(java.util.Date.))
+(defmacro now<date> "A java Date" [] `(java.util.Date.))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn toCharset
-
   "A java Charset of the encoding"
   {:tag Charset}
 
@@ -507,19 +477,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod fpath
-
   String
   [^String fp]
-
   (if-not (empty? fp) (cs/replace fp #"\\" "/") fp))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod fpath
-
   File
   [^File aFile]
-
   (if (nil? aFile)
     ""
     (fpath (.getCanonicalPath aFile))))
@@ -527,71 +493,41 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro sysProp!
-
-  "Set the value of a system property"
-  [prop value]
-
-  `(System/setProperty ~prop ~value))
+  "Set a system property" [prop value] `(System/setProperty ~prop ~value))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro sysProp
-
-  "Get the value of a system property"
-  {:tag String}
-  [prop]
-
-  `(System/getProperty (str ~prop) ""))
+  "Get value of a system property"
+  [prop] `(System/getProperty (str ~prop) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro homeDir
-
-  "Get the user's home directory"
-  {:tag File}
-  []
-
-  `(io/file (sysProp "user.home")))
+(defmacro homeDir "Get user's home dir" [] `(io/file (sysProp "user.home")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro getUser
-
-  "Get the current user login name"
-  {:tag String}
-  []
-
-  `(sysProp "user.name"))
+(defmacro getUser "Get the user login name" [] `(sysProp "user.name"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro getCwd
-
-  "Get the current dir"
-  {:tag File}
-  []
-
-  `(io/file (sysProp "user.dir")))
+(defmacro getCwd "Get current dir" [] `(io/file (sysProp "user.dir")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn trimLastPathSep
-
   "Get rid of trailing dir paths"
   ^String
   [path]
-
   (.replaceFirst (str path) "[/\\\\]+$"  ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn serialize
-
   "Object serialization"
   ^bytes
   [obj]
   {:pre [(some? obj)]}
-
   (with-open
     [out (ByteArrayOutputStream. BUF_SZ)
      oos (ObjectOutputStream. out)]
@@ -601,12 +537,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn deserialize
-
   "Object deserialization"
   ^Serializable
   [^bytes bits]
   {:pre [(some? bits)]}
-
   (with-open
     [in (ByteArrayInputStream. bits)
      ois (ObjectInputStream. in)]
@@ -615,167 +549,125 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro gczn
-
-  "The basename of this class"
-  {:tag String}
+  "Basename of this class"
   [c]
-
   `(let [x# ~c]
      (if (instance? Class x#) (.getSimpleName x#))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn getClassname
-
   "Get the object's class name"
   ^String
-  [^Object obj]
-
+  [obj]
   (if (nil? obj)
     "null"
-    (.getName (.getClass obj))))
+    (if (inst? Class obj)
+      (.getName ^Class obj)
+      (.getName (.getClass ^Object obj)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro filePath
-
-  "Get the file path"
-  {:tag String}
-  [aFile]
-
-  `(fpath aFile))
+(defmacro filePath "Get the file path" [aFile] `(fpath ~aFile))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn isWindows?
-
-  "true if platform is windows"
-  []
-
-  (>= (.indexOf (cs/lower-case
-                  (sysProp "os.name"))
-                "windows") 0))
+  "Is platform Windows?" []
+  (>= (.indexOf (cs/lower-case (sysProp "os.name")) "windows") 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn isMacOS?
-
-  "true if platform is MacOS"
-  []
-
-  (>= (.indexOf (sysProp "os.name")
-                "Mac ") 0))
+  "Is platform MacOS?" []
+  (>= (.indexOf (sysProp "os.name") "Mac ") 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn isUnix?
-
-  "true if platform is *nix"
-  []
-
-  (not (isWindows?)))
+  "Is platform *nix"
+  [] (and (not (isWindows?))
+          (not (isMacOS?))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convLong
-
-  "Parse string as a long value"
+  "String as a long value"
   {:tag Long}
-
-  ([^String s] (convLong s 0))
+  ([s] (convLong s 0))
   ([^String s dftLongVal]
    (trye! dftLongVal (Long/parseLong s) )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convInt
-
-  "Parse string as an int value"
+  "String as an int value"
   {:tag Integer}
-
-  ([^String s] (convInt s 0))
+  ([s] (convInt s 0))
   ([^String s dftIntVal]
    (trye! (int dftIntVal) (Integer/parseInt s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convDouble
-
-  "Parse string as a double value"
+  "String as a double value"
   {:tag Double}
-
-  ([^String s] (convDouble s 0.0))
+  ([s] (convDouble s 0.0))
   ([^String s dftDblVal]
    (trye! dftDblVal (Double/parseDouble s) )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convBool
-
-  "Parse string as a boolean value"
+  "String as a boolean value"
   [^String s]
-
   (contains? BOOLS (cs/lower-case (str s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod loadJavaProps
-
   InputStream
-  [^InputStream inp]
-
-  (doto (Properties.) (.load inp)))
+  [^InputStream inp] (doto (Properties.) (.load inp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod loadJavaProps
-
   File
-  [^File aFile]
-
-  (loadJavaProps (io/as-url aFile)))
+  [^File aFile] (loadJavaProps (io/as-url aFile)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod loadJavaProps
-
   URL
   [^URL aFile]
-
-  (with-open
-    [inp (.openStream aFile)]
-    (loadJavaProps inp)))
+  (with-open [inp (.openStream aFile)] (loadJavaProps inp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn stringify
-
   "Make a string from bytes"
   {:tag String}
 
-  ([^bytes bits] (stringify bits "utf-8"))
+  ([bits] (stringify bits "utf-8"))
   ([^bytes bits ^String encoding]
     (when (some? bits) (String. bits encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn bytesify
-
   "Get bytes with the right encoding"
   ^bytes
 
-  ([^String s] (bytesify s "utf-8"))
+  ([s] (bytesify s "utf-8"))
   ([^String s ^String encoding]
     (when (some? s) (.getBytes s encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn resStream
-
   "Load the resource as stream"
   {:tag InputStream}
-
-  ([^String rcPath] (resStream rcPath nil))
+  ([rcPath] (resStream rcPath nil))
   ([^String rcPath ^ClassLoader czLoader]
     (when-not (empty? rcPath)
       (-> (get-czldr czLoader)
@@ -784,11 +676,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn resUrl
-
   "Load the resource as URL"
   {:tag URL}
-
-  ([^String rcPath] (resUrl rcPath nil))
+  ([rcPath] (resUrl rcPath nil))
   ([^String rcPath ^ClassLoader czLoader]
    (when-not (empty? rcPath)
      (-> (get-czldr czLoader)
@@ -797,16 +687,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn resStr
-
   "Load the resource as string"
   {:tag String}
 
-  ([^String rcPath ^String encoding]
-   (resStr rcPath encoding nil))
-
-  ([^String rcPath]
-   (resStr rcPath "utf-8" nil))
-
+  ([rcPath ^String encoding] (resStr rcPath encoding nil))
+  ([rcPath] (resStr rcPath "utf-8" nil))
   ([^String rcPath
     ^String encoding ^ClassLoader czLoader]
    (with-open
@@ -819,11 +704,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn resBytes
-
   "Load the resource as byte[]"
   ^bytes
 
-  ([^String rcPath] (resBytes rcPath nil))
+  ([rcPath] (resBytes rcPath nil))
   ([^String rcPath ^ClassLoader czLoader]
    (with-open
      [out (ByteArrayOutputStream. BUF_SZ)
@@ -834,7 +718,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn deflate
-
   "Compress the given byte[]"
   ^bytes
   [^bytes bits]
@@ -861,7 +744,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn inflate
-
   "Decompress the given byte[]"
   ^bytes
   [^bytes bits]
@@ -869,7 +751,7 @@
   (if (some? bits)
     (let [buf (byte-array BUF_SZ)
           decr (Inflater.)
-          baos (ByteArrayOutputStream. (alength bits)) ]
+          baos (ByteArrayOutputStream. (alength bits))]
       (.setInput decr bits)
       (loop []
         (if (.finished decr)
@@ -884,87 +766,66 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn normalize
-
   "Normalize a filepath, hex-code all non-alpha characters"
   ^String
   [^String fname]
 
-  (->>
-    (reduce
-      (fn [^StringBuilder buf ^Character ch]
-        (if (or (java.lang.Character/isLetterOrDigit ch)
-                (contains? #{\_ \- \.} ch))
-          (.append buf ch)
-          (.append buf
-                   (str "0x"
-                        (Integer/toString (int ch) 16)))))
-      (StringBuilder.)
-      (.toCharArray fname))
-    (str )))
+  (sreduce<>
+    (fn [^StringBuilder buf ^Character ch]
+      (if (or (java.lang.Character/isLetterOrDigit ch)
+              (contains? #{\_ \- \.} ch))
+        (.append buf ch)
+        (.append buf
+                 (str "0x"
+                      (Integer/toString (int ch) 16)))))
+    (.toCharArray fname)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro now<>
-
-  "the current time in milliseconds"
-  []
-  `(System/currentTimeMillis))
+(defmacro now<> "current time in millis" [] `(System/currentTimeMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn getFPath
-
-  "the file path only"
-  ^String
-  [^String fileUrlPath]
-
-  (if (empty? fileUrlPath)
-    ""
-    (.getPath (io/as-url fileUrlPath))) )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
+;;scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 (defn fmtFileUrl
-
-  "the file path as URL"
+  "The file path as URL"
   ^URL
   [^String path]
 
   (when-not (empty? path)
-    (io/as-url (if (.startsWith "file:" path)
+    (io/as-url (if (.startsWith path "file:")
                  path
-                 (str "file://" path)))))
+                 (str "file:" path)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn getFPath
+  "The file path only"
+  ^String
+  [^String fileUrlPath]
+  (if-some [u (fmtFileUrl fileUrlPath)] (.getPath u) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test and assert funcs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmulti test-isa
-
-  "Check object is subclass of parent"
-
-  (fn [a b c]
-    (if (instance? Class b) :class :object)))
+  "Is subclass of parent"
+  (fn [a b c] (if (instance? Class b) :class :object)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod test-isa
-
-  :class
-  [^String reason ^Class childz ^Class parz]
-
+(defmethod test-isa :class [^String reason
+                            ^Class childz
+                            ^Class parentz]
   (assert (and (some? childz)
-               (some? parz)) "NPE!")
-  (assert (.isAssignableFrom parz childz)
-          (str reason " not-isa " (.getName parz))))
+               (some? parentz)) "NPE!")
+  (assert (.isAssignableFrom parentz childz)
+          (str reason " not-isa " (.getName parentz))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod test-isa
-
-  :object
-  [^String reason ^Object obj ^Class parz]
-
+(defmethod test-isa :object [^String reason
+                             ^Object obj ^Class parz]
   (assert (and (some? parz)
                (some? obj)) "NPE!")
   (assert (instance? parz obj)
@@ -973,47 +834,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn test-some
-
-  "Check object is not null"
+  "Object is not null"
   [^String reason ^Object obj]
-
   (assert (some? obj)
           (str reason " is null")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn test-cond
-
-  "Check a condition"
-  [^String reason cnd]
-
-  (assert cnd (str reason)))
+(defn test-cond "" [^String reason cnd] (assert cnd (str reason)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro assert-not
-
-  ""
-  [cnd]
-
-  `(assert (not ~cnd)))
+(defmacro assert-not "" [cnd] `(assert (not ~cnd)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn test-hgl
-
-  "Check string is not empty"
+  "String is not empty"
   [^String reason ^String v]
-
   (assert (not (empty? v))
           (str reason " is empty")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti test-pos0
-
   "Check number is not negative"
-
   (fn [a b]
     (condp instance? b
       Double  :double
