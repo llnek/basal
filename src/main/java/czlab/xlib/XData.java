@@ -14,15 +14,17 @@
 
 package czlab.xlib;
 
-import static org.slf4j.LoggerFactory.*;
-import java.io.ByteArrayOutputStream;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.IOException;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+
 import org.slf4j.Logger;
 
 /**
@@ -261,6 +263,9 @@ public class XData implements Serializable, Disposable {
     _data=null;
   }
 
+  public static void main(String[] args) {
+  }
+  
 }
 
 

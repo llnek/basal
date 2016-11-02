@@ -255,7 +255,7 @@
   (is (not (.endsWith
              (normalize "/a/b/c!@#*.dat") "!@#*")))
 
-  (is (= (now<>)(now<>)))
+  (is (<= (now<>) (now<>)))
 
   (is (= "/tmp/a.txt" (getFPath "/tmp/a.txt")))
   (is (= "/tmp/a.txt"
