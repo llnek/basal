@@ -27,7 +27,11 @@
 
   (:import [java.util.concurrent.atomic AtomicLong AtomicInteger]
            [java.util.zip DataFormatException Deflater Inflater]
-           [czlab.xlib MonoFlop Muble Watch]
+           [czlab.xlib
+            MonoFlop
+            Muble
+            Watch
+            RunnableWithId]
            [java.util.concurrent TimeUnit]
            [java.security SecureRandom]
            [java.nio.charset Charset]
@@ -195,8 +199,15 @@
 ;;
 (defmacro runnable<>
   "Create a Runnable wrapper"
-  [func]
-  `(reify Runnable (run [_] (~func))))
+
+  ([func]
+   `(reify Runnable (run [_] (~func))))
+
+  ([func rid]
+   `(reify
+      RunnableWithId
+      (run [_] (~func))
+      (id [_] ~rid))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1212,6 +1223,18 @@
   [] (->> (Runtime/getRuntime)
           (.availableProcessors)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn safeWait
+  "Block current thread for some millisecs"
+  [millisecs]
+  (try! (if (spos? millisecs)
+          (Thread/sleep millisecs))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro sysTmpDir
+  "Java tmp dir" [] `(sysProp "java.io.tmpdir"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

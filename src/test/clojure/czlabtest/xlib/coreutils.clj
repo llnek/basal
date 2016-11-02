@@ -358,6 +358,13 @@
 
   (is (spos? (countCpus)))
 
+  (is (let [s (now<>)
+            _ (safeWait 1000)
+            z (now<>)]
+        (>= z (+ s 1000))))
+
+  (is (> (.length (sysTmpDir)) 0))
+
 
   (is (string? "that's all folks!")))
 

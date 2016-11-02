@@ -17,23 +17,21 @@
 
   czlab.xlib.process
 
-  (:require
-    [czlab.xlib.meta :refer [getCldr]]
-    [czlab.xlib.logging :as log])
+  (:require [czlab.xlib.meta :refer [getCldr]]
+            [czlab.xlib.logging :as log])
 
   (:use [czlab.xlib.core]
         [czlab.xlib.str])
 
-  (:import
-    [czlab.xlib CU CallableWithArgs]
-    [clojure.lang APersistentMap]
-    [java.lang.management
-     RuntimeMXBean
-     ManagementFactory
-     OperatingSystemMXBean ]
-    [java.util.concurrent Callable]
-    [java.util TimerTask Timer]
-    [java.lang Thread Runnable]))
+  (:import [czlab.xlib CU CallableWithArgs]
+           [java.util.concurrent Callable]
+           [clojure.lang APersistentMap]
+           [java.lang.management
+            RuntimeMXBean
+            ManagementFactory
+            OperatingSystemMXBean ]
+           [java.util TimerTask Timer]
+           [java.lang Thread Runnable]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -41,21 +39,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn thread<>
-
   "Run this function in a separate thread"
   {:tag Thread}
 
   ([func start?] (thread<> func start? nil))
   ([func start? arg]
-   {:pre [(fn? func)(or (nil? arg)(map? arg))]}
+   {:pre [(fn? func)(or (nil? arg)
+                        (map? arg))]}
    (let [t (Thread. (runnable<> func))
          c (or (:cl arg)
                (:classLoader arg))]
      (some->> (cast? ClassLoader c)
-              (.setContextClassLoader t ))
-     (.setDaemon t (true? (:daemon arg)))
+              (.setContextClassLoader t))
+     (.setDaemon t
+                 (true? (:daemon arg)))
      (if start? (.start t))
-     (log/debug "thread<>: thread#%s%s%s"
+     (log/debug "thread#%s%s%s"
                 (.getName t)
                 ", daemon = " (.isDaemon t))
      t)))
@@ -63,8 +62,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn syncBlockExec
-
-  "Run this function synchronously"
+  "Run function as synchronized"
   [^Object lock func & args]
   {:pre [(fn? func)]}
 
@@ -79,34 +77,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn async!
-
   "Run this function asynchronously"
 
   ([func] (async! func nil))
-  ([func arg]
-   {:pre [(fn? func) (or (nil? arg)(map? arg))]}
-   (thread<> func true arg)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn safeWait
-
-  "Block current thread for some millisecs"
-  [millisecs]
-
-  (trye! nil
-         (if (> millisecs 0) (Thread/sleep millisecs))))
+  ([func arg] (thread<> func true arg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn jvmInfo
-
   "Get info on the jvm"
   ^APersistentMap
   []
-
-  (let [os (ManagementFactory/getOperatingSystemMXBean)
-        rt (ManagementFactory/getRuntimeMXBean)]
+  (let
+    [os (ManagementFactory/getOperatingSystemMXBean)
+     rt (ManagementFactory/getRuntimeMXBean)]
     {:spec-version (.getSpecVersion rt)
      :vm-version (.getVmVersion rt)
      :spec-vendor (.getSpecVendor rt)
@@ -117,17 +101,15 @@
      :arch (.getArch os)
      :processors (.getAvailableProcessors os)
      :os-name (.getName os)
-     :os-version (.getVersion os) }))
+     :os-version (.getVersion os)}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn processPid
-
   "Get the current process pid"
   ^String
   []
-
   (let [ss (-> (ManagementFactory/getRuntimeMXBean)
                (.getName)
                str
@@ -137,21 +119,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn delayExec
-
   "Run this function after some delay"
   [func delayMillis]
-  {:pre [(fn? func)]}
-
+  {:pre [(fn? func)
+         (number? delayMillis)]}
   (-> (Timer. true)
-      (.schedule (proxy
-                   [TimerTask][]
-                   (run [] (func)))
-                 (long delayMillis))))
+      (.schedule (tmtask<> func)
+                 ^long delayMillis)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn exitHook
-
   "Add this as a shutdown hook"
   [func]
   {:pre [(fn? func)]}
