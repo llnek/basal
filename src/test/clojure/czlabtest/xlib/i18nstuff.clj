@@ -16,22 +16,26 @@
 
   (:use [czlab.xlib.resources]
         [czlab.xlib.core]
-        [clojure.test]))
+        [clojure.test])
+
+  (:import [java.util ResourceBundle]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestxlib-i18nstuff
 
-(is (= "hello joe, how is your dawg"
-       (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
-           (rstr "test"  "joe" "dawg" ))))
+  (is (= "hello joe, how is your dawg"
+         (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
+             (rstr "test"  "joe" "dawg" ))))
 
-(is (= ["hello joe, how is your dawg" "hello joe, how is your dawg"]
-       (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
-           (rstr* ["test"  "joe" "dawg"] ["test2"  "joe" "dawg"] ))))
+  (is (= ["hello joe, how is your dawg" "hello joe, how is your dawg"]
+         (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
+             (rstr* ["test"  "joe" "dawg"] ["test2"  "joe" "dawg"] ))))
 
-)
+  (is (inst? ResourceBundle
+             (getResource "czlab/xlib/Resources")))
 
+  (is (string? "That's all folks!")))
 
 
 ;;(clojure.test/run-tests 'czlabtest.xlib.i18nstuff)

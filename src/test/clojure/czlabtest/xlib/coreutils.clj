@@ -355,7 +355,12 @@
   (is (= "23\n" (with-out-str (prn!! "%d%d" 2 3))))
   (is (= "23" (with-out-str (prn! "%d%d" 2 3))))
 
+
+  (is (spos? (countCpus)))
+
+
   (is (string? "that's all folks!")))
+
 
 ;;(clojure.test/run-tests 'czlabtest.xlib.coreutils)
 

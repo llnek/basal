@@ -14,132 +14,127 @@
 
 (ns czlabtest.xlib.strutils
 
-  (:require [czlab.xlib.str :as SU])
-  (:use [clojure.test]))
+  (:use [czlab.xlib.core]
+        [czlab.xlib.str]
+        [clojure.test]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestxlib-strutils
 
-  (is (not (SU/matchChar? \space #{ \a \b \x })))
-  (is (SU/matchChar? \x #{ \a \b \x }))
 
-  (is (= "ABC" (SU/ucase "abc")))
-  (is (= "abc" (SU/lcase "ABC")))
+  (is (and (nichts? nil)(nichts? "")(nichts? [])))
+  (is (hgl? "sss"))
 
-  (is (= "" (SU/ucase nil)))
-  (is (= "" (SU/lcase nil)))
+  (is (= "a/a" (str (stror nil "a")(stror "/" "a")(stror "" "a"))))
 
-  (is (not (SU/hgl? nil)))
-  (is (not (SU/hgl? "")))
-  (is (SU/hgl? "aaa"))
+  (is (= "az" (str (lcase nil)(lcase "A")(lcase "z"))))
+  (is (= "AZ" (str (ucase nil)(ucase "A")(ucase "z"))))
 
-  (is (= "b" (SU/stror nil "b")))
-  (is (= "b" (SU/stror "" "b")))
-  (is (= "a" (SU/stror "a" "b")))
+  (is (= "abcdefghijk" (triml "abcdefghijk" "xyz")))
+  (is (= "defghijk" (triml "abcdefghijk" "abc")))
+  (is (= "" (triml "abcdefghijk" "abcdefghijk")))
 
-  (is (= "abcdefghijk" (SU/triml "abcdefghijk" "xyz")))
-  (is (= "defghijk" (SU/triml "abcdefghijk" "abc")))
-  (is (= "" (SU/triml "abcdefghijk" "abcdefghijk")))
+  (is (= "abcdefghijk" (trimr "abcdefghijk" "xyz")))
+  (is (= "abcdefgh" (trimr "abcdefghijk" "ijk")))
+  (is (= "" (trimr "abcdefghijk" "abcdefghijk")))
 
-  (is (= "abcdefghijk" (SU/trimr "abcdefghijk" "xyz")))
-  (is (= "abcdefgh" (SU/trimr "abcdefghijk" "ijk")))
-  (is (= "" (SU/trimr "abcdefghijk" "abcdefghijk")))
+  (is (= ["abc" "def" "ghijk"] (splitTokens "abc,def,ghijk,,,," ",")))
+  (is (= ["abc" ":" "def"] (splitTokens "abc:def" ":" true)))
+  (is (= ["abc:def" ] (splitTokens "abc:def" "?")))
 
-  (is (== 4 (SU/countChar "abcaaazzz" \a)))
-  (is (== 0 (SU/countChar "abcaaazzz" \A)))
+  (is (not (embeds? "hello joe" "john")))
+  (is (embeds? "hello joe" "joe"))
+  (is (not (embeds? "hello joe" "JOE")))
 
-  (is (== 4 (SU/countStr "abcaaazzz" "a")))
-  (is (== 0 (SU/countStr "abcaaazzz" "A")))
+  (is (hasNoCase? "hello joe" "JOE"))
 
-  (is (= ["abc" "def" "ghijk"] (SU/splitTokens "abc,def,ghijk,,,," ",")))
-  (is (= ["abc" ":" "def"] (SU/splitTokens "abc:def" ":" true)))
-  (is (= ["abc:def" ] (SU/splitTokens "abc:def" "?")))
+  (is (not (has? "hallowed are the ori" \z)))
+  (is (has? "hallowed are the ori" \w))
 
-  (is (not (SU/embeds? "hello joe" "john")))
-  (is (SU/embeds? "hello joe" "joe"))
-  (is (not (SU/embeds? "hello joe" "JOE")))
-  (is (SU/hasNoCase? "hello joe" "JOE"))
+  (is (== -1 (indexAny "hallowed are the ori" "zku")))
+  (is (== -1 (indexAny "hallowed are the ori" "")))
+  (is (== 5 (indexAny "hallowed are the ori" "zkw")))
+  (is (== 1 (indexAny "hallowed are the ori" "akz")))
 
-  (is (== -1 (SU/indexAny "hallowed are the ori" "zku")))
-  (is (== -1 (SU/indexAny "hallowed are the ori" "")))
-  (is (== 5 (SU/indexAny "hallowed are the ori" "zkw")))
-  (is (== 1 (SU/indexAny "hallowed are the ori" "akz")))
+  (is (== 2 (countStr "abcaaabzzz" "ab")))
+  (is (== 4 (countStr "abcaaazzz" "a")))
+  (is (== 0 (countStr "abcaaazzz" "A")))
 
-  (is (not (SU/has? "hallowed are the ori" \z)))
-  (is (SU/has? "hallowed are the ori" \w))
+  (is (== 4 (countChar "abcaaazzz" \a)))
+  (is (== 0 (countChar "abcaaazzz" \A)))
 
-  (is (= "abc" (SU/sname "abc")))
-  (is (= "abc" (SU/sname :abc)))
-  (is (nil? (SU/sname nil)))
+  (is (= "abc" (sname "abc")))
+  (is (= "abc" (sname :abc)))
+  (is (= "" (sname nil)))
 
-  (is (= :a/b/c (SU/toKW "a" "b" "c")))
-  (is (nil? (SU/toKW )))
+  (is (= "heeloo" (nsb "heeloo")))
+  (is (= "" (nsb nil)))
 
-  (is (= "heeloo" (SU/nsb "heeloo")))
-  (is (= "" (SU/nsb nil)))
+  (is (= :a/b/c (toKW "a" "b" "c")))
+  (is (nil? (toKW )))
 
-  (is (= "heeloo" (SU/nsn "heeloo")))
-  (is (= "(null)" (SU/nsn nil)))
+  (is (= "heeloo" (nsn "heeloo")))
+  (is (= "(null)" (nsn nil)))
 
-  (is (not (SU/same? "aaa" "axa")))
-  (is (SU/same? "aaa" "aaa"))
+  (is (not (matchChar? \space #{ \a \b \x })))
+  (is (matchChar? \x #{ \a \b \x }))
 
-  (is (not (SU/nichts? "aaa")))
-  (is (SU/nichts? nil))
-  (is (SU/nichts? ""))
+  (is (not (same? "aaa" "axa")))
+  (is (same? "aaa" "aaa"))
 
-  (is (= "aaa" (SU/strim "   aaa   ")))
-  (is (= "" (SU/strim nil)))
-  (is (= "aaabbbccc" (SU/strimAny "aaabbbccc" "xyz")))
-  (is (= "bbb" (SU/strimAny "aaabbbccc" "ac")))
-  (is (= "bbb" (SU/strimAny "   aaa  bbb  ccc  " "ac" true)))
+  (is (= "aaa" (strim "   aaa   ")))
+  (is (= "" (strim nil)))
 
-  (is (not (SU/hgl? "")))
-  (is (SU/hgl? "haha"))
-
-  (is (= "haha" (SU/strim "            haha                          ")))
-  (is (= "" (SU/strim nil)))
+  (is (= "aaabbbccc" (strimAny "aaabbbccc" "xyz")))
+  (is (= "bbb" (strimAny "aaabbbccc" "ac")))
+  (is (= "bbb" (strimAny "   aaa  bbb  ccc  " "ac" true)))
 
   (is (= "joe;blogg" (str (doto (StringBuilder.)
-                            (SU/addDelim! ";" "joe")
-                            (SU/addDelim! ";" "blogg")))))
+                            (addDelim! ";" "joe")
+                            (addDelim! ";" "blogg")))))
 
-  (is (= 4 (count (SU/splunk "hello, how are you" 5))))
+  (is (= 4 (count (splunk "hello, how are you" 5))))
 
+  (is (hasicAny? "hello, how are you?" ["HELLO" ]))
+  (is (hasicAny? "hello, how are you?" ["you" ]))
+  (is (not (hasicAny? "hello, how are you?" [])))
+  (is (not (hasicAny? "hello, how are you?" ["z" "x"])))
 
-  (is (SU/hasicAny? "hello, how are you?" ["HELLO" ]))
-  (is (SU/hasicAny? "hello, how are you?" ["you" ]))
-  (is (not (SU/hasicAny? "hello, how are you?" [])))
+  (is (not (hasAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "Are" ])))
+  (is (hasAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "ori" ]))
 
-  (is (not (SU/hasAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "Are" ])))
-  (is (SU/hasAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "ori" ]))
+  (is (ewicAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "Ori" ]))
 
-  (is (SU/swicAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "Hall" ]))
-  (is (SU/swAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "ha" ]))
-  (is (not (SU/swAny? "hallowed are the ori" [ "sdfsdg" "jffflf" ])))
+  (is (ewAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "ori" ]))
+  (is (not (ewAny? "hallowed are the ori" [ "sdfsdg" "jffflf" ])))
 
-  (is (SU/ewicAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "Ori" ]))
-  (is (SU/ewAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "ori" ]))
-  (is (not (SU/ewAny? "hallowed are the ori" [ "sdfsdg" "jffflf" ])))
+  (is (swicAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "Hall" ]))
 
-  (is (SU/eqicAny? "heeloo" [ "sdfsdg" "jffflf" "HeeLoo" ]))
-  (is (SU/eqAny? "heeloo" [ "sdfsdg" "jffflf" "heeloo" ]))
-  (is (not (SU/eqAny? "heeloo" [ "sdfsdg" "jffflf" ])))
+  (is (swAny? "hallowed are the ori" [ "sdfsdg" "jffflf" "ha" ]))
+  (is (not (swAny? "hallowed are the ori" [ "sdfsdg" "jffflf" ])))
 
-  (is (not (SU/eqic? "abc" "AbCd")))
-  (is (SU/eqic? "abc" "AbC"))
+  (is (not (eqic? "abc" "AbCd")))
+  (is (eqic? "abc" "AbC"))
 
-  (is (= 10 (.length (SU/str<> 10 \x))))
-  (is (= "xxx" (SU/str<> 3 \x)))
-  (is (= "ori" (SU/rights "Hallowed are the ori" 3)))
-  (is (= "Hal" (SU/lefts "Hallowed are the ori" 3)))
+  (is (eqicAny? "heeloo" [ "sdfsdg" "jffflf" "HeeLoo" ]))
 
-  (is (= "abc def" (SU/urlDecode (SU/urlEncode "abc def"))))
-  (is (not= "abc def" (SU/urlEncode "abc def")))
+  (is (eqAny? "heeloo" [ "sdfsdg" "jffflf" "heeloo" ]))
+  (is (not (eqAny? "heeloo" [ "sdfsdg" "jffflf" ])))
 
-;;
-)
+  (is (inst? StringBuilder (strbf<> )))
+  (is (= "aaa" (str (strbf<> "aaa"))))
+
+  (is (= 10 (.length (str<> 10 \x))))
+  (is (= "xxx" (str<> 3 \x)))
+
+  (is (= "ori" (rights "Hallowed are the ori" 3)))
+  (is (= "Hal" (lefts "Hallowed are the ori" 3)))
+
+  (is (= "abc def" (urlDecode (urlEncode "abc def"))))
+  (is (not= "abc def" (urlEncode "abc def")))
+
+  (is (string? "That's all folks!")))
 
 
 ;;(clojure.test/run-tests 'czlabtest.xlib.strutils)

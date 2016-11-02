@@ -17,22 +17,20 @@
 
   czlab.xlib.scheduler
 
-  (:require
-    [czlab.xlib.logging :as log])
+  (:require [czlab.xlib.logging :as log])
 
   (:use [czlab.xlib.core]
         [czlab.xlib.str])
 
-  (:import
-    [java.util.concurrent ConcurrentHashMap]
-    [czlab.xlib
-     Schedulable
-     TCore
-     Disposable
-     Activable
-     Identifiable
-     RunnableWithId]
-    [java.util Map Properties Timer TimerTask]))
+  (:import [java.util.concurrent ConcurrentHashMap]
+           [czlab.xlib
+            Schedulable
+            TCore
+            Disposable
+            Activable
+            Identifiable
+            RunnableWithId]
+          [java.util Map Properties Timer TimerTask]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -40,10 +38,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- xrefPID
-
   ""
   [r]
-
   (if
     (instance? Identifiable r)
     (.id ^Identifiable r)))
@@ -51,25 +47,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- preRun
-
   ""
   [^Map hQ w]
-
   (if-some [pid (xrefPID w)] (.remove hQ pid)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- addTimer
-
-  ""
-  [^Timer timer ^TimerTask task delayMillis]
-
+(defn- addTimer "" [^Timer timer
+                    ^TimerTask task delayMillis]
   (.schedule timer task ^long delayMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- mkSCD
-
   ""
   ^Schedulable
   [^String named]
@@ -80,12 +70,11 @@
     (with-meta
       (reify Schedulable
 
-        (alarm [me w arg delayMillis]
+        (alarm [_ w arg delayMillis]
           (if (spos? delayMillis)
             (let
-              [tt
-               (proxy [TimerTask][]
-                 (run [] (.interrupt w arg)))]
+              [tt (tmtask<>
+                    #(.interrupt w arg))]
               (addTimer @timer tt delayMillis)
               tt)))
 
@@ -103,15 +92,13 @@
 
         (postpone [me w delayMillis]
           (cond
-            (== delayMillis 0)
+            (szero? delayMillis)
             (do->nil (.run me w))
-            (< delayMillis 0)
+            (sneg? delayMillis)
             (do->nil (.hold me w))
             :else
-            (let [tt
-                  (proxy
-                    [TimerTask][]
-                    (run [] (.wakeup me w)))]
+            (let [tt (tmtask<>
+                       #(.wakeup me w))]
               (addTimer @timer tt delayMillis)
               tt)))
 
@@ -139,10 +126,8 @@
             (if (some? c) (.dispose c))))
 
         (activate [_ options]
-          (let [t (->> (Runtime/getRuntime)
-                       (.availableProcessors)
-                       (or (:threads options) ))
-                b (not (false? (:trace options)))
+          (let [b (not (false? (:trace options)))
+                t (or (:threads options) 0)
                 c (TCore. named ^long t b)]
             (reset! cpu c)
             (.start c)))
@@ -160,7 +145,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn scheduler<>
-
   "Make a Scheduler"
   {:tag Schedulable }
 
