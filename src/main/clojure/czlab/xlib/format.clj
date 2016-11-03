@@ -17,17 +17,16 @@
 
   czlab.xlib.format
 
-  (:require
-    [clojure.pprint :refer [pprint with-pprint-dispatch]]
-    [czlab.xlib.indent :refer [indent-dispatch]]
-    [czlab.xlib.io :refer [readAsStr]]
-    [czlab.xlib.logging :as log]
-    [clojure.java.io :as io]
-    [clojure.edn :as edn]
-    [clojure.data.json :as js])
+  (:require [clojure.pprint :refer [pprint with-pprint-dispatch]]
+            [czlab.xlib.indent :refer [indent-dispatch]]
+            [czlab.xlib.io :refer [readAsStr]]
+            [czlab.xlib.logging :as log]
+            [clojure.java.io :as io]
+            [clojure.edn :as edn]
+            [clojure.data.json :as js])
 
-  (:import  [java.net URL]
-            [java.io File StringWriter]))
+  (:import [java.net URL]
+           [java.io File StringWriter]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -35,15 +34,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn writeEdnString
-
   "Convert clojure object into EDN format"
   ^String
   [obj]
-
   (if (some? obj)
-    (let [sw (StringWriter.)]
-      (with-pprint-dispatch indent-dispatch (pprint obj sw))
-      (str sw))))
+    (-> (StringWriter.)
+        (pprint obj )
+        (with-pprint-dispatch indent-dispatch )
+        str)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -51,54 +49,34 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readEdn
-
-  File
-  [^File fp]
-
-  (readEdn (io/as-url fp)))
+(defmethod readEdn File [^File fp] (readEdn (io/as-url fp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readEdn
-
-  String
-  [^String s]
-
-  (edn/read-string s))
+(defmethod readEdn String [^String s] (edn/read-string s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readEdn
-
-  URL
-  [^URL url]
-
-  (edn/read-string (readAsStr url)))
+(defmethod readEdn URL [^URL url] (edn/read-string (readAsStr url)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn writeJson
-
   "Convert into JSON"
   ^String
   [data]
-
   (js/write-str data))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn readJsonKW
-
   "Parse JSON into object with keys mapped to keywords"
   [^String data]
-
   (js/read-str data :key-fn keyword))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn readJson
-
   "Parse JSON into object"
   {:tag String}
 

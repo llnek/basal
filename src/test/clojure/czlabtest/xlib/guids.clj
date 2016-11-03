@@ -14,7 +14,7 @@
 
 (ns czlabtest.xlib.guids
 
-  (:require [czlab.xlib.guids :as GU])
+  (:require [czlab.xlib.guids :refer :all])
   (:use [clojure.test]))
 
 ;;(def ^:private UID_2 (GU/new-uuid))
@@ -26,13 +26,14 @@
 ;;
 (deftest czlabtestxlib-guids
 
-  (is (not (= (GU/wwid<>) (GU/wwid<>))))
-  (is (not (= (GU/uuid<>) (GU/uuid<>))))
+  (is (not= (wwid<>) (wwid<>)))
+  (is (not= (uuid<>) (uuid<>)))
 
-  (is (> (.length (GU/wwid<>)) 0))
-  (is (> (.length (GU/uuid<>)) 0))
+  (is (> (.length (wwid<>)) 0))
+  (is (> (.length (uuid<>)) 0))
 
-)
+  (is (string? "That's all folks!")))
+
 
 ;;(clojure.test/run-tests 'czlabtest.xlib.guids)
 

@@ -17,19 +17,17 @@
 
   czlab.xlib.guids
 
-  (:require
-    [czlab.xlib.io :refer [readNumber]]
-    [czlab.xlib.logging :as log])
+  (:require [czlab.xlib.io :refer [readNumber]]
+            [czlab.xlib.logging :as log])
 
   (:use [czlab.xlib.core]
         [czlab.xlib.str])
 
-  (:import
-    [java.lang StringBuilder]
-    [java.net InetAddress]
-    [java.util UUID]
-    [java.lang Math]
-    [java.security SecureRandom]))
+  (:import [java.lang StringBuilder]
+           [java.net InetAddress]
+           [java.util UUID]
+           [java.lang Math]
+           [java.security SecureRandom]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -40,9 +38,7 @@
 (def ^{:private true
        :tag String}
   _SS "YcQnPuzVAvpi7taGj1XwoJbIK3smye96NlHrR2DZS0CUxkLF5O4g8fBTqMEdhW")
-(def ^{:private true
-       :tag chars}
-  _CHARS (.toCharArray _SS))
+(def ^:private _CHARS (.toCharArray _SS))
 (def ^:private _UUIDLEN (.length _SS))
 
 (def ^:private ^String LONG_MASK "0000000000")
@@ -53,7 +49,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- fmt
-
   ""
   ^String
   [^String pad ^String mask]
@@ -66,44 +61,32 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- fmtInt
-
+(defmacro ^:private fmtInt
   ""
-  ^String
-  [nm]
-
-  (fmt INT_MASK (Integer/toHexString nm)))
+  [nm] `(fmt INT_MASK (Integer/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- fmtLong
-
+(defmacro ^:private fmtLong
   ""
-  ^String
-  [nm]
-
-  (fmt LONG_MASK (Long/toHexString nm)))
+  [nm] `(fmt LONG_MASK (Long/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- splitTime
-
   ""
   []
-
   (let [s (fmtLong (now<>))
-        n (.length s) ]
-    [ (lefts s (/ n 2))
-      (rights s (max 0 (- n (/ n 2 )) ))]))
+        n (.length s)]
+    [(lefts s (/ n 2))
+     (rights s (max 0 (- n (/ n 2 ))))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- maybeSetIP
-
   ""
   ^long
   []
-
   (let [neta (InetAddress/getLocalHost)
         b (.getAddress neta)]
     (cond
@@ -119,22 +102,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn uuid<>
-
-  "RFC4122, version 4 form"
-  ^String
-  []
-
-  (str (UUID/randomUUID)))
+(defmacro uuid<> "RFC4122, v4 format" [] `(str (java.util.UUID/randomUUID)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn myOwnNewUUid
-
-  "RFC4122, version 4 form"
-  {:tag String :no-doc true}
+  "RFC4122, v4 format"
+  {:tag String
+   :no-doc true}
   []
-
   ;; At i==19 set the high bits of clock sequence as per rfc4122, sec. 4.1.5
   (let [rc (char-array _UUIDLEN)
         rnd (rand<>) ]
@@ -155,13 +131,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn wwid<>
-
   "A new guid based on time and ip-address"
   ^String
   []
-
-  (let [seed (.nextInt (rand<>) (Integer/MAX_VALUE))
-        ts (splitTime) ]
+  (let [seed (.nextInt (rand<>)
+                       (Integer/MAX_VALUE))
+        ts (splitTime)]
     (str (nth ts 0)
          (fmtLong _IP)
          (fmtInt seed)

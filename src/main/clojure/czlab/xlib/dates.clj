@@ -17,24 +17,22 @@
 
   czlab.xlib.dates
 
-  (:require
-    [czlab.xlib.logging :as log]
-    [clojure.string :as cs])
+  (:require [czlab.xlib.logging :as log]
+            [clojure.string :as cs])
 
   (:use [czlab.xlib.consts]
         [czlab.xlib.core]
         [czlab.xlib.str])
 
-  (:import
-    [java.text ParsePosition SimpleDateFormat]
-    [java.util
-     Locale
-     TimeZone
-     SimpleTimeZone
-     Date
-     Calendar
-     GregorianCalendar]
-    [java.sql Timestamp]))
+  (:import [java.text ParsePosition SimpleDateFormat]
+           [java.util
+            Locale
+            TimeZone
+            SimpleTimeZone
+            Date
+            Calendar
+            GregorianCalendar]
+           [java.sql Timestamp]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -42,10 +40,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn leapYear?
-
-  "true if it's leap year"
+  "If it's leap year"
   [year]
-
   (cond
     (zero? (mod year 400)) true
     (zero? (mod year 100)) false
@@ -54,28 +50,24 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- hastzpart?
-
   "Does the string contain time zone info"
   [^String s]
-
   (let [pos (indexAny s ",; \t\r\n\f")
         ss (if (> pos 0)
              (.substring s (inc pos))
-             "") ]
+             "")]
     (or (hasAny? ss ["+" "-"])
         (.matches ss "\\s*[a-zA-Z]+\\s*"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- hastz?
-
   "Does the string contain time zone info"
   [^String dateStr]
-
   (let [p1 (.lastIndexOf dateStr (int \.))
         p2 (.lastIndexOf dateStr (int \:))
         p3 (.lastIndexOf dateStr (int \-))
-        p4 (.lastIndexOf dateStr (int \/)) ]
+        p4 (.lastIndexOf dateStr (int \/))]
     (cond
       (> p1 0)
       (hastzpart? (.substring dateStr (inc p1)))
@@ -94,22 +86,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn parseTimestamp
-
   "Convert string into a valid Timestamp object
   *tstr* conforming to the format \"yyyy-mm-dd hh:mm:ss.[fff...]\""
   ^Timestamp
   [^String s]
-
-  (trye! nil (Timestamp/valueOf s) ))
+  (try! (Timestamp/valueOf s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn parseDate
-
   "Convert string into a Date object"
   ^Date
   [^String tstr ^String fmt]
-
   (when (and (hgl? tstr)
              (hgl? fmt))
     (.parse (SimpleDateFormat. fmt) tstr)))
@@ -117,11 +105,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- parseIso8601
-
   "Parses datetime in ISO8601 format"
   ^Date
   [^String tstr]
-
   (when (hgl? tstr)
     (let [fmt (if (has? tstr \:)
                 (if (has? tstr \.) DT_FMT_MICRO DT_FMT )
@@ -135,17 +121,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn fmtDate
-
   "Convert Date into string value"
   {:tag String}
 
-  ([^Date dt] (fmtDate dt DT_FMT_MICRO nil))
-  ([^Date dt fmt] (fmtDate dt fmt nil))
+  ([dt] (fmtDate dt DT_FMT_MICRO nil))
+  ([dt fmt] (fmtDate dt fmt nil))
   ([^Date dt fmt ^TimeZone tz]
    (if (or (nil? dt)
            (nichts? fmt))
      ""
-     (let [df (SimpleDateFormat. fmt) ]
+     (let [df (SimpleDateFormat. fmt)]
        (when (some? tz)
          (.setTimeZone df tz))
        (.format df dt)))))
@@ -153,21 +138,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn fmtGMT
-
   "Convert Date object into a string - GMT timezone"
   ^String
   [^Date dt]
-
   (fmtDate dt DT_FMT_MICRO (SimpleTimeZone. 0 "GMT")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- add
-
   "Add some amount to the current date"
   ^Calendar
   [^Calendar cal calendarField amount]
-
   (when (some? cal)
     (doto (GregorianCalendar. (.getTimeZone cal))
       (.setTime (.getTime cal))
@@ -176,7 +157,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn gcal<>
-
   "Make a Calendar"
   {:tag Calendar}
 
@@ -201,11 +181,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn addYears
-
   "Add n more years to the calendar"
   ^Calendar
   [^Calendar cal yrs]
-
   (add cal Calendar/YEAR yrs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
