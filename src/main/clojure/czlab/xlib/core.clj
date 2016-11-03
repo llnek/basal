@@ -668,9 +668,8 @@
 (defn bytesify
   "Get bytes with the right encoding"
   ^bytes
-
-  ([s] (bytesify s "utf-8"))
-  ([^String s ^String encoding]
+  [^String s & [^String encoding]]
+  (let [encoding (str (or encoding "utf-8"))]
     (when (some? s) (.getBytes s encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -717,14 +716,13 @@
 (defn resBytes
   "Load the resource as byte[]"
   ^bytes
+  [^String rcPath & [^ClassLoader czLoader]]
 
-  ([rcPath] (resBytes rcPath nil))
-  ([^String rcPath ^ClassLoader czLoader]
-   (with-open
-     [out (ByteArrayOutputStream. BUF_SZ)
-      inp (resStream rcPath czLoader) ]
-     (io/copy inp out :buffer-size BUF_SZ)
-     (.toByteArray out))))
+  (with-open
+    [out (ByteArrayOutputStream. BUF_SZ)
+     inp (resStream rcPath czLoader)]
+    (io/copy inp out :buffer-size BUF_SZ)
+    (.toByteArray out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

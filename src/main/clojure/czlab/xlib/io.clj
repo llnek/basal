@@ -142,35 +142,35 @@
   ""
   ^bytes
   [^InputStream input]
-  (doto->> (baos<>) (copy input ) (.toByteArray )))
+  (let [os (baos<>)] (copy input os) (.toByteArray os)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn charsToBytes
   "Convert char[] to byte[]"
   ^bytes
+  [^chars chs & [^String encoding]]
 
-  ([chArray] (charsToBytes chArray "utf-8"))
-  ([^chars chArray ^String encoding]
+  (let [encoding (stror encoding "utf-8")]
     (comment
       (-> (Charset/forName encoding)
-          (.encode (CharBuffer/wrap chArray))
+          (.encode (CharBuffer/wrap chs))
           (.array)))
-    (.getBytes (String. chArray) encoding)))
+    (.getBytes (String. chs) encoding)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn toChars
   "Convert byte[] to char[]"
   ^chars
+  [^bytes bytess & [^String encoding]]
 
-  ([byteArray] (toChars byteArray "utf-8"))
-  ([^bytes byteArray ^String encoding]
+  (let [encoding (stror encoding "utf-8")]
    (comment
      (-> (Charset/forName encoding)
-         (.decode (ByteBuffer/wrap byteArray))
+         (.decode (ByteBuffer/wrap bytess))
          (.array)))
-   (.toCharArray (String. byteArray encoding))))
+   (.toCharArray (String. bytess encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -273,6 +273,7 @@
     (with-open [baos (baos<>)
                 g (GZIPOutputStream. baos)]
       (.write g bytess 0 (alength bytess))
+      (.finish g)
       (.toByteArray baos))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -282,7 +283,9 @@
   ^bytes
   [^bytes bytess]
   (if (some? bytess)
-    (toBytes (GZIPInputStream. (streamify bytess)))))
+    (with-open [inp (GZIPInputStream.
+                      (streamify bytess))]
+      (toBytes inp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -656,7 +659,10 @@
   "Write data to file"
   ([fout data] (writeFile fout data "utf-8"))
   ([fout data enc]
-   (io/copy data fout :encoding (stror enc "utf-8"))))
+   (io/copy data
+            fout
+            :buffer-size 4096
+            :encoding (stror enc "utf-8"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -718,7 +724,7 @@
   "Save a file to a directory"
 
   ([dir fname stuff] (saveFile dir fname stuff false))
-  ([^File dir ^String fname ^XData stuff del?]
+  ([dir ^String fname ^XData stuff del?]
    ;;(log/debug "saving file: %s" fname)
    (let [fp (io/file dir fname)]
      (if del?

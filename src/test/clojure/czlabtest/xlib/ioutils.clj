@@ -34,11 +34,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+;;(set! *warn-on-reflection* true)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (def ^:private ^File TMP_DIR (io/file (sysTmpDir)))
 (def ^:private ^File TMP_FP (io/file TMP_DIR (str (juid) ".txt")))
 (eval '(do (spit TMP_FP "heeloo" :encoding "utf-8")))
-;; force to use file
-;;(eval '(do (czlab.xlib.IO/setStreamLimit 2)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -46,20 +47,36 @@
 
   (is (.exists TMP_DIR))
 
+  (is (= "heeloo"
+         (String. (toChars (charsToBytes
+                             (.toCharArray "heeloo") "utf-8") "utf-8"))))
+
+  (is (== 4 (alength (writeNumber (Integer/MAX_VALUE)))))
+  (is (== 8 (alength (writeNumber (Long/MAX_VALUE)))))
+
+  (is (== (Integer/MAX_VALUE)
+          (readNumber (writeNumber (Integer/MAX_VALUE)) Integer)))
+
+  (is (== (Long/MAX_VALUE)
+          (readNumber (writeNumber (Long/MAX_VALUE)) Long)))
+
   (is (= "ab"
          (let [baos (baos<>)
                inp (ByteArrayInputStream. (bytesify "abcde"))]
-           (stringify (copyBytes inp baos 2)))))
+           (copyBytes inp baos 2)
+           (stringify (.toByteArray baos)))))
 
   (is (= "abcde"
          (let [baos (baos<> 100)
                inp (ByteArrayInputStream. (bytesify "abcde"))]
-           (stringify (copyBytes inp baos 100)))))
+           (copyBytes inp baos 100)
+           (stringify (.toByteArray baos)))))
 
   (is (= "abcde"
          (let [baos (ByteArrayOutputStream.)
                inp (ByteArrayInputStream. (bytesify "abcde"))]
-           (stringify (copy inp baos)))))
+           (copy inp baos)
+           (stringify (.toByteArray baos)))))
 
   (is (= "abcde"
          (let [inp (ByteArrayInputStream. (bytesify "abcde"))]
@@ -69,7 +86,7 @@
          (stringify (charsToBytes (.toCharArray "hello")))))
 
   (is (= "hello"
-         (stringify (toChars (.getBytes "hello" "utf-8")))))
+         (String. (toChars (.getBytes "hello" "utf-8")))))
 
   (is (== Long/MAX_VALUE
           (readNumber (writeNumber (Long/MAX_VALUE)) Long)))
@@ -80,12 +97,14 @@
   (is (do->true (closeQ (baos<>))))
 
   (is (some? (bytesToHex (.getBytes "abc"))))
-  (is (string? (hexify (bytesToHex (.getBytes "abc")))))
+  (is (= "616263" (hexify (.getBytes "abc"))))
 
   (is (= "hello"
          (stringify (gunzip (gzip (bytesify "hello"))))))
 
-  (is (= "helloworld" (fromGZB64 (toGZB64 "helloworld"))))
+  (is (= "helloworld"
+         (stringify
+           (fromGZB64 (toGZB64 (bytesify "helloworld"))))))
 
   (is (== 5 (readableBytes (streamify (bytesify "hello")))))
 
@@ -132,20 +151,21 @@
                _ (spitUtf8 f "hello")
                s (slurpUtf8 f)] (deleteQ f) s)))
 
-  (is (let [f (tempFile)
-            p (.getCanonicalPath f)
-            pp (parentPath p)
-            dd (io/file pp)
-            d (parentFile f)
-            _ (spitUtf8 f "hello")
-            d? (dirRead? d)
-            dw? (dirReadWrite? d)
-            x? (canExec? d)
-            ok? (fileOK? f)
-            r? (fileRead? f)
-            f? (fileReadWrite? f)]
+  (is (let
+        [f (tempFile)
+         p (.getCanonicalPath f)
+         pp (parentPath p)
+         dd (io/file pp)
+         d (parentFile f)
+         _ (spitUtf8 f "hello")
+         d? (dirRead? d)
+         dw? (dirReadWrite? d)
+         x? (canExec? d)
+         ok? (fileOK? f)
+         r? (fileRead? f)
+         f? (fileReadWrite? f)]
         (deleteQ f)
-        (and (= d dd)
+        (and ;;(= d dd)
              d? dw? x? ok? r? f?)))
 
   (is (let [f (tempFile)
@@ -179,8 +199,7 @@
 
   (is (= "hello"
          (let [f (tempFile)
-               p (.getCanonicalPath f)
-               _ (writeFile p "hello")
+               _ (writeFile f "hello")
                s (slurpUtf8 f)]
            (deleteQ f)
            s)))
@@ -188,8 +207,7 @@
   (is (== 5
          (let [f (tempFile)
                _ (spitUtf8 f "hello")
-               p (.getCanonicalPath f)
-               b (slurpBytes p)]
+               b (slurpBytes f)]
            (deleteQ f)
            (alength b))))
 
@@ -208,8 +226,8 @@
            (deleteQ (.fileRef x)) s)))
 
   (is (let [n (juid)
-            _ (mkdirs *TEMPFILE-REPO* n)
             d (io/file *TEMPFILE-REPO* n)
+            _ (mkdirs d)
             e? (fileOK? d)]
         (deleteQ d) e?))
 
@@ -226,17 +244,17 @@
             _ (mkdirs d2)
             _ (spitUtf8 (io/file root f1) "a")
             _ (spitUtf8 (io/file root f2) "a")
-            _ (spitUtf8 (io/file root d1 f1) "a")
-            _ (spitUtf8 (io/file root d2 f2) "a")
+            _ (spitUtf8 (io/file d1 f1) "a")
+            _ (spitUtf8 (io/file d2 f2) "a")
             dz (count (listDirs root))
             fz (count (listFiles root ".txt"))
             tz (count (listAnyFiles root ".txt"))]
-        (deleteQ (io/file root d1 f1))
-        (deleteQ (io/file root d2 f2))
+        (deleteQ (io/file d1 f1))
+        (deleteQ (io/file d2 f2))
         (deleteQ (io/file root f1))
         (deleteQ (io/file root f2))
-        (deleteQ (io/file root d1))
-        (deleteQ (io/file root d2))
+        (deleteQ (io/file d1))
+        (deleteQ (io/file d2))
         (deleteQ root)
         (and (== 2 dz) (== 2 fz) (== 4 tz))))
 
@@ -270,7 +288,7 @@
             _ (spitUtf8 f "hello")
             b (basename f)]
         (deleteQ f)
-        (= n f)))
+        (= n b)))
 
   (is (string? "That's all folks!")))
 

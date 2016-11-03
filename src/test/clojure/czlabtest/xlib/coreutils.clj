@@ -25,6 +25,8 @@
              HashMap
              HashSet
              Map
+             List
+             Set
              Properties
              Date
              Calendar
@@ -43,7 +45,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(set! *warn-on-reflection* false)
+;;(set! *warn-on-reflection* true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -51,7 +53,7 @@
 (def ^:private dummyProperties (Properties.))
 (def ^:private VAR_USER (System/getProperty "user.name"))
 (def ^:private VAR_PATH (System/getenv "PATH"))
-(def ^:private MUBLE (muble<> {:a 1 :b 2}))
+(def ^:private ^Muble MUBLE (muble<> {:a 1 :b 2}))
 (eval '(do
   (.put ^Properties dummyProperties "1" "hello${user.name}")
   (.put ^Properties dummyProperties "2" "hello${PATH}")
@@ -61,7 +63,8 @@
 ;;
 (deftest czlabtestxlib-coreutils
 
-  (is (let [a (vargs String ["a" "b"])] (== 2 (alength a))))
+  (is (let [a (vargs String ["a" "b"])]
+        (== 2 (alength #^"[Ljava.lang.String;" a))))
 
   (is (map? (pcoll! (transient {}))))
 
@@ -69,13 +72,16 @@
 
   (is (== 1 (last (preduce<vec> #(conj! %1 %2) [1]))))
 
-  (is (= "a" (sreduce<> #(.append %1 %2) ["a"])))
+  (is (= "a"
+         (sreduce<>
+           #(.append ^StringBuilder %1 %2) ["a"])))
 
   (is (= "a" (.getMessage (exp! Exception "a"))))
 
   (is (thrown? IOException (trap! IOException "a")))
 
-  (is (let [a (tovargs String "a" "b")] (== 2 (alength a))))
+  (is (let [a (tovargs String "a" "b")]
+        (== 2 (alength #^"[Ljava.lang.String;" a))))
 
   (is (thrown? UnsupportedOperationException (throwUOE "%s" "a")))
 
@@ -343,9 +349,9 @@
   (is (thrown? BadDataError (normalizeEmail "xxxx")))
   (is (= "abc@abc.com" (normalizeEmail "abc@ABC.cOm")))
 
-  (is (== 1 (.get (convToJava {:a 1}) "a")))
-  (is (== 3 (.get (convToJava [1 2 3]) 2)))
-  (is (== 3 (.size (convToJava #{1 2 3}))))
+  (is (== 1 (.get ^Map (convToJava {:a 1}) "a")))
+  (is (== 3 (.get ^List (convToJava [1 2 3]) 2)))
+  (is (.contains ^Set (convToJava #{1 2 3}) 3))
 
   (is (== 1 (seqint2)))
   (is (== 1 (seqint)))
