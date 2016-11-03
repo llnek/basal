@@ -17,25 +17,23 @@
 
   czlab.xlib.ini
 
-  (:require
-    [czlab.xlib.io :refer [fileRead?]]
-    [czlab.xlib.logging :as log]
-    [clojure.java.io :as io]
-    [clojure.string :as cs])
+  (:require [czlab.xlib.io :refer [fileRead?]]
+            [czlab.xlib.logging :as log]
+            [clojure.java.io :as io]
+            [clojure.string :as cs])
 
   (:use [flatland.ordered.map]
         [czlab.xlib.core]
         [czlab.xlib.str])
 
-  (:import
-    [czlab.xlib Win32Conf]
-    [java.net URL]
-    [java.io
-     File
-     PrintStream
-     IOException
-     InputStreamReader
-     LineNumberReader]))
+  (:import [czlab.xlib Win32Conf]
+           [java.net URL]
+           [java.io
+            File
+            PrintStream
+            IOException
+            InputStreamReader
+            LineNumberReader]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -43,45 +41,38 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti w32ini<>
-  "Parse a INI config file"  {:tag Win32Conf} class)
+  "Parse a INI config file" {:tag Win32Conf} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- throwBadIni
-
   ""
   [^LineNumberReader rdr]
-
-  (throwBadData (format "Bad ini line: %s" (.getLineNumber rdr))))
+  (throwBadData "Bad ini line: %s" (.getLineNumber rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private throwBadKey
-
   ""
   [k]
-
-  `(throwBadData (format "No such item %s" ~k)))
+  `(throwBadData "No such item %s" ~k))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private throwBadMap
-
   ""
   [s]
-
-  `(throwBadData (format "No such heading %s" ~s)))
+  `(throwBadData "No such heading %s" ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- maybeSection
-
   "Look for a section, store the actual section name in metadata"
   [^LineNumberReader rdr
    ncmap
    ^String line]
 
-  (if-some+ [s (strimAny line "[]" true) ]
+  (if-some+ [s (strimAny line "[]" true)]
     (let [k (keyword (lcase s))]
       (if-not (contains? @ncmap k)
         (->> (assoc @ncmap
@@ -94,22 +85,24 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- maybeLine
-
   "Parse a line (name=value) under a section"
   [^LineNumberReader rdr
    ncmap
    section
    ^String line]
 
-  (if-some [kvs (get @ncmap section) ]
+  (if-some [kvs (get @ncmap section)]
     (let [pos (.indexOf line (int \=))
           nm (if (> pos 0)
                (strim (.substring line 0 pos))
-               "" ) ]
+               "" )]
       (if (nichts? nm)
         (throwBadIni rdr))
       (let [k (keyword (lcase nm))]
-        (->> (assoc kvs k [nm  (strim (.substring line (inc pos)))])
+        (->> (assoc kvs
+                    k
+                    [nm  (strim (.substring line
+                                            (inc pos)))])
              (swap! ncmap assoc section)))
       section)
     (throwBadIni rdr)))
@@ -117,7 +110,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- evalOneLine
-
   "Parse a line in the file"
   [^LineNumberReader rdr
    ncmap
@@ -139,7 +131,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- getKV
-
   ""
   ^String
   [sects s k err]
@@ -156,18 +147,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- makeWinini
-
   ""
   [sects]
 
   (reify Win32Conf
 
     (headings [_]
-      (persistent!
-        (reduce
-          #(conj! %1 (:name (meta %2)))
-          (transient #{})
-          (vals sects))))
+      (preduce<set>
+        #(conj! %1 (:name (meta %2)))
+        (vals sects)))
 
     (heading [_ sect]
       (let [sn (keyword (lcase sect))]
@@ -176,45 +164,45 @@
                 (sorted-map)
                 (or (vals (get sects sn)) []))))
 
-    (strValue [this section prop]
-      (str (getKV sects section prop true)))
+    (strValue [this sect prop]
+      (str (getKV sects sect prop true)))
 
-    (strValue [this section prop dft]
-      (if-some [rc (getKV sects section prop false) ]
+    (strValue [this sect prop dft]
+      (if-some [rc (getKV sects sect prop false)]
         rc
         dft))
 
-    (longValue [this section prop dft]
-      (if-some [rc (getKV sects section prop false) ]
+    (longValue [this sect prop dft]
+      (if-some [rc (getKV sects sect prop false)]
         (convLong rc)
         dft))
 
-    (longValue [this section prop]
-      (convLong (getKV sects section prop true) 0))
+    (longValue [this sect prop]
+      (convLong (getKV sects sect prop true) 0))
 
-    (intValue [this section prop dft]
-      (if-some [rc (getKV sects section prop false) ]
+    (intValue [this sect prop dft]
+      (if-some [rc (getKV sects sect prop false)]
         (convInt rc dft)
         dft))
 
-    (intValue [this section prop]
-      (convInt (getKV sects section prop true) ))
+    (intValue [this sect prop]
+      (convInt (getKV sects sect prop true)))
 
-    (doubleValue [this section prop dft]
-      (if-some [rc (getKV sects section prop false) ]
+    (doubleValue [this sect prop dft]
+      (if-some [rc (getKV sects sect prop false)]
         (convDouble rc dft)
         dft))
 
-    (doubleValue [this section prop]
-      (convDouble (getKV sects section prop true) ))
+    (doubleValue [this sect prop]
+      (convDouble (getKV sects sect prop true)))
 
-    (boolValue [this section prop dft]
-      (if-some [rc (getKV sects section prop false) ]
+    (boolValue [this sect prop dft]
+      (if-some [rc (getKV sects sect prop false)]
         (convBool rc dft)
         dft))
 
-    (boolValue [this section prop]
-      (convBool (getKV sects section prop true) ))
+    (boolValue [this sect prop]
+      (convBool (getKV sects sect prop true)))
 
     (dbgShow [_]
       (let [buf (strbf<>)]
@@ -228,34 +216,30 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod w32ini<>
-
   String
   [fpath]
-
   (if (some? fpath)
     (w32ini<> (io/file fpath))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod w32ini<>
-
   File
   [file]
-
   (if (fileRead? file)
     (w32ini<> (io/as-url file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- parseFile
-
   ""
   {:tag Win32Conf}
 
   ([^URL fUrl] (parseFile fUrl "utf-8"))
   ([^URL fUrl enc]
    (with-open [inp (-> (.openStream fUrl)
-                       (io/reader :encoding (stror enc "utf8"))
+                       (io/reader :encoding
+                                  (stror enc "utf8"))
                        (LineNumberReader. ))]
      (loop [total (atom (sorted-map))
             rdr inp
@@ -266,15 +250,14 @@
          (recur total
                 rdr
                 (.readLine rdr)
-                (evalOneLine rdr total curSec line)))))))
+                (evalOneLine rdr
+                             total curSec line)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod w32ini<>
-
   URL
   [^URL fileUrl]
-
   (if (some? fileUrl)
     (parseFile fileUrl)))
 

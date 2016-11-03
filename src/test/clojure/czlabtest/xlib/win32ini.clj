@@ -14,16 +14,17 @@
 
 (ns czlabtest.xlib.win32ini
 
-  (:require
-    [czlab.xlib.core :as CU]
-    [czlab.xlib.ini :as WI])
-  (:use [clojure.test])
-  (:import
-    [czlab.xlib Win32Conf]))
+  (:use [czlab.xlib.core]
+        [czlab.xlib.ini]
+        [clojure.test])
+
+  (:import [czlab.xlib Win32Conf]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^Win32Conf ^:private INIFILE (WI/w32ini<> (CU/resUrl "czlab/xlib/sample.ini")))
+(def
+  ^:private
+  ^Win32Conf INIFILE (w32ini<> (resUrl "czlab/xlib/sample.ini")))
 
 ;;(println "->>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 ;;(.dbgShow INIFILE)
@@ -38,12 +39,14 @@
   (is (map? (.heading INIFILE "operating systems")))
   (is (map? (.heading INIFILE "boot loader")))
 
-  (is (true? (.endsWith (.strValue INIFILE "boot loader" "default") "WINDOWS")))
+  (is (.endsWith
+        (.strValue INIFILE
+                   "boot loader" "default") "WINDOWS"))
 
-  (is (true? (= (.longValue INIFILE "boot loader" "timeout") 30)))
+  (is (= (.longValue INIFILE
+                     "boot loader" "timeout") 30))
 
-
-)
+  (is (string? "That's all folks!")))
 
 
 ;;(clojure.test/run-tests 'czlabtest.xlib.win32ini)

@@ -89,15 +89,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro preduce<map> "" [f c] `(persistent! (reduce ~f (transient {}) ~c)))
+(defmacro preduce<map>
+  "" [f c] `(persistent! (reduce ~f (transient {}) ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro preduce<vec> "" [f c] `(persistent! (reduce ~f (transient []) ~c)))
+(defmacro preduce<set>
+  "" [f c] `(persistent! (reduce ~f (transient #{}) ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro sreduce<> "" [f c] `(str (reduce ~f (StringBuilder.) ~c)))
+(defmacro preduce<vec>
+  "" [f c] `(persistent! (reduce ~f (transient []) ~c)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro sreduce<>
+  "" [f c] `(str (reduce ~f (StringBuilder.) ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
