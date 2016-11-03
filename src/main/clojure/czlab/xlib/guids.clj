@@ -18,7 +18,7 @@
   czlab.xlib.guids
 
   (:require
-    [czlab.xlib.io :refer [readInt readLong]]
+    [czlab.xlib.io :refer [readNumber]]
     [czlab.xlib.logging :as log])
 
   (:use [czlab.xlib.core]
@@ -110,8 +110,8 @@
       (.isLoopbackAddress neta)
       (.nextLong (rand<>))
       (== 4 (alength b))
-      (long (readInt b))
-      :else (readLong b))))
+      (long (readNumber b Integer))
+      :else (readNumber b Long))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -26,13 +26,14 @@
 ;;
 (deftest czlabtestxlib-byteutils
 
-  (is (= "heeloo" (String. (BU/toChars (BU/charsToBytes (.toCharArray "heeloo") CS_UTF8) CS_UTF8))))
+  (is (= "heeloo" (String. ^chars
+                           (BU/toChars (BU/charsToBytes (.toCharArray "heeloo") CS_UTF8) CS_UTF8))))
 
-  (is (= 4 (alength ^bytes (BU/writeBytes (Integer/MAX_VALUE)))))
-  (is (= 8 (alength ^bytes (BU/writeBytes (Long/MAX_VALUE)))))
+  (is (= 4 (alength ^bytes (BU/writeNumber (Integer/MAX_VALUE)))))
+  (is (= 8 (alength ^bytes (BU/writeNumber (Long/MAX_VALUE)))))
 
-  (is (= (Integer/MAX_VALUE) (BU/readInt (BU/writeBytes (Integer/MAX_VALUE)))))
-  (is (= (Long/MAX_VALUE) (BU/readLong (BU/writeBytes (Long/MAX_VALUE)))))
+  (is (= (Integer/MAX_VALUE) (BU/readNumber (BU/writeNumber (Integer/MAX_VALUE)) Integer)))
+  (is (= (Long/MAX_VALUE) (BU/readNumber (BU/writeNumber (Long/MAX_VALUE)) Long)))
 
 )
 
