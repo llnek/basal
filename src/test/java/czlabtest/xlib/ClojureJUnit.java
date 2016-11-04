@@ -25,18 +25,14 @@ public class ClojureJUnit extends ClojureTest {
   @Override
   public List<String> namespaces() {
     return Arrays.asList(new String[] {
-      "czlabtest.xlib.codes",
       "czlabtest.xlib.coreutils",
       "czlabtest.xlib.dateutils",
-      "czlabtest.xlib.fileutils",
-      "czlabtest.xlib.guids",
+      "czlabtest.xlib.misc",
       "czlabtest.xlib.ioutils",
       "czlabtest.xlib.metautils",
       "czlabtest.xlib.procutils",
-      "czlabtest.xlib.seqnum",
       "czlabtest.xlib.strutils",
-      "czlabtest.xlib.win32ini",
-      "czlabtest.xlib.i18nstuff"
+      "czlabtest.xlib.win32ini"
     });
   }
 }

@@ -372,6 +372,9 @@
   (is (> (.length (sysTmpDir)) 0))
 
 
+  (is (> (seqint2) 0))
+  (is (> (seqint) 0))
+
   (is (string? "that's all folks!")))
 
 

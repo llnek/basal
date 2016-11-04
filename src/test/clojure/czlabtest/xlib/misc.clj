@@ -12,14 +12,24 @@
 ;;
 ;; Copyright (c) 2013-2016, Kenneth Leung. All rights reserved.
 
-(ns czlabtest.xlib.codes
+(ns czlabtest.xlib.misc
 
-  (:use [czlab.xlib.countries]
-        [clojure.test]))
+  (:use [czlab.xlib.guids]
+        [czlab.xlib.core]
+        [czlab.xlib.resources]
+        [czlab.xlib.countries]
+        [clojure.test])
+
+  (:import [java.util ResourceBundle]))
+
+;;(def ^:private UID_2 (GU/new-uuid))
+;;(def ^:private UID_1 (GU/new-uuid))
+;;(def ^:private WID_2 (GU/new-wwid))
+;;(def ^:private WID_1 (GU/new-wwid))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftest czlabtestxlib-codes
+(deftest czlabtestxlib-misc
 
   (is (= (findCountry "AU") (findCountry "au")))
   (is (= "Australia" (findCountry "AU")))
@@ -33,8 +43,28 @@
   (is (= "CA" (findStateCode "California")))
   (is (> (count (listStates)) 0))
 
+  (is (not= (wwid<>) (wwid<>)))
+  (is (not= (uuid<>) (uuid<>)))
+
+  (is (> (.length (wwid<>)) 0))
+  (is (> (.length (uuid<>)) 0))
+
+
+  (is (= "hello joe, how is your dawg"
+         (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
+             (rstr "test"  "joe" "dawg" ))))
+
+  (is (= ["hello joe, how is your dawg" "hello joe, how is your dawg"]
+         (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
+             (rstr* ["test"  "joe" "dawg"] ["test2"  "joe" "dawg"] ))))
+
+  (is (inst? ResourceBundle
+             (getResource "czlab/xlib/Resources")))
+
+
+
   (is (string? "That's all folks!")))
 
 
-;;(clojure.test/run-tests 'czlabtest.xlib.codes)
+;;(clojure.test/run-tests 'czlabtest.xlib.misc)
 

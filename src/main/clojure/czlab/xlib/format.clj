@@ -17,8 +17,9 @@
 
   czlab.xlib.format
 
-  (:require [clojure.pprint :refer [pprint with-pprint-dispatch]]
-            [czlab.xlib.indent :refer [indent-dispatch]]
+  (:require [czlab.xlib.indent :refer [indent-dispatch]]
+            [clojure.pprint
+             :refer [pprint with-pprint-dispatch]]
             [czlab.xlib.io :refer [readAsStr]]
             [czlab.xlib.logging :as log]
             [clojure.java.io :as io]
