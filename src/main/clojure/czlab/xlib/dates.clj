@@ -39,6 +39,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
+(def ^String TS_REGEX "^\\d\\d\\d\\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])\\s\\d\\d:\\d\\d:\\d\\d")
+(def ^String DT_REGEX "^\\d\\d\\d\\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$")
+
+(def ^String TS_FMT_NANO "yyyy-MM-dd HH:mm:ss.fffffffff" )
+(def ^String TS_FMT "yyyy-MM-dd HH:mm:ss")
+
+(def ^String DT_FMT_MICRO "yyyy-MM-dd'T'HH:mm:ss.SSS" )
+(def ^String DT_FMT "yyyy-MM-dd'T'HH:mm:ss" )
+(def ^String DATE_FMT "yyyy-MM-dd" )
+
+(def ^String ISO8601_FMT "yyyy-MM-dd'T'HH:mm:ss.SSSZ" )
+
+(def MONTHS ["JAN" "FEB" "MAR" "APR" "MAY" "JUN"
+             "JUL" "AUG" "SEP" "OCT" "NOV" "DEC" ] )
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn leapYear?

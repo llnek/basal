@@ -17,9 +17,8 @@
 
   czlab.xlib.countries
 
-  (:require
-    [czlab.xlib.logging :as log]
-    [clojure.string :as cs])
+  (:require [czlab.xlib.logging :as log]
+            [clojure.string :as cs])
 
   (:use [czlab.xlib.str]))
 
@@ -270,39 +269,25 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn findCountry
-
   "The full country name"
   ^String
   [^String code]
-
   (get _CCODES (ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn listCodes
-
-  "List all the country codes"
-  []
-
-  (keys _CCODES))
+(defn listCodes "List all the country codes" [] (keys _CCODES))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn isUSA?
-
-  "true if the code is US"
-  [^String code]
-
-  (= "US" (ucase code)))
+(defn isUSA? "If the code is US" [^String code] (= "US" (ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn findCountryCode
-
-  "the country code"
+  "The country code"
   ^String
   [^String country]
-
   (when-some [rs (filter #(= (nth % 1) country) _CCODESEQ) ]
     (nth (first rs) 0)))
 
@@ -367,31 +352,22 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn listStates
-
-  "List all the abbreviated states"
-  []
-
-  (keys _STATES))
+(defn listStates "List all the abbreviated states" [] (keys _STATES))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn findState
-
   "The full state name"
   ^String
   [^String code]
-
   (get _STATES (ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn findStateCode
-
   "The abbreviated state code"
   ^String
   [^String state]
-
   (when-some [rs (filter #(= (nth % 1) state) _STATESSEQ) ]
     (nth (first rs) 0)))
 

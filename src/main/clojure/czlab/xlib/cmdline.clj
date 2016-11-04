@@ -17,31 +17,28 @@
 
   czlab.xlib.cmdline
 
-  (:require
-    [czlab.xlib.logging :as log]
-    [clojure.string :as cs])
+  (:require [czlab.xlib.logging :as log]
+            [clojure.string :as cs])
 
   (:use [czlab.xlib.core]
         [czlab.xlib.str])
 
-  (:import
-    [java.io
-     InputStreamReader
-     OutputStreamWriter
-     BufferedOutputStream]
-    [java.io Reader Writer]))
+  (:import [java.io
+            InputStreamReader
+            OutputStreamWriter
+            BufferedOutputStream]
+           [java.io Reader Writer]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- readData
-
   "Read user input"
   ^String
   [^Writer cout ^Reader cin]
-
   ;; windows has '\r\n' linux has '\n'
   (let
     [bf (strbf<>)
@@ -68,13 +65,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onAnswer
-
   "Process the answer, returning the next question"
   [^Writer cout
    cmdQ
    props
    answer]
-
   (let [{:keys [default
                 result
                 id
@@ -86,8 +81,7 @@
       (let [rc (stror answer default)]
         (cond
           ;;if required to answer, repeat the question
-          (and (nichts? rc)
-               must)
+          (and (nichts? rc) must)
           id
 
           (keyword? result)
@@ -106,13 +100,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- popQQ
-
   "Pop the question"
   [^Writer cout
    ^Reader cin
    cmdQ
    props]
-
   (let [{:keys [^String question
                 ^String choices
                 ^String default]}
@@ -140,19 +132,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- popQ
-
   "Pop the question"
   [cout cin cmdQ props]
-
   (if (some? cmdQ) (popQQ cout cin cmdQ props) :end))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- cycleQ
-
   "Cycle through the questions"
   [cout cin cmdQNs start props]
-
   (loop [rc (popQ cout
                   cin
                   (cmdQNs start) props)]
@@ -166,11 +154,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn consoleIO
-
   "Prompt a sequence of questions via console"
   [cmdQs question1]
   {:pre [(map? cmdQs)]}
-
   (let [cout (->> (BufferedOutputStream. (System/out))
                   (OutputStreamWriter.))
         kp (if (isWindows?) "<ctrl-c>" "<ctrl-d>")

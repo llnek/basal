@@ -21,79 +21,81 @@
 
   czlab.xlib.antlib
 
-  (:import
-    [org.apache.tools.ant.taskdefs.optional.unix Symlink]
-    [java.beans Introspector PropertyDescriptor]
-    [java.lang.reflect Method]
-    [java.util Stack]
-    [java.io File]
-    [org.apache.tools.ant.taskdefs
-     Javadoc
-     Java
-     Copy
-     Chmod
-     Concat
-     Move
-     Mkdir
-     Tar
-     Replace
-     ExecuteOn
-     Delete
-     Jar
-     Zip
-     ExecTask
-     Javac]
-    [org.apache.tools.ant.listener
-     AnsiColorLogger
-     TimestampedLogger]
-    [org.apache.tools.ant.types
-     Commandline$Argument
-     Commandline$Marker
-     PatternSet$NameEntry
-     Environment$Variable
-     Reference
-     FileSet
-     Path
-     DirSet]
-    [org.apache.tools.ant
-     NoBannerLogger
-     Project
-     Target
-     Task]
-    [org.apache.tools.ant.taskdefs.optional.junit
-     FormatterElement$TypeAttribute
-     JUnitTask$SummaryAttribute
-     JUnitTask$ForkMode
-     JUnitTask
-     JUnitTest
-     BatchTest
-     FormatterElement]
-    [org.apache.tools.ant.util
-     FileNameMapper
-     ChainedMapper
-     GlobPatternMapper]
-    [org.apache.tools.ant.taskdefs
-     Javadoc$AccessType
-     Replace$Replacefilter
-     Replace$NestedString
-     Tar$TarFileSet
-     Tar$TarCompressionMethod
-     Javac$ImplementationSpecificArgument])
+  (:import [org.apache.tools.ant.taskdefs.optional.unix Symlink]
+           [java.beans Introspector PropertyDescriptor]
+           [java.lang.reflect Method]
+           [java.util Stack]
+           [java.io File]
+           [org.apache.tools.ant.taskdefs
+            Javadoc
+            Java
+            Copy
+            Chmod
+            Concat
+            Move
+            Mkdir
+            Tar
+            Replace
+            ExecuteOn
+            Delete
+            Jar
+            Zip
+            ExecTask
+            Javac]
+           [org.apache.tools.ant.listener
+            AnsiColorLogger
+            TimestampedLogger]
+           [org.apache.tools.ant.types
+            Commandline$Argument
+            Commandline$Marker
+            PatternSet$NameEntry
+            Environment$Variable
+            Reference
+            FileSet
+            Path
+            DirSet]
+           [org.apache.tools.ant
+            NoBannerLogger
+            Project
+            Target
+            Task]
+           [org.apache.tools.ant.taskdefs.optional.junit
+            FormatterElement$TypeAttribute
+            JUnitTask$SummaryAttribute
+            JUnitTask$ForkMode
+            JUnitTask
+            JUnitTest
+            BatchTest
+            FormatterElement]
+           [org.apache.tools.ant.util
+            FileNameMapper
+            ChainedMapper
+            GlobPatternMapper]
+           [org.apache.tools.ant.taskdefs
+            Javadoc$AccessType
+            Replace$Replacefilter
+            Replace$NestedString
+            Tar$TarFileSet
+            Tar$TarCompressionMethod
+            Javac$ImplementationSpecificArgument])
 
   ;;put here but not used, reason is to trick compiler
   ;;to drag in the files and compile it without
   ;;reflection warnings
+  ;;
+  ;;don't use any xlib stuff apart from logging
+  ;;
   (:use [flatland.ordered.set]
         [flatland.ordered.map])
 
-  (:require
-    [czlab.xlib.logging :as log]
-    [clojure.java.io :as io]
-    [clojure.string :as cs]))
+  (:require [czlab.xlib.logging :as log]
+            [clojure.java.io :as io]
+            [clojure.string :as cs]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 (declare maybeCfgNested)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -106,11 +108,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- capstr
-
   "Capitalize the 1st character"
   ^String
   [^String s]
-
   (if (and (some? s)
            (not (.isEmpty s)))
     (str (.toUpperCase (.substring s 0 1))
@@ -119,7 +119,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private ANSI-COLORS
+(def
+  ^:private ANSI-COLORS
   (cs/join "\n"
            ["AnsiColorLogger.ERROR_COLOR=0;31"
             "AnsiColorLogger.WARNING_COLOR=0;35"
@@ -142,11 +143,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn project<>
-
   "Create a new ant project"
   ^Project
   []
-
   (hackAnsiColors)
   (let [lg (doto
              (AnsiColorLogger.)
@@ -161,10 +160,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn execTarget
-
   "Run and execute a target"
   [^Target t]
-
   (-> (.getProject t)
       (.executeTarget (.getName t))))
 
@@ -178,16 +175,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- getBeanInfo
-
   "Get java bean info of this class"
   [cz]
-
   (persistent!
-    (->> (-> (Introspector/getBeanInfo cz)
-             (.getPropertyDescriptors))
-         (reduce
-           #(assoc! %1 (keyword (gpdn %2)) %2)
-           (transient {}) ))))
+    (reduce
+      #(assoc! %1 (keyword (gpdn %2)) %2)
+      (transient {})
+      (-> (Introspector/getBeanInfo cz)
+          (.getPropertyDescriptors)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;create a default project.
@@ -212,20 +207,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- maybeProps
-
   "Add bean info for non-task classes"
   [cz]
-
   (let [b (getBeanInfo cz)] (swap! _PROPS assoc cz b) b))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- method?
-
   "Find this setter method via best match,
    if found, returns a tuple [method classofarg]"
   [^Class cz ^String m]
-
   (let [arr (make-array java.lang.Class 1)]
     (some
       (fn [^Class z]
@@ -234,14 +225,14 @@
           [(.getMethod cz m arr) z]
           (catch Throwable _)))
       ;;add more types when needed
-      [java.lang.String
+      [String
        java.io.File
        Boolean/TYPE
-       java.lang.Boolean
+       Boolean
        Integer/TYPE
-       java.lang.Integer
+       Integer
        Long/TYPE
-       java.lang.Long
+       Long
        org.apache.tools.ant.types.Path])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -275,10 +266,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- coerce
-
   "Best attempt to convert a given value"
   [pj pz value]
-
   (cond
     (or (= Boolean/TYPE pz)
         (= Boolean pz))
@@ -293,10 +282,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- setProp!
-
   ""
   [^Method wm pojo k arr]
-
   (try
     (.invoke wm pojo arr)
   (catch Throwable e#
@@ -309,7 +296,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- setOptions
-
   "Use reflection and invoke setters to set options
   on the pojo"
 
@@ -346,7 +332,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn antTarFileSet
-
   "Configure a TarFileSet Object"
   {:tag Tar$TarFileSet}
 
@@ -356,23 +341,21 @@
    (maybeCfgNested pj fs nested)
    fs)
 
-  ([^Project pj ^Tar$TarFileSet fs options]
+  ([pj fs options]
    (antTarFileSet pj fs options nil))
 
-  ([^Project pj ^Tar$TarFileSet fs]
-   (antTarFileSet pj fs nil nil)))
+  ([pj fs] (antTarFileSet pj fs nil nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn antFileSet
-
   "Create a FileSet Object"
   {:tag FileSet}
 
-  ([^Project pj options]
+  ([pj options]
    (antFileSet pj options nil))
 
-  ([^Project pj]
+  ([pj]
    (antFileSet pj nil nil))
 
   ([^Project pj options nested]
@@ -388,7 +371,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn antBatchTest
-
   "Configure a BatchTest Object"
   {:tag BatchTest }
 
@@ -397,22 +379,22 @@
    (maybeCfgNested pj bt nested)
    bt)
 
-  ([^Project pj ^BatchTest bt options]
+  ([pj bt options]
    (antBatchTest pj bt options nil))
 
-  ([^Project pj ^BatchTest bt]
+  ([pj bt]
    (antBatchTest pj bt nil nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn antJunitTest
-
   "Configure a single JUnit Test Object"
   {:tag JUnitTask }
 
-  ([^Project pj options] (antJunitTest pj options nil))
+  ([pj] (antJunitTest pj nil nil))
 
-  ([^Project pj] (antJunitTest pj nil nil))
+  ([pj options]
+   (antJunitTest pj options nil))
 
   ([^Project pj options nested]
    (let [jt (JUnitTest.)]
@@ -423,14 +405,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn antChainedMapper
-
   "Handles glob only"
   {:tag FileNameMapper }
 
-  ([^Project pj options]
+  ([pj options]
    (antChainedMapper pj options nil))
 
-  ([^Project pj]
+  ([pj]
    (antChainedMapper pj nil nil))
 
   ([^Project pj options nested]
@@ -449,7 +430,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- fmtr-preopts
-
   ""
   [^FormatterElement tk options]
 
@@ -462,13 +442,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn antFormatter
-
   "Create a Formatter Object"
   {:tag FormatterElement }
 
-  ([^Project pj options] (antFormatter pj options nil))
+  ([pj options] (antFormatter pj options nil))
 
-  ([^Project pj] (antFormatter pj nil nil))
+  ([pj] (antFormatter pj nil nil))
 
   ([^Project pj options nested]
    (let [fe (FormatterElement.)]
@@ -479,7 +458,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn setClassPath
-
   "Build a nested Path structure for classpath"
   [^Project pj ^Path root paths]
 
@@ -502,7 +480,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- maybeCfgNested
-
   ""
   [pj tk nested]
 
@@ -541,7 +518,6 @@
         (if-not (empty? v)
           (-> (.createExclude tk)
               (.setName v))))
-
 
       :fileset
       (let [s (antFileSet
@@ -630,7 +606,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- junit-preopts
-
   ""
   [^JUnitTask tk options]
 
@@ -653,7 +628,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- jdoc-preopts
-
   ""
   [^Javadoc tk options]
 
@@ -668,7 +642,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- tar-preopts
-
   ""
   [^Tar tk options]
 
@@ -683,7 +656,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- init-task
-
   "Reify and configure actual ant tasks"
   ^Task
   [^Project pj ^Target target tobj]
@@ -710,7 +682,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn projAntTasks
-
   "Bind all the tasks to a target and a project"
   ^Target
   [^String target tasks]
@@ -728,57 +699,38 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn projAntTasks*
-
   "Bind all the tasks to a target and a project"
   ^Target
   [target & tasks]
-
   (projAntTasks target tasks))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn runTarget
-
   "Run ant tasks"
   [target tasks]
   {:pre [(coll? tasks)]}
-
   (-> (projAntTasks target tasks)
       (execTarget)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn runTarget*
-
-  "Run ant tasks"
-  [target & tasks]
-
-  (runTarget target tasks))
+  "Run ant tasks" [target & tasks] (runTarget target tasks))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn runTasks
-
   "Run ant tasks"
-  [tasks]
-  {:pre [(coll? tasks)]}
-
-  (runTarget "" tasks))
+  [tasks] {:pre [(coll? tasks)]} (runTarget "" tasks))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn runTasks*
-
-  "Run ant tasks"
-  [& tasks]
-
-  ;;(log/info "running tasks count = %d" (count tasks))
-  (runTarget "" tasks))
+(defn runTasks* "Run ant tasks" [& tasks] (runTarget "" tasks))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private ant-task
-
   "Generate wrapper function for an ant task"
   [pj sym docstr func & [preopt]]
   (let [s (str func)
@@ -814,10 +766,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private declAntTasks
-
   "Introspect the default project and cache all registered ant-tasks"
   [pj]
-
   `(do ~@(map (fn [[a b]]
                 `(ant-task ~pj ~a "" ~b))
               (deref _TASKS))))
@@ -829,7 +779,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn cleanDir
-
   "Clean an existing dir or create it"
   [d & {:keys [quiet]
         :or {:quiet true}}]
@@ -848,7 +797,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn deleteDir
-
   "Remove a directory"
   [d & {:keys [quiet]
         :or {:quiet true}}]
@@ -864,7 +812,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn copyFile
-
   "Copy a file to the target folder"
   [file toDir]
 
@@ -876,7 +823,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn moveFile
-
   "Move a file to the target folder"
   [file toDir]
 
@@ -888,7 +834,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn symLink
-
   "Create a file system symbolic link"
   [link target]
 

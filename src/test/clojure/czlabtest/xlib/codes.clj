@@ -14,26 +14,27 @@
 
 (ns czlabtest.xlib.codes
 
-  (:require [czlab.xlib.countries :as CC])
-  (:use [clojure.test]))
+  (:use [czlab.xlib.countries]
+        [clojure.test]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestxlib-codes
 
-  (is (= (CC/findCountry "AU") (CC/findCountry "au")))
-  (is (= "Australia" (CC/findCountry "AU")))
-  (is (= "AU" (CC/findCountryCode "Australia")))
-  (is (false? (CC/isUSA? "aa")))
-  (is (and (CC/isUSA? "US") (= (CC/isUSA? "US") (CC/isUSA? "us"))))
-  (is (> (count (CC/listCodes)) 0))
+  (is (= (findCountry "AU") (findCountry "au")))
+  (is (= "Australia" (findCountry "AU")))
+  (is (= "AU" (findCountryCode "Australia")))
+  (is (false? (isUSA? "aa")))
+  (is (and (isUSA? "US") (= (isUSA? "US") (isUSA? "us"))))
+  (is (> (count (listCodes)) 0))
 
-  (is (= (CC/findState "CA") (CC/findState "ca")))
-  (is (= "California" (CC/findState "ca")))
-  (is (= "CA" (CC/findStateCode "California")))
-  (is (> (count (CC/listStates)) 0))
+  (is (= (findState "CA") (findState "ca")))
+  (is (= "California" (findState "ca")))
+  (is (= "CA" (findStateCode "California")))
+  (is (> (count (listStates)) 0))
 
-)
+  (is (string? "That's all folks!")))
+
 
 ;;(clojure.test/run-tests 'czlabtest.xlib.codes)
 
