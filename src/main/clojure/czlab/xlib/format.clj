@@ -39,10 +39,10 @@
   ^String
   [obj]
   (if (some? obj)
-    (-> (StringWriter.)
-        (pprint obj )
-        (with-pprint-dispatch indent-dispatch )
-        str)))
+    (let [w (StringWriter.)]
+      (->> (pprint obj w)
+           (with-pprint-dispatch indent-dispatch ))
+      (str w))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -62,7 +62,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn writeJson
+(defn writeJsonStr
   "Convert into JSON"
   ^String
   [data]
@@ -70,20 +70,36 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn readJsonKW
+(defn readJsonStrKW
   "Parse JSON into object with keys mapped to keywords"
   [^String data]
   (js/read-str data :key-fn keyword))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn readJson
+(defn readJsonStr
   "Parse JSON into object"
   {:tag String}
 
   ([^String data] (js/read-str data))
   ([^String data keyfn]
    (js/read-str data :key-fn keyfn)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmulti readJson "Parse JSON formatted text" class)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmethod readJson File [^File fp] (readJson (io/as-url fp)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmethod readJson String [^String s] (readJsonStrKW s))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmethod readJson URL [^URL url] (readJson (readAsStr url)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

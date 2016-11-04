@@ -14,22 +14,22 @@
 
 (ns czlabtest.xlib.misc
 
-  (:use [czlab.xlib.guids]
-        [czlab.xlib.core]
-        [czlab.xlib.resources]
+  (:use [czlab.xlib.resources]
         [czlab.xlib.countries]
+        [czlab.xlib.format]
+        [czlab.xlib.guids]
+        [czlab.xlib.core]
+        [czlab.xlib.io]
         [clojure.test])
 
   (:import [java.util ResourceBundle]))
 
-;;(def ^:private UID_2 (GU/new-uuid))
-;;(def ^:private UID_1 (GU/new-uuid))
-;;(def ^:private WID_2 (GU/new-wwid))
-;;(def ^:private WID_1 (GU/new-wwid))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestxlib-misc
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;country codes
 
   (is (= (findCountry "AU") (findCountry "au")))
   (is (= "Australia" (findCountry "AU")))
@@ -43,12 +43,44 @@
   (is (= "CA" (findStateCode "California")))
   (is (> (count (listStates)) 0))
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;guids
+
   (is (not= (wwid<>) (wwid<>)))
   (is (not= (uuid<>) (uuid<>)))
 
   (is (> (.length (wwid<>)) 0))
   (is (> (.length (uuid<>)) 0))
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;formats
+
+  (is (string? (writeEdnString
+                 {:a 1 :b {:c {:e "hello"} :d 4}})))
+
+  (is (let [s (writeEdnString
+                {:a 1 :b {:c {:e "hello"} :d 4}})
+            t (tempFile)
+            _ (spit t s)
+            e (readEdn t)]
+        (deleteQ t)
+        (and (string? s)
+             (= "hello" (get-in e [:b :c :e])))))
+
+  (is (string? (writeJsonStr
+                 {:a 1 :b {:c {:e "hello"} :d 4}})))
+
+  (is (let [s (writeJsonStr
+                {:a 1 :b {:c {:e "hello"} :d 4}})
+            t (tempFile)
+            _ (spit t s)
+            e (readJson t)]
+        (deleteQ t)
+        (and (string? s)
+             (= "hello" (get-in e [:b :c :e])))))
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;resource bundles
 
   (is (= "hello joe, how is your dawg"
          (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
