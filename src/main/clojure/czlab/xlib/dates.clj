@@ -24,7 +24,9 @@
         [czlab.xlib.core]
         [czlab.xlib.str])
 
-  (:import [java.text ParsePosition SimpleDateFormat]
+  (:import [java.text
+            ParsePosition
+            SimpleDateFormat]
            [java.util
             Locale
             TimeZone
@@ -104,7 +106,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- parseIso8601
+(defn parseIso8601
   "Parses datetime in ISO8601 format"
   ^Date
   [^String tstr]
@@ -116,7 +118,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro fmtTimestamp "Timestamp as stringvalue" [ts] `(str ts))
+(defmacro fmtTimestamp "Timestamp as stringvalue" [ts] `(str ~ts))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -141,7 +143,7 @@
   "Convert Date object into a string - GMT timezone"
   ^String
   [^Date dt]
-  (fmtDate dt DT_FMT_MICRO (SimpleTimeZone. 0 "GMT")))
+  (fmtDate dt DT_FMT_MICRO (TimeZone/getTimeZone "GMT")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -149,10 +151,8 @@
   "Add some amount to the current date"
   ^Calendar
   [^Calendar cal calendarField amount]
-  (when (some? cal)
-    (doto (GregorianCalendar. (.getTimeZone cal))
-      (.setTime (.getTime cal))
-      (.add (int calendarField) ^long amount))))
+  (doto cal
+    (.add (int calendarField) ^long amount)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -160,7 +160,7 @@
   "Make a Calendar"
   {:tag Calendar}
 
-  ([] (doto (GregorianCalendar.) (.setTime (Date.))))
+  ([] (gcal<> (Date.)))
   ([arg]
    (cond
      (inst? TimeZone arg)
@@ -189,99 +189,74 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn addMonths
-
   "Add n more months to the calendar"
   ^Calendar
   [^Calendar cal mts]
-
   (add cal Calendar/MONTH mts))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn addDays
-
   "Add n more days to the calendar"
   ^Calendar
   [^Calendar cal days]
-
   (add cal Calendar/DAY_OF_YEAR days))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn +months
-
   "Add n months"
-  ^Date
+  ^Calendar
   [months]
-
-  (-> (gcal<> (Date.))
-      (addMonths  months)
-      (.getTime)))
+  (-> (gcal<> (Date.)) (addMonths  months)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn +years
-
   "Add n years"
-  ^Date
+  ^Calendar
   [years]
-
-  (-> (gcal<> (Date.))
-      (addYears years)
-      (.getTime)))
+  (-> (gcal<> (Date.)) (addYears years)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn +days
-
   "Add n days"
-  ^Date
+  ^Calendar
   [days]
-
-  (-> (gcal<> (Date.))
-      (addDays days)
-      (.getTime)))
+  (-> (gcal<> (Date.)) (addDays days)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn fmtTime
-
+(defmacro fmtTime
   "Format current time"
-  ^String
-  [^String fmt]
-
-  (-> (SimpleDateFormat. fmt)
-      (.format (-> (GregorianCalendar.)
-                   (.getTimeInMillis)
-                   (Date.)))))
+  [^String fmt] `(fmtDate (now<date>) ~fmt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn fmtCal
-
   "Formats time to yyyy-MM-ddThh:mm:ss"
   ^String
   [^Calendar cal]
-
   (java.lang.String/format
     (Locale/getDefault)
     "%1$04d-%2$02d-%3$02dT%4$02d:%5$02d:%6$02d"
-    (into-array Object
-                [(.get cal Calendar/YEAR)
-                 (+ 1 (.get cal Calendar/MONTH))
-                 (.get cal Calendar/DAY_OF_MONTH)
-                 (.get cal Calendar/HOUR_OF_DAY)
-                 (.get cal Calendar/MINUTE)
-                 (.get cal Calendar/SECOND)])))
+    (tovargs Object
+             (.get cal Calendar/YEAR)
+             (+ 1 (.get cal Calendar/MONTH))
+             (.get cal Calendar/DAY_OF_MONTH)
+             (.get cal Calendar/HOUR_OF_DAY)
+             (.get cal Calendar/MINUTE)
+             (.get cal Calendar/SECOND))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn gcal<gmt>
-
   "Make a Calendar (GMT)"
   {:tag GregorianCalendar}
 
-  ([] (GregorianCalendar. (TimeZone/getTimeZone "GMT")))
+  ([] (GregorianCalendar.
+        (TimeZone/getTimeZone "GMT")))
   ([arg]
    (let [^Calendar c (gcal<gmt>)]
      (cond
@@ -294,20 +269,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro dtime
-
   "Get the time in millis"
-  [d]
-
-  `(.getTime ^java.util.Date ~d))
+  ([d] `(.getTime ^java.util.Date ~d))
+  ([] `(now<>)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn debugCal
-
   "Debug show a calendar's internal data"
   ^String
   [^Calendar cal]
-
   (cs/join ""
            ["{" (.. cal (getTimeZone) (getDisplayName) )  "} "
             "{" (.. cal (getTimeZone) (getID)) "} "
