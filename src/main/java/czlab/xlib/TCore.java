@@ -106,12 +106,6 @@ public class TCore extends ThreadPoolExecutor implements RejectedExecutionHandle
     }
   }
 
-  /**
-   */
-  public void schedule(Runnable r) {
-    execute(r);
-  }
-
   @Override
   public void execute(Runnable r) {
     if (! _paused) {

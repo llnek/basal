@@ -194,12 +194,6 @@ public class XData implements Serializable, Disposable {
   }
 
   /**
-   */
-  public String filePath() throws IOException {
-    return _data instanceof File ? ((File) _data).getCanonicalPath() : "";
-  }
-
-  /**
    * @throws IOException
    */
   public long size() throws IOException {
@@ -263,9 +257,6 @@ public class XData implements Serializable, Disposable {
     _data=null;
   }
 
-  public static void main(String[] args) {
-  }
-  
 }
 
 

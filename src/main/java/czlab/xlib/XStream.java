@@ -33,15 +33,15 @@ public class XStream extends InputStream implements Disposable {
 
   public static final Logger TLOG= getLogger(XStream.class);
   private transient InputStream _inp = null;
-  protected boolean _closed = true;
-  protected boolean _transientFile;
-  protected File _fn;
+  private boolean _closed = true;
+  private boolean _transientFile;
+  private File _fn;
   private long pos = 0L;
 
   /**
    */
-  public XStream(File f, boolean delFile) {
-    _transientFile = delFile;
+  public XStream(File f, boolean isTransient) {
+    _transientFile = isTransient;
     _fn= f;
   }
 

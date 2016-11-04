@@ -30,7 +30,7 @@ public interface Muble extends Gettable, Settable {
   public Iterable<?> seq();
 
   /**
-   * format to clojur EDN
+   * format to clojure EDN
    */
   public Object toEDN();
 
