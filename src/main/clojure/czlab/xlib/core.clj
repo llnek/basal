@@ -435,19 +435,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro asFQKeyword
+(defn asFQKeyword
   "Scope name as a fully-qualified keyword"
-  [^String t]
-  {:pre [(not (empty? t))
-         (< (.indexOf t "/") 0)]}
-  `(keyword (str *ns* "/" ~t)))
+  [t]
+  {:pre [(string? t)
+         (and (< (.indexOf t (int \/)) 0)
+              (< (.indexOf t (int \:)) 0))]}
+  (keyword (str *ns* "/" t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn isFQKeyword?
   ""
   [kw]
-
   (and (keyword? kw)
        (> (.indexOf (str kw) (int \/)) 0)))
 
