@@ -172,6 +172,9 @@
 
   ;;(is (= ::yo (asFQKeyword "yo")))
 
+  (is (not (isFQKeyword? :a)))
+  (is (isFQKeyword? ::a))
+
   (is (notnil? (juid)))
 
   (is (< (.indexOf (juid) ":\\-") 0))
