@@ -300,14 +300,14 @@
   "A tuple [bool stream]"
   ^APersistentVector
   [arg]
-  (condp = (class arg)
-    String [true (streamify (bytesify arg))]
-    File [true (FileInputStream. ^File arg)]
-    (bytesClass) [true (streamify arg)]
-    InputStream [false arg]
-    URL [true (.openStream ^URL arg)]
-    nil [false nil]
-    (throwBadArg "Bad type")))
+  (cond
+    (inst? File arg) [true (FileInputStream. ^File arg)]
+    (string? arg) [true (streamify (bytesify arg))]
+    (instBytes? arg) [true (streamify arg)]
+    (inst? InputStream arg) [false arg]
+    (inst? URL arg) [true (.openStream ^URL arg)]
+    (nil? arg) [false nil]
+    :else (throwBadArg "Bad type %s" (class arg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
