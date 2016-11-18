@@ -257,13 +257,13 @@
   (java.lang.String/format
     (Locale/getDefault)
     "%1$04d-%2$02d-%3$02dT%4$02d:%5$02d:%6$02d"
-    (tovargs Object
-             (.get cal Calendar/YEAR)
-             (+ 1 (.get cal Calendar/MONTH))
-             (.get cal Calendar/DAY_OF_MONTH)
-             (.get cal Calendar/HOUR_OF_DAY)
-             (.get cal Calendar/MINUTE)
-             (.get cal Calendar/SECOND))))
+    (vargs* Object
+            (.get cal Calendar/YEAR)
+            (+ 1 (.get cal Calendar/MONTH))
+            (.get cal Calendar/DAY_OF_MONTH)
+            (.get cal Calendar/HOUR_OF_DAY)
+            (.get cal Calendar/MINUTE)
+            (.get cal Calendar/SECOND))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

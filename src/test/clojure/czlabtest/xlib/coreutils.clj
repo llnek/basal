@@ -80,7 +80,7 @@
 
   (is (thrown? IOException (trap! IOException "a")))
 
-  (is (let [a (tovargs String "a" "b")]
+  (is (let [a (vargs* String "a" "b")]
         (== 2 (alength #^"[Ljava.lang.String;" a))))
 
   (is (thrown? UnsupportedOperationException (throwUOE "%s" "a")))
