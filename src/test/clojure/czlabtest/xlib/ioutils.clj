@@ -123,6 +123,12 @@
   (is (let [x (xdata<file>)
             f? (some? (.fileRef x))] f?))
 
+  (is (thrown? Throwable (coerceToInputStream 333)))
+
+  (is (let [[c i] (coerceToInputStream "aaa")]
+        (if c (closeQ i))
+        (inst? InputStream i)))
+
   (is (with-open [inp (resStream "czlab/xlib/mime.properties")]
         (binding [*MEMBUF-LIMIT* (* 2 1024)]
           (let [z (.available inp)
