@@ -17,11 +17,11 @@ package czlab.xlib;
 /**
  * @author Kenneth Leung
  */
-@FunctionalInterface public interface Disposable {
+public interface Disposable {
 
   /**
    */
-  public void dispose();
+  default public void dispose() {}
 
 }
 
