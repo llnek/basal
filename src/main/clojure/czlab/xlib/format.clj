@@ -34,7 +34,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn writeEdnString
+(defn writeEdnStr
   "Convert clojure object into EDN format"
   ^String
   [obj]

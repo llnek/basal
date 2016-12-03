@@ -55,10 +55,10 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;formats
 
-  (is (string? (writeEdnString
+  (is (string? (writeEdnStr
                  {:a 1 :b {:c {:e "hello"} :d 4}})))
 
-  (is (let [s (writeEdnString
+  (is (let [s (writeEdnStr
                 {:a 1 :b {:c {:e "hello"} :d 4}})
             t (tempFile)
             _ (spit t s)
