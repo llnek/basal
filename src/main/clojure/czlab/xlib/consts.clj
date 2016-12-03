@@ -26,13 +26,6 @@
 (def ^String UTF8 "UTF-8" )
 (def ^String SLASH   "/" )
 
-(comment
-(def EV_OPTS :____eventoptions)
-(def JS_LAST :____lastresult)
-(def JS_CRED :credential)
-(def JS_USER :principal)
-(def JS_FLATLINE :____flatline))
-
 (def BOOLS #{ "true", "yes", "on", "ok", "active", "1"} )
 
 (def ^String HEX_CHARS "0123456789ABCDEF")

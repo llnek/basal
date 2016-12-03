@@ -439,8 +439,8 @@
   "Scope name as a fully-qualified keyword"
   [t]
   {:pre [(string? t)
-         (and (< (.indexOf t (int \/)) 0)
-              (< (.indexOf t (int \:)) 0))]}
+         (and (< (.indexOf ^String t (int \/)) 0)
+              (< (.indexOf ^String t (int \:)) 0))]}
   (keyword (str *ns* "/" t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
