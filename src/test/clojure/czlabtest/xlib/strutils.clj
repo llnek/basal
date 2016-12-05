@@ -137,6 +137,13 @@
   (is (= "abc def" (urlDecode (urlEncode "abc def"))))
   (is (not= "abc def" (urlEncode "abc def")))
 
+  (is (= "-world" (drophead "hello-world" 5)))
+  (is (= "hello-" (droptail "hello-world" 5)))
+  (is (= "" (drophead "hello-world" 50)))
+  (is (= "" (droptail "hello-world" 50)))
+  (is (= "" (drophead "hello" 5)))
+  (is (= "" (droptail "hello" 5)))
+
   (is (string? "That's all folks!")))
 
 

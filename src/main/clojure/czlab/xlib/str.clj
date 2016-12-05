@@ -450,6 +450,37 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn drophead
+  "Drop leftmost len characters of a String"
+  ^String
+  [^String src len]
+  {:pre [(number? len)]}
+
+  (if (or (<= len 0)
+          (nichts? src))
+    ""
+    (if (< (.length src) len)
+      ""
+      (.substring src len))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn droptail
+  "Drop rightmost len characters of a String"
+  ^String
+  [^String src len]
+  {:pre [(number? len)]}
+
+  (if (or (<= len 0)
+          (nichts? src))
+    ""
+    (let [n (.length src)]
+      (if (< n len)
+        ""
+        (.substring src 0 (- n len))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn- sformat
   ""
   [^String fmt & args]
