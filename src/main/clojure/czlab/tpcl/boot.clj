@@ -646,6 +646,71 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn packAll
+  "Pack all content"
+  {:no-doc true}
+  [initor]
+  (let [root (ge :packDir)
+        dist (ge :distDir)
+        ver (ge :version)
+        src (ge :srcDir)]
+
+    ;;clean and init the pack dir
+    (a/cleanDir root)
+    (if (fn? initor)
+      (initor root))
+
+    ;; copy license stuff
+    (a/runTarget*
+      "pack/lics"
+      (a/antCopy
+        {:todir root}
+        [[:fileset
+          {:dir (ge :basedir)
+           :includes "*.md,LICENSE"}]]))
+    ;; copy source
+    (a/runTarget*
+      "pack/src"
+      (a/antCopy
+        {:todir (fp! root "src/main/clojure")}
+        [[:fileset {:dir (fp! src "clojure")}]])
+      (a/antCopy
+        {:todir (fp! root "src/main/java")}
+        [[:fileset {:dir (fp! src "java")}]]))
+    ;; copy distro jars
+    (a/runTarget*
+      "pack/dist"
+      (a/antCopy
+        {:todir (fp! root "dist")}
+        [[:fileset {:dir dist
+                    :includes "*.jar"}]]))
+    (a/runTarget*
+      "pack/lib"
+      (a/antCopy
+        {:todir (fp! root "lib")}
+        [[:fileset {:dir (ge :libDir)}]]))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn tarAll
+  "Tar everything"
+  {:no-doc true}
+  []
+  (let [root (ge :packDir)
+        dist (ge :distDir)]
+    (a/runTarget*
+      "pack/all"
+      (a/antTar
+        {:destFile (fp! dist (str (idAndVer) ".tar.gz"))
+         :compression "gzip"}
+        [[:tarfileset {:dir root
+                       :excludes "bin/**"}]
+         [:tarfileset {:dir root
+                       :mode "755"
+                       :includes "bin/**"}]]))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (bc/task-options!
   uber {:as-jars true}
   aot {:all true})
@@ -792,58 +857,16 @@
   "Package all output files into a tar file"
   []
   (bc/with-pre-wrap fileset
-    (let [root (ge :packDir)
-          dist (ge :distDir)
-          ver (ge :version)
-          src (ge :srcDir)]
-      ;; make some dirs
-      (a/cleanDir root)
-      (map #(.mkdirs (io/file root %))
-           ["dist" "lib" "docs"])
-      ;; copy license stuff
-      (a/runTarget*
-        "pack/lics"
-        (a/antCopy
-          {:todir root}
-          [[:fileset
-            {:dir (ge :basedir)
-             :includes "*.md,LICENSE,COPYING"}]]))
-      ;; copy source
-      (a/runTarget*
-        "pack/src"
-        (a/antCopy
-          {:todir (fp! root "src/main/clojure")}
-          [[:fileset {:dir (fp! src "clojure")}]])
-        (a/antCopy
-          {:todir (fp! root "src/main/java")}
-          [[:fileset {:dir (fp! src "java")}]]))
-      ;; copy distro jars
-      (a/runTarget*
-        "pack/dist"
-        (a/antCopy
-          {:todir (fp! root "dist")}
-          [[:fileset {:dir dist
-                      :includes "*.jar"}]]))
-      (a/runTarget*
-        "pack/lib"
-        (a/antCopy
-          {:todir (fp! root "lib")}
-          [[:fileset {:dir (ge :libDir)}]]))
 
+    (let []
+      (packAll
+        (fn [root]
+          (map #(.mkdirs (io/file root %))
+               ["dist" "lib" "docs"])))
       (if (ge :wantDocs) (genDocs))
-
-      ;; tar everything
-      (a/runTarget*
-        "pack/all"
-        (a/antTar
-          {:destFile (fp! dist (str (idAndVer) ".tar.gz"))
-           :compression "gzip"}
-          [[:tarfileset {:dir root
-                         :excludes "bin/**"}]
-           [:tarfileset {:dir root
-                         :mode "755"
-                         :includes "bin/**"}]]))
+      (tarAll)
       nil)
+
     fileset))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
