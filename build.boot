@@ -30,7 +30,7 @@
 
     [org.clojure/clojure "1.8.0" ]
 
-    [net.mikera/cljunit "0.5.0" :scope "provided"]
+    [net.mikera/cljunit "0.6.0" :scope "provided"]
     [junit/junit "4.12"  :scope "provided"]
 
     ;;[org.projectodd.shimdandy/shimdandy-impl "1.1.0"]
