@@ -89,7 +89,8 @@
   ^String
   [^ResourceBundle bundle ^String pkey & pms]
 
-  (if (hgl? pkey)
+  (if (and (some? bundle)
+           (hgl? pkey))
     (let [kv (str (.getString bundle pkey))
           pc (count pms)]
       ;;(log/debug "RStr key = %s, value = %s" pkey kv)
