@@ -328,7 +328,7 @@
 
   (is (string? (.toEDN MUBLE)))
 
-  (is (== 9 (:a (.impl MUBLE))))
+  (is (== 9 (:a (.intern MUBLE))))
 
   (is (== 1 (do (.copyEx MUBLE {:a 1 :y 4 :z 2})
                 (.getv MUBLE :a))))

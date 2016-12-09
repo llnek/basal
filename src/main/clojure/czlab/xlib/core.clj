@@ -1038,7 +1038,7 @@
            (.setv this k v))
          (.getv this k))
        (toEDN [_] (pr-str (.g data)))
-       (impl [_] (.g data))
+       (intern [_] (.g data))
        (copyEx [_ m]
          (if (and (map? m)
                   (not (identical? (.g data) m)))

@@ -41,7 +41,7 @@ public interface Muble extends Gettable, Settable {
 
   /**
    */
-  public Object impl();
+  public Object intern();
 
   /**
    */
