@@ -549,6 +549,7 @@
     :CPATH
     (fn [_]
       [[:location (fp! (ge :basedir) "artifacts")]
+       [:location (fp! (ge :basedir) "attic")]
        [:location (ge :jzzDir)]
        [:location (ge :czzDir)]
        [:fileset {:dir (ge :libDir)
