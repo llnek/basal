@@ -17,11 +17,11 @@ package czlab.xlib;
 /**
  * @author Kenneth Leung
  */
-public interface Mutable {
+public interface Atomic {
 
   /**
    */
-  public Muble muble();
+  public Object atom();
 
 }
 
