@@ -21,7 +21,7 @@ package czlab.xlib;
 
   /**
    */
-  public boolean init(Object obj);
+  public void init(Object obj);
 
 }
 
