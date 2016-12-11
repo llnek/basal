@@ -638,19 +638,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn touch!
-  "Touch a file"
-  [file]
-  {:pre [(some? file)]}
-  (let [f (io/file file)]
-    (if-not (.exists f)
-      (with-open [os (FileOutputStream. f)])
-      (when-not
-        (.setLastModified f (System/currentTimeMillis))
-        (throwIOE "Unable to set the lastmodtime: %s" f)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn changeContent
   "Pass file content to the work function,
   returning new content"
@@ -911,6 +898,21 @@
     (if (>= p 0)
       (.substring n 0 p)
       n)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn touch!
+  "Touch a file"
+  [file]
+  {:pre [(some? file)]}
+  (let [f (io/file file)]
+    (if-not (.exists f)
+      (do
+        (mkdirs (.getParentFile f))
+        (with-open [os (FileOutputStream. f)]))
+      (when-not
+        (.setLastModified f (System/currentTimeMillis))
+        (throwIOE "Unable to set the lastmodtime: %s" f)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
