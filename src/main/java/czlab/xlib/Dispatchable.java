@@ -12,7 +12,7 @@
  *
  * Copyright (c) 2013-2016, Kenneth Leung. All rights reserved. */
 
-package czlab.xlib.core;
+package czlab.xlib;
 
 /**
  * @author Kenneth Leung
