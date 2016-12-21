@@ -10,9 +10,7 @@
   :dependencies '[
 
     [ant-contrib/ant-contrib "1.0b3" :exclusions [ant]]
-    [org.slf4j/slf4j-api "1.7.21" ]
-    ;;[ch.qos.logback/logback-classic "1.1.7" ]
-    ;;[ch.qos.logback/logback-core "1.1.7" ]
+    [org.slf4j/slf4j-api "1.7.22" ]
     [org.apache.logging.log4j/log4j-core "2.7"]
     [org.apache.logging.log4j/log4j-slf4j-impl "2.7"]
 
@@ -26,29 +24,26 @@
     [org.flatland/ordered "1.5.4"]
 
     [com.cemerick/pomegranate "0.3.1" :scope "provided"]
-    [codox/codox "0.10.1" :scope "provided"]
+    [codox/codox "0.10.2" :scope "provided"]
 
     [org.clojure/clojure "1.8.0" ]
 
     [net.mikera/cljunit "0.6.0" :scope "provided"]
     [junit/junit "4.12"  :scope "provided"]
 
-    ;;[org.projectodd.shimdandy/shimdandy-impl "1.1.0"]
-    ;;[org.projectodd.shimdandy/shimdandy-api "1.2.0"]
-
     ;; this is causing the RELEASE_6 warning
     ;; boot/clj stuff
-    [boot/base "2.6.0" :scope "provided"]
-    [boot/core "2.6.0" :scope "provided"]
-    [boot/pod "2.6.0" :scope "provided"]
-    [boot/worker "2.6.0" :scope "provided"]
-    [boot/aether "2.6.0" :scope "provided"]
+    [boot/base "2.7.0" :scope "provided"]
+    [boot/core "2.7.0" :scope "provided"]
+    [boot/pod "2.7.0" :scope "provided"]
+    [boot/worker "2.7.0" :scope "provided"]
+    [boot/aether "2.7.0" :scope "provided"]
 
   ]
 
   :source-paths #{"src/main/clojure" "src/main/java"}
   :test-runner "czlabtest.xlib.ClojureJUnit"
-  :version "1.0.0"
+  :version "0.1.0"
   :debug true
   :project 'czlab/czlab-xlib)
 
