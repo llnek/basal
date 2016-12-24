@@ -43,13 +43,13 @@ public enum I18N {
   /**
    */
   public static ResourceBundle bundle(Object bkey) {
-    return _bs.get(bkey);
+    return bkey == null ? null : _bs.get(bkey);
   }
 
   /**
    */
-  public static void unsetBundle(String bkey) {
-    _bs.remove(bkey);
+  public static void unsetBundle(Object bkey) {
+    if (bkey != null) { _bs.remove(bkey); }
   }
 
   /**
