@@ -19,6 +19,11 @@ package czlab.xlib;
  */
 public interface Startable {
 
+
+  /**
+   */
+  public Object restart(Object arg);
+
   /**
    */
   public Object start(Object arg);
