@@ -130,7 +130,7 @@
                 t (or (:threads options) 0)
                 c (TCore. named ^long t b)]
             (reset! cpu c)
-            (.start c)))
+            (.start c nil)))
 
         (deactivate [_]
           (let [^TCore c @cpu]

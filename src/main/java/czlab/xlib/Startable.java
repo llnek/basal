@@ -21,7 +21,7 @@ public interface Startable {
 
   /**
    */
-  public void start();
+  public Object start(Object arg);
 
   /**
    */
