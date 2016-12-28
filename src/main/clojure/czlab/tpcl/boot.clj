@@ -45,9 +45,9 @@
 ;;(set! *warn-on-reflection* true)
 
 ;;default local vars
-(defonce ^:private L-VARS (atom {}))
+(defonce ^:private l-vars (atom {}))
 ;;user vars
-(defonce ^:private U-VARS (atom {}))
+(defonce ^:private u-vars (atom {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -73,11 +73,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn se! "Set a local var" [k v] (swap! L-VARS assoc k v))
+(defn se! "Set a local var" [k v] (swap! l-vars assoc k v))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn localVars "Get the local vars" ^APersistentMap [] @L-VARS)
+(defn localVars "Get the local vars" ^APersistentMap [] @l-vars)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -138,7 +138,7 @@
 (defn- glocal
   "Get the value for this local var"
   [k]
-  (let [v (get @L-VARS k)] (if (fn? v) (v k) v)))
+  (let [v (get @l-vars k)] (if (fn? v) (v k) v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -150,7 +150,7 @@
   ([k local?]
    (or (if local?
          (glocal k)
-         (if-some [v (get @U-VARS k)]
+         (if-some [v (get @u-vars k)]
            (if (fn? v) (v k) v)
            (glocal k)))
        (bc/get-env k))))
@@ -614,7 +614,7 @@
 
   ([] (bootEnv! nil))
   ([options]
-   (reset! U-VARS (merge {} options))
+   (reset! u-vars (merge {} options))
    (bootEnvVars!)
    (bootEnvPaths!)
    (bootSyncCPath (str (ge :jzzDir) "/"))))
@@ -727,8 +727,8 @@
   ""
   {:no-doc true}
   []
-  {:L-VARS (dumpVars @L-VARS)
-   :U-VARS (dumpVars @U-VARS)})
+  {:l-vars (dumpVars @l-vars)
+   :u-vars (dumpVars @u-vars)})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

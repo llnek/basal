@@ -120,7 +120,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (def
-  ^:private ANSI-COLORS
+  ^:private ansi-colors
   (cs/join "\n"
            ["AnsiColorLogger.ERROR_COLOR=0;31"
             "AnsiColorLogger.WARNING_COLOR=0;35"
@@ -136,7 +136,7 @@
   (let [tmp (System/getProperty "java.io.tmpdir")
         f (io/file tmp "czlab-antlogansi.colors")]
     (if-not (.exists f)
-      (spit f ANSI-COLORS :encoding "utf-8"))
+      (spit f ansi-colors :encoding "utf-8"))
     (System/setProperty "ant.logger.defaults"
                         (.getCanonicalPath f))))
 

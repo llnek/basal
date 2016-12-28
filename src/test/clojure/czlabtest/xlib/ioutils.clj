@@ -130,7 +130,7 @@
         (inst? InputStream i)))
 
   (is (with-open [inp (resStream "czlab/xlib/mime.properties")]
-        (binding [*MEMBUF-LIMIT* (* 2 1024)]
+        (binding [*membuf-limit* (* 2 1024)]
           (let [z (.available inp)
                 x (readBytes inp)
                 f (.fileRef x)
@@ -141,7 +141,7 @@
 
   (is (with-open [inp (resStream "czlab/xlib/mime.properties")
                   rdr (InputStreamReader. inp)]
-        (binding [*MEMBUF-LIMIT* (* 2 1024)]
+        (binding [*membuf-limit* (* 2 1024)]
           (let [z (.available inp)
                 x (readChars rdr)
                 f (.fileRef x)
@@ -226,13 +226,13 @@
 
   (is (= "hello"
          (let [n (juid)
-               _ (saveFile *TEMPFILE-REPO* n (xdata<> "hello") true)
-               x (getFile *TEMPFILE-REPO* n)
+               _ (saveFile *tempfile-repo* n (xdata<> "hello") true)
+               x (getFile *tempfile-repo* n)
                s (readAsStr (.fileRef x))]
            (deleteQ (.fileRef x)) s)))
 
   (is (let [n (juid)
-            d (io/file *TEMPFILE-REPO* n)
+            d (io/file *tempfile-repo* n)
             _ (mkdirs d)
             e? (fileOK? d)]
         (deleteQ d) e?))
@@ -242,7 +242,7 @@
             n2 (juid)
             f1 (str n1 ".txt")
             f2 (str n2 ".txt")
-            root (io/file *TEMPFILE-REPO* n0)
+            root (io/file *tempfile-repo* n0)
             d1 (io/file root n1)
             d2 (io/file root n2)
             _ (mkdirs root)
@@ -266,7 +266,7 @@
 
   (is (let [n0 (juid) n1 (juid) n2 (juid)
             n3 (juid) n4 (juid) n5 (juid)
-            root (io/file *TEMPFILE-REPO* n0)
+            root (io/file *tempfile-repo* n0)
             _ (mkdirs root)
             d1 (doto (io/file root n1) (mkdirs))
             d2 (doto (io/file root n2) (mkdirs))
@@ -290,7 +290,7 @@
              (== 4 (count fs)))))
 
   (is (let [n (juid)
-            f (io/file *TEMPFILE-REPO* (str n ".txt"))
+            f (io/file *tempfile-repo* (str n ".txt"))
             _ (spitUtf8 f "hello")
             b (basename f)]
         (deleteQ f)

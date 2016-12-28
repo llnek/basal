@@ -21,7 +21,7 @@ public interface Activable {
 
   /**
    */
-  public void activate(Object options);
+  public void activate(Object arg);
 
   /**
    */

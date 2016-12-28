@@ -27,7 +27,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private _CCODES {
+(def ^:private _ccodes {
     "AF"  "Afghanistan"
     "AL"  "Albania"
     "DZ"  "Algeria"
@@ -264,7 +264,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private _CCODESEQ (seq _CCODES))
+(def ^:private _ccodes-seq (seq _ccodes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -272,11 +272,11 @@
   "The full country name"
   ^String
   [^String code]
-  (get _CCODES (ucase code)))
+  (get _ccodes (ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn listCodes "List all the country codes" [] (keys _CCODES))
+(defn listCodes "List all the country codes" [] (keys _ccodes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -288,12 +288,12 @@
   "The country code"
   ^String
   [^String country]
-  (when-some [rs (filter #(= (nth % 1) country) _CCODESEQ) ]
+  (when-some [rs (filter #(= (nth % 1) country) _ccodes-seq)]
     (nth (first rs) 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private _STATES {
+(def ^:private _states {
     "AL"  "Alabama"
     "AK"  "Alaska"
     "AZ"  "Arizona"
@@ -348,11 +348,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private _STATESSEQ (seq _STATES))
+(def ^:private _states-seq (seq _states))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn listStates "List all the abbreviated states" [] (keys _STATES))
+(defn listStates "List all the abbreviated states" [] (keys _states))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -360,7 +360,7 @@
   "The full state name"
   ^String
   [^String code]
-  (get _STATES (ucase code)))
+  (get _states (ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -368,7 +368,7 @@
   "The abbreviated state code"
   ^String
   [^String state]
-  (when-some [rs (filter #(= (nth % 1) state) _STATESSEQ) ]
+  (when-some [rs (filter #(= (nth % 1) state) _states-seq) ]
     (nth (first rs) 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

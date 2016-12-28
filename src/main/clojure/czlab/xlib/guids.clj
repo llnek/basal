@@ -37,14 +37,14 @@
 ;;"0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz"
 (def ^{:private true
        :tag String}
-  _SS "YcQnPuzVAvpi7taGj1XwoJbIK3smye96NlHrR2DZS0CUxkLF5O4g8fBTqMEdhW")
-(def ^:private _CHARS (.toCharArray _SS))
-(def ^:private _UUIDLEN (.length _SS))
+  _ss "YcQnPuzVAvpi7taGj1XwoJbIK3smye96NlHrR2DZS0CUxkLF5O4g8fBTqMEdhW")
+(def ^:private _chars (.toCharArray _ss))
+(def ^:private _uuid-len (.length _ss))
 
-(def ^:private ^String LONG_MASK "0000000000")
-(def ^:private ^String INT_MASK "00000")
-;;(def ^:private LONG_MASK "0000000000000000")
-;;(def ^:private INT_MASK "00000000")
+(def ^:private ^String long-mask "0000000000")
+(def ^:private ^String int-mask "00000")
+;;(def ^:private long-mask "0000000000000000")
+;;(def ^:private int-mask "00000000")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -63,13 +63,13 @@
 ;;
 (defmacro ^:private fmtInt
   ""
-  [nm] `(fmt INT_MASK (Integer/toHexString ~nm)))
+  [nm] `(fmt int-mask (Integer/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private fmtLong
   ""
-  [nm] `(fmt LONG_MASK (Long/toHexString ~nm)))
+  [nm] `(fmt long-mask (Long/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -112,7 +112,7 @@
    :no-doc true}
   []
   ;; At i==19 set the high bits of clock sequence as per rfc4122, sec. 4.1.5
-  (let [rc (char-array _UUIDLEN)
+  (let [rc (char-array _uuid-len)
         rnd (rand<>) ]
     (dotimes [n (alength rc) ]
       (aset-char rc
@@ -125,7 +125,7 @@
                          pos (if (= n 19)
                                (bit-or (bit-and r 0x3) 0x8)
                                (bit-and r 0xf)) ]
-                     (aget ^chars _CHARS pos))) ))
+                     (aget ^chars _chars pos))) ))
     (String. rc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

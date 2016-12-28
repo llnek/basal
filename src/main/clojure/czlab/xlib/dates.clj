@@ -39,20 +39,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(def ^String TS_REGEX "^\\d\\d\\d\\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])\\s\\d\\d:\\d\\d:\\d\\d")
-(def ^String DT_REGEX "^\\d\\d\\d\\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$")
+(def ^String ^:private ts-regex "^\\d\\d\\d\\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])\\s\\d\\d:\\d\\d:\\d\\d")
+(def ^String ^:private dt-regex "^\\d\\d\\d\\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$")
 
-(def ^String TS_FMT_NANO "yyyy-MM-dd HH:mm:ss.fffffffff" )
-(def ^String TS_FMT "yyyy-MM-dd HH:mm:ss")
+(def ^String ^:private ts-fmt-nano "yyyy-MM-dd HH:mm:ss.fffffffff" )
+(def ^String ^:private ts-fmt "yyyy-MM-dd HH:mm:ss")
 
-(def ^String DT_FMT_MICRO "yyyy-MM-dd'T'HH:mm:ss.SSS" )
-(def ^String DT_FMT "yyyy-MM-dd'T'HH:mm:ss" )
-(def ^String DATE_FMT "yyyy-MM-dd" )
+(def ^String ^:dynamic *dt-fmt-micro* "yyyy-MM-dd'T'HH:mm:ss.SSS" )
+(def ^String ^:dynamic *dt-fmt* "yyyy-MM-dd'T'HH:mm:ss" )
+(def ^String ^:dynamic *date-fmt* "yyyy-MM-dd" )
 
-(def ^String ISO8601_FMT "yyyy-MM-dd'T'HH:mm:ss.SSSZ" )
+(def ^String ^:dynamic *iso8601-fmt* "yyyy-MM-dd'T'HH:mm:ss.SSSZ" )
 
-(def MONTHS ["JAN" "FEB" "MAR" "APR" "MAY" "JUN"
-             "JUL" "AUG" "SEP" "OCT" "NOV" "DEC" ] )
+(def ^:private months ["JAN" "FEB" "MAR" "APR" "MAY" "JUN"
+                       "JUL" "AUG" "SEP" "OCT" "NOV" "DEC"])
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -128,8 +128,8 @@
   [^String tstr]
   (when (hgl? tstr)
     (let [fmt (if (has? tstr \:)
-                (if (has? tstr \.) DT_FMT_MICRO DT_FMT )
-                DATE_FMT ) ]
+                (if (has? tstr \.) *dt-fmt-micro* *dt-fmt*)
+                *date-fmt*)]
       (parseDate tstr (if (hastz? tstr) (str fmt "Z") fmt)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -142,7 +142,7 @@
   "Convert Date into string value"
   {:tag String}
 
-  ([dt] (fmtDate dt DT_FMT_MICRO nil))
+  ([dt] (fmtDate dt *dt-fmt-micro* nil))
   ([dt fmt] (fmtDate dt fmt nil))
   ([^Date dt fmt ^TimeZone tz]
    (if (or (nil? dt)
@@ -159,7 +159,7 @@
   "Convert Date object into a string - GMT timezone"
   ^String
   [^Date dt]
-  (fmtDate dt DT_FMT_MICRO (TimeZone/getTimeZone "GMT")))
+  (fmtDate dt *dt-fmt-micro* (TimeZone/getTimeZone "GMT")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

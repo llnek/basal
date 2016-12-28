@@ -18,7 +18,7 @@ package czlab.xlib;
 /**
  * @author Kenneth Leung
  */
-public interface Context {
+@FunctionalInterface public interface Context {
 
   /**
    */

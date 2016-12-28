@@ -22,7 +22,7 @@ package czlab.xlib;
 
   /**
    */
-  public void configure(Object c);
+  public void configure(Object arg);
 
 }
 

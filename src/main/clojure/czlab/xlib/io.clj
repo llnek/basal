@@ -60,8 +60,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(def ^:dynamic *TEMPFILE-REPO* (io/file (sysTmpDir)))
-(def ^:dynamic *MEMBUF-LIMIT* (* 4 MegaBytes))
+(def ^:dynamic *tempfile-repo* (io/file (sysTmpDir)))
+(def ^:dynamic *membuf-limit* (* 4 MegaBytes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -367,7 +367,7 @@
      (if (> (count sux) 2) sux ".dat")
      dir))
   ([] (tempFile "" ""))
-  ([pfx sux] (tempFile pfx sux *TEMPFILE-REPO*)))
+  ([pfx sux] (tempFile pfx sux *tempfile-repo*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -379,7 +379,7 @@
      [fp (FileOutputStream. fp)]))
   ([] (openTempFile "" ""))
   ([pfx sux]
-   (openTempFile pfx sux *TEMPFILE-REPO*)))
+   (openTempFile pfx sux *tempfile-repo*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -515,7 +515,7 @@
 
   ([inp] (readBytes inp false))
   ([^InputStream inp usefile?]
-   (slurpb inp (if usefile? 1 *MEMBUF-LIMIT*))))
+   (slurpb inp (if usefile? 1 *membuf-limit*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -524,12 +524,12 @@
   {:tag XData}
   ([rdr] (readChars rdr false))
   ([^Reader rdr usefile?]
-   (slurpc rdr (if usefile? 1 *MEMBUF-LIMIT*))))
+   (slurpc rdr (if usefile? 1 *membuf-limit*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn workDirPath
-  "The working directory" ^String [] (fpath *TEMPFILE-REPO*))
+  "The working directory" ^String [] (fpath *tempfile-repo*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

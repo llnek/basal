@@ -21,7 +21,7 @@ package czlab.xlib;
 
   /**
    */
-  public void interrupt(Object obj);
+  public void interrupt(Object arg);
 
 }
 
