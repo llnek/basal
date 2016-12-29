@@ -148,12 +148,16 @@
 
   ([k] (ge k false))
   ([k local?]
-   (or (if local?
-         (glocal k)
-         (if-some [v (get @u-vars k)]
-           (if (fn? v) (v k) v)
-           (glocal k)))
-       (bc/get-env k))))
+   (let [rc
+         (if local?
+           (glocal k)
+           (if-some [v (get @u-vars k)]
+             (if (fn? v) (v k) v)
+             (glocal k)))]
+     ;;sometimes we really want nothing to be returned
+     (if (= :nichts rc)
+       nil
+       (or rc (bc/get-env k))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -612,12 +616,14 @@
   "Setup env-vars and paths -
   must be called by the user"
 
-  ([] (bootEnv! nil))
-  ([options]
-   (reset! u-vars (merge {} options))
+  ([] (bootEnv! nil nil))
+  ([options] (bootEnv! options nil))
+  ([options post]
+   (swap! u-vars merge options)
    (bootEnvVars!)
    (bootEnvPaths!)
-   (bootSyncCPath (str (ge :jzzDir) "/"))))
+   (bootSyncCPath (str (ge :jzzDir) "/"))
+   (if (fn? post) (post))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
