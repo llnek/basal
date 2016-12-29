@@ -469,7 +469,7 @@
   (se! :target-path "target")
   (se! :warn-reflection true)
   (se! :pmode "dev")
-  (se! :bld "cout")
+  (se! :bld "out")
   (se! :cout "z")
   (se! :jzz "j")
   (se! :czz "c")

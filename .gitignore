@@ -3,6 +3,7 @@ targets/
 target/
 build/
 cout/
+out/
 #lib/
 classes/
 checkouts/
