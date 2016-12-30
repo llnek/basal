@@ -33,11 +33,11 @@
 
     ;; this is causing the RELEASE_6 warning
     ;; boot/clj stuff
-    [boot/base "2.7.0" :scope "provided"]
-    [boot/core "2.7.0" :scope "provided"]
-    [boot/pod "2.7.0" :scope "provided"]
-    [boot/worker "2.7.0" :scope "provided"]
-    [boot/aether "2.7.0" :scope "provided"]
+    [boot/base "2.7.1" :scope "provided"]
+    [boot/core "2.7.1" :scope "provided"]
+    [boot/pod "2.7.1" :scope "provided"]
+    [boot/worker "2.7.1" :scope "provided"]
+    [boot/aether "2.7.1" :scope "provided"]
 
   ]
 
