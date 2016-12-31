@@ -478,14 +478,6 @@
   (se! :jzz "j")
   (se! :czz "c")
   (se! :wzz "w")
-  (se! :mdirs
-       (fn [_]
-         [(ge :bootBuildDir)
-          (ge :distDir)
-          (ge :libDir)
-          (ge :qaDir)
-          (ge :czzDir)
-          (ge :jzzDir)]))
   (se! :bootBuildDir
             (fn [_] (fp! (ge :basedir)
                          (ge :bld))))
@@ -522,7 +514,15 @@
   (se! :reportTestDir
             (fn [_] (fp! (ge :qaDir) "r")))
   (se! :packDir
-            (fn [_] (fp! (ge :bootBuildDir) "p"))))
+            (fn [_] (fp! (ge :bootBuildDir) "p")))
+  (se! :mdirs
+       (fn [_]
+         [(ge :bootBuildDir)
+          (ge :distDir)
+          (ge :libDir)
+          (ge :qaDir)
+          (ge :czzDir)
+          (ge :jzzDir)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

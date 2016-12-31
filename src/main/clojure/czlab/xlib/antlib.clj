@@ -685,7 +685,6 @@
   "Bind all the tasks to a target and a project"
   ^Target
   [^String target tasks]
-  {:pre [(coll? tasks)]}
 
   (let [^Project pj @dftprj
         tg (Target.)]
@@ -709,7 +708,7 @@
 (defn runTarget
   "Run ant tasks"
   [target tasks]
-  {:pre [(coll? tasks)]}
+
   (-> (projAntTasks target tasks)
       (execTarget)))
 
@@ -720,9 +719,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn runTasks
-  "Run ant tasks"
-  [tasks] {:pre [(coll? tasks)]} (runTarget "" tasks))
+(defn runTasks "Run ant tasks" [tasks]  (runTarget "" tasks))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
