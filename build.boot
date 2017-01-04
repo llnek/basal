@@ -6,11 +6,9 @@
   :url "https://github.com/llnek/xlib"
 
   :dependencies '[
-
     [org.clojure/data.json "0.2.6"]
     [org.clojure/clojure "1.8.0"]
-    [czlab/czlab-pariah "0.1.0"]
-
+    [czlab/czlab-pariah "0.1.0" :scope "provided"]
   ]
 
   :source-paths #{"src/main/clojure" "src/main/java"}
