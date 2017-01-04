@@ -5,20 +5,12 @@
   :description ""
   :url "https://github.com/llnek/xlib"
 
-  ;;:exclusions '[javax.servlet/servlet-api]
-
   :dependencies '[
 
+    [org.clojure/data.json "0.2.6"]
+    [org.clojure/clojure "1.8.0"]
     [czlab/czlab-pariah "0.1.0"]
 
-    [org.clojure/tools.logging "0.3.1" ]
-    [org.clojure/data.json "0.2.6" ]
-
-    [com.cemerick/pomegranate "0.3.1" :scope "provided"]
-    [codox/codox "0.10.2" :scope "provided"]
-    [org.clojure/clojure "1.8.0" ]
-    [net.mikera/cljunit "0.6.0" :scope "provided"]
-    [junit/junit "4.12"  :scope "provided"]
   ]
 
   :source-paths #{"src/main/clojure" "src/main/java"}
