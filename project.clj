@@ -15,6 +15,8 @@
                  [org.flatland/ordered "1.5.4"]
                  [org.clojure/data.json "0.2.6"]]
 
+  :plugins [[lein-codox "0.10.2"]]
+
   :profiles {:provided {:dependencies
                         [[net.mikera/cljunit "0.6.0" :scope "test"]
                          [junit/junit "4.12" :scope "test"]
