@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>czlab</groupId>
-  <artifactId>czlab-xlib</artifactId>
+  <groupId>io.czlab</groupId>
+  <artifactId>xlib</artifactId>
   <packaging>jar</packaging>
   <version>0.1.0</version>
-  <name>czlab-xlib</name>
-  <description/>
+  <name>xlib</name>
+  <description>General clojure helper functions</description>
   <url>https://github.com/llnek/xlib</url>
   <licenses>
     <license>
-      <name>Apache License 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+      <name>Eclipse Public License</name>
+      <url>http://www.eclipse.org/legal/epl-v10.html</url>
     </license>
   </licenses>
   <scm>
     <connection>scm:git:git://github.com/llnek/xlib.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/llnek/xlib.git</developerConnection>
-    <tag>159c97b94d66b910e5688a525c0b8f0ba81d876d
+    <tag>7044f65930a33e2973956c383a2df1889060e257
 </tag>
     <url>https://github.com/llnek/xlib</url>
   </scm>
@@ -50,7 +50,7 @@
             <configuration>
               <sources>
                 <source>src/main/java</source>
-                <source>test/main/java</source>
+                <source>src/test/java</source>
               </sources>
             </configuration>
           </execution>
