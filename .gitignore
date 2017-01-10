@@ -13,7 +13,9 @@ public/scripts/
 public/styles/
 public/images/
 public/pages/
-/pom.xml
+
+
+pom.xml
 
 *.class
 *.asc
