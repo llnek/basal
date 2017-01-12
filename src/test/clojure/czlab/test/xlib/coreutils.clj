@@ -43,7 +43,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private dummyResourcePath "czlab/xlib/Resources_en.properties")
+(def ^:private dummyResourcePath "czlab/xlib/etc/Resources_en.properties")
 (def ^:private dummyProperties (Properties.))
 (def ^:private VAR_USER (System/getProperty "user.name"))
 (def ^:private VAR_PATH (System/getenv "PATH"))
@@ -245,14 +245,14 @@
     (is (== 97 (aget (bytesify "a" "utf-8") 0)))
 
     (is (with-open
-          [s (resStream "czlab/xlib/sample.ini")]
+          [s (resStream "czlab/xlib/etc/sample.ini")]
           (inst? InputStream s)))
 
-    (is (inst? URL (resUrl "czlab/xlib/sample.ini")))
+    (is (inst? URL (resUrl "czlab/xlib/etc/sample.ini")))
 
-    (is (string? (resStr "czlab/xlib/sample.ini")))
+    (is (string? (resStr "czlab/xlib/etc/sample.ini")))
 
-    (is (> (alength (resBytes "czlab/xlib/sample.ini")) 0))
+    (is (> (alength (resBytes "czlab/xlib/etc/sample.ini")) 0))
 
     (is (= "aaa"
            (stringify (inflate (deflate (bytesify "aaa"))))))

@@ -132,7 +132,7 @@
 
   (testing
     "related to: mime properties"
-    (is (with-open [inp (resStream "czlab/xlib/mime.properties")]
+    (is (with-open [inp (resStream "czlab/xlib/etc/mime.properties")]
           (binding [*membuf-limit* (* 2 1024)]
             (let [z (.available inp)
                   x (readBytes inp)
@@ -142,7 +142,7 @@
               (.dispose x)
               (== z n)))))
 
-    (is (with-open [inp (resStream "czlab/xlib/mime.properties")
+    (is (with-open [inp (resStream "czlab/xlib/etc/mime.properties")
                     rdr (InputStreamReader. inp)]
           (binding [*membuf-limit* (* 2 1024)]
             (let [z (.available inp)

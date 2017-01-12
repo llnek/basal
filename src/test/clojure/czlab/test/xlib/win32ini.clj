@@ -18,7 +18,7 @@
 ;;
 (def
   ^:private
-  ^Win32Conf INIFILE (w32ini<> (resUrl "czlab/xlib/sample.ini")))
+  ^Win32Conf INIFILE (w32ini<> (resUrl "czlab/xlib/etc/sample.ini")))
 
 ;;(println "->>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 ;;(.dbgShow INIFILE)

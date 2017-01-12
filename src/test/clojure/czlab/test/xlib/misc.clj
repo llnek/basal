@@ -73,15 +73,15 @@
   (testing
     "related to: resource bundles"
     (is (= "hello joe, how is your dawg"
-           (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
+           (-> (loadResource (resUrl "czlab/xlib/etc/Resources_en.properties"))
                (rstr "test"  "joe" "dawg" ))))
 
     (is (= ["hello joe, how is your dawg" "hello joe, how is your dawg"]
-           (-> (loadResource (resUrl "czlab/xlib/Resources_en.properties"))
+           (-> (loadResource (resUrl "czlab/xlib/etc/Resources_en.properties"))
                (rstr* ["test"  "joe" "dawg"] ["test2"  "joe" "dawg"] ))))
 
     (is (inst? ResourceBundle
-               (getResource "czlab/xlib/Resources"))))
+               (getResource "czlab/xlib/etc/Resources"))))
 
 
   (is (string? "That's all folks!")))
