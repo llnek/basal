@@ -6,8 +6,6 @@
             :name "Eclipse Public License"}
 
   :description "General clojure helper functions"
-
-  ;;:scm "https://github.com/llnek/xlib.git"
   :url "https://github.com/llnek/xlib"
 
   :dependencies [[org.apache.logging.log4j/log4j-slf4j-impl "2.7"]
@@ -18,8 +16,7 @@
                  [org.clojure/data.json "0.2.6"]]
 
   :plugins [[lein-codox "0.10.2"]
-            [lein-czlab "0.1.1"]]
-  :hooks [leiningen.lein-czlab]
+            [lein-pprint "1.1.2"]]
 
   :profiles {:provided {:dependencies
                         [[net.mikera/cljunit "0.6.0" :scope "test"]
