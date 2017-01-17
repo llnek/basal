@@ -10,14 +10,15 @@
 
 package czlab.xlib;
 
+
 /**
  * @author Kenneth Leung
  */
-@FunctionalInterface public interface Initable {
+public interface LifeCycle extends Initable ,Startable ,Disposable {
 
   /**
    */
-  public Object init(Object arg);
+  public Object config();
 
 }
 

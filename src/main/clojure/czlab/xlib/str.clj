@@ -194,6 +194,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn strKW
+  "Stringify a keyword - no leading colon"
+  ^String
+  [^Keyword k]
+  (cs/replace (str k) #"^:" ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn toKW
   "Concatenate all args and return it as a keyword"
   ^Keyword
