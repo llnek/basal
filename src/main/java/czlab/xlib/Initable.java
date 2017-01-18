@@ -17,7 +17,7 @@ package czlab.xlib;
 
   /**
    */
-  public Object init(Object arg);
+  public void init(Object arg);
 
 }
 

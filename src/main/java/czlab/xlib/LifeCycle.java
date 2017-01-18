@@ -14,7 +14,7 @@ package czlab.xlib;
 /**
  * @author Kenneth Leung
  */
-public interface LifeCycle extends Initable ,Startable ,Disposable {
+public interface LifeCycle extends Hierarchial, Initable ,Startable ,Disposable {
 
   /**
    */

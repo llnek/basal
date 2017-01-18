@@ -17,7 +17,7 @@ public interface Hierarchial {
 
   /**
    */
-  public void setParent(Object p);
+  default public void setParent(Object p) {}
 
   /**
    */
