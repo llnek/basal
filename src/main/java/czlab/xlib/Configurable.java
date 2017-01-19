@@ -19,6 +19,10 @@ package czlab.xlib;
    */
   public void configure(Object arg);
 
+  /**
+   */
+  public Object config();
+
 }
 
 
