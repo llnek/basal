@@ -185,7 +185,7 @@
               t (.lastModified f)
               p (.getCanonicalPath f)
               f2 (str p ".t")]
-          (safeWait 1000)
+          (pause 1000)
           (touch! f)
           (touch! f2)
           (let [rc (and (> (.lastModified f) t)

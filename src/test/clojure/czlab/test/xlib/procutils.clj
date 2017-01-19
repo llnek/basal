@@ -62,7 +62,7 @@
                     @SCD
                     (runnable<>
                       #(swap! x inc)))
-              (safeWait 500)
+              (pause 500)
               @x)))
 
     (is (== 1
@@ -74,7 +74,7 @@
                 (runnable<>
                       #(swap! x inc))
                 500)
-              (safeWait 1000)
+              (pause 1000)
               @x)))
 
     (is (== 1
@@ -83,22 +83,22 @@
                r (runnable<>
                    #(swap! x inc) "117")]
               (.hold ^Schedulable @SCD r)
-              (safeWait 500)
+              (pause 500)
               (.wakeup ^Schedulable @SCD r)
-              (safeWait 500)
+              (pause 500)
               @x)))
 
     (is (do
           (async!
             #(spit CUR_FP "123"))
-          (safeWait 500)
+          (pause 500)
           (and (.exists ^File CUR_FP)
                (>= (.length ^File CUR_FP) 3))))
 
     (is (do
           (delayExec
             #(spit CUR_FP "123456") 500)
-          (safeWait 1000)
+          (pause 1000)
           (and (.exists ^File CUR_FP)
                (>= (.length ^File CUR_FP) 6))))
 

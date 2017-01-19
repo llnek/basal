@@ -1242,7 +1242,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn safeWait
+(defn pause
   "Block current thread for some millisecs"
   [millisecs]
   (try! (if (spos? millisecs)
