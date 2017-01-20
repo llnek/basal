@@ -18,11 +18,11 @@ public interface Startable {
 
   /**
    */
-  default public Object restart(Object... arg) { return this; }
+  default public Object restart(Object arg) { return this; }
 
   /**
    */
-  public Object start(Object... arg);
+  public Object start(Object arg);
 
   /**
    */

@@ -19,10 +19,6 @@ public interface Configurable {
    */
   public void configure(Object arg);
 
-  /**
-   */
-  public Object config();
-
 }
 
 

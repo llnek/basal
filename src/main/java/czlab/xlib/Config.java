@@ -11,54 +11,14 @@
 package czlab.xlib;
 
 
-import java.util.Date;
-import java.util.Set;
-
-
 /**
  * @author Kenneth Leung
  */
-public interface Config {
+@FunctionalInterface public interface Config {
 
   /**
    */
-  public double doubleValue(String name, double dft);
-
-  /**
-   */
-  public boolean boolValue(String name, boolean dft);
-
-  /**
-   */
-  public String strValue(String name, String dft);
-
-  /**
-   */
-  public long longValue(String name, long dft);
-
-  /**
-   */
-  public Iterable<?> sequence(String name);
-
-  /**
-   */
-  public boolean contains(String name);
-
-  /**
-   */
-  public Date dateValue(String name);
-
-  /**
-   */
-  public Config child(String name);
-
-  /**
-   */
-  public int size();
-
-  /**
-   */
-  public Set<String> keys();
+  public Object config();
 
 }
 
