@@ -13,7 +13,7 @@ package czlab.xlib;
 /**
  * @author Kenneth Leung
  */
-@FunctionalInterface public interface Configurable {
+public interface Configurable {
 
   /**
    */
