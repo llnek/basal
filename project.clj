@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defproject io.czlab/basal "0.1.0"
+(defproject io.czlab/basal "1.0.0"
 
   :license {:url "http://www.eclipse.org/legal/epl-v10.html"
             :name "Eclipse Public License"}
@@ -11,7 +11,7 @@
   :dependencies [[org.clojure/tools.logging "0.3.1"]
                  [org.flatland/ordered "1.5.4"]
                  [org.clojure/data.json "0.2.6"]
-                 [io.czlab/jasal "0.1.0"]]
+                 [io.czlab/jasal "1.0.0"]]
 
   :plugins [[lein-codox "0.10.2"]
             [lein-pprint "1.1.2"]]
