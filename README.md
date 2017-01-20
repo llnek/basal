@@ -1,4 +1,4 @@
-# xlib
+# basal
 General utilities.
 
 ## Usage
