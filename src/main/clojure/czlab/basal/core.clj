@@ -718,12 +718,15 @@
   ([rcPath] (resStr rcPath "utf-8" nil))
   ([^String rcPath
     ^String encoding ^ClassLoader czLoader]
-   (with-open
-     [out (ByteArrayOutputStream. BUF_SZ)
-      inp (resStream rcPath czLoader)]
-     (io/copy inp out :buffer-size BUF_SZ)
-     (-> (.toByteArray out)
-         (stringify encoding)))))
+   (if-some
+     [res (resStream rcPath czLoader)]
+     (with-open
+       [out (ByteArrayOutputStream. BUF_SZ)
+        inp res]
+       (io/copy inp out :buffer-size BUF_SZ)
+       (-> (.toByteArray out)
+           (stringify encoding)))
+     nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -731,12 +734,13 @@
   "Load the resource as byte[]"
   ^bytes
   [^String rcPath & [^ClassLoader czLoader]]
-
-  (with-open
-    [out (ByteArrayOutputStream. BUF_SZ)
-     inp (resStream rcPath czLoader)]
-    (io/copy inp out :buffer-size BUF_SZ)
-    (.toByteArray out)))
+  (if-some
+    [res (resStream rcPath czLoader)]
+    (with-open
+      [out (ByteArrayOutputStream. BUF_SZ)
+       inp res]
+      (io/copy inp out :buffer-size BUF_SZ)
+      (.toByteArray out))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
