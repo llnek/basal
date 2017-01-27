@@ -26,6 +26,51 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- isOption?
+  ""
+  [^String option]
+  (and (some? option)
+       (not= "--" option)
+       (or (.startsWith option "--")
+           (.startsWith option "-")
+           (.startsWith option "/"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- maybeOption
+  ""
+  [option key?]
+  (when (isOption? option)
+    (let [s (-> (cs/replace option #"^(-|/)+" "")
+                (cs/trim))]
+      (if (> (.length s) 0)
+        (if key? (keyword s) s)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn parseOptions
+  ""
+  ([cmdline] (parseOptions cmdline true))
+  ([cmdline key?]
+   (loop [options (transient {})
+          [p1 p2 & more
+           :as args] cmdline]
+     (if-some [o1 (maybeOption p1 key?)]
+       (if (or (nil? p2)
+               (isOption? p2))
+         (recur (assoc! options o1 true)
+                (if (nil? p2)
+                  more
+                  (cons p2 more)))
+         (recur (assoc! options o1 p2) more))
+       [(persistent! options)
+        (if (= "--" p1)
+          (if (some? p2)
+            (cons p2 more) [])
+          (or args []))]))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- readData

@@ -11,7 +11,8 @@
   (:require [clojure.string :as cs]
             [clojure.java.io :as io])
 
-  (:use [czlab.basal.core]
+  (:use [czlab.basal.cmdline]
+        [czlab.basal.core]
         [clojure.test])
 
   (:import  [java.util
@@ -360,7 +361,6 @@
     (is (= "23\n" (with-out-str (prn!! "%d%d" 2 3))))
     (is (= "23" (with-out-str (prn! "%d%d" 2 3))))
 
-
     (is (spos? (countCpus)))
 
     (is (let [s (now<>)
@@ -372,6 +372,20 @@
 
     (is (> (seqint2) 0))
     (is (> (seqint) 0)))
+
+  (testing
+    "cmdline options"
+    (is (let [[o v] (parseOptions ["--a" "b" "/c" "d" "-e" "f" "g"])]
+          (and (= "b" (:a o))
+               (= "d" (:c o))
+               (= "f" (:e o))
+               (= "g" (cs/join "" v)))))
+    (is (let [[o v] (parseOptions ["--" "a" "b" "c"])]
+          (and (empty? o)
+               (= "abc" (cs/join "" v)))))
+    (is (let [[o v] (parseOptions ["a" "b" "c"])]
+          (and (empty? o)
+               (= "abc" (cs/join "" v))))))
 
   (is (string? "that's all folks!")))
 
