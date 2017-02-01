@@ -454,6 +454,7 @@
   "Generate a unique id using std java"
   ^String
   []
+  ;;happens to be all hex chars
   (.replaceAll (str (UID.)) "[:\\-]+" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
