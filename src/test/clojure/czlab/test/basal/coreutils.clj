@@ -387,6 +387,13 @@
           (and (empty? o)
                (= "abc" (cs/join "" v))))))
 
+  (testing
+    "extra macros"
+    (is (= (try-let [a 3 b 4]  (-> (inc a) (+ b)))
+           8))
+    (is (= (let-try [a 3 b "x"] (let [z (+ 3 a)] (inc z)))
+           7)))
+
   (is (string? "that's all folks!")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
