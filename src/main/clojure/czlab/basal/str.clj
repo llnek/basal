@@ -401,6 +401,16 @@
     (true?
       (some #(= src %) substrs))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn wrapped?
+  "If src string starts with head and ends with tail"
+  [^String src ^String head ^String tail]
+  (if (and (hgl? src)
+           (hgl? head) (hgl? tail))
+    (and (.startsWith src head)
+         (.endsWith src tail))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro strbf<>

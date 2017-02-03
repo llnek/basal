@@ -27,6 +27,9 @@
 
     (is (= "a/a" (str (stror nil "a")(stror "/" "a")(stror "" "a"))))
 
+    (is (not (wrapped? "hello joe, are you well?" "xell" "!")))
+    (is (wrapped? "hello joe, are you well?" "hell" "?"))
+
     (is (= "az" (str (lcase nil)(lcase "A")(lcase "z"))))
     (is (= "AZ" (str (ucase nil)(ucase "A")(ucase "z"))))
 
