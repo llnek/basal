@@ -827,6 +827,14 @@
 (defmacro now<> "current time in millis" [] `(System/currentTimeMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro notfalse? "Explicit not false" [x] `(not (false? ~x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro nottrue? "Explicit not true" [x] `(not (true? ~x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 (defn fmtFileUrl
   "The file path as URL"
