@@ -828,11 +828,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro notfalse? "Explicit not false" [x] `(not (false? ~x)))
+(defmacro !false? "Explicit not false" [x] `(not (false? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro nottrue? "Explicit not true" [x] `(not (true? ~x)))
+(defmacro !true? "Explicit not true" [x] `(not (true? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]

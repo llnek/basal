@@ -389,6 +389,10 @@
 
   (testing
     "extra macros"
+    (is (!true? false))
+    (is (!false? true))
+    (is (not (!true? true)))
+    (is (not (!false? false)))
     (is (= (try-let [a 3 b 4]  (-> (inc a) (+ b)))
            8))
     (is (= (let-try [a 3 b "x"] (let [z (+ 3 a)] (inc z)))
