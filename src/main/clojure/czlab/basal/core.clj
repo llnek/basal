@@ -185,7 +185,7 @@
 (defmacro try!!
   "Eat the exception, log and return a default value"
   [defv & exprs]
-  `(try ~@exprs (catch Throwable e# (log/warn e# "") ~defv )))
+  `(try ~@exprs (catch Throwable e# (log/warn e# "") ~defv)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -194,7 +194,7 @@
   [defv & exprs]
   `(try ~@exprs
         (catch Throwable e#
-          (log/warn "Just ate a %s, yummy" (.toString e#)) ~defv )))
+          (log/warn "Just ate a %s, yummy" e#) ~defv)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -233,15 +233,17 @@
   "bindings => binding-form test. When test is not empty, evaluates body
   with binding-form bound to the value of test"
 
-  ([bindings then] `(if-some+ ~bindings ~then nil))
+  ([bindings then]
+   `(if-some+ ~bindings ~then nil))
+
   ([bindings then else & oldform]
-   (let [form (bindings 0) tst (bindings 1)]
+   (let [form (bindings 0)
+         tst (bindings 1)]
      `(let [temp# ~tst]
         (if (empty? temp#)
           ~else
           (let [~form temp#] ~then))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro doto->>
@@ -341,7 +343,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro notnil? "is x not nil" [x] `(not (nil? ~x)))
+(defmacro ^:private !nil? "is x not nil" [x] `(not (nil? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -388,11 +390,11 @@
 
   ([] (get-czldr nil))
   ([cl]
-    (or cl (.getContextClassLoader (Thread/currentThread)))))
+    (or cl (. (Thread/currentThread) getContextClassLoader))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn nilNichts "If nil, return NICHTS" {:no-doc true} [obj] (or obj NICHTS))
+(defn nilNichts "If nil, return NICHTS" ^:no-doc [obj] (or obj NICHTS))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -400,7 +402,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro rnil "Get rid of nil(s) in seq" [someseq] `(remove nil? ~someseq))
+(defmacro rnil "Get rid of nil(s) in seq" [seq] `(remove nil? ~seq))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

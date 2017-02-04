@@ -43,8 +43,9 @@
   ""
   [option key?]
   (when (isOption? option)
-    (let [s (-> (cs/replace option #"^(-|/)+" "")
-                (cs/trim))]
+    (let [s (-> (cs/replace option
+                            #"^(-|/)+" "")
+                cs/trim)]
       (if (> (.length s) 0)
         (if key? (keyword s) s)))))
 
@@ -115,7 +116,7 @@
                 next]}
         cmdQ]
     (if (nil? answer)
-      (do->nil (.write cout "\n"))
+      (do->nil (. cout write "\n"))
       (let [rc (stror answer default)]
         (cond
           ;;if required to answer, repeat the question
