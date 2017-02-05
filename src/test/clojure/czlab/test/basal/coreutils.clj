@@ -128,10 +128,6 @@
 
     (is (cexp? (Exception. "a")))
 
-    (is (false? (notnil? nil)))
-
-    (is (notnil? ""))
-
     (is (false? (.firstCall (doto->> (monoFlop<>)
                                      (.firstCall )
                                      (.firstCall )))))
@@ -149,8 +145,6 @@
     (is (== 3 (count (flatnil [1 2 nil 3]))))
 
     (is (vector? (flatnil [1 2 nil 3])))
-
-    (is (== 2 (:a (interject {:a 1} :a #(inc (get %1 %2))))))
 
     (is (identical? (nilNichts nil) NICHTS))
 
@@ -172,8 +166,6 @@
     (is (not (isFQKeyword? :a)))
     (is (isFQKeyword? ::a))
 
-    (is (notnil? (juid)))
-
     (is (< (.indexOf (juid) ":\\-") 0))
 
     (is (let [r (randSign)] (or (pos? r)(neg? r))))
@@ -181,7 +173,7 @@
     (is (let [b (randBool)] (or (false? b)(true? b))))
 
     (is (inst? SecureRandom (rand<>)))
-    (is (inst? Date (now<date>)))
+    (is (inst? Date (date<>)))
 
     (is (inst? Charset (toCharset "utf-16")))
     (is (> (.indexOf (fpath "/tmp/abc/def.txt") "/abc/") 0))

@@ -413,22 +413,24 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn interject
+(defn- interject
   "Run the function on the current field value,
    replacing the key with the returned value.
    function(pojo oldvalue) -> newvalue"
   [pojo field func]
   {:pre [(map? pojo) (fn? func)]}
-  (assoc pojo
-         field
-         (func pojo field)))
+  (assoc pojo field (func pojo field)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro szero? "Safe zero?" [e] `(let [e# ~e] (and (number? e#)(zero? e#))))
-(defmacro sneg? "Safe neg?" [e] `(let [e# ~e] (and (number? e#)(neg? e#))))
-(defmacro spos? "Safe pos?" [e] `(let [e# ~e] (and (number? e#)(pos? e#))))
-(defmacro snneg? "Safe not neg?" [e] `(not (sneg? ~e)))
+(defmacro szero? "Safe zero?" [e]
+  `(let [e# ~e] (and (number? e#)(zero? e#))))
+(defmacro sneg? "Safe neg?" [e]
+  `(let [e# ~e] (and (number? e#)(neg? e#))))
+(defmacro spos? "Safe pos?" [e]
+  `(let [e# ~e] (and (number? e#)(pos? e#))))
+(defmacro snneg? "Safe not neg?" [e]
+  `(let [e# ~e] (or (szero? e#)(spos? e#))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -500,12 +502,12 @@
              (SecureRandom/getInstanceStrong)
              (SecureRandom.))]
      (->> (SecureRandom/getSeed 4)
-          (.setSeed r))
+          (. r setSeed))
      r)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro now<date> "A java Date" [] `(java.util.Date.))
+(defmacro date<> "A java Date" [] `(java.util.Date.))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -561,7 +563,7 @@
   "Get rid of trailing dir paths"
   ^String
   [path]
-  (.replaceFirst (str path) "[/\\\\]+$"  ""))
+  (. (str path) replaceFirst "[/\\\\]+$"  ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -573,8 +575,8 @@
   (with-open
     [out (ByteArrayOutputStream. BUF_SZ)
      oos (ObjectOutputStream. out)]
-    (.writeObject oos ^Serializable obj)
-    (.toByteArray out)))
+    (. oos writeObject ^Serializable obj)
+    (. out toByteArray )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -586,7 +588,7 @@
   (with-open
     [in (ByteArrayInputStream. bits)
      ois (ObjectInputStream. in)]
-    (.readObject ois)))
+    (. ois readObject )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -605,8 +607,8 @@
   (if (nil? obj)
     "null"
     (if (inst? Class obj)
-      (.getName ^Class obj)
-      (.getName (.getClass ^Object obj)))))
+      (. ^Class obj getName)
+      (.. ^Object obj getClass getName))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -675,7 +677,7 @@
 ;;
 (defmethod loadJavaProps
   File
-  [^File aFile] (loadJavaProps (io/as-url aFile)))
+  [aFile] (loadJavaProps (io/as-url aFile)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -692,7 +694,8 @@
 
   ([bits] (stringify bits "utf-8"))
   ([^bytes bits ^String encoding]
-    (when (some? bits) (String. bits encoding))))
+    (some-> bits
+            (String. encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -700,8 +703,8 @@
   "Get bytes with the right encoding"
   ^bytes
   [^String s & [^String encoding]]
-  (let [encoding (str (or encoding "utf-8"))]
-    (when (some? s) (.getBytes s encoding))))
+  (some-> s
+          (.getBytes (or encoding "utf-8"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -854,7 +857,7 @@
   "The file path only"
   ^String
   [^String fileUrlPath]
-  (if-some [u (fmtFileUrl fileUrlPath)] (.getPath u) ""))
+  (str (some-> (fmtFileUrl fileUrlPath) .getPath)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test and assert funcs
@@ -935,7 +938,7 @@
 (defmethod test-pos0
   :double
   [^String reason v]
-  (assert (>= v 0.0)
+  (assert (snneg? v)
           (str reason " must be >= 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -943,7 +946,7 @@
 (defmethod test-pos0
   :long
   [^String reason v]
-  (assert (>= v 0)
+  (assert (snneg? v)
           (str reason " must be >= 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -951,7 +954,7 @@
 (defmethod test-pos
   :double
   [^String reason v]
-  (assert (> v 0.0)
+  (assert (spos? v)
           (str reason " must be > 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -959,7 +962,7 @@
 (defmethod test-pos
   :long
   [^String reason v]
-  (assert (> v 0)
+  (assert (spos? v)
           (str reason " must be > 0")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -977,8 +980,7 @@
   ^Throwable
   [root]
   (loop [r root
-         t (if (some? root)
-             (.getCause ^Throwable root))]
+         t (some-> ^Throwable root .getCause)]
     (if (nil? t)
       r
       (recur t (.getCause t)))))
@@ -988,7 +990,7 @@
 (defn rootCauseMsg
   "Find the root error message"
   [root]
-  (if-some [e (rootCause root)] (.getMessage e) ""))
+  (str (some-> (rootCause root) .getMessage)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1006,10 +1008,10 @@
   "Convert Java Map into Clojure Map"
   ^APersistentMap
   [^java.util.Map props]
-
   (preduce<map>
-    #(assoc! %1 (keyword %2) (.get props %2))
-    (.keySet props)))
+    #(assoc! %1
+             (keyword %2)
+             (. props get %2)) (.keySet props)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1052,12 +1054,11 @@
                 (UnsynchedMObj. (or seed {})))]
      (reify Muble
        (setv [_ k v]
-         (->> (assoc (.g data) k v)
-                     (.s data)) v)
+         (->> (assoc (.g data) k v) (.s data)) v)
        (unsetv [_ k]
-         (let [v (get (.g data) k)]
-           (->> (dissoc (.g data) k)
-                (.s data)) v))
+         (let [m (.g data)
+               v (get m k)]
+           (.s data (dissoc m k)) v))
        (getOrSet [this k v]
          (when-not
            (.contains this k)
@@ -1066,18 +1067,19 @@
        (toEDN [_] (pr-str (.g data)))
        (intern [_] (.g data))
        (copyEx [_ m]
-         (if (and (map? m)
-                  (not (identical? (.g data) m)))
-           (->> (merge (.g data) m)
-                (.s data ))))
+         (let [d (.g data)]
+           (if (and (map? m)
+                    (not (identical? d m)))
+             (.s data (merge d m)))))
        (copy [this x]
-         (when (and (some? x)
+         (when (and (instance? Muble x)
                     (not (identical? this x)))
            (doseq [[k v] (.seq ^Muble x)]
              (.setv this k v))))
-       (seq [_] (seq (.g data)))
-       (contains [_ k] (contains? (.g data) k))
        (getv [_ k] (get (.g data) k))
+       (seq [_] (seq (.g data)))
+       (contains [_ k]
+         (contains? (.g data) k))
        (clear [_ ] (.c data))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1106,7 +1108,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn prtStk "Print stack" [^Throwable e] (some-> e (.printStackTrace)))
+(defn prtStk "Print stack" [^Throwable e] (some-> e .printStackTrace))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1126,10 +1128,7 @@
   "Remove the leading colon"
   ^String
   [path]
-  (let [s (str path)]
-    (if (.startsWith s ":")
-      (.substring s 1)
-      s)))
+  (cs/replace (str path) #"^:" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1148,14 +1147,14 @@
     (throwBadData (str "Bad email address " email))
 
     :else
-    (let [ss (.split email "@") ]
+    (let [ss (.split email "@")]
       (if (== 2 (alength ss))
         (str (aget ss 0) "@" (cs/lower-case (aget ss 1)))
         (throwBadData (str "Bad email address " email))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(declare toJava)
+(declare convToJava)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1165,7 +1164,7 @@
   [obj]
   (let [rc (ArrayList.)]
     (doseq [v (seq obj)]
-      (.add rc (toJava v)))
+      (.add rc (convToJava v)))
     rc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1176,7 +1175,7 @@
   [obj]
   (let [rc (HashSet.)]
     (doseq [v (seq obj)]
-      (.add rc (toJava v)))
+      (.add rc (convToJava v)))
     rc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1187,13 +1186,14 @@
   [obj]
   (let [rc (HashMap.)]
     (doseq [[k v] (seq obj)]
-      (.put rc (name k) (toJava v)))
+      (.put rc
+            (stripNSPath (name k)) (convToJava v)))
     rc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- toJava
-  "Convert a clojure collection to its Java equivalent"
+(defn convToJava
+  "Convert a clojure data structure to its Java equivalent"
   ^Object
   [obj]
 
@@ -1212,11 +1212,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn convToJava
-  "Clojure to Java" ^Object [obj] (toJava obj))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defonce ^:private _numInt (AtomicInteger. 1))
 (defonce ^:private _numLng (AtomicLong. 1))
 
@@ -1227,10 +1222,10 @@
   [n]
   (cond
     (inst? AtomicInteger n)
-    (.getAndIncrement ^AtomicInteger n)
+    (. ^AtomicInteger n getAndIncrement)
 
     (inst? AtomicLong n)
-    (.getAndIncrement ^AtomicLong n)
+    (. ^AtomicLong n getAndIncrement)
 
     :else
     (throwBadArg "expecting atomic-number type")))
@@ -1256,21 +1251,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn cancelTimerTask
-  "" [^TimerTask t] (try! (do->nil (some-> t (.cancel)))))
+  "" [^TimerTask t] (try! (some-> t .cancel)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn countCpus "How many cpus?"
-  [] (->> (Runtime/getRuntime)
-          (.availableProcessors)))
+  [] (. (Runtime/getRuntime) availableProcessors))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn pause
   "Block current thread for some millisecs"
   [millisecs]
-  (try! (if (spos? millisecs)
-          (Thread/sleep millisecs))))
+  (try! (if (spos? millisecs) (Thread/sleep millisecs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

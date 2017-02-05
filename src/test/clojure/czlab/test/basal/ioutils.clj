@@ -119,7 +119,7 @@
                  s (slurp f)] (deleteQ f) s))))
 
   (is (inst? XData (xdata<> nil)))
-  (is (let [x (xdata<file>)
+  (is (let [x (fdata<>)
             f? (some? (.fileRef x))] f?))
 
   (testing

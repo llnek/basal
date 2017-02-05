@@ -63,9 +63,7 @@
   "Does the string contain time zone info"
   [^String s]
   (let [pos (indexAny s ",; \t\r\n\f")
-        ss (if (> pos 0)
-             (.substring s (inc pos))
-             "")]
+        ss (if (> pos 0) (. s substring (inc pos)) "")]
     (or (hasAny? ss ["+" "-"])
         (.matches ss "\\s*[a-zA-Z]+\\s*"))))
 
@@ -110,7 +108,7 @@
   [^String tstr ^String fmt]
   (when (and (hgl? tstr)
              (hgl? fmt))
-    (.parse (SimpleDateFormat. fmt) tstr)))
+    (. (SimpleDateFormat. fmt) parse tstr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -141,8 +139,7 @@
            (nichts? fmt))
      ""
      (let [df (SimpleDateFormat. fmt)]
-       (when (some? tz)
-         (.setTimeZone df tz))
+       (some->> tz (. df setTimeZone))
        (.format df dt)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -238,7 +235,7 @@
 ;;
 (defmacro fmtTime
   "Format current time"
-  [^String fmt] `(fmtDate (now<date>) ~fmt))
+  [^String fmt] `(fmtDate (date<>) ~fmt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -259,14 +256,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn gcal<gmt>
+(defn gmt<>
   "Make a Calendar (GMT)"
   {:tag GregorianCalendar}
 
   ([] (GregorianCalendar.
         (TimeZone/getTimeZone "GMT")))
   ([arg]
-   (let [^Calendar c (gcal<gmt>)]
+   (let [^Calendar c (gmt<>)]
      (cond
        (inst? Date arg)
        (.setTime c ^Date arg)
@@ -288,10 +285,10 @@
   ^String
   [^Calendar cal]
   (cs/join ""
-           ["{" (.. cal (getTimeZone) (getDisplayName) )  "} "
-            "{" (.. cal (getTimeZone) (getID)) "} "
+           ["{" (.. cal getTimeZone getDisplayName)  "} "
+            "{" (.. cal getTimeZone getID) "} "
             "[" (.getTimeInMillis cal) "] "
-            (fmtCal cal) ]))
+            (fmtCal cal)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

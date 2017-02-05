@@ -32,11 +32,11 @@
   "Convert clojure object into EDN format"
   ^String
   [obj]
-  (if (some? obj)
-    (let [w (StringWriter.)]
-      (->> (pprint obj w)
-           (with-pprint-dispatch indent-dispatch ))
-      (str w))))
+  (let [w (StringWriter.)]
+    (if (some? obj)
+      (with-pprint-dispatch
+        indent-dispatch (pprint obj w)))
+    (str w)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -44,23 +44,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readEdn File [^File fp] (readEdn (io/as-url fp)))
+(defmethod readEdn File [fp] (readEdn (io/as-url fp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readEdn String [^String s] (edn/read-string s))
+(defmethod readEdn String [s] (edn/read-string s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readEdn URL [^URL url] (edn/read-string (readAsStr url)))
+(defmethod readEdn URL [url] (edn/read-string (readAsStr url)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn writeJsonStr
-  "Convert into JSON"
-  ^String
-  [data]
-  (js/write-str data))
+(defn writeJsonStr "Convert into JSON" ^String [data] (js/write-str data))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -85,15 +81,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readJson File [^File fp] (readJson (io/as-url fp)))
+(defmethod readJson File [fp] (readJson (io/as-url fp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readJson String [^String s] (readJsonStrKW s))
+(defmethod readJson String [s] (readJsonStrKW s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod readJson URL [^URL url] (readJson (readAsStr url)))
+(defmethod readJson URL [url] (readJson (readAsStr url)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

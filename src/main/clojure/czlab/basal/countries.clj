@@ -282,8 +282,12 @@
   "The country code"
   ^String
   [^String country]
-  (when-some [rs (filter #(= (nth % 1) country) _ccodes-seq)]
-    (nth (first rs) 0)))
+
+  (some-> (filter #(= (nth % 1)
+                      country)
+                  _ccodes-seq)
+          first
+          (nth 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -362,8 +366,11 @@
   "The abbreviated state code"
   ^String
   [^String state]
-  (when-some [rs (filter #(= (nth % 1) state) _states-seq) ]
-    (nth (first rs) 0)))
+  (some-> (filter #(= (nth % 1)
+                      state)
+                  _states-seq)
+          first
+          (nth 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

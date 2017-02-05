@@ -63,16 +63,15 @@
   "Wrapped these bytes in an input-stream"
   ^InputStream
   [^bytes bytess]
-  (if (some? bytess)
-    (ByteArrayInputStream. bytess)))
+  (some-> bytess ByteArrayInputStream. ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn baos<>
   "Make a byte array output stream"
-  {:tag ByteArrayOutputStream }
+  {:tag ByteArrayOutputStream}
 
-  ([] (baos<> BUF_SZ))
+  ([] (baos<> nil))
   ([size]
    (ByteArrayOutputStream. (int (or size BUF_SZ)))))
 
@@ -89,7 +88,7 @@
     (if (< n 0)
       cnt
       (do
-        (when (> n 0)
+        (if (> n 0)
           (.write output buf 0 n))
         (recur buf
                (+ n cnt)
@@ -127,8 +126,8 @@
 
   (let [cnt (copyAll input output)]
     (if (> cnt Integer/MAX_VALUE)
-      (trap! IOException "size too large")
-      cnt)))
+      (trap! IOException "size too large"))
+    cnt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -136,7 +135,9 @@
   ""
   ^bytes
   [^InputStream input]
-  (let [os (baos<>)] (copy input os) (.toByteArray os)))
+  (let [os (baos<>)]
+    (copy input os)
+    (.toByteArray  os)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -219,8 +220,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn closeQ "Close object" [obj] (try! (some->
-                                          (cast? Closeable obj) (.close))))
+(defn closeQ
+  "Close object"
+  [obj]
+  (try! (some-> (cast? Closeable obj) .close)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -254,8 +257,7 @@
   "Turn bytes into hex string"
   ^String
   [^bytes bytess]
-  (if (some? bytess)
-    (String. (bytesToHex bytess))))
+  (some-> bytess bytesToHex String. ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -286,7 +288,7 @@
 (defn resetStream!
   "Safely reset this stream"
   [^InputStream inp]
-  (try! (some-> inp (.reset))))
+  (try! (some-> inp .reset)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -309,16 +311,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod openFile
-  String
-  [^String fp] (if (some? fp) (XStream. (io/file fp))))
+(defmethod openFile String [fp] (some-> fp io/file XStream. ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod openFile
-  File
-  [^File f]
-  (if (some? f) (XStream. f)))
+(defmethod openFile File [^File f] (some-> f XStream. ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -327,9 +324,7 @@
   ^bytes
   [^String gzb64]
   (if (some? gzb64)
-    (-> (Base64/getDecoder)
-        (.decode gzb64)
-        (gunzip ))))
+    (-> (Base64/getDecoder) (.decode gzb64) gunzip)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -384,8 +379,7 @@
   (let [[fp os] (openTempFile)]
     (try
       (copy inp os)
-      (finally
-        (closeQ os)))
+      (finally (closeQ os)))
     fp))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -396,8 +390,8 @@
   (if (some? inpsrc)
     (let [rdr (.getCharacterStream inpsrc)
           ism (.getByteStream inpsrc) ]
-      (try! (some-> ism (.reset)))
-      (try! (some-> rdr (.reset))))))
+      (try! (some-> ism .reset))
+      (try! (some-> rdr .reset)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -409,7 +403,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro xdata<file>
+(defmacro fdata<>
   "Create XData with temp-file"
   ([dir] `(XData. (tempFile "" "" ~dir)))
   ([] `(XData. (tempFile))))
@@ -421,9 +415,7 @@
   [^ByteArrayOutputStream baos]
   (let [[^File fp ^OutputStream os]
         (openTempFile) ]
-    (doto os
-      (.write (.toByteArray baos))
-      (.flush))
+    (doto os (.write (.toByteArray baos)) .flush)
     (.close baos)
     [fp os]))
 
@@ -435,9 +427,7 @@
   (let [[^File fp ^OutputStream out]
         (openTempFile)
         w (OutputStreamWriter. out "utf-8")]
-    (doto w
-      (.write (.toCharArray wtr))
-      (.flush))
+    (doto w (.write (.toCharArray wtr)) .flush)
     (closeQ wtr)
     [fp w]))
 
@@ -531,12 +521,10 @@
   ""
   ^bytes
   [data]
-
   (condp = (class data)
     InputStream (toBytes data)
     String (bytesify data)
-    (bytesClass) data
-    nil))
+    (bytesClass) data))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -569,7 +557,7 @@
   "If file exists"
   [fp]
   `(boolean (some->
-              ~(with-meta fp {:tag 'java.io.File}) (.exists))))
+              ~(with-meta fp {:tag 'java.io.File}) .exists)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -617,7 +605,7 @@
   "Parent file"
   [f]
   `(some->
-     ~(with-meta f {:tag 'java.io.File})  (.getParentFile )))
+     ~(with-meta f {:tag 'java.io.File})  .getParentFile))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -666,7 +654,8 @@
   "Remove leading separators from name"
   ^String
   [^ZipEntry en]
-  (.replaceAll (.getName en) "^[\\/]+",""))
+  (-> (.getName en)
+      (.replaceAll "^[\\/]+" "")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -678,7 +667,7 @@
     (if (.isDirectory en)
       (.mkdirs f)
       (do
-        (.mkdirs (.getParentFile f))
+        (.. f getParentFile mkdirs)
         (with-open [inp (.getInputStream src en)
                     os (FileOutputStream. f)]
           (copy inp os))))))
@@ -731,11 +720,11 @@
        (writeFile fp (.getBytes stuff))
        (let [opts (make-array CopyOption 1)]
          (aset #^"[Ljava.nio.file.CopyOption;"
-               opts
-               0 StandardCopyOption/REPLACE_EXISTING)
-         (Files/move (.toPath (.fileRef stuff))
-                     (.toPath fp)
-                     opts)
+               opts 0 StandardCopyOption/REPLACE_EXISTING)
+         (Files/move (.. stuff
+                         fileRef
+                         toPath)
+                     (.toPath fp) opts)
          ;;since file has moved, update stuff
          (.setDeleteFlag stuff false)
          (.reset stuff fp false))))))
@@ -746,13 +735,11 @@
   "Get a file from a directory"
   ^XData
   [^File dir ^String fname]
-
   ;;(log/debug "getting file: %s" fname)
   (let [fp (io/file dir fname)
         xs (xdata<> )]
     (if (fileRead? fp)
-      (.reset xs fp false))
-    xs))
+      (.reset xs fp false)) xs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -764,7 +751,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod mkdirs File [^File f] (doto f (.mkdirs)))
+(defmethod mkdirs File [^File f] (doto f .mkdirs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -823,15 +810,15 @@
 (defn- grep-paths
   "Find folders containing files with this extension"
   [top out fext]
-  (doseq [^File f (.listFiles (io/file top))]
+  (doseq [^File f
+          (.listFiles (io/file top))]
     (cond
       (.isDirectory f)
       (grep-paths f out fext)
       (.endsWith (.getName f) fext)
       (let [p (.getParentFile f)]
         (when-not (contains? @out p))
-          (swap! out conj p))
-      :else nil)))
+          (swap! out conj p)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -846,7 +833,9 @@
     (grep-paths rootDir bin ext)
     (doseq [k @bin]
       (let [kp (.getCanonicalPath ^File k)]
-        (swap! out conj (.substring kp (+ rlen 1)))))
+        (swap! out
+               conj
+               (.substring kp (+ rlen 1)))))
     @out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -859,7 +848,7 @@
       (let [p (if (.empty stk)
                 '()
                 (for [x (.toArray stk)]
-                  (.getName ^File x)))
+                  (. ^File x getName)))
             fid (.getName f)
             paths (conj (into [] p) fid)]
         (if
@@ -890,8 +879,7 @@
   (let [n (.getName (io/file file))
         p (.lastIndexOf n ".")]
     (if (>= p 0)
-      (.substring n 0 p)
-      n)))
+      (.substring n 0 p) n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -902,10 +890,10 @@
   (let [f (io/file file)]
     (if-not (.exists f)
       (do
-        (mkdirs (.getParentFile f))
+        (.. f getParentFile mkdirs)
         (with-open [os (FileOutputStream. f)]))
       (when-not
-        (.setLastModified f (System/currentTimeMillis))
+        (. f setLastModified (System/currentTimeMillis))
         (throwIOE "Unable to set the lastmodtime: %s" f)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

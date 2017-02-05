@@ -46,10 +46,10 @@
   [^String pad ^String mask]
 
   (let [mlen (.length mask)
-        plen (.length pad) ]
+        plen (.length pad)]
     (if (>= mlen plen)
       (.substring mask 0 plen)
-      (str (.replace (strbf<> pad) (- plen mlen) plen mask )))))
+      (str (.replace (strbf<> pad) (- plen mlen) plen mask)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -71,7 +71,7 @@
   (let [s (fmtLong (now<>))
         n (.length s)]
     [(lefts s (/ n 2))
-     (rights s (max 0 (- n (/ n 2 ))))]))
+     (rights s (max 0 (- n (/ n 2))))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -83,14 +83,14 @@
         b (.getAddress neta)]
     (cond
       (.isLoopbackAddress neta)
-      (.nextLong (rand<>))
+      (. (rand<>) nextLong)
       (== 4 (alength b))
       (long (readNumber b Integer))
       :else (readNumber b Long))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private ^long _IP (Math/abs (maybeSetIP)) )
+(def ^:private ^long _IP (Math/abs (maybeSetIP)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -105,8 +105,8 @@
   []
   ;; At i==19 set the high bits of clock sequence as per rfc4122, sec. 4.1.5
   (let [rc (char-array _uuid-len)
-        rnd (rand<>) ]
-    (dotimes [n (alength rc) ]
+        rnd (rand<>)]
+    (dotimes [n (alength rc)]
       (aset-char rc
                  n
                  (case n
@@ -116,8 +116,8 @@
                          r (bit-or 0 (.intValue d))
                          pos (if (= n 19)
                                (bit-or (bit-and r 0x3) 0x8)
-                               (bit-and r 0xf)) ]
-                     (aget ^chars _chars pos))) ))
+                               (bit-and r 0xf))]
+                     (aget ^chars _chars pos)))))
     (String. rc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

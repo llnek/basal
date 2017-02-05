@@ -16,10 +16,10 @@
            [java.util TimeZone Calendar Date]))
 
 ;;(println "tssss === " (fmtTimestamp (Timestamp. (now<>))))
-;;(println "dddd === " (fmtDate (now<date>)))
-;;(println "gggg === " (fmtGMT (now<date>)))
+;;(println "dddd === " (fmtDate (date<>)))
+;;(println "gggg === " (fmtGMT (date<>)))
 ;;(println "gggg === " (fmtCal (gcal<>)))
-;;(println "gggg === " (debugCal (gcal<gmt>)))
+;;(println "gggg === " (debugCal (gmt<>)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -42,18 +42,18 @@
     (is (inst? String (fmtDate (Date.) "yyyy/MM/dd HH:mm:ss Z")))
     (is (inst? String (fmtTime "yyyy/MM/dd HH:mm:ss Z")))
     (is (string? (fmtTimestamp (Timestamp. (now<>)))))
-    (is (string? (fmtDate (now<date>))))
-    (is (string? (fmtGMT (now<date>)))))
+    (is (string? (fmtDate (date<>))))
+    (is (string? (fmtGMT (date<>)))))
 
   (testing
     "related to: calendars"
     (is (inst? Calendar (gcal<> (TimeZone/getTimeZone "GMT"))))
-    (is (inst? Calendar (gcal<> (now<date>))))
+    (is (inst? Calendar (gcal<> (date<>))))
     (is (inst? Calendar (gcal<> (now<>))))
     (is (inst? Calendar (gcal<>)))
-    (is (inst? Calendar (gcal<gmt> (now<date>))))
-    (is (inst? Calendar (gcal<gmt> (now<>))))
-    (is (inst? Calendar (gcal<gmt>)))
+    (is (inst? Calendar (gmt<> (date<>))))
+    (is (inst? Calendar (gmt<> (now<>))))
+    (is (inst? Calendar (gmt<>)))
 
     (is (let [c (gcal<>)
               y (.get c Calendar/YEAR)

@@ -88,10 +88,8 @@
   (if-some [kvs (get @ncmap section)]
     (let [pos (.indexOf line (int \=))
           nm (if (> pos 0)
-               (strim (.substring line 0 pos))
-               "" )]
-      (if (nichts? nm)
-        (throwBadIni rdr))
+               (strim (.substring line 0 pos)) "")]
+      (if (nichts? nm) (throwBadIni rdr))
       (let [k (keyword (lcase nm))]
         (->> (assoc kvs
                     k
@@ -229,7 +227,7 @@
   ""
   {:tag Win32Conf}
 
-  ([^URL fUrl] (parseFile fUrl "utf-8"))
+  ([fUrl] (parseFile fUrl "utf-8"))
   ([^URL fUrl enc]
    (with-open [inp (-> (.openStream fUrl)
                        (io/reader :encoding
@@ -251,9 +249,8 @@
 ;;
 (defmethod w32ini<>
   URL
-  [^URL fileUrl]
-  (if (some? fileUrl)
-    (parseFile fileUrl)))
+  [fileUrl]
+  (some-> fileUrl parseFile))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
