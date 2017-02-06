@@ -33,34 +33,28 @@
 (defmethod isChild?
   :class
   [^Class basz ^Class cz]
-
-  (if (or (nil? basz)
-          (nil? cz))
-    false
-    (.isAssignableFrom basz cz)))
+  (and basz cz (.isAssignableFrom basz cz)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod isChild?
   :object
   [^Class basz ^Object obj]
-
-  (if (or (nil? basz)
-          (nil? obj))
-    false
-    (instance? basz obj)))
+  (and basz obj (instance? basz obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bytesClass "Java class for byte[]" ^Class [] (Class/forName "[B"))
+(let [z (Class/forName "[B")]
+(defn bytesClass "Java class for byte[]" ^Class [] z))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn charsClass "Java class for char[]" ^Class [] (Class/forName "[C"))
+(let [z (Class/forName "[C")]
+(defn charsClass "Java class for char[]" ^Class [] z))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- gcn "Get name of this Class" [^Class c] (.getName c))
+(defn- gcn "" [c] (some-> ^Class c .getName))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -93,7 +87,7 @@
   "If class is Char"
   [classObj]
 
-  (isXXX? classObj [ "char" "Char" "java.lang.Character" ]))
+  (isXXX? classObj ["char" "Char" "java.lang.Character"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -101,7 +95,7 @@
   "If class is Int"
   [classObj]
 
-  (isXXX? classObj [ "int" "Int" "java.lang.Integer" ]))
+  (isXXX? classObj ["int" "Int" "java.lang.Integer"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -109,7 +103,7 @@
   "If class is Long"
   [classObj]
 
-  (isXXX? classObj [ "long" "Long" "java.lang.Long" ]))
+  (isXXX? classObj ["long" "Long" "java.lang.Long"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -117,7 +111,7 @@
   "If class is Float"
   [classObj]
 
-  (isXXX? classObj [ "float" "Float" "java.lang.Float" ]))
+  (isXXX? classObj ["float" "Float" "java.lang.Float"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -125,7 +119,7 @@
   "If class is Double"
   [classObj]
 
-  (isXXX? classObj [ "double" "Double" "java.lang.Double" ]))
+  (isXXX? classObj ["double" "Double" "java.lang.Double"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -133,7 +127,7 @@
   "If class is Byte"
   [classObj]
 
-  (isXXX? classObj [ "byte" "Byte" "java.lang.Byte" ]))
+  (isXXX? classObj ["byte" "Byte" "java.lang.Byte"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -141,7 +135,7 @@
   "If class is Short"
   [classObj]
 
-  (isXXX? classObj [ "short" "Short" "java.lang.Short" ]))
+  (isXXX? classObj ["short" "Short" "java.lang.Short"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -149,7 +143,7 @@
   "If class is String"
   [classObj]
 
-  (isXXX? classObj [ "String" "java.lang.String" ]))
+  (isXXX? classObj ["String" "java.lang.String"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -157,7 +151,7 @@
   "If class is Object"
   [classObj]
 
-  (isXXX? classObj [ "Object" "java.lang.Object" ]))
+  (isXXX? classObj ["Object" "java.lang.Object"]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
