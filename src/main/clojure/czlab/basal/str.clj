@@ -20,12 +20,12 @@
            [java.net URLEncoder URLDecoder]
            [clojure.lang Keyword APersistentVector]
            [java.io
+            Reader
+            Writer
             File
             CharArrayWriter
             OutputStream
-            OutputStreamWriter
-             Reader
-           Writer]
+            OutputStreamWriter]
            [java.lang StringBuilder]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -38,7 +38,7 @@
   [s]
   (or (nil? s)
       (not (string? s))
-      (.isEmpty ^String s)))
+      (. ^String s isEmpty)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -76,10 +76,10 @@
     (loop [len (.length src)
            pos 0]
       (if (and (< pos len)
-               (>= (->> (int (.charAt src pos))
-                        (.indexOf unwantedChars)) 0))
+               (>= (->> (int (. src charAt pos))
+                        (. unwantedChars indexOf)) 0))
         (recur len (inc pos))
-        (.substring src pos)))
+        (. src substring pos)))
     src))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -93,10 +93,10 @@
            (hgl? src))
     (loop [pos (.length src)]
       (if (and (> pos 0)
-               (>= (->> (int (.charAt src (dec pos)))
-                        (.indexOf unwantedChars)) 0))
+               (>= (->> (int (. src charAt (dec pos)))
+                        (. unwantedChars indexOf)) 0))
         (recur (dec pos))
-        (.substring src 0 pos)))
+        (. src substring 0 pos)))
     src))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -108,7 +108,7 @@
   ([s sep] (splitTokens s sep false))
   ([^String s ^String sep incSep?]
    (let [t (StringTokenizer.
-             s sep (boolean incSep?))]
+             s sep (bool! incSep?))]
      (loop [rc (transient [])]
        (if-not (.hasMoreTokens t)
          (pcoll! rc)
@@ -133,7 +133,7 @@
 (defmacro has?
   "If the char is inside the big str"
   [^String bigs ^Character ch]
-  (let [c# (int (.charValue ch))] `(>= (.indexOf  ~bigs ~c#) 0)))
+  (let [c# (int (.charValue ch))] `(>= (.indexOf ~bigs ~c#) 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -291,7 +291,7 @@
 (defn hasicAny?
   "If bigs contains any one of these strs - ignore case"
   [^String bigs substrs]
-  {:pre [(coll? substrs)]}
+  {:pre [(sequential? substrs)]}
 
   (if (or (empty? substrs)
           (nichts? bigs))
@@ -306,7 +306,7 @@
 (defn hasAny?
   "If bigs contains any one of these strs"
   [^String bigs substrs]
-  {:pre [(coll? substrs)]}
+  {:pre [(sequential? substrs)]}
 
   (if (or (empty? substrs)
           (nichts? bigs))
@@ -319,7 +319,7 @@
 (defn ewicAny?
   "If bigs endsWith any one of the strs, no-case"
   [^String bigs substrs]
-  {:pre [(coll? substrs)]}
+  {:pre [(sequential? substrs)]}
 
   (if (or (empty? substrs)
           (nichts? bigs))
@@ -333,7 +333,7 @@
 (defn ewAny?
   "If bigs endsWith any one of the strs"
   [^String bigs substrs]
-  {:pre [(coll? substrs)]}
+  {:pre [(sequential? substrs)]}
 
   (if (or (empty? substrs)
           (nichts? bigs))
@@ -346,7 +346,7 @@
 (defn swicAny?
   "If bigs startWith any one of the strs - no case"
   [^String bigs substrs]
-  {:pre [(coll? substrs)]}
+  {:pre [(sequential? substrs)]}
 
   (if (or (empty? substrs)
           (nichts? bigs))
@@ -360,7 +360,7 @@
 (defn swAny?
   "If bigs startWith any one of the strs"
   [^String bigs substrs]
-  {:pre [(coll? substrs)]}
+  {:pre [(sequential? substrs)]}
 
   (if (or (empty? substrs)
           (nichts? bigs))
@@ -380,7 +380,7 @@
 (defn eqicAny?
   "String.equalIgnoreCase() on any one of the strs"
   [^String src substrs]
-  {:pre [(coll? substrs)]}
+  {:pre [(sequential? substrs)]}
 
   (if (or (empty? substrs)
           (nichts? src))
@@ -394,7 +394,7 @@
 (defn eqAny?
   "If String.equals() on any one of the strs"
   [^String src substrs]
-  {:pre [(coll? substrs)]}
+  {:pre [(sequential? substrs)]}
 
   (if (empty? substrs)
     false

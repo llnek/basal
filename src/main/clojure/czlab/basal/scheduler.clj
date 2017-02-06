@@ -31,25 +31,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- xrefPID
-  ""
-  [r]
-  (if
-    (instance? Identifiable r)
-    (.id ^Identifiable r)))
+(defn- xrefPID "" [r] (if (inst? Identifiable r) (.id ^Identifiable r)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- preRun
-  ""
-  [^Map hQ w]
-  (if-some [pid (xrefPID w)] (.remove hQ pid)))
+(defn- preRun "" [^Map hQ w] (some->> (xrefPID w) (. hQ remove)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- addTimer "" [^Timer timer
                     ^TimerTask task delayMillis]
-  (.schedule timer task ^long delayMillis))
+  (. timer schedule task ^long delayMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -65,24 +57,19 @@
       (reify Schedulable
 
         (alarm [_ w arg delayMillis]
-          (if (spos? delayMillis)
-            (let
-              [tt (tmtask<>
-                    #(.interrupt w arg))]
-              (addTimer @timer tt delayMillis)
-              tt)))
+          (when (spos? delayMillis)
+            (let [tt (tmtask<>
+                       #(. w interrupt arg))]
+              (addTimer @timer tt delayMillis) tt)))
 
-        (purge [_]
-          (.purge ^Timer @timer))
+        (purge [_] (. ^Timer @timer purge))
 
         (dequeue [_ w] )
 
         (run [_ w]
           (when-some [r (cast? Runnable w)]
             (preRun holdQ r)
-            (-> ^TCore
-                @cpu
-                (.execute r))))
+            (. ^TCore @cpu execute r)))
 
         (postpone [me w delayMillis]
           (cond
@@ -97,42 +84,36 @@
               tt)))
 
         (hold [this w]
-          (.hold this (xrefPID w) w))
+          (. this hold (xrefPID w) w))
 
         (hold [_ pid w]
-          (if (some? pid)
-            (.put holdQ pid w)))
+          (if pid (.put holdQ pid w)))
 
         (wakeup [this w]
-          (.wakeAndRun this (xrefPID w) w))
+          (. this wakeAndRun (xrefPID w) w))
 
         (wakeAndRun [this pid w]
-          (if (some? pid)
-            (.remove holdQ pid))
+          (some->> pid
+                   (. holdQ remove))
           (.run this w))
 
-        (reschedule [this w]
-          (.run this w))
+        (reschedule [this w] (.run this w))
 
         (dispose [this]
-          (let [^TCore c @cpu]
-            (.deactivate this)
-            (if (some? c) (.dispose c))))
+          (.deactivate this)
+          (some-> ^TCore @cpu .dispose))
 
         (activate [_ options]
-          (let [b (not (false? (:trace options)))
+          (let [b (!false? (:trace options))
                 t (or (:threads options) 0)
                 c (TCore. named ^long t b)]
             (reset! cpu c)
-            (.start c nil)))
+            (. c start nil)))
 
         (deactivate [_]
-          (let [^TCore c @cpu]
-            (doto ^Timer @timer
-              (.cancel)
-              (.purge))
-            (.clear holdQ)
-            (if (some? c) (.stop c)))))
+          (doto ^Timer @timer .cancel .purge)
+          (. holdQ clear)
+          (some-> ^TCore @cpu .stop)))
 
       {:typeid ::Scheduler })))
 
@@ -140,7 +121,7 @@
 ;;
 (defn scheduler<>
   "Make a Scheduler"
-  {:tag Schedulable }
+  {:tag Schedulable}
 
   ([] (scheduler<> (juid)))
   ([^String named] (mkSCD named)))

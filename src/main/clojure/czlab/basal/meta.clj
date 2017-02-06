@@ -182,20 +182,19 @@
 
   ([z] (forname z nil))
   ([^String z cl]
-   (if (nil? cl)
-     (java.lang.Class/forName z)
-     (->> ^ClassLoader cl
-          (java.lang.Class/forName z true)))))
+   (if cl
+     (java.lang.Class/forName z true cl)
+     (java.lang.Class/forName z))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn getCldr
   "Get the current classloader"
   {:tag ClassLoader}
-
   ([] (getCldr nil))
   ([cl]
-   (or cl (.getContextClassLoader (Thread/currentThread)))))
+   (or cl (. (Thread/currentThread)
+             getContextClassLoader ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -203,19 +202,18 @@
   "Set current classloader"
   [^ClassLoader cl]
   {:pre [(some? cl)]}
-
-  (.setContextClassLoader (Thread/currentThread) cl))
+  (. (Thread/currentThread) setContextClassLoader cl))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn loadClass
   "Load this class by name"
   {:tag Class}
-
-  ([clazzName] (loadClass clazzName nil))
+  ([clazzName]
+   (loadClass clazzName nil))
   ([^String clazzName cl]
    (if (hgl? clazzName)
-     (.loadClass (getCldr cl) clazzName))))
+     (. (getCldr cl) loadClass clazzName))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -259,15 +257,15 @@
   [^Class cz]
   {:pre [(some? cz)]}
 
-  (-> (.getDeclaredConstructor cz (make-array Class 0))
-      (.newInstance (object-array 0)  )))
+  (-> (.getDeclaredConstructor cz
+                               (make-array Class 0))
+      (.newInstance (object-array 0))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn new<>
   "Make an object of this class by calling the default constructor"
   {:tag Object}
-
   ([clazzName] (new<> clazzName nil))
   ([^String clazzName cl]
    (if (hgl? clazzName)

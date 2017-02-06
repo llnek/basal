@@ -44,9 +44,8 @@
          c (or (:cl arg)
                (:classLoader arg))]
      (some->> (cast? ClassLoader c)
-              (.setContextClassLoader t))
-     (.setDaemon t
-                 (true? (:daemon arg)))
+              (. t setContextClassLoader))
+     (. t setDaemon (true? (:daemon arg)))
      (if start? (.start t))
      (log/debug "thread#%s%s%s"
                 (.getName t)
@@ -98,17 +97,17 @@
      :os-version (.getVersion os)}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn processPid
   "Get the current process pid"
   ^String
   []
-  (let [ss (-> (ManagementFactory/getRuntimeMXBean)
-               (.getName)
-               str
-               (.split "@"))]
-    (if (empty ss) "" (first ss))))
+  (if-some+ [ss (-> (ManagementFactory/getRuntimeMXBean)
+                    .getName
+                    str
+                    (.split "@"))]
+            (first ss)
+            ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -117,9 +116,7 @@
   [func delayMillis]
   {:pre [(fn? func)
          (number? delayMillis)]}
-  (-> (Timer. true)
-      (.schedule (tmtask<> func)
-                 ^long delayMillis)))
+  (. (Timer. true) schedule (tmtask<> func) ^long delayMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -129,7 +126,7 @@
   {:pre [(fn? func)]}
 
   (->> (thread<> func false {:daemon true})
-       (.addShutdownHook (Runtime/getRuntime))))
+       (. (Runtime/getRuntime) addShutdownHook )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

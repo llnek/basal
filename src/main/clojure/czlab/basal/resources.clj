@@ -36,10 +36,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod loadResource
-  File
-  [aFile]
-  (loadResource (io/as-url aFile)))
+(defmethod loadResource File [aFile] (loadResource (io/as-url aFile)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -55,8 +52,8 @@
 (defmethod loadResource
   String
   [^String path]
-  (with-open [inp (some-> (getCldr)
-                          (.getResource path) (.openStream))]
+  (with-open [inp (some-> getCldr
+                          (.getResource path) .openStream)]
     (PropertyResourceBundle. inp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -70,8 +67,7 @@
   ([^String baseName
     ^Locale locale
     ^ClassLoader cl]
-   (if (and (hgl? baseName)
-            (some? locale))
+   (if (and locale (hgl? baseName))
      (ResourceBundle/getBundle baseName
                                locale (getCldr cl)))))
 
@@ -83,17 +79,16 @@
   ^String
   [^ResourceBundle bundle ^String pkey & pms]
 
-  (if (and (some? bundle)
-           (hgl? pkey))
+  (if (and bundle (hgl? pkey))
     (let [kv (str (.getString bundle pkey))
           pc (count pms)]
       ;;(log/debug "RStr key = %s, value = %s" pkey kv)
       (loop [src kv pos 0]
         (if (>= pos pc)
          src
-         (recur (.replaceFirst src
-                               "\\{\\}"
-                               (str (nth pms pos)))
+         (recur (. src
+                   replaceFirst
+                   "\\{\\}" (str (nth pms pos)))
                 (inc pos)))))
     pkey))
 
