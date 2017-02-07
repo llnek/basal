@@ -524,7 +524,8 @@
   (condp = (class data)
     InputStream (toBytes data)
     String (bytesify data)
-    (bytesClass) data))
+    (bytesClass) data
+    nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
