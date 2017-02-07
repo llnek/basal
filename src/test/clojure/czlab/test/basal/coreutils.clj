@@ -45,14 +45,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (def ^:private dummyResourcePath "czlab/basal/etc/Resources_en.properties")
-(def ^:private dummyProperties (Properties.))
+(def ^{:private true :tag  Properties} dummyProperties (Properties.))
 (def ^:private VAR_USER (System/getProperty "user.name"))
 (def ^:private VAR_PATH (System/getenv "PATH"))
 (def ^:private ^Muble MUBLE (muble<> {:a 1 :b 2}))
 (eval '(do
-  (.put ^Properties dummyProperties "1" "hello${user.name}")
-  (.put ^Properties dummyProperties "2" "hello${PATH}")
-  (.put ^Properties dummyProperties "3" "${user.name}${PATH}")))
+  (. dummyProperties put "1" "hello${user.name}")
+  (. dummyProperties put "2" "hello${PATH}")
+  (. dummyProperties put "3" "${user.name}${PATH}")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -129,8 +129,8 @@
     (is (cexp? (Exception. "a")))
 
     (is (false? (.firstCall (doto->> (monoFlop<>)
-                                     (.firstCall )
-                                     (.firstCall )))))
+                                     .firstCall
+                                     .firstCall))))
 
     (is (.firstCall (monoFlop<>)))
 
@@ -220,16 +220,15 @@
 
     (is (= "AAA"
            (let [p (-> (.getBytes "a=AAA")
-                       (ByteArrayInputStream. )
-                       (loadJavaProps ))]
+                       ByteArrayInputStream.
+                       loadJavaProps)]
              (.getProperty p "a"))))
 
     (is (= "AAA"
            (let [p (-> (doto (io/file
-                               (sysProp "java.io.tmpdir")
-                               (juid))
+                               (sysProp "java.io.tmpdir") (juid))
                          (spit "a=AAA"))
-                       (loadJavaProps))]
+                       loadJavaProps)]
              (.getProperty p "a"))))
 
     (is (= "aaa"

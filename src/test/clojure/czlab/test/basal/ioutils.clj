@@ -47,16 +47,16 @@
 
   (testing
     "related to: read/write numbers"
-    (is (== 4 (alength (writeNumber (Integer/MAX_VALUE)))))
-    (is (== 8 (alength (writeNumber (Long/MAX_VALUE)))))
+    (is (== 4 (alength (writeNumber Integer/MAX_VALUE))))
+    (is (== 8 (alength (writeNumber Long/MAX_VALUE))))
     (is (== Long/MAX_VALUE
-            (readNumber (writeNumber (Long/MAX_VALUE)) Long)))
+            (readNumber (writeNumber Long/MAX_VALUE) Long)))
     (is (== Integer/MAX_VALUE
-            (readNumber (writeNumber (Integer/MAX_VALUE)) Integer)))
-    (is (== (Integer/MAX_VALUE)
-            (readNumber (writeNumber (Integer/MAX_VALUE)) Integer)))
-    (is (== (Long/MAX_VALUE)
-            (readNumber (writeNumber (Long/MAX_VALUE)) Long))))
+            (readNumber (writeNumber Integer/MAX_VALUE) Integer)))
+    (is (== Integer/MAX_VALUE
+            (readNumber (writeNumber Integer/MAX_VALUE) Integer)))
+    (is (== Long/MAX_VALUE
+            (readNumber (writeNumber Long/MAX_VALUE) Long))))
 
   (testing
     "related to: string<->chars<->bytes"

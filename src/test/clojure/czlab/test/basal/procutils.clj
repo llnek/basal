@@ -25,9 +25,7 @@
 ;;(set! *warn-on-reflection* true)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private CUR_MS (str (now<>)))
-(def ^:private
-  CUR_FP (io/file (sysTmpDir) CUR_MS))
+(def ^{:private true :tag File} CUR_FP (io/file (sysTmpDir) (str (now<>))))
 (def ^:private SCD (atom nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,7 +38,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- tearDown []
-  (.deactivate ^Schedulable @SCD)
+  (. ^Schedulable @SCD deactivate)
   (reset! SCD nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,33 +56,32 @@
 
     (is (== 1
             (let [x (atom 0)]
-              (.run ^Schedulable
-                    @SCD
-                    (runnable<>
-                      #(swap! x inc)))
+              (. ^Schedulable
+                 @SCD
+                 run
+                 (runnable<> #(swap! x inc)))
               (pause 500)
               @x)))
 
     (is (== 1
             (let
               [x (atom 0)]
-              (.postpone
-                ^Schedulable
-                @SCD
-                (runnable<>
-                      #(swap! x inc))
-                500)
+              (. ^Schedulable
+                 @SCD
+                 postpone
+                 (runnable<> #(swap! x inc)) 500)
               (pause 1000)
               @x)))
 
     (is (== 1
             (let
-              [x (atom 0)
+              [^Schedulable s @SCD
+               x (atom 0)
                r (runnable<>
                    #(swap! x inc) "117")]
-              (.hold ^Schedulable @SCD r)
+              (. s hold r)
               (pause 500)
-              (.wakeup ^Schedulable @SCD r)
+              (. s wakeup r)
               (pause 500)
               @x)))
 
@@ -92,15 +89,15 @@
           (async!
             #(spit CUR_FP "123"))
           (pause 500)
-          (and (.exists ^File CUR_FP)
-               (>= (.length ^File CUR_FP) 3))))
+          (and (.exists CUR_FP)
+               (>= (.length CUR_FP) 3))))
 
     (is (do
           (delayExec
             #(spit CUR_FP "123456") 500)
           (pause 1000)
-          (and (.exists ^File CUR_FP)
-               (>= (.length ^File CUR_FP) 6))))
+          (and (.exists CUR_FP)
+               (>= (.length CUR_FP) 6))))
 
     (is (do
           (syncBlockExec
@@ -109,8 +106,8 @@
               (spit CUR_FP
                     (apply str a xs)))
             "123" "456" "789")
-          (and (.exists ^File CUR_FP)
-               (>= (.length ^File CUR_FP) 9))))
+          (and (.exists CUR_FP)
+               (>= (.length CUR_FP) 9))))
 
     (is (> (.length (processPid)) 0))
 
