@@ -197,7 +197,7 @@
 (defn strKW
   "Stringify a keyword - no leading colon"
   ^String
-  [^Keyword k]
+  [k]
   (cs/replace (str k) #"^:" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
