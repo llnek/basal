@@ -52,7 +52,7 @@
 (defmethod loadResource
   String
   [^String path]
-  (with-open [inp (some-> getCldr
+  (with-open [inp (some-> (getCldr)
                           (.getResource path) .openStream)]
     (PropertyResourceBundle. inp)))
 
