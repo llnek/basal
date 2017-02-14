@@ -12,6 +12,7 @@
   czlab.basal.guids
 
   (:require [czlab.basal.io :refer [readNumber]]
+            [clojure.string :as cs]
             [czlab.basal.logging :as log])
 
   (:use [czlab.basal.core]
@@ -95,6 +96,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro uuid<> "RFC4122, v4 format" [] `(str (java.util.UUID/randomUUID)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn uid<> "UUID, no dash" [] (cs/replace (uuid<>) #"-" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
