@@ -133,7 +133,8 @@
 (defmacro has?
   "If the char is inside the big str"
   [^String bigs ^Character ch]
-  (let [c# (int (.charValue ch))] `(>= (.indexOf ~bigs ~c#) 0)))
+  (let [c# (int (.charValue ch))]
+    `(>= (.indexOf (str ~bigs) ~c#) 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

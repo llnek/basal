@@ -15,8 +15,7 @@
             [clojure.java.io :as io]
             [clojure.string :as cs])
 
-  (:use [czlab.basal.consts]
-        [czlab.basal.meta]
+  (:use [czlab.basal.meta]
         [czlab.basal.core]
         [czlab.basal.str])
 

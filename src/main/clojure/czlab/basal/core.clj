@@ -16,8 +16,7 @@
             [clojure.string :as cs]
             [clojure.edn :as edn])
 
-  (:use [czlab.basal.consts]
-        [clojure.walk])
+  (:use [clojure.walk])
 
   (:import [czlab.jasal BadDataError MonoFlop Muble Watch RunnableWithId]
            [java.util.concurrent.atomic AtomicLong AtomicInteger]
@@ -58,6 +57,25 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 ;; #^"[Ljava.lang.Object;"
+
+(def ^String PATHSEP (System/getProperty "file.separator"))
+(def ^String USASCII "ISO-8859-1" )
+(def ^String UTF16 "UTF-16" )
+(def ^String UTF8 "UTF-8" )
+(def ^String SLASH   "/" )
+
+(def BOOLS #{ "true", "yes", "on", "ok", "active", "1"} )
+(def ^String HEX_CHARS "0123456789ABCDEF")
+(def ^String HEX_CHS "0123456789abcdef")
+
+(def KiloBytes 1024)
+(def BUF_SZ (* 4 KiloBytes))
+(def MegaBytes (* KiloBytes KiloBytes))
+(def GigaBytes (* KiloBytes MegaBytes))
+
+(def OneK 1024)
+(def FourK (* 4 OneK))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defprotocol GetSetClr

@@ -14,8 +14,7 @@
   (:require [czlab.basal.logging :as log]
             [clojure.string :as cs])
 
-  (:use [czlab.basal.consts]
-        [czlab.basal.core]
+  (:use [czlab.basal.core]
         [czlab.basal.str])
 
   (:import [java.text
