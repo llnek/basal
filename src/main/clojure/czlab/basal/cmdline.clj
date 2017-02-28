@@ -141,12 +141,7 @@
                (if (:must? cmdQ) "*") "? "))
   ;; choices ?
   (if (hgl? choices)
-    (if (has? choices \n)
-      (.write cout
-              (str (if (cs/starts-with? choices "\n") "[" "[\n")
-                   choices
-                   (if (cs/ends-with? choices "\n") "]" "\n]" )))
-      (.write cout (str "[" choices "]"))))
+    (.write cout (str "[" choices "]")))
   ;; defaults ?
   (if (hgl? default)
     (.write cout (str "(" default ")")))
@@ -181,7 +176,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn consoleIO
+(defn termio
   "Prompt a sequence of questions via console"
   [cmdQs question1]
   {:pre [(map? cmdQs)]}

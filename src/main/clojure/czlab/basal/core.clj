@@ -79,9 +79,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defprotocol GetSetClr
-
-  ""
-
+  "Generic interface to get, set and clear values"
   (s [_ x])
   (c [_])
   (g [_]))
@@ -97,29 +95,32 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro preduce<map>
-  "" [f c] `(persistent! (reduce ~f (transient {}) ~c)))
+  "Reduce with a transient map, returning a map"
+  [f c] `(persistent! (reduce ~f (transient {}) ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro preduce<set>
-  "" [f c] `(persistent! (reduce ~f (transient #{}) ~c)))
+  "Reduce with a transient set, returning a set"
+  [f c] `(persistent! (reduce ~f (transient #{}) ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro preduce<vec>
-  "" [f c] `(persistent! (reduce ~f (transient []) ~c)))
+  "Reduce with a transient vec, returning a vec"
+  [f c] `(persistent! (reduce ~f (transient []) ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro sreduce<>
-  "" [f c] `(str (reduce ~f (StringBuilder.) ~c)))
+  "Reduce with a string builder, returning a string"
+  [f c] `(str (reduce ~f (StringBuilder.) ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro rset!
   "Reset a atom"
-  ([a v]
-   `(reset! ~a ~v))
+  ([a v] `(reset! ~a ~v))
   ([a] `(rset! ~a nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
