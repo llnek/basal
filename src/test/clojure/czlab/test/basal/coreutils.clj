@@ -118,13 +118,13 @@
 
     (is (true? (do->true nil nil "")))
 
-    (is (inst? String ""))
+    (is (ist? String ""))
 
     (is (== 3 (let-when [a 1 b 2] (pos? a) (+ a b))))
 
     (is (nil? (let-when [a 1 b 0] (pos? b) (+ a b))))
 
-    (is (inst? String (cast? String (.cast String "a"))))
+    (is (ist? String (cast? String (.cast String "a"))))
 
     (is (cexp? (Exception. "a")))
 
@@ -166,24 +166,24 @@
     (is (not (isFQKeyword? :a)))
     (is (isFQKeyword? ::a))
 
-    (is (< (.indexOf (juid) ":\\-") 0))
+    (is (< (.indexOf (jid<>) ":\\-") 0))
 
     (is (let [r (randSign)] (or (pos? r)(neg? r))))
 
     (is (let [b (randBool)] (or (false? b)(true? b))))
 
-    (is (inst? SecureRandom (rand<>)))
-    (is (inst? Date (date<>)))
+    (is (ist? SecureRandom (rand<>)))
+    (is (ist? Date (date<>)))
 
-    (is (inst? Charset (toCharset "utf-16")))
+    (is (ist? Charset (toCharset "utf-16")))
     (is (> (.indexOf (fpath "/tmp/abc/def.txt") "/abc/") 0))
     (is (> (.indexOf (fpath (io/file "/t/a/d.txt")) "/a/") 0))
     (is (= "joe"
            (do (sysProp! "hello" "joe") (sysProp "hello"))))
 
-    (is (inst? File (homeDir)))
+    (is (ist? File (homeDir)))
     (is (not-empty (getUser)))
-    (is (inst? File (getCwd)))
+    (is (ist? File (getCwd)))
 
     (is (= "a/b/c" (trimLastPathSep "a/b/c/")))
     (is (= "a\\b" (trimLastPathSep "a\\b\\")))
@@ -226,7 +226,7 @@
 
     (is (= "AAA"
            (let [p (-> (doto (io/file
-                               (sysProp "java.io.tmpdir") (juid))
+                               (sysProp "java.io.tmpdir") (jid<>))
                          (spit "a=AAA"))
                        loadJavaProps)]
              (.getProperty p "a"))))
@@ -238,9 +238,9 @@
 
     (is (with-open
           [s (resStream "czlab/basal/etc/sample.ini")]
-          (inst? InputStream s)))
+          (ist? InputStream s)))
 
-    (is (inst? URL (resUrl "czlab/basal/etc/sample.ini")))
+    (is (ist? URL (resUrl "czlab/basal/etc/sample.ini")))
 
     (is (string? (resStr "czlab/basal/etc/sample.ini")))
 
@@ -299,7 +299,7 @@
 
     (is (not= \: (.charAt (stripNSPath (str ::yo)) 0)))
 
-    (is (inst? TimerTask (tmtask<> #(let [] 1))))
+    (is (ist? TimerTask (tmtask<> #(let [] 1))))
     (is (do->true (cancelTimerTask (tmtask<> #(let [] 1)))))
 
     (is (== 9 (do (.setv MUBLE :a 9)

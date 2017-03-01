@@ -124,7 +124,7 @@
     (is (eqAny? "heeloo" [ "sdfsdg" "jffflf" "heeloo" ]))
     (is (not (eqAny? "heeloo" [ "sdfsdg" "jffflf" ])))
 
-    (is (inst? StringBuilder (strbf<> )))
+    (is (ist? StringBuilder (strbf<> )))
     (is (= "aaa" (str (strbf<> "aaa"))))
 
     (is (= 10 (.length (str<> 10 \x))))

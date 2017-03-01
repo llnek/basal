@@ -33,27 +33,27 @@
 
   (testing
     "related to: parsing dates"
-    (is (inst? Date (parseDate "1999/12/12 13:13:13" "yyyy/MM/dd HH:mm:ss")))
-    (is (inst? Timestamp (parseTimestamp "2000-12-31 13:14:15")))
-    (is (inst? Date (parseIso8601 "1999-12-25T11:12:13.444"))))
+    (is (ist? Date (parseDate "1999/12/12 13:13:13" "yyyy/MM/dd HH:mm:ss")))
+    (is (ist? Timestamp (parseTimestamp "2000-12-31 13:14:15")))
+    (is (ist? Date (parseIso8601 "1999-12-25T11:12:13.444"))))
 
   (testing
     "related to: formatting dates"
-    (is (inst? String (fmtDate (Date.) "yyyy/MM/dd HH:mm:ss Z")))
-    (is (inst? String (fmtTime "yyyy/MM/dd HH:mm:ss Z")))
+    (is (ist? String (fmtDate (Date.) "yyyy/MM/dd HH:mm:ss Z")))
+    (is (ist? String (fmtTime "yyyy/MM/dd HH:mm:ss Z")))
     (is (string? (fmtTimestamp (Timestamp. (now<>)))))
     (is (string? (fmtDate (date<>))))
     (is (string? (fmtGMT (date<>)))))
 
   (testing
     "related to: calendars"
-    (is (inst? Calendar (gcal<> (TimeZone/getTimeZone "GMT"))))
-    (is (inst? Calendar (gcal<> (date<>))))
-    (is (inst? Calendar (gcal<> (now<>))))
-    (is (inst? Calendar (gcal<>)))
-    (is (inst? Calendar (gmt<> (date<>))))
-    (is (inst? Calendar (gmt<> (now<>))))
-    (is (inst? Calendar (gmt<>)))
+    (is (ist? Calendar (gcal<> (TimeZone/getTimeZone "GMT"))))
+    (is (ist? Calendar (gcal<> (date<>))))
+    (is (ist? Calendar (gcal<> (now<>))))
+    (is (ist? Calendar (gcal<>)))
+    (is (ist? Calendar (gmt<> (date<>))))
+    (is (ist? Calendar (gmt<> (now<>))))
+    (is (ist? Calendar (gmt<>)))
 
     (is (let [c (gcal<>)
               y (.get c Calendar/YEAR)

@@ -31,7 +31,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- xrefPID "" [r] (if (inst? Identifiable r) (.id ^Identifiable r)))
+(defn- xrefPID "" [r] (if (ist? Identifiable r) (.id ^Identifiable r)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -123,7 +123,7 @@
   "Make a Scheduler"
   {:tag Schedulable}
 
-  ([] (scheduler<> (juid)))
+  ([] (scheduler<> (jid<>)))
   ([^String named] (mkSCD named)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -80,7 +80,7 @@
            (-> (loadResource (resUrl "czlab/basal/etc/Resources_en.properties"))
                (rstr* ["test"  "joe" "dawg"] ["test2"  "joe" "dawg"] ))))
 
-    (is (inst? ResourceBundle
+    (is (ist? ResourceBundle
                (getResource "czlab/basal/etc/Resources"))))
 
 

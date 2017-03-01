@@ -167,10 +167,10 @@
   ([] (gcal<> (Date.)))
   ([arg]
    (cond
-     (inst? TimeZone arg)
+     (ist? TimeZone arg)
      (GregorianCalendar. ^TimeZone arg)
 
-     (inst? Date arg)
+     (ist? Date arg)
      (doto
       (GregorianCalendar.)
       (.setTime ^Date arg))
@@ -264,7 +264,7 @@
   ([arg]
    (let [^Calendar c (gmt<>)]
      (cond
-       (inst? Date arg)
+       (ist? Date arg)
        (.setTime c ^Date arg)
        (spos? arg)
        (.setTimeInMillis c ^long arg))

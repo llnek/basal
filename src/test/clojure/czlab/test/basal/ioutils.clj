@@ -32,7 +32,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (def ^:private ^File TMP_DIR (io/file (sysTmpDir)))
-(def ^:private ^File TMP_FP (io/file TMP_DIR (str (juid) ".txt")))
+(def ^:private ^File TMP_FP (io/file TMP_DIR (str (jid<>) ".txt")))
 (eval '(do (spit TMP_FP "heeloo" :encoding "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -118,7 +118,7 @@
            (let [f (copyStream (streamify (bytesify "hello")))
                  s (slurp f)] (deleteQ f) s))))
 
-  (is (inst? XData (xdata<> nil)))
+  (is (ist? XData (xdata<> nil)))
   (is (let [x (fdata<>)
             f? (some? (.fileRef x))] f?))
 
@@ -128,7 +128,7 @@
 
     (is (let [[c i] (coerceToInputStream "aaa")]
           (if c (closeQ i))
-          (inst? InputStream i))))
+          (ist? InputStream i))))
 
   (testing
     "related to: mime properties"
@@ -231,21 +231,21 @@
              s)))
 
     (is (= "hello"
-           (let [n (juid)
+           (let [n (jid<>)
                  _ (saveFile *tempfile-repo* n (xdata<> "hello") true)
                  x (getFile *tempfile-repo* n)
                  s (readAsStr (.fileRef x))]
              (deleteQ (.fileRef x)) s)))
 
-    (is (let [n (juid)
+    (is (let [n (jid<>)
               d (io/file *tempfile-repo* n)
               _ (mkdirs d)
               e? (fileOK? d)]
           (deleteQ d) e?))
 
-    (is (let [n0 (juid)
-              n1 (juid)
-              n2 (juid)
+    (is (let [n0 (jid<>)
+              n1 (jid<>)
+              n2 (jid<>)
               f1 (str n1 ".txt")
               f2 (str n2 ".txt")
               root (io/file *tempfile-repo* n0)
@@ -270,8 +270,8 @@
           (deleteQ root)
           (and (== 2 dz) (== 2 fz) (== 4 tz))))
 
-    (is (let [n0 (juid) n1 (juid) n2 (juid)
-              n3 (juid) n4 (juid) n5 (juid)
+    (is (let [n0 (jid<>) n1 (jid<>) n2 (jid<>)
+              n3 (jid<>) n4 (jid<>) n5 (jid<>)
               root (io/file *tempfile-repo* n0)
               _ (mkdirs root)
               d1 (doto (io/file root n1) (mkdirs))
@@ -295,7 +295,7 @@
           (and (== 3 (count ds))
                (== 4 (count fs)))))
 
-    (is (let [n (juid)
+    (is (let [n (jid<>)
               f (io/file *tempfile-repo* (str n ".txt"))
               _ (spitUtf8 f "hello")
               b (basename f)]

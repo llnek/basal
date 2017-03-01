@@ -44,7 +44,7 @@
 
     (is (not (nil? (loadClass "java.lang.String"))))
 
-    (is (inst? XData (objArgs<> "czlab.jasal.XData"
+    (is (ist? XData (objArgs<> "czlab.jasal.XData"
                                 Object ""
                                 Boolean/TYPE false)))
 

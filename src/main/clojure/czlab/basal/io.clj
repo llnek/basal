@@ -296,11 +296,11 @@
   ^APersistentVector
   [arg]
   (cond
-    (inst? File arg) [true (FileInputStream. ^File arg)]
+    (ist? File arg) [true (FileInputStream. ^File arg)]
     (string? arg) [true (streamify (bytesify arg))]
     (instBytes? arg) [true (streamify arg)]
-    (inst? InputStream arg) [false arg]
-    (inst? URL arg) [true (.openStream ^URL arg)]
+    (ist? InputStream arg) [false arg]
+    (ist? URL arg) [true (.openStream ^URL arg)]
     (nil? arg) [false nil]
     :else (throwBadArg "Bad type %s" (class arg))))
 
