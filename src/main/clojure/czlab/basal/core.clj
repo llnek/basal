@@ -316,6 +316,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+;;(defmacro same? "identical?" [x y] `(identical? ~x ~y))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro try-let
   "a try let combo" [bindings & forms] `(try! (let ~bindings ~@forms)))
 
@@ -472,14 +476,14 @@
   [kw] (and (keyword? kw) (> (.indexOf (str kw) (int \/)) 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro uuid<> "RFC4122, v4 format" [] `(str (java.util.UUID/randomUUID)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;happens to be all hex chars
 (defn jid<>
   "Generate a unique id using std java"
   ^String [] (.replaceAll (str (UID.)) "[:\\-]+" ""))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro uuid<> "RFC4122, v4 format" [] `(str (java.util.UUID/randomUUID)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -845,11 +849,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmulti test-isa
   "Is subclass of parent"
-  (fn [a b c] (if (class? b) :class :object)))
+  (fn [a b c] (if (class? c) :class :object)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod test-isa :class [reason cz parz]
+(defmethod test-isa :class [reason parz cz]
   (assert (and (some? cz)
                (class? parz)) "NPE!")
   (assert (. ^Class parz isAssignableFrom ^Class cz)
@@ -857,36 +861,33 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod test-isa :object [^String reason
-                             ^Object obj ^Class parz]
-  (assert (and (some? parz)
+(defmethod test-isa :object [reason parz obj]
+  (assert (and (class? parz)
                (some? obj)) "NPE!")
   (assert (instance? parz obj)
-          (str reason " not-isa " (.getName parz))))
+          (str reason " not-isa " (gczn parz))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn test-some
-  "Object is not null"
-  [^String reason ^Object obj]
-  (assert (some? obj)
-          (str reason " is null")))
+  "Object is not null" [reason obj]
+  (assert (some? obj) (str reason " is null")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn test-cond "" [^String reason cnd] (assert cnd (str reason)))
+(defn test-cond
+  "verify a true condition" [reason cnd] (assert cnd (str reason)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro assert-not "" [cnd] `(assert (not ~cnd)))
+(defmacro assert-not
+  "verify a false condition" [cnd] `(assert (not ~cnd)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn test-hgl
   "String is not empty"
-  [^String reason ^String v]
-  (assert (not (empty? v))
-          (str reason " is empty")))
+  [reason s] (assert (not (empty? s)) (str reason " is empty")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -916,7 +917,7 @@
 ;;
 (defmethod test-pos0
   :double
-  [^String reason v]
+  [reason v]
   (assert (snneg? v)
           (str reason " must be >= 0")))
 
@@ -924,7 +925,7 @@
 ;;
 (defmethod test-pos0
   :long
-  [^String reason v]
+  [reason v]
   (assert (snneg? v)
           (str reason " must be >= 0")))
 
@@ -932,7 +933,7 @@
 ;;
 (defmethod test-pos
   :double
-  [^String reason v]
+  [reason v]
   (assert (spos? v)
           (str reason " must be > 0")))
 
@@ -940,7 +941,7 @@
 ;;
 (defmethod test-pos
   :long
-  [^String reason v]
+  [reason v]
   (assert (spos? v)
           (str reason " must be > 0")))
 
@@ -948,18 +949,19 @@
 ;;
 (defn test-seq+
   "Check sequence is not empty"
-  [^String reason v]
+  [reason v]
   (assert (> (count v) 0)
           (str reason  " must be non empty")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn rootCause
-  "Find the root error"
+  "Find root error"
   ^Throwable
   [root]
   (loop [r root
-         t (some-> ^Throwable root .getCause)]
+         t (some-> ^Throwable
+                   root .getCause)]
     (if (nil? t)
       r
       (recur t (.getCause t)))))
@@ -967,26 +969,24 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn rootCauseMsg
-  "Find the root error message"
-  [root]
-  (str (some-> (rootCause root) .getMessage)))
+  "Find root error msg"
+  [root] (str (some-> (rootCause root) .getMessage)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn sortJoin
   "Sort a list of strings and then concatenate them"
+
   ([ss] (sortJoin "" ss))
   ([sep ss]
-   (if (empty? ss)
-     ""
-     (cs/join sep (sort ss)))))
+   (if (empty? ss) "" (cs/join sep (sort ss)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn pmap<>
-  "Convert Java Map into Clojure Map"
-  ^APersistentMap
-  [^java.util.Map props]
+  "Java Map into Clojure Map"
+  ^APersistentMap [^java.util.Map props]
+
   (preduce<map>
     #(assoc! %1
              (keyword %2)
@@ -1003,7 +1003,8 @@
   (g [_] data))
 
 ;;(ns-unmap *ns* '->UnsynchedMObj)
-(alter-meta! #'->UnsynchedMObj assoc :private true)
+(alter-meta! #'->UnsynchedMObj
+             assoc :private true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1016,13 +1017,13 @@
   (g [_] data))
 
 ;;(ns-unmap *ns* '->VolatileMObj)
-(alter-meta! #'->VolatileMObj assoc :private true)
+(alter-meta! #'->VolatileMObj
+             assoc :private true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn muble<>
-  "Create a (unsynced/volatile), mutable object"
-  {:tag Muble}
+  "A (unsynced/volatile) mutable" {:tag Muble}
 
   ([seed] (muble<> seed false))
   ([] (muble<> {}))
@@ -1051,7 +1052,7 @@
                     (not (identical? d m)))
              (.s data (merge d m)))))
        (copy [this x]
-         (when (and (instance? Muble x)
+         (when (and (ist? Muble x)
                     (not (identical? this x)))
            (doseq [[k v] (.seq ^Muble x)]
              (.setv this k v))))
@@ -1064,16 +1065,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn tmtask<>
-  "Create a new timer task"
-  ^TimerTask
-  [func]
-  {:pre [(fn? func)]}
+  "A timer task"
+  ^TimerTask [func] {:pre [(fn? func)]}
   (proxy [TimerTask][] (run [] (try! (func)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn prnMuble
-  "Print out this mutable object"
+(defn prnMuble "Print this mutable"
 
   ([ctx] (prnMuble ctx false))
   ([^Muble ctx dbg]
@@ -1087,14 +1085,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn prtStk "Print stack" [^Throwable e] (some-> e .printStackTrace))
+(defn prtStk "Print stack" [e] (some-> ^Throwable e .printStackTrace))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn dumpStk
-  "Dump stack trace to string"
-  ^String
-  [^Throwable e]
+  "Dump stack trace" ^String [^Throwable e]
+
   (with-open
     [out (ByteArrayOutputStream. BUF_SZ)
      ps (PrintStream. out true "utf-8")]
@@ -1105,16 +1102,12 @@
 ;;
 (defn stripNSPath
   "Remove the leading colon"
-  ^String
-  [path]
-  (cs/replace (str path) #"^:" ""))
+  ^String [path] (cs/replace (str path) #"^:" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn normalizeEmail
-  "Normalize an email address"
-  ^String
-  [^String email]
+  "Check email address" ^String [^String email]
 
   (cond
     (empty? email)
@@ -1138,33 +1131,30 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- convList
-  "Convert sequence to Java List"
-  ^ArrayList
-  [obj]
+  "to Java List" ^ArrayList [obj]
+
   (let [rc (ArrayList.)]
-    (doseq [v (seq obj)]
+    (doseq [v obj]
       (.add rc (convToJava v)))
     rc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- convSet
-  "Convert to Java Set"
-  ^HashSet
-  [obj]
+  "to Java Set" ^HashSet [obj]
+
   (let [rc (HashSet.)]
-    (doseq [v (seq obj)]
+    (doseq [v obj]
       (.add rc (convToJava v)))
     rc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- convMap
-  "Convert to Java Map"
-  ^HashMap
-  [obj]
+  "to Java Map" ^HashMap [obj]
+
   (let [rc (HashMap.)]
-    (doseq [[k v] (seq obj)]
+    (doseq [[k v] obj]
       (.put rc
             (stripNSPath (name k)) (convToJava v)))
     rc))
@@ -1172,9 +1162,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convToJava
-  "Convert a clojure data structure to its Java equivalent"
-  ^Object
-  [obj]
+  "Convert a clojure data structure
+  to its Java equivalent"
+  ^Object [obj]
 
   (cond
     (map? obj)
@@ -1220,17 +1210,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro prn!!
-  "" [fmt & args] `(println (apply format ~fmt ~@args [])))
+  "println with format" [fmt & args] `(println (apply format ~fmt ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro prn!
-  "" [fmt & args] `(print (apply format ~fmt ~@args [])))
+  "print with format" [fmt & args] `(print (apply format ~fmt ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn cancelTimerTask
-  "" [^TimerTask t] (try! (some-> t .cancel)))
+  "Cancel a timer task" [^TimerTask t] (try! (some-> t .cancel)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1241,13 +1231,11 @@
 ;;
 (defn pause
   "Block current thread for some millisecs"
-  [millisecs]
-  (try! (if (spos? millisecs) (Thread/sleep millisecs))))
+  [millisecs] (try! (if (spos? millisecs) (Thread/sleep millisecs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro sysTmpDir
-  "Java tmp dir" [] `(sysProp "java.io.tmpdir"))
+(defmacro sysTmpDir "Java tmp dir" [] `(sysProp "java.io.tmpdir"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

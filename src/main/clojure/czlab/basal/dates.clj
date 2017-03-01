@@ -49,8 +49,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn leapYear?
-  "If it's leap year"
-  [year]
+  "If it's leap year" [year]
   (cond
     (zero? (mod year 400)) true
     (zero? (mod year 100)) false
@@ -59,8 +58,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- hastzpart?
-  "Does the string contain time zone info"
-  [^String s]
+  "String contains time zone?" [^String s]
+
   (let [pos (indexAny s ",; \t\r\n\f")
         ss (if (> pos 0) (. s substring (inc pos)) "")]
     (or (hasAny? ss ["+" "-"])

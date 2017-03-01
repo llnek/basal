@@ -82,8 +82,8 @@
     (is (not (matchChar? \space #{ \a \b \x })))
     (is (matchChar? \x #{ \a \b \x }))
 
-    (is (not (same? "aaa" "axa")))
-    (is (same? "aaa" "aaa"))
+    (is (not (eq? "aaa" "axa")))
+    (is (eq? "aaa" "aaa"))
 
     (is (= "aaa" (strim "   aaa   ")))
     (is (= "" (strim nil)))

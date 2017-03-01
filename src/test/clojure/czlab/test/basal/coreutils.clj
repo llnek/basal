@@ -260,8 +260,8 @@
     (is (= "/tmp/a.txt"
            (.getPath (fmtFileUrl "file:/tmp/a.txt"))))
 
-    (is (thrown? Throwable (test-isa "reason" String InputStream)))
-    (is (thrown? Throwable (test-isa "reason" "" InputStream)))
+    (is (thrown? Throwable (test-isa "reason" InputStream String)))
+    (is (thrown? Throwable (test-isa "reason" InputStream "")))
     (is (thrown? Throwable (test-some "reason" nil)))
     (is (thrown? Throwable (test-cond "reason" (= 1 2))))
     (is (thrown? Throwable (assert-not (= 1 1))))

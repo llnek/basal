@@ -226,7 +226,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn same?
+(defn eq?
   "If these 2 strings are the same"
   [^String a ^String b]
   (cond
