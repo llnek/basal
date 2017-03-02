@@ -14,7 +14,7 @@
                  [io.czlab/jasal "1.0.0"]]
 
   :plugins [[cider/cider-nrepl "0.14.0"]
-            [lein-pprint "1.1.2"]
+            [lein-cprint "1.2.0"]
             [lein-codox "0.10.3"]]
 
   :profiles {:provided {:dependencies
