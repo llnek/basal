@@ -35,43 +35,36 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmulti w32ini<>
-  "Parse a INI config file" {:tag Win32Conf} class)
+  "Parses a ini config file" {:tag Win32Conf} class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- throwBadIni
-  ""
-  [^LineNumberReader rdr]
+  "" [^LineNumberReader rdr]
   (throwBadData "Bad ini line: %s" (.getLineNumber rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private throwBadKey
-  ""
-  [k]
-  `(throwBadData "No such item %s" ~k))
+  "" [k] `(throwBadData "No such item %s" ~k))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private throwBadMap
-  ""
-  [s]
-  `(throwBadData "No such heading %s" ~s))
+  "" [s] `(throwBadData "No such heading %s" ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- maybeSection
-  "Look for a section, store the actual section name in metadata"
-  [^LineNumberReader rdr
-   ncmap
-   ^String line]
+  "Look for a section storing the
+  actual name in meta" [rdr ncmap line]
 
   (if-some+ [s (strimAny line "[]" true)]
     (let [k (keyword (lcase s))]
       (if-not (contains? @ncmap k)
         (->> (assoc @ncmap
                     k
-                    (with-meta (sorted-map) {:name s}))
+                    (with-meta (ordered-map) {:name s}))
              (reset! ncmap)))
       k)
     (throwBadIni rdr)))
@@ -80,10 +73,7 @@
 ;;
 (defn- maybeLine
   "Parse a line (name=value) under a section"
-  [^LineNumberReader rdr
-   ncmap
-   section
-   ^String line]
+  [rdr ncmap section ^String line]
 
   (if-some [kvs (get @ncmap section)]
     (let [pos (.indexOf line (int \=))
@@ -102,11 +92,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- evalOneLine
-  "Parse a line in the file"
-  [^LineNumberReader rdr
-   ncmap
-   curSec
-   ^String line]
+  "Parses a line in the file"
+  [rdr ncmap curSec ^String line]
 
   (let [ln (strim line)]
     (cond
@@ -123,9 +110,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- getKV
-  ""
-  ^String
-  [sects s k err]
+  "" ^String [sects s k err]
 
   (let [sn (keyword (lcase s))
         kn (keyword (lcase k))
@@ -138,9 +123,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- makeWinini
-  ""
-  [sects]
+(defn- makeWinini "" [sects]
 
   (reify Win32Conf
 
@@ -153,29 +136,29 @@
       (let [sn (keyword (lcase sect))]
         (reduce #(assoc %1
                         (first %2) (last %2))
-                (sorted-map)
+                (ordered-map)
                 (or (vals (get sects sn)) []))))
 
     (strValue [this sect prop]
       (str (getKV sects sect prop true)))
 
     (strValue [this sect prop dft]
-      (if-some [rc (getKV sects sect prop false)]
-        rc
-        dft))
+      (if-some [rc (getKV sects
+                          sect prop false)]
+        rc dft))
 
     (longValue [this sect prop dft]
-      (if-some [rc (getKV sects sect prop false)]
-        (convLong rc)
-        dft))
+      (if-some [rc (getKV sects
+                          sect prop false)]
+        (convLong rc) dft))
 
     (longValue [this sect prop]
       (convLong (getKV sects sect prop true) 0))
 
     (intValue [this sect prop dft]
-      (if-some [rc (getKV sects sect prop false)]
-        (convInt rc dft)
-        dft))
+      (if-some [rc (getKV sects
+                          sect prop false)]
+        (convInt rc dft) dft))
 
     (intValue [this sect prop]
       (convInt (getKV sects sect prop true)))
@@ -189,9 +172,9 @@
       (convDouble (getKV sects sect prop true)))
 
     (boolValue [this sect prop dft]
-      (if-some [rc (getKV sects sect prop false)]
-        (convBool rc dft)
-        dft))
+      (if-some [rc (getKV sects
+                          sect prop false)]
+        (convBool rc dft) dft))
 
     (boolValue [this sect prop]
       (convBool (getKV sects sect prop true)))
@@ -209,23 +192,17 @@
 ;;
 (defmethod w32ini<>
   String
-  [fpath]
-  (if (some? fpath)
-    (w32ini<> (io/file fpath))))
+  [fpath] (if (hgl? fpath) (w32ini<> (io/file fpath))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod w32ini<>
   File
-  [file]
-  (if (fileRead? file)
-    (w32ini<> (io/as-url file))))
+  [file] (if (fileRead? file) (w32ini<> (io/as-url file))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- parseFile
-  ""
-  {:tag Win32Conf}
+(defn- parseFile "" {:tag Win32Conf}
 
   ([fUrl] (parseFile fUrl "utf-8"))
   ([^URL fUrl enc]
@@ -249,8 +226,7 @@
 ;;
 (defmethod w32ini<>
   URL
-  [fileUrl]
-  (some-> fileUrl parseFile))
+  [fileUrl] (some-> fileUrl parseFile))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

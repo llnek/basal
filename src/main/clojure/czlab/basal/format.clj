@@ -6,7 +6,7 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Handlers for common file formats such as JSON, EDN."
+(ns ^{:doc "Helpers for file formats JSON, EDN."
       :author "Kenneth Leung"}
 
   czlab.basal.format
@@ -29,9 +29,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn writeEdnStr
-  "Convert clojure object into EDN format"
-  ^String
-  [obj]
+  "Format to edn" ^String [obj]
+
   (let [w (StringWriter.)]
     (if (some? obj)
       (with-pprint-dispatch
@@ -56,20 +55,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn writeJsonStr "Convert into JSON" ^String [data] (js/write-str data))
+(defn writeJsonStr
+  "Format to json" ^String [data] (js/write-str data))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn readJsonStrKW
-  "Parse JSON into object with keys mapped to keywords"
-  [^String data]
-  (js/read-str data :key-fn keyword))
+  "Parses json. keys mapped to keywords"
+  [^String data] (js/read-str data :key-fn keyword))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn readJsonStr
-  "Parse JSON into object"
-  {:tag String}
+  "Parses json" {:tag String}
 
   ([^String data] (js/read-str data))
   ([^String data keyfn]
@@ -77,7 +75,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti readJson "Parse JSON formatted text" class)
+(defmulti readJson "Parses json" class)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

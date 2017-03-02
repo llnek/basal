@@ -42,33 +42,28 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- fmt
-  ""
-  ^String
-  [^String pad ^String mask]
+  "" ^String [^String pad ^String mask]
 
   (let [mlen (.length mask)
         plen (.length pad)]
     (if (>= mlen plen)
       (.substring mask 0 plen)
-      (str (.replace (strbf<> pad) (- plen mlen) plen mask)))))
+      (str (.replace (strbf<> pad)
+                     (- plen mlen) plen mask)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private fmtInt
-  ""
-  [nm] `(fmt int-mask (Integer/toHexString ~nm)))
+  "" [nm] `(fmt int-mask (Integer/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private fmtLong
-  ""
-  [nm] `(fmt long-mask (Long/toHexString ~nm)))
+  "" [nm] `(fmt long-mask (Long/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- splitTime
-  ""
-  []
+(defn- splitTime "" []
   (let [s (fmtLong (now<>))
         n (.length s)]
     [(lefts s (/ n 2))
@@ -76,10 +71,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- maybeSetIP
-  ""
-  ^long
-  []
+(defn- maybeSetIP "" []
   (let [neta (InetAddress/getLocalHost)
         b (.getAddress neta)]
     (cond
@@ -91,16 +83,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private ^long _IP (Math/abs (maybeSetIP)))
+(def ^:private ^long _IP (Math/abs ^long (maybeSetIP)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn myOwnNewUUid
-  "RFC4122, v4 format"
-  {:tag String
-   :no-doc true}
-  []
-  ;; At i==19 set the high bits of clock sequence as per rfc4122, sec. 4.1.5
+  "rfc4122, v4 format"
+  {:tag String :no-doc true} []
+
+  ;;at i==19 set the high bits of clock
+  ;;sequence as per rfc4122, sec. 4.1.5
   (let [rc (char-array _uuid-len)
         rnd (rand<>)]
     (dotimes [n (alength rc)]
@@ -120,9 +112,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn wwid<>
-  "A new guid based on time and ip-address"
-  ^String
-  []
+  "uid based on time/ip" ^String []
+
   (let [seed (.nextInt (rand<>)
                        (Integer/MAX_VALUE))
         ts (splitTime)]

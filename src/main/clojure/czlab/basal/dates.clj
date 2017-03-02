@@ -58,7 +58,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- hastzpart?
-  "String contains time zone?" [^String s]
+  "String has time zone?" [^String s]
 
   (let [pos (indexAny s ",; \t\r\n\f")
         ss (if (> pos 0) (. s substring (inc pos)) "")]
@@ -68,8 +68,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- hastz?
-  "Does the string contain time zone info"
-  [^String dateStr]
+  "String has timezone?" [^String dateStr]
+
   (let [p1 (.lastIndexOf dateStr (int \.))
         p2 (.lastIndexOf dateStr (int \:))
         p3 (.lastIndexOf dateStr (int \-))
@@ -93,17 +93,17 @@
 ;;
 (defn parseTimestamp
   "Convert string into a valid Timestamp object
-  *tstr* conforming to the format \"yyyy-mm-dd hh:mm:ss.[fff...]\""
+  *tstr* conforming to the format
+  \"yyyy-mm-dd hh:mm:ss.[fff...]\""
   ^Timestamp
-  [^String s]
-  (try! (Timestamp/valueOf s)))
+  [^String s] (try! (Timestamp/valueOf s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn parseDate
-  "Convert string into a Date object"
-  ^Date
-  [^String tstr ^String fmt]
+  "String to Date"
+  ^Date [^String tstr ^String fmt]
+
   (when (and (hgl? tstr)
              (hgl? fmt))
     (. (SimpleDateFormat. fmt) parse tstr)))
@@ -111,12 +111,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn parseIso8601
-  "Parses datetime in ISO8601 format"
-  ^Date
-  [^String tstr]
+  "To ISO8601 format" ^Date [^String tstr]
+
   (when (hgl? tstr)
     (let [fmt (if (has? tstr \:)
-                (if (has? tstr \.) *dt-fmt-micro* *dt-fmt*)
+                (if (has? tstr \.)
+                  *dt-fmt-micro* *dt-fmt*)
                 *date-fmt*)]
       (parseDate tstr (if (hastz? tstr) (str fmt "Z") fmt)))))
 
@@ -127,8 +127,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn fmtDate
-  "Convert Date into string value"
-  {:tag String}
+  "Date to string" {:tag String}
 
   ([dt] (fmtDate dt *dt-fmt-micro* nil))
   ([dt fmt] (fmtDate dt fmt nil))
@@ -143,25 +142,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn fmtGMT
-  "Convert Date object into a string - GMT timezone"
-  ^String
-  [^Date dt]
+  "Date to string - GMT"
+  ^String [^Date dt]
   (fmtDate dt *dt-fmt-micro* (TimeZone/getTimeZone "GMT")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- add
-  "Add some amount to the current date"
+  "Add to the current date"
   ^Calendar
-  [^Calendar cal calendarField amount]
-  (doto cal
-    (.add (int calendarField) ^long amount)))
+  [^Calendar cal field amount]
+  (doto cal (.add (int field) ^long amount)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn gcal<>
-  "Make a Calendar"
-  {:tag Calendar}
+  "Make a Calendar" {:tag Calendar}
 
   ([] (gcal<> (Date.)))
   ([arg]
@@ -184,73 +180,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn addYears
-  "Add n more years to the calendar"
-  ^Calendar
-  [^Calendar cal yrs]
-  (add cal Calendar/YEAR yrs))
+  "Add years to the calendar" {:tag Calendar}
+
+  ([years] (addYears (gcal<> (Date.)) years))
+  ([^Calendar cal years] (add cal Calendar/YEAR years)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn addMonths
-  "Add n more months to the calendar"
-  ^Calendar
-  [^Calendar cal mts]
-  (add cal Calendar/MONTH mts))
+  "Add more months to the calendar" {:tag Calendar}
+
+  ([months] (addMonths (gcal<> (Date.)) months))
+  ([^Calendar cal months] (add cal Calendar/MONTH months)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn addDays
-  "Add n more days to the calendar"
-  ^Calendar
-  [^Calendar cal days]
-  (add cal Calendar/DAY_OF_YEAR days))
+  "Add more days to the calendar" {:tag Calendar}
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn +months
-  "Add n months"
-  ^Calendar
-  [months]
-  (-> (gcal<> (Date.)) (addMonths  months)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn +years
-  "Add n years"
-  ^Calendar
-  [years]
-  (-> (gcal<> (Date.)) (addYears years)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn +days
-  "Add n days"
-  ^Calendar
-  [days]
-  (-> (gcal<> (Date.)) (addDays days)))
+  ([days] (addDays (gcal<> (Date.)) days))
+  ([^Calendar cal days] (add cal Calendar/DAY_OF_YEAR days)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro fmtTime
-  "Format current time"
-  [^String fmt] `(fmtDate (date<>) ~fmt))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn fmtCal
-  "Formats time to yyyy-MM-ddThh:mm:ss"
-  ^String
-  [^Calendar cal]
-  (java.lang.String/format
-    (Locale/getDefault)
-    "%1$04d-%2$02d-%3$02dT%4$02d:%5$02d:%6$02d"
-    (vargs* Object
-            (.get cal Calendar/YEAR)
-            (+ 1 (.get cal Calendar/MONTH))
-            (.get cal Calendar/DAY_OF_MONTH)
-            (.get cal Calendar/HOUR_OF_DAY)
-            (.get cal Calendar/MINUTE)
-            (.get cal Calendar/SECOND))))
+  "Format current time" [^String fmt] `(fmtDate (date<>) ~fmt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -275,6 +229,22 @@
   "Get the time in millis"
   ([^java.util.Date d] (.getTime d))
   ([] (now<>)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- fmtCal
+  "" ^String [^Calendar cal]
+
+  (java.lang.String/format
+    (Locale/getDefault)
+    "%1$04d-%2$02d-%3$02dT%4$02d:%5$02d:%6$02d"
+    (vargs* Object
+            (.get cal Calendar/YEAR)
+            (+ 1 (.get cal Calendar/MONTH))
+            (.get cal Calendar/DAY_OF_MONTH)
+            (.get cal Calendar/HOUR_OF_DAY)
+            (.get cal Calendar/MINUTE)
+            (.get cal Calendar/SECOND))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

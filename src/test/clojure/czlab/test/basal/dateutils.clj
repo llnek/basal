@@ -79,13 +79,13 @@
 
     (is (let [c (gcal<>)
               y (.get c Calendar/YEAR)
-              c2 (+years 5)
+              c2 (addYears 5)
               y2 (.get c2 Calendar/YEAR)]
           (== 5 (- y2 y))))
 
     (is (let [c (gcal<>)
               m (.get c Calendar/MONTH)
-              c2 (+months (if (> m 5) -2 2))
+              c2 (addMonths (if (> m 5) -2 2))
               m2 (.get c2 Calendar/MONTH)]
           (if (> m 5)
             (== 2 (- m m2))
@@ -93,13 +93,12 @@
 
     (is (let [c (gcal<>)
               d (.get c Calendar/DAY_OF_MONTH)
-              c2 (+days (if (> d 15) -5 5))
+              c2 (addDays (if (> d 15) -5 5))
               d2 (.get c2 Calendar/DAY_OF_MONTH)]
           (if (> d 15)
             (== 5 (- d d2))
             (== 5 (- d2 d)))))
 
-    (is (string? (fmtCal (gcal<>))))
     (is (> (dtime) 0))
     (is (string? (debugCal (gcal<>)))))
 
