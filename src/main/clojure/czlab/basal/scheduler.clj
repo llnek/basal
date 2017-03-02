@@ -46,9 +46,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- mkSCD
-  ""
-  ^Schedulable
-  [^String named]
+  "" ^Schedulable [^String named]
 
   (let [timer (atom (Timer. named true))
         holdQ (ConcurrentHashMap.)

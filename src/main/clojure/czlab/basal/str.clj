@@ -34,7 +34,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn nichts?
-  "If this string is empty"
+  "Is string empty?"
   [s]
   (or (nil? s)
       (not (string? s))
@@ -42,7 +42,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro hgl? "If string has length" [s] `(not (nichts? ~s)))
+(defmacro hgl? "If string has length?" [s] `(not (nichts? ~s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -172,11 +172,7 @@
 (defn countChar
   "Count the times this char appears in the big str"
   [^String bigs ^Character ch]
-
-  (reduce
-    #(if (= ch %2) (inc %1) %1)
-    0
-    (.toCharArray bigs)))
+  (reduce #(if (= ch %2) (inc %1) %1) 0 (.toCharArray bigs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -197,19 +193,14 @@
 ;;
 (defn strKW
   "Stringify a keyword - no leading colon"
-  ^String
-  [k]
-  (cs/replace (str k) #"^:" ""))
+  ^String [k] (cs/replace (str k) #"^:" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn toKW
   "Concatenate all args and return it as a keyword"
   ^Keyword
-  [& args]
-
-  (if-not (empty? args)
-    (keyword (cs/join "/" args))))
+  [& args] (if-not (empty? args) (keyword (cs/join "/" args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -299,8 +290,7 @@
     false
     (let [lc (lcase bigs)]
       (true?
-        (some #(>= (.indexOf lc (lcase %)) 0)
-              substrs)))))
+        (some #(>= (.indexOf lc (lcase %)) 0) substrs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -312,8 +302,7 @@
   (if (or (empty? substrs)
           (nichts? bigs))
     false
-    (true?
-      (some #(>= (.indexOf bigs ^String %) 0) substrs))))
+    (true? (some #(>= (.indexOf bigs ^String %) 0) substrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -387,8 +376,7 @@
           (nichts? src))
     false
     (let [lc (lcase src)]
-      (true?
-        (some #(= lc (lcase %)) substrs)))))
+      (true? (some #(= lc (lcase %)) substrs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -399,14 +387,14 @@
 
   (if (empty? substrs)
     false
-    (true?
-      (some #(= src %) substrs))))
+    (true? (some #(= src %) substrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn wrapped?
   "If src string starts with head and ends with tail"
   [^String src ^String head ^String tail]
+
   (if (and (hgl? src)
            (hgl? head) (hgl? tail))
     (and (.startsWith src head)
@@ -496,8 +484,8 @@
 ;;
 (defn- sformat
   ""
-  [^String fmt & args]
-  (String/format fmt (into-array Object args)))
+  [fmt & args]
+  (String/format ^String fmt (into-array Object args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

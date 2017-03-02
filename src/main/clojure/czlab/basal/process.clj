@@ -33,34 +33,32 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn thread<>
-  "Run this function in a separate thread"
-  {:tag Thread}
+  "Run function in a separate thread" {:tag Thread}
 
-  ([func start?] (thread<> func start? nil))
-  ([func start? arg]
-   {:pre [(fn? func)(or (nil? arg)
-                        (map? arg))]}
+  ([func start? {:keys [cl daemon
+                        classLoader] :as arg}]
+   {:pre [(fn? func)]}
    (let [t (Thread. (runnable<> func))
-         c (or (:cl arg)
-               (:classLoader arg))]
+         c (or cl classLoader)]
      (some->> (cast? ClassLoader c)
               (. t setContextClassLoader))
-     (. t setDaemon (true? (:daemon arg)))
+     (. t setDaemon (true? daemon))
      (if start? (.start t))
      (log/debug "thread#%s%s%s"
                 (.getName t)
                 ", daemon = " (.isDaemon t))
-     t)))
+     t))
+
+  ([func start?] (thread<> func start? nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn syncBlockExec
-  "Run function as synchronized"
-  [^Object lock func & args]
-  {:pre [(fn? func)]}
+  "Run function synchronized"
+  [lockObj func & args] {:pre [(fn? func)]}
 
   (CU/syncExec
-    lock
+    lockObj
     (reify CallableWithArgs
       (run [_ p1 xs]
         (apply func p1 xs)))
@@ -70,21 +68,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn async!
-  "Run this function asynchronously"
-
+  "Run function async"
   ([func] (async! func nil))
   ([func arg] (thread<> func true arg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn jvmInfo
-  "Get info on the jvm"
-  ^APersistentMap
-  []
+  "Get info on the jvm" ^APersistentMap []
+
   (let
     [os (ManagementFactory/getOperatingSystemMXBean)
      rt (ManagementFactory/getRuntimeMXBean)]
-    {:spec-version (.getSpecVersion rt)
+    {:processors (.getAvailableProcessors os)
+     :spec-version (.getSpecVersion rt)
      :vm-version (.getVmVersion rt)
      :spec-vendor (.getSpecVendor rt)
      :vm-vendor (.getVmVendor rt)
@@ -92,27 +89,26 @@
      :vm-name (.getVmName rt)
      :name (.getName rt)
      :arch (.getArch os)
-     :processors (.getAvailableProcessors os)
      :os-name (.getName os)
      :os-version (.getVersion os)}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn processPid
-  "Get the current process pid"
-  ^String
-  []
-  (if-some+ [ss (-> (ManagementFactory/getRuntimeMXBean)
-                    .getName
-                    str
-                    (.split "@"))]
-            (first ss)
-            ""))
+  "Get process pid" ^String []
+
+  (if-some+
+    [ss (-> (ManagementFactory/getRuntimeMXBean)
+            .getName
+            str
+            (.split "@"))]
+    (first ss)
+    ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn delayExec
-  "Run this function after some delay"
+  "Run function after some delay"
   [func delayMillis]
   {:pre [(fn? func)
          (number? delayMillis)]}
@@ -121,9 +117,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn exitHook
-  "Add this as a shutdown hook"
-  [func]
-  {:pre [(fn? func)]}
+  "Add a shutdown hook"
+  [func] {:pre [(fn? func)]}
 
   (->> (thread<> func false {:daemon true})
        (. (Runtime/getRuntime) addShutdownHook )))
