@@ -719,7 +719,7 @@
    that have files of this extension" [rootDir ext]
 
   (let [rootDir (io/file rootDir)
-        rlen  (.length (fpath rootDir))
+        rlen  (.length ^String (fpath rootDir))
         rlen (inc rlen)
         bin (atom #{})
         dig
@@ -733,7 +733,7 @@
                 (when-not (contains? @bin p)
                   (swap! bin conj p))))))]
     (dig rootDir dig)
-    (mapv #(.substring (fpath %) rlen) @bin)))
+    (mapv #(.substring ^String (fpath %) rlen) @bin)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
