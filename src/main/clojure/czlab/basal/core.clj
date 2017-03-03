@@ -269,6 +269,32 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defmacro if-fn?
+  "bindings => binding-form test. When test is a fn?, evaluates body
+  with binding-form bound to the value of test"
+
+  [bindings body]
+  (let [form (bindings 0)
+        tst (bindings 1)]
+    `(let [temp# ~tst]
+       (if (fn? temp#)
+          (let [~form temp#] ~body)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro when-fn?
+  "bindings => binding-form test. When test is a fn?, evaluates body
+  with binding-form bound to the value of test"
+  [bindings & body]
+
+  (let [form (bindings 0)
+        tst (bindings 1)]
+    `(let [temp# ~tst]
+       (if (fn? temp#)
+         (let [~form temp#] ~@body)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro doto->>
   "Combine doto and ->>" [x & forms]
 

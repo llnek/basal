@@ -108,6 +108,9 @@
 
     (is (= "b" (if-some+ [a ""] a "b")))
 
+    (is (== 3 (when-fn? [f inc] nil (f 2))))
+    (is (== 3 (if-fn? [f inc] (f 2))))
+
     (is (notin? #{:a :b} :c))
 
     (is (in? #{:a :b} :a))
