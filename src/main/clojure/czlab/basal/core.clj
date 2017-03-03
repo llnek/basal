@@ -273,12 +273,16 @@
   "bindings => binding-form test. When test is a fn?, evaluates body
   with binding-form bound to the value of test"
 
-  [bindings body]
-  (let [form (bindings 0)
-        tst (bindings 1)]
-    `(let [temp# ~tst]
-       (if (fn? temp#)
-          (let [~form temp#] ~body)))))
+  ([bindings then]
+   `(if-fn? ~bindings ~then nil))
+
+  ([bindings then else & oldform]
+   (let [form (bindings 0)
+         tst (bindings 1)]
+     `(let [temp# ~tst]
+        (if-not (fn? temp#)
+          ~else
+          (let [~form temp#] ~then))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
