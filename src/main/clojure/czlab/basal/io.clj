@@ -257,7 +257,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn coerceToInputStream
+(defn inputStream??
   "A tuple [you-close? stream]"
   ^APersistentVector
   [arg]

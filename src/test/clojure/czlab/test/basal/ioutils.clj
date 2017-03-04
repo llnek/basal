@@ -124,9 +124,9 @@
 
   (testing
     "related to: stream coersions"
-    (is (thrown? Throwable (coerceToInputStream 333)))
+    (is (thrown? Throwable (inputStream?? 333)))
 
-    (is (let [[c i] (coerceToInputStream "aaa")]
+    (is (let [[c i] (inputStream?? "aaa")]
           (if c (closeQ i))
           (ist? InputStream i))))
 
