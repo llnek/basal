@@ -268,7 +268,8 @@
     (ist? InputStream arg) [false arg]
     (ist? URL arg) [true (.openStream ^URL arg)]
     (nil? arg) [false nil]
-    :else (throwBadArg "Bad type %s" (class arg))))
+    :else [false nil]))
+    ;;:else (throwBadArg "Bad type %s" (class arg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
