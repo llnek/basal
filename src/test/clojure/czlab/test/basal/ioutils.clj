@@ -124,9 +124,7 @@
 
   (testing
     "related to: stream coersions"
-    (is (let [[d i] (inputStream?? 333)]
-          (and (false? d)
-               (nil? i))))
+    (is (nil? (inputStream?? 333)))
 
     (is (let [[c i] (inputStream?? "aaa")]
           (if c (closeQ i))

@@ -266,9 +266,9 @@
     (string? arg) [true (streamify (bytesify arg))]
     (instBytes? arg) [true (streamify arg)]
     (ist? InputStream arg) [false arg]
-    (ist? URL arg) [true (.openStream ^URL arg)]
-    (nil? arg) [false nil]
-    :else [false nil]))
+    (ist? URL arg) [true (.openStream ^URL arg)]))
+    ;;(nil? arg) [false nil]
+    ;;:else [false nil]))
     ;;:else (throwBadArg "Bad type %s" (class arg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
