@@ -1015,12 +1015,14 @@
 ;;
 (defn pmap<>
   "Java Map into Clojure Map"
-  ^APersistentMap [^java.util.Map props]
+  {:tag APersistentMap}
 
-  (preduce<map>
-    #(assoc! %1
-             (keyword %2)
-             (. props get %2)) (.keySet props)))
+  ([props] (pmap<> props true))
+  ([^java.util.Map props key?]
+   (preduce<map>
+     #(assoc! %1
+              (if key? (keyword %2) (str %2))
+              (. props get %2)) (.keySet props))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
