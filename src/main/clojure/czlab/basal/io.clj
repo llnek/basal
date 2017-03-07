@@ -796,5 +796,17 @@
         (throwIOE "Unable to set the lastmodtime: %s" f)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn bytes??
+  "Coerce to bytes" ^bytes [arg]
+  (cond
+    (ist? File arg) (slurpBytes arg)
+    (string? arg) (bytesify arg)
+    (instBytes? arg) arg
+    (ist? InputStream arg) (toBytes arg)
+    (ist? URL arg)
+    (with-open [p (.openStream ^URL arg)] (toBytes p))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
 
