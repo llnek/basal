@@ -132,6 +132,17 @@
 
     (is (cexp? (Exception. "a")))
 
+    (is (let [x (Exception. "ho" nil)
+              e (Exception. "hi" nil)]
+          (nil? (some.. e getCause getCause))))
+
+    (is (let [y (Exception. "yo")
+              x (Exception. "ho" y)
+              e (Exception. "hi" x)]
+          (= "yo" (some.. e getCause getCause getMessage))))
+
+    (is (== 2 (some.. "hi" toString length)))
+
     (is (false? (.firstCall (doto->> (monoFlop<>)
                                      .firstCall
                                      .firstCall))))

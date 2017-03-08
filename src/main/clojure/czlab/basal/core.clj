@@ -297,6 +297,16 @@
        (if (fn? temp#)
          (let [~form temp#] ~@body)))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro some.. "Safely handle nil"
+
+  ([x form] `(let [x# ~x] (if-not (nil? x#) (. x# ~form))))
+  ([x form & more]
+   `(let [x# ~x]
+      (if-not (nil? x#)
+        (some.. (. x# ~form) ~@more)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro doto->>
