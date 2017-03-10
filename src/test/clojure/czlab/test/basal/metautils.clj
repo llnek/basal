@@ -14,9 +14,46 @@
 
   (:import [czlab.jasal CU XData]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- f1 ""
+  ([])
+  ([x])
+  ([x y])
+  ([x y {:keys [ff]}]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- f2 ""
+  ([])
+  ([x])
+  ([x y])
+  ([x y {:keys [ff]}])
+  ([x y f p d & z]))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestbasal-metautils
+
+  (testing
+    "related to: fn arity"
+    (is (let [[r v?] (countArity f1)]
+          (and (false? v?)
+               (contains? r 0)
+               (contains? r 1)
+               (contains? r 2)
+               (contains? r 3))))
+    (is (let [[r v?] (countArity
+                       (fn [a b]))]
+          (and (false? v?)
+               (contains? r 2))))
+    (is (let [[r v?] (countArity f2)]
+          (and (true? v?)
+               (contains? r 0)
+               (contains? r 1)
+               (contains? r 2)
+               (contains? r 3)
+               (contains? r 5)))))
 
   (testing
     "related to: class operations"

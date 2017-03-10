@@ -16,11 +16,38 @@
   (:use [czlab.basal.core]
         [czlab.basal.str])
 
-  (:import [clojure.lang APersistentVector]
+  (:import [clojure.lang RestFn APersistentVector]
            [java.lang.reflect Member Field Method Modifier]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn countArity
+  "Figure out arity of function, returning the set of
+  arity counts and whether var-args are used.
+  e.g.
+  [#{0 1 2 3} true]"
+
+  [func] {:pre [(fn? func)]}
+
+  (let [s
+        (persistent!
+          (reduce
+            #(let [^java.lang.reflect.Method m %2
+                   n (.getName m)]
+               (cond
+                 (= "getRequiredArity" n)
+                 (-> (conj! %1 (.getRequiredArity ^RestFn func))
+                     (conj! 709394))
+                 (= "invoke" n)
+                 (conj! %1 (.getParameterCount m))
+                 :else %1))
+            (transient #{})
+            (.getDeclaredMethods (class func))))
+        v? (contains? s 709394)]
+    [(disj s 709394) v?]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
