@@ -101,6 +101,7 @@
           (.deactivate this)
           (some-> ^TCore @cpu .dispose))
 
+        (activate [_] (.activate _ nil))
         (activate [_ options]
           (let [b (!false? (:trace options))
                 t (or (:threads options) 0)
