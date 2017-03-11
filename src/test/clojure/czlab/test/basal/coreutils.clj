@@ -251,6 +251,8 @@
 
     (is (== 97 (aget (bytesify "a" "utf-8") 0)))
 
+    (is (= \e (aget (charsify "hello") 1)))
+
     (is (with-open
           [s (resStream "czlab/basal/etc/sample.ini")]
           (ist? InputStream s)))

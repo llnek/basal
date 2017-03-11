@@ -735,6 +735,12 @@
   ([^bytes bits ^String encoding]
     (some-> bits (String. encoding))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn charsify
+  "Get chars from string" ^chars [s]
+  (if (string? s) (.toCharArray ^String s)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn bytesify
