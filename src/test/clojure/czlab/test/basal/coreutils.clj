@@ -247,11 +247,11 @@
              (.getProperty p "a"))))
 
     (is (= "aaa"
-           (stringify (.getBytes "aaa" "utf-8") "utf-8")))
+           (strit (.getBytes "aaa" "utf-8") "utf-8")))
 
-    (is (== 97 (aget (bytesify "a" "utf-8") 0)))
+    (is (== 97 (aget (bytesit "a" "utf-8") 0)))
 
-    (is (= \e (aget (charsify "hello") 1)))
+    (is (= \e (aget (charsit "hello") 1)))
 
     (is (with-open
           [s (resStream "czlab/basal/etc/sample.ini")]
@@ -264,7 +264,7 @@
     (is (> (alength (resBytes "czlab/basal/etc/sample.ini")) 0))
 
     (is (= "aaa"
-           (stringify (inflate (deflate (bytesify "aaa"))))))
+           (strit (inflate (deflate (bytesit "aaa"))))))
 
     (is (not (.endsWith
                (normalize "/a/b/c!@#*.dat") "!@#*")))

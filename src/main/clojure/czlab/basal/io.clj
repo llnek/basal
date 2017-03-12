@@ -58,7 +58,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn streamify
+(defn streamit
   "Wrapped these bytes in an input-stream"
   ^InputStream [^bytes bytess] (some-> bytess ByteArrayInputStream. ))
 
@@ -148,7 +148,7 @@
   "Deserialize a number"
   ^Number [^bytes bytess ^Class numType]
 
-  (with-open [dis (-> (streamify bytess)
+  (with-open [dis (-> (streamit bytess)
                       (DataInputStream. ))]
     (cond
       (or (= numType Double)
@@ -247,7 +247,7 @@
 
   (if (some? bytess)
     (with-open [inp (GZIPInputStream.
-                      (streamify bytess))] (toBytes inp))))
+                      (streamit bytess))] (toBytes inp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -263,8 +263,8 @@
   [arg]
   (cond
     (ist? File arg) [true (FileInputStream. ^File arg)]
-    (string? arg) [true (streamify (bytesify arg))]
-    (instBytes? arg) [true (streamify arg)]
+    (string? arg) [true (streamit (bytesit arg))]
+    (instBytes? arg) [true (streamit arg)]
     (ist? InputStream arg) [false arg]
     (ist? URL arg) [true (.openStream ^URL arg)]))
     ;;(nil? arg) [false nil]
@@ -483,7 +483,7 @@
 (defn convBytes "" ^bytes [data]
   (condp = (class data)
     InputStream (toBytes data)
-    String (bytesify data)
+    String (bytesit data)
     (bytesClass) data
     nil))
 
@@ -801,7 +801,7 @@
   "Coerce to bytes" ^bytes [arg]
   (cond
     (ist? File arg) (slurpBytes arg)
-    (string? arg) (bytesify arg)
+    (string? arg) (bytesit arg)
     (instBytes? arg) arg
     (ist? InputStream arg) (toBytes arg)
     (ist? URL arg)

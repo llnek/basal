@@ -62,33 +62,33 @@
     "related to: string<->chars<->bytes"
     (is (= "ab"
            (let [baos (baos<>)
-                 inp (ByteArrayInputStream. (bytesify "abcde"))]
+                 inp (ByteArrayInputStream. (bytesit "abcde"))]
              (copyBytes inp baos 2)
-             (stringify (.toByteArray baos)))))
+             (strit (.toByteArray baos)))))
 
     (is (= "abcde"
            (let [baos (baos<> 100)
-                 inp (ByteArrayInputStream. (bytesify "abcde"))]
+                 inp (ByteArrayInputStream. (bytesit "abcde"))]
              (copyBytes inp baos 100)
-             (stringify (.toByteArray baos)))))
+             (strit (.toByteArray baos)))))
 
     (is (= "abcde"
            (let [baos (ByteArrayOutputStream.)
-                 inp (ByteArrayInputStream. (bytesify "abcde"))]
+                 inp (ByteArrayInputStream. (bytesit "abcde"))]
              (copy inp baos)
-             (stringify (.toByteArray baos)))))
+             (strit (.toByteArray baos)))))
 
     (is (= "abcde"
-           (let [inp (ByteArrayInputStream. (bytesify "abcde"))]
-             (stringify (toBytes inp)))))
+           (let [inp (ByteArrayInputStream. (bytesit "abcde"))]
+             (strit (toBytes inp)))))
 
     (is (= "hello"
-           (stringify (charsToBytes (.toCharArray "hello")))))
+           (strit (charsToBytes (.toCharArray "hello")))))
 
     (is (= "hello"
            (String. (toChars (.getBytes "hello" "utf-8"))))))
 
-  (is (== 5 (readableBytes (streamify (bytesify "hello")))))
+  (is (== 5 (readableBytes (streamit (bytesit "hello")))))
   (is (do->true (closeQ (baos<>))))
 
   (testing
@@ -99,11 +99,11 @@
   (testing
     "related to: gzip/gunzip"
     (is (= "hello"
-           (stringify (gunzip (gzip (bytesify "hello"))))))
+           (strit (gunzip (gzip (bytesit "hello"))))))
 
     (is (= "helloworld"
-           (stringify
-             (fromGZB64 (toGZB64 (bytesify "helloworld")))))))
+           (strit
+             (fromGZB64 (toGZB64 (bytesit "helloworld")))))))
 
   (testing
     "related to: temp files"
@@ -115,7 +115,7 @@
               o? (some? os)] (closeQ os) (deleteQ f) o?))
 
     (is (= "hello"
-           (let [f (copyStream (streamify (bytesify "hello")))
+           (let [f (copyStream (streamit (bytesit "hello")))
                  s (slurp f)] (deleteQ f) s))))
 
   (is (ist? XData (xdata<> nil)))

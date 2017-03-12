@@ -728,22 +728,22 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn stringify
+(defn strit
   "Make a string from bytes" {:tag String}
 
-  ([bits] (stringify bits "utf-8"))
+  ([bits] (strit bits "utf-8"))
   ([^bytes bits ^String encoding]
     (some-> bits (String. encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn charsify
+(defn charsit
   "Get chars from string" ^chars [s]
   (if (string? s) (.toCharArray ^String s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bytesify
+(defn bytesit
   "Get bytes with the right encoding"
   ^bytes
   [^String s & [^String encoding]]
@@ -787,7 +787,7 @@
         inp res]
        (io/copy inp out :buffer-size BUF_SZ)
        (-> (.toByteArray out)
-           (stringify encoding))))))
+           (strit encoding))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
