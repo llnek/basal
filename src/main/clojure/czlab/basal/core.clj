@@ -745,16 +745,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn charsit
-  "Get chars from string" ^chars [s]
-  (if (string? s) (.toCharArray ^String s)))
+  "Get chars from string" ^chars [obj]
+  (cond
+    (string? obj) (.toCharArray ^String obj)
+    (= CSCZ (class obj)) obj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn bytesit
-  "Get bytes with the right encoding"
-  ^bytes
-  [^String s & [^String encoding]]
-  (some-> s (.getBytes (or encoding "utf-8"))))
+  "Get bytes with the right encoding" {:tag "[B"}
+
+  ([obj] (bytesit obj "utf-8"))
+  ([obj ^String encoding]
+   (cond
+    (string? obj)
+    (. ^String obj getBytes (or encoding "utf-8"))
+    (= CSCZ (class obj))
+    (bytesit (String. ^chars obj) encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
