@@ -246,6 +246,11 @@
                        loadJavaProps)]
              (.getProperty p "a"))))
 
+    (is (= "aaa" (strit (.toCharArray "aaa"))))
+    (is (= "aaa" (strit "aaa")))
+    (is (= nil (strit nil)))
+    (is (= "3" (strit 3)))
+
     (is (= "aaa"
            (strit (.getBytes "aaa" "utf-8") "utf-8")))
 

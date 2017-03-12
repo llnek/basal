@@ -59,6 +59,7 @@
 ;; #^"[Ljava.lang.Object;"
 (def ^:private CSCZ (class (.toCharArray "")))
 (def ^:private BSCZ (class (.getBytes "")))
+(def ^:private SGCZ (class ""))
 
 (def ^String PATHSEP (System/getProperty "file.separator"))
 (def ^String USASCII "ISO-8859-1" )
@@ -735,10 +736,11 @@
 
   ([obj] (strit obj "utf-8"))
   ([obj ^String encoding]
-   (condp = (class obj)
-     BSCZ (String. ^bytes obj encoding)
-     CSCZ (String. ^chars obj)
-     nil)))
+   (cond
+     (= BSCZ  (class obj)) (String. ^bytes obj encoding)
+     (= CSCZ (class obj)) (String. ^chars obj)
+     (string? obj) obj
+     (some? obj) (str obj))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
