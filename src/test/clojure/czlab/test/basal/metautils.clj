@@ -74,6 +74,9 @@
     (is (isString? (class "")))
     (is (isBytes? (class (byte-array 0))))
 
+    (is (not (isBytes? nil)))
+    (is (not (isChars? nil)))
+
     (is (not (nil? (forname "java.lang.String"))))
     (is (not (nil? (getCldr))))
 

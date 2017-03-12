@@ -57,6 +57,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 ;; #^"[Ljava.lang.Object;"
+(def ^:private CSCZ (class (.toCharArray "")))
+(def ^:private BSCZ (class (.getBytes "")))
 
 (def ^String PATHSEP (System/getProperty "file.separator"))
 (def ^String USASCII "ISO-8859-1" )
@@ -729,11 +731,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn strit
-  "Make a string from bytes" {:tag String}
+  "Make a string from bytes or chars" {:tag String}
 
-  ([bits] (strit bits "utf-8"))
-  ([^bytes bits ^String encoding]
-    (some-> bits (String. encoding))))
+  ([obj] (strit obj "utf-8"))
+  ([obj ^String encoding]
+   (condp = (class obj)
+     BSCZ (String. ^bytes obj encoding)
+     CSCZ (String. ^chars obj)
+     nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
