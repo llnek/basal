@@ -39,6 +39,14 @@ public class Cljrt implements java.io.Closeable {
   }
 
   /**
+   *
+   * @param cl
+   */
+  public static Cljrt newrt() {
+    return new Cljrt(null, "?");
+  }
+
+  /**
    */
   public void require(String... namespaces) {
     for (String ns : namespaces) {
@@ -128,8 +136,10 @@ public class Cljrt implements java.io.Closeable {
     _require = RT.var("clojure.core", "require");
     _resolve = RT.var("clojure.core", "resolve");
     _refer = RT.var("clojure.core", "refer");
-    _loader=cl;
-    _name=name;
+    _loader = (cl==null)
+      ? Thread.currentThread().getContextClassLoader()
+      : cl;
+    _name= (name==null) ? "?" : name;
   }
 
   private ClassLoader _loader;
