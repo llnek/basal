@@ -20,6 +20,9 @@
             [clojure.edn :as edn]
             [clojure.data.json :as js])
 
+  (:use [czlab.basal.core]
+        [czlab.basal.str])
+
   (:import [java.net URL]
            [java.io File StringWriter]))
 
@@ -62,16 +65,17 @@
 ;;
 (defn readJsonStrKW
   "Parses json. keys mapped to keywords"
-  [^String data] (js/read-str data :key-fn keyword))
+  [^String data] (if (hgl? data)
+                   (js/read-str data :key-fn keyword)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn readJsonStr
   "Parses json" {:tag String}
 
-  ([^String data] (js/read-str data))
+  ([^String data] (if (hgl? data) (js/read-str data)))
   ([^String data keyfn]
-   (js/read-str data :key-fn keyfn)))
+   (if (hgl? data) (js/read-str data :key-fn keyfn))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
