@@ -224,6 +224,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defmacro trye!!
+  "Eat the exception returning nil"
+  [defv & exprs]
+  `(try ~@exprs (catch Throwable e#  ~defv)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro try! "Eat the exception, return nil" [& forms] `(try!! nil ~@forms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -684,7 +691,7 @@
 
   ([s] (convLong s 0))
   ([^String s dftLongVal]
-   (trye! dftLongVal (Long/parseLong s) )))
+   (trye!! dftLongVal (Long/parseLong s) )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -693,7 +700,7 @@
 
   ([s] (convInt s 0))
   ([^String s dftIntVal]
-   (trye! (int dftIntVal) (Integer/parseInt s))))
+   (trye!! (int dftIntVal) (Integer/parseInt s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -702,7 +709,7 @@
 
   ([s] (convDouble s 0.0))
   ([^String s dftDblVal]
-   (trye! dftDblVal (Double/parseDouble s) )))
+   (trye!! dftDblVal (Double/parseDouble s) )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
