@@ -1279,7 +1279,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro prn!!
-  "println with format" [fmt & args] `(println (apply format ~fmt ~@args [])))
+  "println with format" [fmt & args] `(print (apply format (str ~fmt "\n") ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
