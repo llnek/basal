@@ -643,6 +643,13 @@
   (with-open [in (ByteArrayInputStream. bits)
               ois (ObjectInputStream. in)] (. ois readObject)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn numSign
+  "Find the sign of a number" [n]
+  {:pre [(number? n)]}
+  (cond (> n 0) 1 (< n 0) -1 :else 0))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn gczn

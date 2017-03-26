@@ -220,6 +220,10 @@
     (is (if (isMacOS?) (not (isWindows?)) true))
     (is (if (isUnix?) (not (isWindows?)) true))
 
+    (is (and (= -1 (numSign -233))
+             (= 1 (numSign 675))
+             (= 0 (numSign 0))))
+
     (is (and (== 911 (convLong "911"))
              (== 111 (convLong nil 111))))
 
