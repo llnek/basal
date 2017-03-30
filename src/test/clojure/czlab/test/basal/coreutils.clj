@@ -27,7 +27,7 @@
              Calendar
              TimerTask]
             [java.sql Timestamp]
-            [czlab.jasal Muble BadDataError]
+            [czlab.jasal Idable Muble BadDataError]
             [java.security SecureRandom]
             [java.net URL]
             [java.io
@@ -49,6 +49,8 @@
 (def ^:private VAR_USER (System/getProperty "user.name"))
 (def ^:private VAR_PATH (System/getenv "PATH"))
 (def ^:private ^Muble MUBLE (muble<> {:a 1 :b 2}))
+(def ^:private idobj (reify Idable (id [_] "hello")))
+
 (eval '(do
   (. dummyProperties put "1" "hello${user.name}")
   (. dummyProperties put "2" "hello${PATH}")
@@ -419,6 +421,7 @@
 
   (testing
     "extra macros"
+    (is (= "hello" (id?? idobj)))
     (is (!true? false))
     (is (!false? true))
     (is (not (!true? true)))

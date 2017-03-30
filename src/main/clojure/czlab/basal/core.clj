@@ -18,7 +18,7 @@
 
   (:use [clojure.walk])
 
-  (:import [czlab.jasal BadDataError MonoFlop Muble Watch RunnableWithId]
+  (:import [czlab.jasal Idable BadDataError MonoFlop Muble Watch RunnableWithId]
            [java.util.concurrent.atomic AtomicLong AtomicInteger]
            [java.util.zip DataFormatException Deflater Inflater]
            [java.util.concurrent TimeUnit]
@@ -1345,6 +1345,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro sysTmpDir "Java tmp dir" [] `(sysProp "java.io.tmpdir"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro id?? "" [x]
+  `(.id ~(with-meta x {:tag 'czlab.jasal.Idable})))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn objEQ? "" [this obj]
+  (and obj
+       (or (identical? this obj)
+           (and (= (.getClass ^Object this)
+                   (.getClass ^Object obj))
+                (= (.id ^Idable obj)
+                   (.id ^Idable this))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
