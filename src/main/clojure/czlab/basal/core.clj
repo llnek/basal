@@ -94,7 +94,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro entity<>
-  "Create a new entity" [classname] `(new ~classname (atom {})))
+  "Create a new entity"
+  ([classname] `(new ~classname (atom {})))
+  ([classname seed] `(new ~classname (atom seed))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
