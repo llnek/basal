@@ -79,6 +79,10 @@
 (def OneK 1024)
 (def FourK (* 4 OneK))
 
+(def _empty-set_ #{})
+(def _empty-map_ {})
+(def _empty-vec_ [])
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro defentity

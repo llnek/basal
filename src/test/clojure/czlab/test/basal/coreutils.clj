@@ -56,7 +56,7 @@
 
 
 (defentity TestEnt
-  czlab.jasal.Identifiable
+  czlab.jasal.Idable
   (id [_] (:arg @data))
   czlab.jasal.Initable
   (init [_ arg] (swap! data assoc :arg arg)))

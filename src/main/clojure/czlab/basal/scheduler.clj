@@ -22,7 +22,7 @@
             TCore
             Disposable
             Activable
-            Identifiable
+            Idable
             RunnableWithId]
           [java.util Map Properties Timer TimerTask]))
 
@@ -31,7 +31,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- xrefPID "" [r] (if (ist? Identifiable r) (.id ^Identifiable r)))
+(defn- xrefPID "" [r] (if (ist? Idable r) (.id ^Idable r)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
