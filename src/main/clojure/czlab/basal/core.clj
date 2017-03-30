@@ -79,6 +79,23 @@
 (def OneK 1024)
 (def FourK (* 4 OneK))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro defentity
+  "Define a statful record" [name & more]
+  `(defrecord
+     ~name
+     [~'data]
+     ~'czlab.basal.Stateful
+     ~'(state [_] data)
+     ~'(deref [_] @data)
+     ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro entity<>
+  "Create a new entity" [classname] `(new ~classname (atom {})))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defprotocol GetSetClr

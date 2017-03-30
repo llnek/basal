@@ -54,6 +54,13 @@
   (. dummyProperties put "2" "hello${PATH}")
   (. dummyProperties put "3" "${user.name}${PATH}")))
 
+
+(defentity TestEnt
+  czlab.jasal.Identifiable
+  (id [_] (:arg @data))
+  czlab.jasal.Initable
+  (init [_ arg] (swap! data assoc :arg arg)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestbasal-coreutils
@@ -403,6 +410,12 @@
     (is (let [[o v] (parseOptions ["a" "b" "c"])]
           (and (empty? o)
                (= "abc" (cs/join "" v))))))
+
+  (testing
+    "related to: entity"
+    (is (let [e (entity<> TestEnt)]
+          (.init e "hello")
+          (= "hello" (.id e)))))
 
   (testing
     "extra macros"
