@@ -200,7 +200,7 @@
 (defn toKW
   "Concatenate all args and return it as a keyword"
   ^Keyword
-  [& args] (if-not (empty? args) (keyword (cs/join "/" args))))
+  [& args] (if-not (empty? args) (keyword (cs/join "" args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -73,7 +73,7 @@
     (is (= "heeloo" (nsb "heeloo")))
     (is (= "" (nsb nil)))
 
-    (is (= :a/b/c (toKW "a" "b" "c")))
+    (is (= :abc (toKW "a" "b" "c")))
     (is (nil? (toKW )))
 
     (is (= "heeloo" (nsn "heeloo")))
