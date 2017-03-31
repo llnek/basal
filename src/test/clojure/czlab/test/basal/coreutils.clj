@@ -59,9 +59,9 @@
 
 (defentity TestEnt
   czlab.jasal.Idable
-  (id [_] (:arg @data))
+  (id [_] (:id @data))
   czlab.jasal.Initable
-  (init [_ arg] (swap! data assoc :arg arg)))
+  (init [_ arg] (swap! data assoc :id arg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -417,7 +417,11 @@
     "related to: entity"
     (is (let [e (entity<> TestEnt)]
           (.init e "hello")
-          (= "hello" (.id e)))))
+          (= "hello" (.id e))))
+    (is (let [e (entity<> TestEnt)]
+          (.update e {:a 3 :id 4})
+          (and (= 4 (.id e))
+               (= 3 (:a @e))))))
 
   (testing
     "extra macros"

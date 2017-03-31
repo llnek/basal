@@ -84,13 +84,28 @@
 (def _empty-vec_ [])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
+;;this causes issues with print-match#multimethod(IDeref,IRecord clash)
+(comment
 (defmacro defentity
   "Define a statful record" [name & more]
   `(defrecord
      ~name
      [~'data]
      ~'czlab.basal.Stateful
+     ~'(update [_ c] (swap! data merge c))
+     ~'(state [_] data)
+     ~'(deref [_] @data)
+     ~@more)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro defentity
+  "Define a statful type" [name & more]
+  `(deftype
+     ~name
+     [~'data]
+     ~'czlab.basal.Stateful
+     ~'(update [_ c] (swap! data merge c))
      ~'(state [_] data)
      ~'(deref [_] @data)
      ~@more))

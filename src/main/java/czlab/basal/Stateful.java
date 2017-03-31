@@ -19,6 +19,10 @@ public interface Stateful extends IDeref {
 
   /**
    */
+  public void update(Object changes);
+
+  /**
+   */
   public Object state();
 
 }
