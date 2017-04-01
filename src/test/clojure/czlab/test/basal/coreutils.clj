@@ -58,8 +58,8 @@
 
 
 (defentity TestEnt
-  czlab.jasal.Idable
-  (id [_] (:id @data))
+  Object
+  (hashCode [_] 999)
   czlab.jasal.Initable
   (init [_ arg] (swap! data assoc :id arg)))
 
@@ -421,6 +421,7 @@
     (is (let [e (entity<> TestEnt)]
           (.update e {:a 3 :id 4})
           (and (= 4 (.id e))
+               (= 999 (.hashCode e))
                (= 3 (:a @e))))))
 
   (testing

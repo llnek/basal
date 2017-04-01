@@ -108,6 +108,10 @@
      ~'(update [_ c] (swap! data merge c))
      ~'(state [_] data)
      ~'(deref [_] @data)
+     ~'czlab.jasal.Idable
+     ~'(id [_] (:id @data))
+     ~'Object
+     ~'(toString [me] (str (id?? me)))
      ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
