@@ -118,8 +118,11 @@
 ;;
 (defmacro entity<>
   "Create a new entity"
-  ([classname] `(new ~classname (atom {})))
-  ([classname seed] `(new ~classname (atom ~seed))))
+  ([classname] `(entity<> ~classname {}))
+  ([classname seed] `(entity<> ~classname ~seed false))
+  ([classname seed volatile??]
+   `(let [s# ~seed]
+      (new ~classname (if-not ~volatile?? (atom s#) (volatile! s#))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
