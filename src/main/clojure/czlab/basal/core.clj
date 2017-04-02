@@ -99,8 +99,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defmacro defstateful
+  "Define a simple statful type" [name & more]
+  `(deftype
+     ~name
+     [~'data]
+     ~'czlab.basal.Stateful
+     ~'(update [_ c] (swap! data merge c))
+     ~'(state [_] data)
+     ~'(deref [_] @data)
+     ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro defentity
-  "Define a statful type" [name & more]
+  "Define a statful entity type" [name & more]
   `(deftype
      ~name
      [~'data]
