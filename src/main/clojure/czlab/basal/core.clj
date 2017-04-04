@@ -105,7 +105,12 @@
      ~name
      [~'data]
      ~'czlab.basal.Stateful
-     ~'(update [_ c] (swap! data merge c))
+     ~'(update [_ c] (if (volatile? data)
+                       (vswap! data merge c)
+                       (swap! data merge c)))
+     ~'(reset [_ c] (if (volatile? data)
+                      (vreset! data c)
+                      (reset! data c)))
      ~'(state [_] data)
      ~'(deref [_] @data)
      ~@more))
@@ -118,7 +123,12 @@
      ~name
      [~'data]
      ~'czlab.basal.Stateful
-     ~'(update [_ c] (swap! data merge c))
+     ~'(update [_ c] (if (volatile? data)
+                       (vswap! data merge c)
+                       (swap! data merge c)))
+     ~'(reset [_ c] (if (volatile? data)
+                      (vreset! data c)
+                      (reset! data c)))
      ~'(state [_] data)
      ~'(deref [_] @data)
      ~'czlab.jasal.Idable
