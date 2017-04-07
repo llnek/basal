@@ -23,6 +23,10 @@ public interface Stateful extends IDeref {
 
   /**
    */
+  public void remove(Object field);
+
+  /**
+   */
   public void reset(Object changes);
 
   /**

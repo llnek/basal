@@ -84,33 +84,39 @@
 (def _empty-vec_ [])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;this causes issues with print-match#multimethod(IDeref,IRecord clash)
-(comment
-(defmacro defentity
-  "Define a statful record" [name & more]
-  `(defrecord
-     ~name
-     [~'data]
-     ~'czlab.basal.Stateful
-     ~'(update [_ c] (swap! data merge c))
-     ~'(state [_] data)
-     ~'(deref [_] @data)
-     ~@more)))
+;;
+(defmacro reset-stateful "" [data arg]
+  `(let [data# ~data
+         arg# ~arg]
+     (if (volatile? data#)
+       (vreset! data# arg#)
+       (reset! data# arg#))))
+
+(defmacro dissoc-stateful "" [data arg]
+  `(let [data# ~data
+         arg# ~arg]
+     (if (volatile? data#)
+       (vswap! data# dissoc arg#)
+       (swap! data# dissoc arg#))))
+
+(defmacro merge-stateful "" [data arg]
+  `(let [data# ~data
+         arg# ~arg]
+     (if (volatile? data#)
+       (vswap! data# merge arg#)
+       (swap! data# merge arg#))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
+;;using defrecord causes issues with print-match#multimethod(IDeref,IRecord clash)
 (defmacro defstateful
   "Define a simple statful type" [name & more]
   `(deftype
      ~name
      [~'data]
      ~'czlab.basal.Stateful
-     ~'(update [_ c] (if (volatile? data)
-                       (vswap! data merge c)
-                       (swap! data merge c)))
-     ~'(reset [_ c] (if (volatile? data)
-                      (vreset! data c)
-                      (reset! data c)))
+     ~'(update [_ c] (merge-stateful data c))
+     ~'(remove [_ k] (dissoc-stateful data k))
+     ~'(reset [_ c] (reset-stateful data c))
      ~'(state [_] data)
      ~'(deref [_] @data)
      ~@more))
@@ -123,12 +129,9 @@
      ~name
      [~'data]
      ~'czlab.basal.Stateful
-     ~'(update [_ c] (if (volatile? data)
-                       (vswap! data merge c)
-                       (swap! data merge c)))
-     ~'(reset [_ c] (if (volatile? data)
-                      (vreset! data c)
-                      (reset! data c)))
+     ~'(update [_ c] (merge-stateful data c))
+     ~'(remove [_ k] (dissoc-stateful data k))
+     ~'(reset [_ c] (reset-stateful data c))
      ~'(state [_] data)
      ~'(deref [_] @data)
      ~'czlab.jasal.Idable
