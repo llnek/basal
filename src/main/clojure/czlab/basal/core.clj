@@ -109,7 +109,7 @@
   `(let [s# ~(with-meta statefulObj
                         {:tag 'czlab.basal.Stateful})
          d# (.state s#)]
-     (if (volatile? d#) (vreset! d# ~arg) (reset! d# ~arg))))
+     (if (volatile? d#) (vreset! d# ~arg) (reset! d# ~arg)) s#))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -117,7 +117,7 @@
   `(let [s# ~(with-meta statefulObj
                         {:tag 'czlab.basal.Stateful})
          d# (.state s#)]
-     (if (volatile? d#) (vswap! d# ~@args) (swap! d# ~@args))))
+     (if (volatile? d#) (vswap! d# ~@args) (swap! d# ~@args)) s#))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;using defrecord causes issues with print-match#multimethod(IDeref,IRecord clash)
