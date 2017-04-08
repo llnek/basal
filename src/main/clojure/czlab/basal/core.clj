@@ -105,36 +105,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro alterVolatileData
-  ""
-  ([data func] `(vswap! ~data ~func))
-  ([data func x] `(vswap! ~data ~func ~x))
-  ([data func x y] `(vswap! ~data ~func ~x ~y)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro alterAtomicData
-  ""
-  ([data func] `(swap! ~data ~func))
-  ([data func x] `(swap! ~data ~func ~x))
-  ([data func x y] `(swap! ~data ~func ~x ~y)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro resetVolatileData [data arg] `(vreset! ~data ~arg))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro resetAtomicData [data arg] `(reset! ~data ~arg))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro alterStatefulData "" [statefulObj & args]
-  `(let [s# ~(with-meta statefulObj {:tag 'czlab.basal.Stateful})
+(defmacro resetStateful "" [statefulObj arg]
+  `(let [s# ~(with-meta statefulObj
+                        {:tag 'czlab.basal.Stateful})
          d# (.state s#)]
-     (if (volatile? d#)
-       (vswap! d# ~@args)
-       (swap! d# ~@args))))
+     (if (volatile? d#) (vreset! d# ~arg) (reset! d# ~arg))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro alterStateful "" [statefulObj & args]
+  `(let [s# ~(with-meta statefulObj
+                        {:tag 'czlab.basal.Stateful})
+         d# (.state s#)]
+     (if (volatile? d#) (vswap! d# ~@args) (swap! d# ~@args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;using defrecord causes issues with print-match#multimethod(IDeref,IRecord clash)
@@ -144,15 +127,6 @@
      ~name
      [~'data]
      ~'czlab.basal.Stateful
-     ~'(update [_ m] (if (volatile? data)
-                       (alterVolatileData data merge m)
-                       (alterAtomicData data merge m)))
-     ~'(remove [_ k] (if (volatile? data)
-                       (alterVolatileData data dissoc k)
-                       (alterAtomicData data dissoc k)))
-     ~'(reset [_ c] (if (volatile? data)
-                      (resetVolatileData data c)
-                      (resetAtomicData data c)))
      ~'(state [_] data)
      ~'(deref [_] @data)
      ~@more))
@@ -1419,8 +1393,15 @@
        (or (identical? this obj)
            (and (= (.getClass ^Object this)
                    (.getClass ^Object obj))
-                (= (.id ^Idable obj)
-                   (.id ^Idable this))))))
+                (= (.hashCode ^Object obj)
+                   (.hashCode ^Object this))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn idEQ? "" [this obj]
+  (and (objEQ? this obj)
+       (= (.id ^Idable obj)
+          (.id ^Idable this))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

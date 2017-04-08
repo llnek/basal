@@ -420,10 +420,10 @@
           (= "hello" (.id e))))
     (is (let [e (entity<> TestEnt)]
           (.init e "hello")
-          (alterStatefulData e update-in [:w] assoc :y 9)
+          (alterStateful e update-in [:w] assoc :y 9)
           (= 9 (get-in @e [:w :y]))))
     (is (let [e (entity<> TestEnt)]
-          (.update e {:a 3 :id 4})
+          (alterStateful e assoc :a 3 :id 4)
           (and (= 4 (.id e))
                (= 999 (.hashCode e))
                (= 3 (:a @e))))))

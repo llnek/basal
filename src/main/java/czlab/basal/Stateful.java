@@ -19,18 +19,6 @@ public interface Stateful extends IDeref {
 
   /**
    */
-  public void update(Object changes);
-
-  /**
-   */
-  public void remove(Object field);
-
-  /**
-   */
-  public void reset(Object changes);
-
-  /**
-   */
   public Object state();
 
 }
