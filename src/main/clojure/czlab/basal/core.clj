@@ -24,6 +24,7 @@
            [java.util.concurrent TimeUnit]
            [java.security SecureRandom]
            [java.nio.charset Charset]
+           [czlab.basal Stateful]
            [clojure.lang
             PersistentList
             Keyword
@@ -83,28 +84,57 @@
 (def _empty-map_ {})
 (def _empty-vec_ [])
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro prn!!
+  "println with format" [fmt & args] `(print (apply format (str ~fmt "\n") ~@args [])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro prn!
+  "print with format" [fmt & args] `(print (apply format ~fmt ~@args [])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro ist? "instance?" [type obj] `(instance? ~type ~obj))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;hack to wrap a macro as fn so that you can use *apply* on it
+(defmacro ^:private make-fn [m]
+ `(fn [& args#] (eval (cons '~m args#))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro reset-stateful "" [data arg]
-  `(let [data# ~data
-         arg# ~arg]
-     (if (volatile? data#)
-       (vreset! data# arg#)
-       (reset! data# arg#))))
+(defmacro alterVolatileData
+  ""
+  ([data func] `(vswap! ~data ~func))
+  ([data func x] `(vswap! ~data ~func ~x))
+  ([data func x y] `(vswap! ~data ~func ~x ~y)))
 
-(defmacro dissoc-stateful "" [data arg]
-  `(let [data# ~data
-         arg# ~arg]
-     (if (volatile? data#)
-       (vswap! data# dissoc arg#)
-       (swap! data# dissoc arg#))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro alterAtomicData
+  ""
+  ([data func] `(swap! ~data ~func))
+  ([data func x] `(swap! ~data ~func ~x))
+  ([data func x y] `(swap! ~data ~func ~x ~y)))
 
-(defmacro merge-stateful "" [data arg]
-  `(let [data# ~data
-         arg# ~arg]
-     (if (volatile? data#)
-       (vswap! data# merge arg#)
-       (swap! data# merge arg#))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro resetVolatileData [data arg] `(vreset! ~data ~arg))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro resetAtomicData [data arg] `(reset! ~data ~arg))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro alterStatefulData "" [statefulObj & args]
+  `(let [s# ~(with-meta statefulObj {:tag 'czlab.basal.Stateful})
+         d# (.state s#)]
+     (if (volatile? d#)
+       (vswap! d# ~@args)
+       (swap! d# ~@args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;using defrecord causes issues with print-match#multimethod(IDeref,IRecord clash)
@@ -114,9 +144,15 @@
      ~name
      [~'data]
      ~'czlab.basal.Stateful
-     ~'(update [_ c] (merge-stateful data c))
-     ~'(remove [_ k] (dissoc-stateful data k))
-     ~'(reset [_ c] (reset-stateful data c))
+     ~'(update [_ m] (if (volatile? data)
+                       (alterVolatileData data merge m)
+                       (alterAtomicData data merge m)))
+     ~'(remove [_ k] (if (volatile? data)
+                       (alterVolatileData data dissoc k)
+                       (alterAtomicData data dissoc k)))
+     ~'(reset [_ c] (if (volatile? data)
+                      (resetVolatileData data c)
+                      (resetAtomicData data c)))
      ~'(state [_] data)
      ~'(deref [_] @data)
      ~@more))
@@ -125,19 +161,10 @@
 ;;
 (defmacro defentity
   "Define a statful entity type" [name & more]
-  `(deftype
+  `(defstateful
      ~name
-     [~'data]
-     ~'czlab.basal.Stateful
-     ~'(update [_ c] (merge-stateful data c))
-     ~'(remove [_ k] (dissoc-stateful data k))
-     ~'(reset [_ c] (reset-stateful data c))
-     ~'(state [_] data)
-     ~'(deref [_] @data)
-     ~'czlab.jasal.Idable
-     ~'(id [_] (:id @data))
-     ~'Object
-     ~'(toString [me] (str (id?? me)))
+     ~'czlab.jasal.Idable ~'(id [_] (:id @data))
+     ~'Object ~'(toString [me] (str (id?? me)))
      ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -430,10 +457,6 @@
 (defmacro do->false "Do and return false" [& forms] `(do ~@forms false))
 (defmacro do->nil "Do and return nil" [& forms] `(do ~@forms nil))
 (defmacro do->true "Do and return true" [& forms] `(do ~@forms true))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ist? "instance?" [type obj] `(instance? ~type ~obj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1356,16 +1379,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro prn!!
-  "println with format" [fmt & args] `(print (apply format (str ~fmt "\n") ~@args [])))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro prn!
-  "print with format" [fmt & args] `(print (apply format ~fmt ~@args [])))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn cancelTimerTask
   "Cancel a timer task" [^TimerTask t] (try! (some-> t .cancel)))
 
@@ -1411,5 +1424,4 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
-
 
