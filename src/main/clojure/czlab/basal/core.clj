@@ -122,7 +122,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;using defrecord causes issues with print-match#multimethod(IDeref,IRecord clash)
 (defmacro defstateful
-  "Define a simple statful type" [name & more]
+  "Define a simple stateful type" [name & more]
   `(deftype
      ~name
      [~'data]
@@ -150,6 +150,22 @@
   ([classname seed volatile??]
    `(let [s# ~seed]
       (new ~classname (if-not ~volatile?? (atom s#) (volatile! s#))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro defobject
+  "Define a simple type" [name & more]
+  `(deftype
+     ~name
+     [~'data]
+     ~'clojure.lang.IDeref
+     ~'(deref [_] data)
+     ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro object<>
+  "Create a new object" [classname seed] `(new ~classname ~seed))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

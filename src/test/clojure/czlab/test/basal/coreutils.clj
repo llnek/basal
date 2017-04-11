@@ -56,12 +56,15 @@
   (. dummyProperties put "2" "hello${PATH}")
   (. dummyProperties put "3" "${user.name}${PATH}")))
 
-
 (defentity TestEnt
   Object
   (hashCode [_] 999)
   czlab.jasal.Initable
   (init [_ arg] (swap! data assoc :id arg)))
+
+(defobject TestClass
+  Object
+  (hashCode [_] (.hashCode data)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -415,6 +418,13 @@
 
   (testing
     "related to: entity"
+    (is (let [e (object<> TestClass 999)]
+          (= 999 @e)))
+    (is (let [e (object<> TestClass {:a 1})]
+          (= 1 (:a @e))))
+    (is (let [e (object<> TestClass 1)]
+          (= (.hashCode (Integer. 1))
+             (.hashCode e))))
     (is (let [e (entity<> TestEnt)]
           (.init e "hello")
           (= "hello" (.id e))))
