@@ -1421,25 +1421,52 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn svtable "Hook parent vtable" [me par] (assoc me :$proto par))
+(defn svtbl "Hook parent vtable" [vt par] (assoc vt :$proto par))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn gvtable
+(defn gvtbl
   "Find key from vtable"
-  [vtable kee]
-  (if (map? vtable)
-    (if (in? vtable kee)
-      (vtable kee)
-      (gvtable (:$proto vtable) kee))))
+  [vt kee]
+  (if (map? vt)
+    (if (in? vt kee)
+      (vt kee)
+      (gvtbl (:$proto vt) kee))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn rvtable
+(defn rvtbl
   "Find key from vtable and run func"
-  [vtable kee & args]
-  (let [f (gvtable vtable kee)]
-    (if (fn? f) (apply f vtable args) f)))
+  [vt kee & args]
+  (let [f (gvtbl vt kee)]
+    (if (fn? f) (apply f vt args) f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro ^:private _defvtable_
+  "" [name & args]
+  (assert (even? (count args)))
+  `(def ~name
+     (-> {}
+        ~@(reduce
+            (fn [acc [k v]]
+              (conj acc `(assoc ~k ~v)))
+            []
+            (partition 2 args)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro defvtbl*
+  "" [name & args]
+  (assert (even? (count args)))
+  `(def ~name (hash-map ~@args )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro defvtbl**
+  "" [name par & args]
+  (assert (even? (count args)))
+  `(def ~name (hash-map :$proto ~par ~@args )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

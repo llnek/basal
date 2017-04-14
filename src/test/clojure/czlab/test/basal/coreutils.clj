@@ -66,6 +66,10 @@
   Object
   (hashCode [_] (.hashCode data)))
 
+(defvtbl* TestVT-C :c (fn [_ a b] (* a b)))
+(defvtbl** TestVT-D TestVT-C :d (fn [_ a b] (/ a b)))
+(defvtbl** TestVT-E TestVT-D :e (fn [_ a b] (+ a b)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestbasal-coreutils
@@ -418,21 +422,15 @@
 
   (testing
     "related to: vtable"
-    (is (let [c {:c (fn [_ a b] (* a b))}
-              d {:d (fn [_ a b] (/ a b))}
-              e {:e (fn [_ a b] (+ a b))}
-              x (->> c (svtable d) (svtable e))]
-          (= 15 (rvtable x :c 3 5))))
-    (is (let [c {:c (fn [_ a b] (* a b))}
-              d {:d (fn [_ a b] (/ a b))}
-              x (svtable d c)]
-          (nil? (rvtable x :z 3 5))))
-    (is (let [c {:c 99}
-              d {:d (fn [_ a b] (/ a b))}
-              x (svtable d c)]
-          (= 99 (rvtable x :c 3 5))))
+    (is (let []
+          (= 15 (rvtbl TestVT-E :c 3 5))))
+    (is (let []
+          (nil? (rvtbl TestVT-D :e 3 5))))
+    (is (let [z {:z 99}
+              x (svtbl TestVT-C z)]
+          (= 99 (rvtbl x :z 3 5))))
     (is (let [c {:a (fn [_ a b] (+ a b))}]
-          (= 8 (rvtable c :a 3 5)))))
+          (= 8 (rvtbl c :a 3 5)))))
 
   (testing
     "related to: entity"
