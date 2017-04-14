@@ -1419,6 +1419,28 @@
        (= (.id ^Idable obj)
           (.id ^Idable this))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn svtable "Hook parent vtable" [me par] (assoc me :$proto par))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn gvtable
+  "Find key from vtable"
+  [vtable kee]
+  (if (map? vtable)
+    (if (in? vtable kee)
+      (vtable kee)
+      (gvtable (:$proto vtable) kee))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn rvtable
+  "Find key from vtable and run func"
+  [vtable kee & args]
+  (let [f (gvtable vtable kee)]
+    (if (fn? f) (apply f args) f)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
 
