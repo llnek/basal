@@ -1439,7 +1439,7 @@
   "Find key from vtable and run func"
   [vtable kee & args]
   (let [f (gvtable vtable kee)]
-    (if (fn? f) (apply f args) f)))
+    (if (fn? f) (apply f vtable args) f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

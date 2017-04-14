@@ -418,20 +418,20 @@
 
   (testing
     "related to: vtable"
-    (is (let [c {:c (fn [a b] (* a b))}
-              d {:d (fn [a b] (/ a b))}
-              e {:e (fn [a b] (+ a b))}
+    (is (let [c {:c (fn [_ a b] (* a b))}
+              d {:d (fn [_ a b] (/ a b))}
+              e {:e (fn [_ a b] (+ a b))}
               x (->> c (svtable d) (svtable e))]
           (= 15 (rvtable x :c 3 5))))
-    (is (let [c {:c (fn [a b] (* a b))}
-              d {:d (fn [a b] (/ a b))}
+    (is (let [c {:c (fn [_ a b] (* a b))}
+              d {:d (fn [_ a b] (/ a b))}
               x (svtable d c)]
           (nil? (rvtable x :z 3 5))))
     (is (let [c {:c 99}
-              d {:d (fn [a b] (/ a b))}
+              d {:d (fn [_ a b] (/ a b))}
               x (svtable d c)]
           (= 99 (rvtable x :c 3 5))))
-    (is (let [c {:a (fn [a b] (+ a b))}]
+    (is (let [c {:a (fn [_ a b] (+ a b))}]
           (= 8 (rvtable c :a 3 5)))))
 
   (testing
