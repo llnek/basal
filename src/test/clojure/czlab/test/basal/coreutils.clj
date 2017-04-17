@@ -66,9 +66,16 @@
   Object
   (hashCode [_] (.hashCode data)))
 
-(defvtbl* TestVT-C :c (fn [_ a b] (* a b)))
-(defvtbl** TestVT-D TestVT-C :d (fn [_ a b] (/ a b)))
-(defvtbl** TestVT-E TestVT-D :c (fn [_ a b] (- a b)) :e (fn [_ a b] (+ a b)))
+(def ^:private
+  TestVT-C (defvtbl* :c (fn [_ a b] (* a b))))
+
+(def ^:private
+  TestVT-D (defvtbl** TestVT-C :d (fn [_ a b] (/ a b))))
+
+(def ^:private
+  TestVT-E (defvtbl**
+             TestVT-D
+             :c (fn [_ a b] (- a b)) :e (fn [_ a b] (+ a b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -1472,16 +1472,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro defvtbl*
-  "" [name & args]
+  "" [& args]
   (assert (even? (count args)))
-  `(def ~name (hash-map ~@args )))
+  `(hash-map ~@args ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro defvtbl**
-  "" [name par & args]
+  "" [par & args]
   (assert (even? (count args)))
-  `(def ~name (hash-map :$proto ~par ~@args )))
+  `(hash-map :$proto ~par ~@args ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
