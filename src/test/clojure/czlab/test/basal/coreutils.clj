@@ -68,7 +68,7 @@
 
 (defvtbl* TestVT-C :c (fn [_ a b] (* a b)))
 (defvtbl** TestVT-D TestVT-C :d (fn [_ a b] (/ a b)))
-(defvtbl** TestVT-E TestVT-D :e (fn [_ a b] (+ a b)))
+(defvtbl** TestVT-E TestVT-D :c (fn [_ a b] (- a b)) :e (fn [_ a b] (+ a b)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -423,7 +423,9 @@
   (testing
     "related to: vtable"
     (is (let []
-          (= 15 (rvtbl TestVT-E :c 3 5))))
+          (= 2 (rvtbl TestVT-E :c 5 3))))
+    (is (let []
+          (= 15 (rvtbl' TestVT-E :c 5 3))))
     (is (let []
           (nil? (rvtbl TestVT-D :e 3 5))))
     (is (let [z {:z 99}

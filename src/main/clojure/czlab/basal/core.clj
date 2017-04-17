@@ -1435,6 +1435,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn gvtbl'
+  "Find key from vtable"
+  [vt kee]
+  (gvtbl (:$proto vt) kee))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn rvtbl'
+  "Find key from vtable and run func"
+  [vt kee & args]
+  (let [f (gvtbl' vt kee)]
+    (if (fn? f) (apply f vt args) f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn rvtbl
   "Find key from vtable and run func"
   [vt kee & args]
