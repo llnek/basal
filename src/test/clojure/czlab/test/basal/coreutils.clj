@@ -15,7 +15,10 @@
         [czlab.basal.core]
         [clojure.test])
 
-  (:import  [java.util
+  (:import  [czlab.jasal Idable Muble BadDataError]
+            [java.security SecureRandom]
+            [clojure.lang IDeref]
+            [java.util
              ArrayList
              HashMap
              HashSet
@@ -27,8 +30,6 @@
              Calendar
              TimerTask]
             [java.sql Timestamp]
-            [czlab.jasal Idable Muble BadDataError]
-            [java.security SecureRandom]
             [java.net URL]
             [java.io
              File
@@ -56,11 +57,16 @@
   (. dummyProperties put "2" "hello${PATH}")
   (. dummyProperties put "3" "${user.name}${PATH}")))
 
-(defentity TestEnt
+(defstateful TestEnt
+  czlab.jasal.Idable
+  (id [_] (:id @data))
   Object
+  (toString [_] (str (id?? _)))
   (hashCode [_] 999)
   czlab.jasal.Initable
   (init [_ arg] (swap! data assoc :id arg)))
+
+(defcontext TestMuClass)
 
 (defobject TestClass
   Object
@@ -365,7 +371,9 @@
 
     (is (string? (.toEDN MUBLE)))
 
-    (is (== 9 (:a (.intern MUBLE))))
+    (is (== 9 (:a (.deref ^IDeref MUBLE))))
+
+    (is (== 9 (:a @MUBLE)))
 
     (is (== 1 (do (.copyEx MUBLE {:a 1 :y 4 :z 2})
                   (.getv MUBLE :a))))
@@ -443,6 +451,9 @@
 
   (testing
     "related to: entity"
+    (is (let [e (context<> TestMuClass 999)]
+          (and (= 999 @e)
+               (ist? Muble (.getx e)))))
     (is (let [e (object<> TestClass 999)]
           (= 999 @e)))
     (is (let [e (object<> TestClass {:a 1})]

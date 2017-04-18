@@ -133,7 +133,31 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro defentity
+(defmacro defcontext
+  "Define a simple type" [name & more]
+  `(deftype
+     ~name
+     [~'data ~'vars]
+     ~'clojure.lang.IDeref
+     ~'(deref [_] data)
+     ~'czlab.jasal.Context
+     ~'(getx [_] vars)
+     ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro defobject
+  "Define a simple type" [name & more]
+  `(deftype
+     ~name
+     [~'data]
+     ~'clojure.lang.IDeref
+     ~'(deref [_] data)
+     ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro ^:private XXXdefentity
   "Define a statful entity type" [name & more]
   `(defstateful
      ~name
@@ -153,14 +177,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro defobject
-  "Define a simple type" [name & more]
-  `(deftype
-     ~name
-     [~'data]
-     ~'clojure.lang.IDeref
-     ~'(deref [_] data)
-     ~@more))
+(defmacro context<>
+  "Create a new object"
+  [classname seed] `(new ~classname ~seed (czlab.basal.core/muble<>)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1192,7 +1211,10 @@
          data (if volatile??
                 (VolatileMObj. (or seed {}))
                 (UnsynchedMObj. (or seed {})))]
-     (reify Muble
+     (reify
+       clojure.lang.IDeref
+       (deref [_] (.g data))
+       Muble
        (setv [_ k v]
          (->> (assoc (.g data) k v) (.s data)) v)
        (unsetv [_ k]
@@ -1205,7 +1227,6 @@
            (.setv this k v))
          (.getv this k))
        (toEDN [_] (pr-str (.g data)))
-       (intern [_] (.g data))
        (copyEx [_ m]
          (let [d (.g data)]
            (if (and (map? m)
@@ -1432,6 +1453,16 @@
     (if (in? vt kee)
       (vt kee)
       (gvtbl (:$proto vt) kee))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn cvtbl?
+  "key in vtable?"
+  [vt kee]
+  (if (map? vt)
+    (if (in? vt kee)
+      (vt kee)
+      (gvtbl (:$proto vt) kee)) false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
