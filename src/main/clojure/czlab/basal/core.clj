@@ -18,13 +18,13 @@
 
   (:use [clojure.walk])
 
-  (:import [czlab.jasal Idable BadDataError MonoFlop Muble Watch RunnableWithId]
+  (:import [czlab.jasal Idable DataError MonoFlop Watch RunnableWithId]
            [java.util.concurrent.atomic AtomicLong AtomicInteger]
            [java.util.zip DataFormatException Deflater Inflater]
            [java.util.concurrent TimeUnit]
            [java.security SecureRandom]
            [java.nio.charset Charset]
-           [czlab.basal Stateful]
+           [czlab.basal Stateful Muble]
            [clojure.lang
             PersistentList
             Keyword
@@ -125,35 +125,27 @@
   "Define a simple stateful type" [name & more]
   `(deftype
      ~name
-     [~'data]
+     [~'_data]
      ~'czlab.basal.Stateful
-     ~'(state [_] data)
-     ~'(deref [_] @data)
+     ~'(deref [_] @_data)
+     ~'(state [_] _data)
      ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro defcontext
   "Define a simple type" [name & more]
-  `(deftype
-     ~name
-     [~'data ~'vars]
-     ~'clojure.lang.IDeref
-     ~'(deref [_] data)
-     ~'czlab.jasal.Context
-     ~'(getx [_] vars)
+  `(deftype ~name [~'_data]
+     ~'czlab.basal.Context ~'(getx [_] (:$vars _data))
+     ~'clojure.lang.IDeref ~'(deref [_] _data)
      ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro defobject
   "Define a simple type" [name & more]
-  `(deftype
-     ~name
-     [~'data]
-     ~'clojure.lang.IDeref
-     ~'(deref [_] data)
-     ~@more))
+  `(deftype ~name [~'_data]
+     ~'clojure.lang.IDeref ~'(deref [_] _data) ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -161,7 +153,7 @@
   "Define a statful entity type" [name & more]
   `(defstateful
      ~name
-     ~'czlab.jasal.Idable ~'(id [_] (:id @data))
+     ~'czlab.jasal.Idable ~'(id [_] (:id @_data))
      ~'Object ~'(toString [me] (str (id?? me)))
      ~@more))
 
@@ -179,7 +171,12 @@
 ;;
 (defmacro context<>
   "Create a new object"
-  [classname seed] `(new ~classname ~seed (czlab.basal.core/muble<>)))
+  [classname seed]
+  `(let [s# ~seed dummy# (assert (map? s#))
+         r# (object<> ~classname
+                      (assoc s# :$vars (czlab.basal.core/muble<>)))]
+     (assert (instance? czlab.basal.Context r#))
+     r#))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -269,7 +266,7 @@
 (defn throwBadData
   "Throw Bad Data Exception"
   [fmt & xs]
-  (->> ^String (apply format fmt xs) (trap! BadDataError )))
+  (->> ^String (apply format fmt xs) (trap! DataError )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1174,12 +1171,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftype UnsynchedMObj
-  [^:unsynchronized-mutable data]
+  [^:unsynchronized-mutable _data]
   GetSetClr
 
-  (s [_ x] (set! data x))
-  (c [_] (set! data {}))
-  (g [_] data))
+  (s [_ x] (set! _data x))
+  (c [_] (set! _data {}))
+  (g [_] _data))
 
 ;;(ns-unmap *ns* '->UnsynchedMObj)
 (alter-meta! #'->UnsynchedMObj
@@ -1188,12 +1185,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftype VolatileMObj
-  [^:volatile-mutable data]
+  [^:volatile-mutable _data]
   GetSetClr
 
-  (s [_ x] (set! data x))
-  (c [_] (set! data {}))
-  (g [_] data))
+  (s [_ x] (set! _data x))
+  (c [_] (set! _data {}))
+  (g [_] _data))
 
 ;;(ns-unmap *ns* '->VolatileMObj)
 (alter-meta! #'->VolatileMObj
@@ -1208,40 +1205,40 @@
   ([] (muble<> {}))
   ([seed volatile??]
    (let [^czlab.basal.core.GetSetClr
-         data (if volatile??
+         _data (if volatile??
                 (VolatileMObj. (or seed {}))
                 (UnsynchedMObj. (or seed {})))]
      (reify
        clojure.lang.IDeref
-       (deref [_] (.g data))
+       (deref [_] (.g _data))
        Muble
        (setv [_ k v]
-         (->> (assoc (.g data) k v) (.s data)) v)
+         (->> (assoc (.g _data) k v) (.s _data)) v)
        (unsetv [_ k]
-         (let [m (.g data)
+         (let [m (.g _data)
                v (get m k)]
-           (.s data (dissoc m k)) v))
+           (.s _data (dissoc m k)) v))
        (getOrSet [this k v]
          (when-not
            (.contains this k)
            (.setv this k v))
          (.getv this k))
-       (toEDN [_] (pr-str (.g data)))
+       (toEDN [_] (pr-str (.g _data)))
        (copyEx [_ m]
-         (let [d (.g data)]
+         (let [d (.g _data)]
            (if (and (map? m)
                     (not (identical? d m)))
-             (.s data (merge d m)))))
+             (.s _data (merge d m)))))
        (copy [this x]
          (when (and (ist? Muble x)
                     (not (identical? this x)))
            (doseq [[k v] (.seq ^Muble x)]
              (.setv this k v))))
-       (getv [_ k] (get (.g data) k))
-       (seq [_] (seq (.g data)))
+       (getv [_ k] (get (.g _data) k))
+       (seq [_] (seq (.g _data)))
        (contains [_ k]
-         (contains? (.g data) k))
-       (clear [_ ] (.c data))))))
+         (in? (.g _data) k))
+       (clear [_ ] (.c _data))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

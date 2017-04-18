@@ -15,8 +15,9 @@
         [czlab.basal.core]
         [clojure.test])
 
-  (:import  [czlab.jasal Idable Muble BadDataError]
+  (:import  [czlab.jasal Idable DataError]
             [java.security SecureRandom]
+            [czlab.basal Context Muble]
             [clojure.lang IDeref]
             [java.util
              ArrayList
@@ -59,18 +60,18 @@
 
 (defstateful TestEnt
   czlab.jasal.Idable
-  (id [_] (:id @data))
+  (id [_] (:id @_data))
   Object
   (toString [_] (str (id?? _)))
   (hashCode [_] 999)
   czlab.jasal.Initable
-  (init [_ arg] (swap! data assoc :id arg)))
+  (init [_ arg] (swap! _data assoc :id arg)))
 
 (defcontext TestMuClass)
 
 (defobject TestClass
   Object
-  (hashCode [_] (.hashCode data)))
+  (hashCode [_] (.hashCode _data)))
 
 (def ^:private
   TestVT-C (defvtbl* :c (fn [_ a b] (* a b))))
@@ -117,7 +118,7 @@
 
     (is (thrown? IOException (throwIOE "%s" "a")))
 
-    (is (thrown? BadDataError (throwBadData "bad")))
+    (is (thrown? DataError (throwBadData "bad")))
 
     (is (= ::yo (getTypeId (with-meta {} {:typeid ::yo}))))
 
@@ -393,8 +394,8 @@
 
     (is (nil? (do (.clear MUBLE) (.getv MUBLE :q))))
 
-    (is (thrown? BadDataError (normalizeEmail "xxxx@@@ddddd")))
-    (is (thrown? BadDataError (normalizeEmail "xxxx")))
+    (is (thrown? DataError (normalizeEmail "xxxx@@@ddddd")))
+    (is (thrown? DataError (normalizeEmail "xxxx")))
     (is (= "abc@abc.com" (normalizeEmail "abc@ABC.cOm")))
 
     (is (== 1 (.get ^Map (convToJava {:a 1}) "a")))
@@ -451,8 +452,8 @@
 
   (testing
     "related to: entity"
-    (is (let [e (context<> TestMuClass 999)]
-          (and (= 999 @e)
+    (is (let [^Context e (context<> TestMuClass {:a 999})]
+          (and (= 999 (:a @e))
                (ist? Muble (.getx e)))))
     (is (let [e (object<> TestClass 999)]
           (= 999 @e)))
