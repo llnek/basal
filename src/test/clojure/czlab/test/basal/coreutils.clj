@@ -15,30 +15,31 @@
         [czlab.basal.core]
         [clojure.test])
 
-  (:import  [czlab.jasal Idable DataError]
-            [java.security SecureRandom]
-            [czlab.basal Context Muble]
-            [clojure.lang IDeref]
-            [java.util
-             ArrayList
-             HashMap
-             HashSet
-             Map
-             List
-             Set
-             Properties
-             Date
-             Calendar
-             TimerTask]
-            [java.sql Timestamp]
-            [java.net URL]
-            [java.io
-             File
-             InputStream
-             IOException
-             FileOutputStream
-             ByteArrayInputStream]
-            [java.nio.charset Charset]))
+  (:import [czlab.jasal Idable DataError]
+           [java.security SecureRandom]
+           [clojure.lang IDeref]
+           ;;[czlab.basal.core Muable Contextual]
+           [czlab.basal.core GenericMutable VolatileMutable]
+           [java.util
+            ArrayList
+            HashMap
+            HashSet
+            Map
+            List
+            Set
+            Properties
+            Date
+            Calendar
+            TimerTask]
+           [java.sql Timestamp]
+           [java.net URL]
+           [java.io
+            File
+            InputStream
+            IOException
+            FileOutputStream
+            ByteArrayInputStream]
+           [java.nio.charset Charset]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -50,8 +51,8 @@
 (def ^{:private true :tag  Properties} dummyProperties (Properties.))
 (def ^:private VAR_USER (System/getProperty "user.name"))
 (def ^:private VAR_PATH (System/getenv "PATH"))
-(def ^:private ^Muble MUBLE (muble<> {:a 1 :b 2}))
-(def ^:private ^Muble VMU (vuble<> {:a 1 :b 2}))
+(def ^:private ^GenericMutable MUBLE (muble<> {:a 1 :b 2}))
+(def ^:private ^Muable VMU (vuble<> {:a 1 :b 2}))
 (def ^:private idobj (reify Idable (id [_] "hello")))
 
 (eval '(do
@@ -71,8 +72,8 @@
 (defcontext TestMuClass)
 
 (defobject TestClass
-  Object
-  (hashCode [_] (.hashCode _data)))
+  Idable
+  (id [_] (:id _)))
 
 (def ^:private
   TestVT-C (defvtbl* :c (fn [_ a b] (* a b))))
@@ -348,8 +349,8 @@
                          (.put "a" "A")
                          (.put "z" "Z"))] (:a (pmap<> m)))))
 
-    (is (== 1 (:a (.deref (czlab.basal.core.VolatileMutable. {:a 1})))))
-    (is (== 1 (:a (.deref (czlab.basal.core.GenericMutable. {:a 1})))))
+    (is (== 1 (:a (.deref (VolatileMutable. {:a 1})))))
+    (is (== 1 (:a (.deref (GenericMutable. {:a 1})))))
 
     (is (string? (dumpStk (Exception. "a"))))
 
@@ -376,23 +377,23 @@
 
     (is (== 9 (:a @MUBLE)))
 
-    (is (== 1 (do (.copyEx MUBLE {:a 1 :y 4 :z 2})
+    (is (== 1 (do (.copy* MUBLE {:a 1 :y 4 :z 2})
                   (.getv MUBLE :a))))
 
-    (is (== 4 (count (.seq MUBLE))))
+    (is (== 4 (count (seq @MUBLE))))
 
-    (is (== 2 (do (.copy MUBLE MUBLE)
+    (is (== 2 (do (copy* MUBLE MUBLE)
                   (.getv MUBLE :z))))
 
-    (is (== 6 (do (.clear MUBLE)
-                  (.copy MUBLE (muble<> {:p 1 :q 5}))
+    (is (== 6 (do (.wipe! MUBLE)
+                  (.copy* MUBLE (muble<> {:p 1 :q 5}))
                   (+ (.getv MUBLE :p)
                      (.getv MUBLE :q)))))
 
     (is (not (.contains MUBLE :z)))
-    (is (== 2 (count (.seq MUBLE))))
+    (is (== 2 (count (seq @MUBLE))))
 
-    (is (nil? (do (.clear MUBLE) (.getv MUBLE :q))))
+    (is (nil? (do (.wipe! MUBLE) (.getv MUBLE :q))))
 
     (is (thrown? DataError (normalizeEmail "xxxx@@@ddddd")))
     (is (thrown? DataError (normalizeEmail "xxxx")))
@@ -452,16 +453,15 @@
 
   (testing
     "related to: entity"
-    (is (let [^Context e (context<> TestMuClass {:a 999})]
+    (is (let [e (context<> TestMuClass {:a 999})]
           (and (= 999 (:a @e))
-               (ist? Muble (.getx e)))))
-    (is (let [e (object<> TestClass 999)]
-          (= 999 @e)))
-    (is (let [e (object<> TestClass {:a 1})]
-          (= 1 (:a @e))))
-    (is (let [e (object<> TestClass 1)]
-          (= (.hashCode (Integer. 1))
-             (.hashCode e))))
+               (satisfies? Muable (getx e)))))
+    (is (let [e (object<> TestClass {:a 999})]
+          (= 999 (:a e))))
+    (is (let [e (object<> TestClass {})]
+          (nil? (:a e))))
+    (is (let [e (object<> TestClass {:id 8})]
+          (= 8 (id?? e))))
     (is (let [e (atomic<> TestEnt)]
           (.init e "hello")
           (= "hello" (.id e))))
@@ -478,6 +478,8 @@
   (testing
     "extra macros"
     (is (= "hello" (id?? idobj)))
+    (is (self? MUBLE MUBLE))
+    (is (!self? MUBLE VMU))
     (is (!true? false))
     (is (!false? true))
     (is (not (!true? true)))
