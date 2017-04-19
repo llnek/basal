@@ -105,7 +105,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro resetStateful "" [statefulObj arg]
+(defmacro resetAtomic "" [statefulObj arg]
   `(let [s# ~(with-meta statefulObj
                         {:tag 'czlab.basal.Stateful})
          d# (.state s#)]
@@ -113,7 +113,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro alterStateful "" [statefulObj & args]
+(defmacro alterAtomic "" [statefulObj & args]
   `(let [s# ~(with-meta statefulObj
                         {:tag 'czlab.basal.Stateful})
          d# (.state s#)]
@@ -121,24 +121,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;using defrecord causes issues with print-match#multimethod(IDeref,IRecord clash)
-(defmacro defstateful
+(defmacro defatomic
   "Define a simple stateful type" [name & more]
-  `(deftype
-     ~name
-     [~'_data]
+  `(deftype ~name [~'_data]
      ~'czlab.basal.Stateful
-     ~'(deref [_] @_data)
-     ~'(state [_] _data)
-     ~@more))
+     ~'(deref [_] @_data) ~'(state [_] _data) ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro defcontext
   "Define a simple type" [name & more]
   `(deftype ~name [~'_data]
-     ~'czlab.basal.Context ~'(getx [_] (:$vars _data))
-     ~'clojure.lang.IDeref ~'(deref [_] _data)
-     ~@more))
+     ~'clojure.lang.IDeref ~'(deref [_] @_data)
+     ~'czlab.basal.Context ~'(getx [_] _data) ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -149,23 +144,29 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ^:private XXXdefentity
-  "Define a statful entity type" [name & more]
-  `(defstateful
-     ~name
-     ~'czlab.jasal.Idable ~'(id [_] (:id @_data))
-     ~'Object ~'(toString [me] (str (id?? me)))
-     ~@more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro entity<>
+(defmacro atomic<>
   "Create a new entity"
-  ([classname] `(entity<> ~classname {}))
-  ([classname seed] `(entity<> ~classname ~seed false))
+  ([classname] `(atomic<> ~classname {}))
+  ([classname seed] `(atomic<> ~classname ~seed false))
   ([classname seed volatile??]
    `(let [s# ~seed]
       (new ~classname (if-not ~volatile?? (atom s#) (volatile! s#))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro object<>
+  "Create a new object" [classname seed] `(new ~classname ~seed))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro context<+>
+  "Create a new object"
+  [classname seed]
+  `(let [s# ~seed dummy# (assert (map? s#))
+         r# (object<> ~classname
+                      (czlab.basal.core/vuble<> s#))]
+     (assert (instance? czlab.basal.Context r#))
+     r#))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -174,22 +175,9 @@
   [classname seed]
   `(let [s# ~seed dummy# (assert (map? s#))
          r# (object<> ~classname
-                      (assoc s# :$vars (czlab.basal.core/muble<>)))]
+                      (czlab.basal.core/muble<> s#))]
      (assert (instance? czlab.basal.Context r#))
      r#))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro object<>
-  "Create a new object" [classname seed] `(new ~classname ~seed))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defprotocol GetSetClr
-  "Generic interface to get, set and clear values"
-  (s [_ x])
-  (c [_])
-  (g [_]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -450,6 +438,13 @@
                   `(~f ~gx)))
               forms)
        ~gx)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro !self?
+  "Shorthand for not identical?" [me other] `(not (identical? ~me ~other)))
+(defmacro self?
+  "Shorthand for identical?" [me other] `(identical? ~me ~other))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1170,82 +1165,54 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(deftype UnsynchedMObj
-  [^:unsynchronized-mutable _data]
-  GetSetClr
-
-  (s [_ x] (set! _data x))
-  (c [_] (set! _data {}))
-  (g [_] _data))
-
-;;(ns-unmap *ns* '->UnsynchedMObj)
-(alter-meta! #'->UnsynchedMObj
-             assoc :private true)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(deftype VolatileMObj
-  [^:volatile-mutable _data]
-  GetSetClr
-
-  (s [_ x] (set! _data x))
-  (c [_] (set! _data {}))
-  (g [_] _data))
-
-;;(ns-unmap *ns* '->VolatileMObj)
-(alter-meta! #'->VolatileMObj
-             assoc :private true)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn muble<>
-  "A (unsynced/volatile) mutable" {:tag Muble}
-
-  ([seed] (muble<> seed false))
-  ([] (muble<> {}))
-  ([seed volatile??]
-   (let [^czlab.basal.core.GetSetClr
-         _data (if volatile??
-                (VolatileMObj. (or seed {}))
-                (UnsynchedMObj. (or seed {})))]
-     (reify
-       clojure.lang.IDeref
-       (deref [_] (.g _data))
-       Muble
-       (setv [_ k v]
-         (->> (assoc (.g _data) k v) (.s _data)) v)
-       (unsetv [_ k]
-         (let [m (.g _data)
-               v (get m k)]
-           (.s _data (dissoc m k)) v))
-       (getOrSet [this k v]
-         (when-not
-           (.contains this k)
-           (.setv this k v))
-         (.getv this k))
-       (toEDN [_] (pr-str (.g _data)))
-       (copyEx [_ m]
-         (let [d (.g _data)]
-           (if (and (map? m)
-                    (not (identical? d m)))
-             (.s _data (merge d m)))))
-       (copy [this x]
-         (when (and (ist? Muble x)
-                    (not (identical? this x)))
-           (doseq [[k v] (.seq ^Muble x)]
-             (.setv this k v))))
-       (getv [_ k] (get (.g _data) k))
-       (seq [_] (seq (.g _data)))
-       (contains [_ k]
-         (in? (.g _data) k))
-       (clear [_ ] (.c _data))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn tmtask<>
   "A timer task"
   ^TimerTask [func] {:pre [(fn? func)]}
   (proxy [TimerTask][] (run [] (try! (func)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro ^:private decl-muble-types "" [name dtype]
+  `(deftype ~name
+     [~(with-meta '_data {dtype true})]
+  ~'clojure.lang.IDeref
+  ~'(deref [_] _data)
+  ~'czlab.basal.Muble
+  ~'(setv [_ k v] (set! _data (assoc _data k v)) v)
+  ~'(unsetv [_ k] (let [v (get _data k)] (set! _data (dissoc _data k)) v))
+  ~'(getOrSet [me k v] (when-not (.contains me k) (.setv me k v)) (.getv me k))
+  ~'(toEDN [_] (pr-str _data))
+  ~'(copyEx [me m] (if (and (map? m)
+                            (!self? _data m))
+                     (set! _data (merge _data m))))
+  ~'(copy [me x] (if (and (ist? Muble x)
+                          (!self? me x))
+                   (set! _data (merge _data @x))))
+  ~'(getv [_ k] (get _data k))
+  ~'(seq [_] (seq _data))
+  ~'(contains [_ k] (in? _data k))
+  ~'(clear [_ ] (set! _data {}))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(decl-muble-types GenericMutable :unsynchronized-mutable )
+(decl-muble-types VolatileMutable :volatile-mutable)
+;;(ns-unmap *ns* '->GenericMutable)
+(alter-meta! #'->GenericMutable assoc :private true)
+;;(ns-unmap *ns* '->VolatileMutable)
+(alter-meta! #'->VolatileMutable assoc :private true)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn muble<>
+  "A (unsynced) mutable" {:tag Muble}
+  ([] (muble<> {}))
+  ([seed] (GenericMutable. seed)))
+
+(defn vuble<>
+  "A (volatile) mutable" {:tag Muble}
+  ([] (vuble<> {}))
+  ([seed] (VolatileMutable. seed)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1253,13 +1220,8 @@
 
   ([ctx] (prnMuble ctx false))
   ([^Muble ctx dbg]
-   (let
-     [buf (StringBuilder. "\n")]
-     (doseq [[k v] (.seq ctx)]
-       (.append buf (str k " = " v "\n")))
-     (.append buf "\n")
-     (let [s (str buf)]
-       (if dbg (log/debug "%s" s)(log/info "%s" s))))))
+   (let [s (.toEDN ctx)]
+     (if dbg (log/debug "%s" s)(log/info "%s" s)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

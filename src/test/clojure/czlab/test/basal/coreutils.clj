@@ -51,6 +51,7 @@
 (def ^:private VAR_USER (System/getProperty "user.name"))
 (def ^:private VAR_PATH (System/getenv "PATH"))
 (def ^:private ^Muble MUBLE (muble<> {:a 1 :b 2}))
+(def ^:private ^Muble VMU (vuble<> {:a 1 :b 2}))
 (def ^:private idobj (reify Idable (id [_] "hello")))
 
 (eval '(do
@@ -58,7 +59,7 @@
   (. dummyProperties put "2" "hello${PATH}")
   (. dummyProperties put "3" "${user.name}${PATH}")))
 
-(defstateful TestEnt
+(defatomic TestEnt
   czlab.jasal.Idable
   (id [_] (:id @_data))
   Object
@@ -347,9 +348,8 @@
                          (.put "a" "A")
                          (.put "z" "Z"))] (:a (pmap<> m)))))
 
-    (is (== 1 (:a (.g (czlab.basal.core.UnsynchedMObj. {:a 1})))))
-
-    (is (== 1 (:a (.g (czlab.basal.core.VolatileMObj. {:a 1})))))
+    (is (== 1 (:a (.deref (czlab.basal.core.VolatileMutable. {:a 1})))))
+    (is (== 1 (:a (.deref (czlab.basal.core.GenericMutable. {:a 1})))))
 
     (is (string? (dumpStk (Exception. "a"))))
 
@@ -462,15 +462,15 @@
     (is (let [e (object<> TestClass 1)]
           (= (.hashCode (Integer. 1))
              (.hashCode e))))
-    (is (let [e (entity<> TestEnt)]
+    (is (let [e (atomic<> TestEnt)]
           (.init e "hello")
           (= "hello" (.id e))))
-    (is (let [e (entity<> TestEnt)]
+    (is (let [e (atomic<> TestEnt)]
           (.init e "hello")
-          (alterStateful e update-in [:w] assoc :y 9)
+          (alterAtomic e update-in [:w] assoc :y 9)
           (= 9 (get-in @e [:w :y]))))
-    (is (let [e (entity<> TestEnt)]
-          (alterStateful e assoc :a 3 :id 4)
+    (is (let [e (atomic<> TestEnt)]
+          (alterAtomic e assoc :a 3 :id 4)
           (and (= 4 (.id e))
                (= 999 (.hashCode e))
                (= 3 (:a @e))))))
