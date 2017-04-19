@@ -129,7 +129,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro defcontext
+(defmacro ^:private defcontext
   "Define a simple type" [name & more]
   `(deftype ~name [~'_data]
      ~'clojure.lang.IDeref ~'(deref [_] @_data)
@@ -153,14 +153,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro object<>
-  "Create a new object" [classname seed]
-  `(let [s# ~seed
-         ~'_ (assert (map? s#))]
-     (merge (new ~classname) s#)))
+  "Create a new object"
+  ([classname] `(object<> ~classname {}))
+  ([classname seed]
+   `(let [s# ~seed ~'_ (assert (map? s#))] (merge (new ~classname) s#))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro context<+>
+(defmacro ^:private context<+>
   "Create a new object"
   ([classname] `(context<+> ~classname {}))
   ([classname seed]
@@ -172,7 +172,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro context<>
+(defmacro ^:private context<>
   "Create a new object"
   ([classname] `(context<> ~classname {}))
   ([classname seed]
@@ -1496,4 +1496,5 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 

@@ -16,26 +16,50 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
+(def ^:dynamic
+  *logger-or-not-flag* (System/getProperty "czlabloggerornotflag"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro trace "" [& args]
-  `(if (log/enabled? :trace) (log/logf :trace ~@args)))
+  `(if (and *logger-or-not-flag*
+            (log/enabled? :trace)) (log/logf :trace ~@args)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro debug "" [& args]
-  `(if (log/enabled? :debug) (log/logf :debug ~@args)))
+  `(if (and *logger-or-not-flag*
+            (log/enabled? :debug)) (log/logf :debug ~@args)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro info "" [& args]
-  `(if (log/enabled? :info) (log/logf :info ~@args)))
+  `(if (and *logger-or-not-flag*
+            (log/enabled? :info)) (log/logf :info ~@args)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro warn "" [& args]
-  `(if (log/enabled? :warn) (log/logf :warn ~@args)))
+  `(if (and *logger-or-not-flag*
+            (log/enabled? :warn)) (log/logf :warn ~@args)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro exception "" [e]
-  `(if (log/enabled? :error) (log/logf :error ~e "")))
+  `(if (and *logger-or-not-flag*
+            (log/enabled? :error)) (log/logf :error ~e "")))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro error "" [& args]
-  `(if (log/enabled? :error) (log/logf :error ~@args)))
+  `(if (and *logger-or-not-flag*
+            (log/enabled? :error)) (log/logf :error ~@args)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro fatal "" [& args]
-  `(if (log/enabled? :fatal) (log/logf :fatal ~@args)))
+  `(if (and *logger-or-not-flag*
+            (log/enabled? :fatal)) (log/logf :fatal ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

@@ -17,10 +17,9 @@
             [lein-cprint "1.2.0"]
             [lein-codox "0.10.3"]]
 
-  :profiles {:provided {:dependencies
-                        [[org.clojure/clojure "1.8.0" :scope "provided"]
-                         [net.mikera/cljunit "0.6.0" :scope "test"]
-                         [junit/junit "4.12" :scope "test"]]}
+  :profiles {:provided {:dependencies [[org.clojure/clojure
+                                        "1.8.0"
+                                        :scope "provided"]]}
              :uberjar {:aot :all}}
 
   :global-vars {*warn-on-reflection* true}
@@ -35,7 +34,8 @@
   :test-paths ["src/test/clojure"]
   :resource-paths ["src/main/resources"]
 
-  :jvm-opts ["-Dlog4j.configurationFile=file:attic/log4j2.xml"]
+  :jvm-opts ["-Dlog4j.configurationFile=file:attic/log4j2.xml"
+             "-Dczlabloggerornotflag=true"]
   :javac-options ["-source" "8"
                   "-Xlint:unchecked" "-Xlint:-options" "-Xlint:deprecation"])
 

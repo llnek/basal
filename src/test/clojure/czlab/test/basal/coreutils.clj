@@ -69,8 +69,6 @@
   czlab.jasal.Initable
   (init [_ arg] (swap! _data assoc :id arg)))
 
-(defcontext TestMuClass)
-
 (defobject TestClass
   Idable
   (id [_] (:id _)))
@@ -453,9 +451,6 @@
 
   (testing
     "related to: entity"
-    (is (let [e (context<> TestMuClass {:a 999})]
-          (and (= 999 (:a @e))
-               (satisfies? Muable (getx e)))))
     (is (let [e (object<> TestClass {:a 999})]
           (= 999 (:a e))))
     (is (let [e (object<> TestClass {})]
