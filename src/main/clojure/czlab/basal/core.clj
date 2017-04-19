@@ -1185,7 +1185,7 @@
   ~'(copyEx [me m] (if (and (map? m)
                             (!self? _data m))
                      (set! _data (merge _data m))))
-  ~'(copy [me x] (if (and (ist? Muble x)
+  ~'(copy [me x] (if (and (ist? czlab.basal.Muble x)
                           (!self? me x))
                    (set! _data (merge _data @x))))
   ~'(getv [_ k] (get _data k))
@@ -1205,12 +1205,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn muble<>
-  "A (unsynced) mutable" {:tag Muble}
+  "A (unsynced) mutable" {:tag czlab.basal.Muble}
   ([] (muble<> {}))
   ([seed] (GenericMutable. seed)))
 
 (defn vuble<>
-  "A (volatile) mutable" {:tag Muble}
+  "A (volatile) mutable" {:tag czlab.basal.Muble}
   ([] (vuble<> {}))
   ([seed] (VolatileMutable. seed)))
 
