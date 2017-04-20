@@ -105,7 +105,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro resetAtomic "" [statefulObj arg]
+(defmacro reset-atomic "" [statefulObj arg]
   `(let [s# ~(with-meta statefulObj
                         {:tag 'czlab.basal.Stateful})
          d# (.state s#)]
@@ -113,7 +113,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro alterAtomic "" [statefulObj & args]
+(defmacro alter-atomic "" [statefulObj & args]
   `(let [s# ~(with-meta statefulObj
                         {:tag 'czlab.basal.Stateful})
          d# (.state s#)]
@@ -121,7 +121,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;using defrecord causes issues with print-match#multimethod(IDeref,IRecord clash)
-(defmacro defatomic
+(defmacro decl-atomic
   "Define a simple stateful type" [name & more]
   `(deftype ~name [~'_data]
      ~'czlab.basal.Stateful
@@ -129,23 +129,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro defcontext+
+(defmacro decl-volatile
   "Define a simple type" [name & more]
-  `(decl-muble-types ~name
-                     :volatile-mutable
-                     ~'czlab.basal.core.Contextual ~@more))
+  `(decl-muble-types ~name :volatile-mutable ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro defcontext
+(defmacro decl-mutable
   "Define a simple type" [name & more]
-  `(decl-muble-types ~name
-                     :unsynchronized-mutable
-                     ~'czlab.basal.core.Contextual ~@more))
+  `(decl-muble-types ~name :unsynchronized-mutable ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro defobject
+(defmacro decl-object
   "Define a simple type" [name & more] `(defrecord ~name [] ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -168,14 +164,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro context<>
+(defmacro mutable<>
   "Create a new object"
-  ([classname] `(context<> ~classname {}))
+  ([classname] `(mutable<> ~classname {}))
   ([classname seed]
    `(let [s# ~seed
           ~'_ (assert (map? s#))
           r# (new ~classname s#)]
-      (assert (satisfies? czlab.basal.core/Contextual r#))
+      (assert (satisfies? czlab.basal.core/Muable r#))
       r#)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1173,13 +1169,11 @@
 ;;
 (defprotocol Muable
   ""
-  (getOrSet [_ ^Object k ^Object v] "")
+  (get?setf! [_ k v] "")
+  (setf! [_ k v] "")
+  (unsetf! [_ k] "")
   (wipe! [_] "")
   (copy* [_ m] ""))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defprotocol Contextual "")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1187,8 +1181,8 @@
   `(deftype ~name
      [~(with-meta '_data {dtype true})]
   ~'czlab.basal.core.Muable
-  ~'(getOrSet [me k v]
-      (when-not (contains? _data k) (.setv me k v)) (get _data k))
+  ~'(get?setf! [me k v]
+      (when-not (contains? _data k) (setf! me k v)) (get _data k))
   ~'(wipe! [_ ] (set! _data {}))
   ~'(copy* [me x]
       (let [m (if (and (satisfies? czlab.basal.core/Muable x)
@@ -1196,33 +1190,22 @@
             m (if (map? m) m nil)
             m (if (!self? _data m) m)]
         (do->nil  (if m (set! _data (merge _data m))))))
-  ~'clojure.lang.IDeref
+  ~'(setf! [_ k v] (set! _data (assoc _data k v)) v)
+  ~'(unsetf! [_ k] (let [v (get _data k)]
+                     (set! _data (dissoc _data k)) v))
+  ~'czlab.basal.Stateful
   ~'(deref [_] _data)
-  ~'czlab.jasal.Settable
-  ~'(setv [_ k v] (set! _data (assoc _data k v)) v)
-  ~'(unsetv [_ k] (let [v (get _data k)] (set! _data (dissoc _data k)) v))
+  ~'(state [_] _data)
   ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (decl-muble-types GenericMutable :unsynchronized-mutable )
 (decl-muble-types VolatileMutable :volatile-mutable)
-;;(ns-unmap *ns* '->GenericMutable)
-(alter-meta! #'->GenericMutable assoc :private true)
-;;(ns-unmap *ns* '->VolatileMutable)
-(alter-meta! #'->VolatileMutable assoc :private true)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn muble<>
-  "A (unsynced) mutable" {:tag czlab.basal.core.Muable}
-  ([] (muble<> {}))
-  ([seed] (GenericMutable. seed)))
-
-(defn vuble<>
-  "A (volatile) mutable" {:tag czlab.basal.core.Muable}
-  ([] (vuble<> {}))
-  ([seed] (VolatileMutable. seed)))
+(ns-unmap *ns* '->VolatileMutable)
+(ns-unmap *ns* '->GenericMutable)
+;;(alter-meta! #'->VolatileMutable assoc :private true)
+;;(alter-meta! #'->GenericMutable assoc :private true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

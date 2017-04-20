@@ -16,11 +16,10 @@
         [czlab.basal.core]
         [clojure.test])
 
-  (:import [czlab.jasal Idable DataError Settable]
+  (:import [czlab.basal.core GenericMutable VolatileMutable]
+           [czlab.jasal Idable DataError]
            [java.security SecureRandom]
            [clojure.lang IDeref]
-           ;;[czlab.basal.core Muable Contextual]
-           [czlab.basal.core GenericMutable VolatileMutable]
            [java.util
             ArrayList
             HashMap
@@ -52,8 +51,8 @@
 (def ^{:private true :tag  Properties} dummyProperties (Properties.))
 (def ^:private VAR_USER (System/getProperty "user.name"))
 (def ^:private VAR_PATH (System/getenv "PATH"))
-(def ^:private ^GenericMutable MUBLE (muble<> {:a 1 :b 2}))
-(def ^:private ^Muable VMU (vuble<> {:a 1 :b 2}))
+(def ^:private ^GenericMutable MUBLE (GenericMutable. {:a 1 :b 2}))
+(def ^:private ^Muable VMU (VolatileMutable. {:a 1 :b 2}))
 (def ^:private idobj (reify Idable (id [_] "hello")))
 
 (eval '(do
@@ -61,7 +60,7 @@
   (. dummyProperties put "2" "hello${PATH}")
   (. dummyProperties put "3" "${user.name}${PATH}")))
 
-(defatomic TestEnt
+(decl-atomic TestEnt
   czlab.jasal.Idable
   (id [_] (:id @_data))
   Object
@@ -70,15 +69,15 @@
   czlab.jasal.Initable
   (init [_ arg] (swap! _data assoc :id arg)))
 
-(defcontext+ TestCtxV
+(decl-volatile TestCtxV
   czlab.jasal.Idable
   (id [me] (:id @me)))
 
-(defcontext TestCtx
+(decl-mutable TestCtx
   czlab.jasal.Idable
   (id [me] (:id @me)))
 
-(defobject TestClass
+(decl-object TestClass
   Idable
   (id [_] (:id _)))
 
