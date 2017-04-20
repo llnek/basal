@@ -365,16 +365,16 @@
     (is (ist? TimerTask (tmtask<> #(let [] 1))))
     (is (do->true (cancelTimerTask (tmtask<> #(let [] 1)))))
 
-    (is (== 9 (do (.setv MUBLE :a 9)
+    (is (== 9 (do (setf! MUBLE :a 9)
                   (get @MUBLE :a))))
 
-    (is (nil? (do (.unsetv MUBLE :b)
+    (is (nil? (do (unsetf! MUBLE :b)
                   (get @MUBLE :b))))
 
-    (is (== 7 (do (.getOrSet MUBLE :b 7)
+    (is (== 7 (do (get?setf! MUBLE :b 7)
                   (get @MUBLE :b))))
 
-    (is (== 7 (do (.getOrSet MUBLE :b 6)
+    (is (== 7 (do (get?setf! MUBLE :b 6)
                   (get @MUBLE :b))))
 
     (is (string? (pr-str @MUBLE)))
@@ -392,7 +392,7 @@
                   (get @MUBLE :z))))
 
     (is (== 6 (do (.wipe! MUBLE)
-                  (.copy* MUBLE (muble<> {:p 1 :q 5}))
+                  (.copy* MUBLE {:p 1 :q 5})
                   (+ (get @MUBLE :p)
                      (get @MUBLE :q)))))
 
@@ -465,13 +465,13 @@
           (nil? (:a e))))
     (is (let [e (object<> TestClass {:id 8})]
           (= 8 (id?? e))))
-    (is (let [e (context<> TestCtxV {:id 8})]
+    (is (let [e (mutable<> TestCtxV {:id 8})]
           (= 8 (id?? e))))
-    (is (let [e (context<> TestCtx {:id 8})]
-          (.setv ^Settable e :z 9)
+    (is (let [e (mutable<> TestCtx {:id 8})]
+          (setf! e :z 9)
           (copy* e {:w 3 :q 4})
-          (getOrSet e :z 444)
-          (getOrSet e :k 444)
+          (get?setf! e :z 444)
+          (get?setf! e :k 444)
           (and (= 8 (id?? e))
                (= 7 (+ (:w @e) (:q @e)))
                (= 9 (:z @e))
@@ -481,10 +481,10 @@
           (= "hello" (.id e))))
     (is (let [e (atomic<> TestEnt)]
           (.init e "hello")
-          (alterAtomic e update-in [:w] assoc :y 9)
+          (alter-atomic e update-in [:w] assoc :y 9)
           (= 9 (get-in @e [:w :y]))))
     (is (let [e (atomic<> TestEnt)]
-          (alterAtomic e assoc :a 3 :id 4)
+          (alter-atomic e assoc :a 3 :id 4)
           (and (= 4 (.id e))
                (= 999 (.hashCode e))
                (= 3 (:a @e))))))

@@ -279,12 +279,6 @@
 (defmulti fpath
   "Nice format a path, no-backslash" {:tag String} class)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(deftype TypeNichts [])
-;;(ns-unmap *ns* '->TypeNichts)
-(alter-meta! #'->TypeNichts assoc :private true)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (meta nil) is fine, so no need to worry
 (defmacro getTypeId "typeId from metadata" [m] `(:typeid (meta ~m)))
@@ -506,10 +500,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defonce NICHTS (TypeNichts.))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn monoFlop<>
   "Flip on first call,
   useful for one-time logic" ^MonoFlop []
@@ -545,14 +535,6 @@
 
   ([] (get-czldr nil))
   ([cl] (or cl (. (Thread/currentThread) getContextClassLoader))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn nilNichts "If nil, return NICHTS" ^:no-doc [obj] (or obj NICHTS))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn isNichts? "Is it NICHTS" ^:no-doc [obj] (identical? obj NICHTS))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
