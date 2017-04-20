@@ -129,11 +129,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ^:private defcontext
+(defmacro defcontext+
   "Define a simple type" [name & more]
-  `(deftype ~name [~'_data]
-     ~'clojure.lang.IDeref ~'(deref [_] @_data)
-     ~'czlab.basal.core.Contextual ~'(getx [_] _data) ~@more))
+  `(decl-muble-types ~name
+                     :volatile-mutable
+                     ~'czlab.basal.core.Contextual ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro defcontext
+  "Define a simple type" [name & more]
+  `(decl-muble-types ~name
+                     :unsynchronized-mutable
+                     ~'czlab.basal.core.Contextual ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -160,25 +168,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ^:private context<+>
-  "Create a new object"
-  ([classname] `(context<+> ~classname {}))
-  ([classname seed]
-   `(let [s# ~seed dummy# (assert (map? s#))
-          r# (new ~classname
-                  (czlab.basal.core/vuble<> s#))]
-      (assert (satisfies? czlab.basal.core/Contextual r#))
-      r#)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ^:private context<>
+(defmacro context<>
   "Create a new object"
   ([classname] `(context<> ~classname {}))
   ([classname seed]
-   `(let [s# ~seed dummy# (assert (map? s#))
-          r# (new ~classname
-                  (czlab.basal.core/muble<> s#))]
+   `(let [s# ~seed
+          ~'_ (assert (map? s#))
+          r# (new ~classname s#)]
       (assert (satisfies? czlab.basal.core/Contextual r#))
       r#)))
 
@@ -1178,27 +1174,22 @@
 (defprotocol Muable
   ""
   (getOrSet [_ ^Object k ^Object v] "")
-  (toEDN [_] "")
   (wipe! [_] "")
   (copy* [_ m] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defprotocol Contextual
-  ""
-  (^czlab.basal.core.Muable getx [_] ""))
+(defprotocol Contextual "")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro ^:private decl-muble-types "" [name dtype]
+(defmacro decl-muble-types "" [name dtype & more]
   `(deftype ~name
      [~(with-meta '_data {dtype true})]
   ~'czlab.basal.core.Muable
   ~'(getOrSet [me k v]
-      (when-not (.contains me k)
-        (.setv me k v)) (.getv me k))
+      (when-not (contains? _data k) (.setv me k v)) (get _data k))
   ~'(wipe! [_ ] (set! _data {}))
-  ~'(toEDN [_] (pr-str _data))
   ~'(copy* [me x]
       (let [m (if (and (satisfies? czlab.basal.core/Muable x)
                        (instance? clojure.lang.IDeref x)) @x x)
@@ -1210,9 +1201,7 @@
   ~'czlab.jasal.Settable
   ~'(setv [_ k v] (set! _data (assoc _data k v)) v)
   ~'(unsetv [_ k] (let [v (get _data k)] (set! _data (dissoc _data k)) v))
-  ~'czlab.jasal.Gettable
-  ~'(contains [_ k] (in? _data k))
-  ~'(getv [_ k] (get _data k))))
+  ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1240,8 +1229,8 @@
 (defn prnMuable "Print this mutable"
 
   ([ctx] (prnMuable ctx false))
-  ([^czlab.basal.core.Muable ctx dbg]
-   (let [s (.toEDN ctx)]
+  ([ctx dbg]
+   (let [s (pr-str @ctx)]
      (if dbg (log/debug "%s" s)(log/info "%s" s)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

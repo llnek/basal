@@ -8,14 +8,15 @@
 
 (ns czlab.test.basal.coreutils
 
-  (:require [clojure.string :as cs]
+  (:require [czlab.basal.logging :as log]
+            [clojure.string :as cs]
             [clojure.java.io :as io])
 
   (:use [czlab.basal.cmdline]
         [czlab.basal.core]
         [clojure.test])
 
-  (:import [czlab.jasal Idable DataError]
+  (:import [czlab.jasal Idable DataError Settable]
            [java.security SecureRandom]
            [clojure.lang IDeref]
            ;;[czlab.basal.core Muable Contextual]
@@ -68,6 +69,14 @@
   (hashCode [_] 999)
   czlab.jasal.Initable
   (init [_ arg] (swap! _data assoc :id arg)))
+
+(defcontext+ TestCtxV
+  czlab.jasal.Idable
+  (id [me] (:id @me)))
+
+(defcontext TestCtx
+  czlab.jasal.Idable
+  (id [me] (:id @me)))
 
 (defobject TestClass
   Idable
@@ -358,40 +367,40 @@
     (is (do->true (cancelTimerTask (tmtask<> #(let [] 1)))))
 
     (is (== 9 (do (.setv MUBLE :a 9)
-                  (.getv MUBLE :a))))
+                  (get @MUBLE :a))))
 
     (is (nil? (do (.unsetv MUBLE :b)
-                  (.getv MUBLE :b))))
+                  (get @MUBLE :b))))
 
     (is (== 7 (do (.getOrSet MUBLE :b 7)
-                  (.getv MUBLE :b))))
+                  (get @MUBLE :b))))
 
     (is (== 7 (do (.getOrSet MUBLE :b 6)
-                  (.getv MUBLE :b))))
+                  (get @MUBLE :b))))
 
-    (is (string? (.toEDN MUBLE)))
+    (is (string? (pr-str @MUBLE)))
 
     (is (== 9 (:a (.deref ^IDeref MUBLE))))
 
     (is (== 9 (:a @MUBLE)))
 
     (is (== 1 (do (.copy* MUBLE {:a 1 :y 4 :z 2})
-                  (.getv MUBLE :a))))
+                  (get @MUBLE :a))))
 
     (is (== 4 (count (seq @MUBLE))))
 
     (is (== 2 (do (copy* MUBLE MUBLE)
-                  (.getv MUBLE :z))))
+                  (get @MUBLE :z))))
 
     (is (== 6 (do (.wipe! MUBLE)
                   (.copy* MUBLE (muble<> {:p 1 :q 5}))
-                  (+ (.getv MUBLE :p)
-                     (.getv MUBLE :q)))))
+                  (+ (get @MUBLE :p)
+                     (get @MUBLE :q)))))
 
-    (is (not (.contains MUBLE :z)))
+    (is (not (contains? @MUBLE :z)))
     (is (== 2 (count (seq @MUBLE))))
 
-    (is (nil? (do (.wipe! MUBLE) (.getv MUBLE :q))))
+    (is (nil? (do (.wipe! MUBLE) (get @MUBLE :q))))
 
     (is (thrown? DataError (normalizeEmail "xxxx@@@ddddd")))
     (is (thrown? DataError (normalizeEmail "xxxx")))
@@ -457,6 +466,17 @@
           (nil? (:a e))))
     (is (let [e (object<> TestClass {:id 8})]
           (= 8 (id?? e))))
+    (is (let [e (context<> TestCtxV {:id 8})]
+          (= 8 (id?? e))))
+    (is (let [e (context<> TestCtx {:id 8})]
+          (.setv ^Settable e :z 9)
+          (copy* e {:w 3 :q 4})
+          (getOrSet e :z 444)
+          (getOrSet e :k 444)
+          (and (= 8 (id?? e))
+               (= 7 (+ (:w @e) (:q @e)))
+               (= 9 (:z @e))
+               (= 444 (:k @e)))))
     (is (let [e (atomic<> TestEnt)]
           (.init e "hello")
           (= "hello" (.id e))))
