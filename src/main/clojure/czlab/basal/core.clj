@@ -57,7 +57,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
+;;{:keys [a] {:keys []} :b} - destruct nested
 ;; #^"[Ljava.lang.Object;"
+
 (def ^:private CSCZ (class (.toCharArray "")))
 (def ^:private BSCZ (class (.getBytes "")))
 (def ^:private SGCZ (class ""))
