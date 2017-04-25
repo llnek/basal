@@ -199,18 +199,10 @@
 
     (is (vector? (flatnil [1 2 nil 3])))
 
-    (is (identical? (nilNichts nil) NICHTS))
-
     (is (not (szero? nil)))
     (is (not (sneg? nil)))
     (is (not (spos? nil)))
     (is (snneg? 1))
-
-    (is (isNichts? NICHTS))
-
-    (is (not (isNichts? "")))
-
-    (is (= (nilNichts "") ""))
 
     (is (> (.indexOf (envVar "PATH") "/bin") 0))
 
