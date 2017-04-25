@@ -39,7 +39,8 @@
                         classLoader] :as arg}]
    {:pre [(fn? func)]}
    (let [t (Thread. (runnable<> func))
-         c (or cl classLoader)]
+         c (or cl
+               classLoader (getCldr))]
      (some->> (cast? ClassLoader c)
               (. t setContextClassLoader))
      (. t setDaemon (true? daemon))
