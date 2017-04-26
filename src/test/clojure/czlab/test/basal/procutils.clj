@@ -59,7 +59,7 @@
               (. ^Schedulable
                  @SCD
                  run
-                 (runnable<> #(swap! x inc)))
+                 (run-able<> (swap! x inc)))
               (pause 500)
               @x)))
 
@@ -69,7 +69,7 @@
               (. ^Schedulable
                  @SCD
                  postpone
-                 (runnable<> #(swap! x inc)) 500)
+                 (run-able<> (swap! x inc)) 500)
               (pause 1000)
               @x)))
 
@@ -77,8 +77,8 @@
             (let
               [^Schedulable s @SCD
                x (atom 0)
-               r (runnable<>
-                   #(swap! x inc) "117")]
+               r (run-able+id<>
+                   "117" (swap! x inc))]
               (. s hold r)
               (pause 500)
               (. s wakeup r)

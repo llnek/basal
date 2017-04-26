@@ -38,7 +38,7 @@
   ([func start? {:keys [cl daemon
                         classLoader] :as arg}]
    {:pre [(fn? func)]}
-   (let [t (Thread. (runnable<> func))
+   (let [t (Thread. (run-able<> (func)))
          c (or cl
                classLoader (getCldr))]
      (some->> (cast? ClassLoader c)

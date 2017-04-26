@@ -136,7 +136,7 @@
 
     ;;(is (nil? (try! (let [] (/ 1 0)))))
 
-    (is (instance? Runnable (runnable<> #(let [] 0))))
+    (is (instance? Runnable (run-able<> (let [] 0))))
 
     (is (= "a" (when-some+ [a "a"] a)))
 

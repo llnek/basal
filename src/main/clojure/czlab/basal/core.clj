@@ -316,19 +316,26 @@
 ;;
 (defmacro try! "Eat the exception, return nil" [& forms] `(try!! nil ~@forms))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro run-able+id<>
+  "Create a RunnableWithId wrapper"
+  [rid & forms]
+  `(reify
+     czlab.jasal.Idable
+     (id [_] ~rid)
+     Runnable
+     (run [_] (try ~@forms
+                   (catch Throwable t#)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro runnable<>
-  "Create a Runnable or RunnableWithId wrapper"
-
-  ([func]
-   `(reify Runnable (run [_] (~func))))
-
-  ([func rid]
-   `(reify
-      RunnableWithId
-      (run [_] (~func))
-      (id [_] ~rid))))
+(defmacro run-able<>
+  "Create a Runnable wrapper"
+  [& forms]
+  `(reify Runnable
+     (run [_] (try ~@forms
+                   (catch Throwable t#)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
