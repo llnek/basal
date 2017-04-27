@@ -285,6 +285,14 @@
 ;; (meta nil) is fine, so no need to worry
 (defmacro getTypeId "typeId from metadata" [m] `(:typeid (meta ~m)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro do-with "" [bindings & more]
+  (assert (= 2 (count bindings)))
+  (let [a (first bindings)
+        b (last bindings)]
+      `(let [~a ~b] ~@more ~a)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro bool! "Shorthand for boolean" [x] `(boolean ~x))
@@ -1459,5 +1467,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+
 
 

@@ -166,6 +166,8 @@
 
     (is (nil? (let-when [a 1 b 0] (pos? b) (+ a b))))
 
+    (is (== 1 (do-with [a 1] (-> (+ a 2) (* 3)))))
+
     (is (ist? String (cast? String (.cast String "a"))))
 
     (is (cexp? (Exception. "a")))
