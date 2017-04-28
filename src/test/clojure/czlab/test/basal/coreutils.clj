@@ -166,7 +166,14 @@
 
     (is (nil? (let-when [a 1 b 0] (pos? b) (+ a b))))
 
-    (is (== 1 (do-with [a 1] (-> (+ a 2) (* 3)))))
+    (is (true? (let [x (atom 9)
+                     y (atom false)]
+                 (do-with [a (+ 3 4)]
+                          (->> (-> (+ a 2) (* 3))
+                               (reset! x))
+                          (if (= 27 @x)
+                            (reset! y true)))
+                 @y)))
 
     (is (ist? String (cast? String (.cast String "a"))))
 
