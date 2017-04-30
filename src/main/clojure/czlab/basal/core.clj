@@ -861,10 +861,11 @@
   ([obj] (bytesit obj "utf-8"))
   ([obj ^String encoding]
    (cond
-    (string? obj)
-    (. ^String obj getBytes (or encoding "utf-8"))
-    (= CSCZ (class obj))
-    (bytesit (String. ^chars obj) encoding))))
+     (= BSCZ (class obj)) obj
+     (string? obj)
+     (.getBytes ^String obj (or encoding "utf-8"))
+     (= CSCZ (class obj))
+     (bytesit (String. ^chars obj) encoding))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
