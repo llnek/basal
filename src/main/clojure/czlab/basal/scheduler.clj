@@ -46,7 +46,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- mkSCD
-  "" ^Schedulable [^String named]
+  "" ^Schedulable [named]
 
   (let [timer (atom (Timer. named true))
         holdQ (ConcurrentHashMap.)
@@ -123,7 +123,7 @@
   {:tag Schedulable}
 
   ([] (scheduler<> (jid<>)))
-  ([^String named] (mkSCD named)))
+  ([named] (mkSCD (sname named))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

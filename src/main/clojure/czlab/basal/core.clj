@@ -333,8 +333,8 @@
      czlab.jasal.Idable
      (id [_] ~rid)
      Runnable
-     (run [_] (try ~@forms
-                   (catch Throwable t#)))))
+     (run [_] (czlab.basal.core/try! ~@forms))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -342,8 +342,8 @@
   "Create a Runnable wrapper"
   [& forms]
   `(reify Runnable
-     (run [_] (try ~@forms
-                   (catch Throwable t#)))))
+     (run [_] (czlab.basal.core/try! ~@forms ))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
