@@ -606,7 +606,7 @@
   {:pre [(string? t)
          (and (< (.indexOf ^String t (int \/)) 0)
               (< (.indexOf ^String t (int \:)) 0))]}
-  (keyword (str *ns* "/" t)))
+  (keyword (str *ns*) t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1468,8 +1468,56 @@
   (assert (even? (count args)))
   `(hash-map :$proto ~par ~@args ))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defprotocol JEnumProto
+  ""
+  (lookup-enum-str [_ s] "")
+  (get-enum-str [_ e] "")
+  (lookup-enum-int [_ n] ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(decl-object JEnum
+             JEnumProto
+             (get-enum-str [me e]
+               (if (in? me e)
+                 (cs/replace (str e) #"^:" "")))
+             (lookup-enum-str [me s]
+               (let [kee (keyword s)]
+                 (some #(if (= kee (first %)) (first %)) me)))
+             (lookup-enum-int [me n]
+              (some #(if (= n (last %)) (first %)) me)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro decl-generic-enum "" [name base & more]
+  (assert (and (not-empty more)
+               (integer? base)))
+  (let []
+    `(def ~name
+       (czlab.basal.core/object<>
+         czlab.basal.core.JEnum
+         (-> {}
+             ~@(reduce
+                 #(conj %1
+                        `(assoc (keyword (str *ns*) ~(str %2))
+                                ~(+ base (count %1)))) [] more))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro decl-special-enum "" [name & more]
+  (assert (even? (count more)))
+  (let [ps (partition 2 more)]
+    `(def ~name
+       (czlab.basal.core/object<>
+         czlab.basal.core.JEnum
+         (-> {}
+             ~@(mapv #(do
+                        `(assoc (keyword (str *ns*) ~(str (first %)))
+                                ~(last %))) ps))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
-
 
 

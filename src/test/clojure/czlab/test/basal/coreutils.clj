@@ -60,6 +60,9 @@
   (. dummyProperties put "2" "hello${PATH}")
   (. dummyProperties put "3" "${user.name}${PATH}")))
 
+(decl-special-enum YYY a 1 b (+ 2 3))
+(decl-generic-enum xxx 0 a b c)
+
 (decl-atomic TestEnt
   czlab.jasal.Idable
   (id [_] (:id @_data))
@@ -493,6 +496,9 @@
   (testing
     "extra macros"
     (is (= "hello" (id?? idobj)))
+    (is (= ::b (lookup-enum-str xxx "czlab.test.basal.coreutils/b")))
+    (is (= "czlab.test.basal.coreutils/a" (get-enum-str xxx ::a)))
+    (is (= ::c (lookup-enum-int xxx 2)))
     (is (self? MUBLE MUBLE))
     (is (!self? MUBLE VMU))
     (is (!true? false))
