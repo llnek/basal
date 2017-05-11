@@ -10,9 +10,9 @@
 
 package czlab.basal;
 
+import clojure.lang.Symbol;
 import clojure.lang.IFn;
 import clojure.lang.RT;
-import clojure.lang.Symbol;
 import clojure.lang.Var;
 
 /**
@@ -103,7 +103,6 @@ public class Cljrt implements java.io.Closeable {
   public Object callVar(IFn fn) {
     return this.callVarEx(fn);
   }
-
 
   /**
    */

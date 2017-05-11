@@ -16,6 +16,12 @@ package czlab.basal;
  */
 public abstract class Finalizer {
 
+  /**
+   */
+  protected abstract void finzer();
+
+  /**
+   */
   protected Finalizer() {}
 
   /**
@@ -25,9 +31,6 @@ public abstract class Finalizer {
     super.finalize();
   }
 
-  /**
-   */
-  protected abstract void finzer();
 }
 
 

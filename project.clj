@@ -18,8 +18,7 @@
             [lein-codox "0.10.3"]]
 
   :profiles {:provided {:dependencies [[org.clojure/clojure
-                                        "1.8.0"
-                                        :scope "provided"]]}
+                                        "1.8.0" :scope "provided"]]}
              :uberjar {:aot :all}}
 
   :global-vars {*warn-on-reflection* true}
