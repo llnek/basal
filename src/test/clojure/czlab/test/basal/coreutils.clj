@@ -85,13 +85,13 @@
   (id [_] (:id _)))
 
 (def ^:private
-  TestVT-C (defvtbl* :c (fn [_ a b] (* a b))))
+  TestVT-C (vtbl* :c (fn [_ a b] (* a b))))
 
 (def ^:private
-  TestVT-D (defvtbl** TestVT-C :d (fn [_ a b] (/ a b))))
+  TestVT-D (vtbl** TestVT-C :d (fn [_ a b] (/ a b))))
 
 (def ^:private
-  TestVT-E (defvtbl**
+  TestVT-E (vtbl**
              TestVT-D
              :c (fn [_ a b] (- a b)) :e (fn [_ a b] (+ a b))))
 
@@ -258,9 +258,9 @@
              (filePath (io/file "c/tmp/a.txt")) "/tmp/") 0))
 
     (is (if-not (isWindows?)
-          (or (isUnix?)(isMacOS?)) true))
+          (or (isLinux?)(isMacOS?)) true))
     (is (if (isMacOS?) (not (isWindows?)) true))
-    (is (if (isUnix?) (not (isWindows?)) true))
+    (is (if (isLinux?) (not (isWindows?)) true))
 
     (is (and (= -1 (numSign -233))
              (= 1 (numSign 675))
@@ -294,7 +294,7 @@
 
     (is (= "aaa" (strit (.toCharArray "aaa"))))
     (is (= "aaa" (strit "aaa")))
-    (is (= nil (strit nil)))
+    (is (= "" (strit nil)))
     (is (= "3" (strit 3)))
 
     (is (= "aaa"
