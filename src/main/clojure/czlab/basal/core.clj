@@ -57,7 +57,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
-;;{:keys [a] {:keys []} :b} - destruct nested
+;;{:keys [a] {:keys []} :b} - destruct nested map b
 ;; #^"[Ljava.lang.Object;"
 
 (def ^:private CSCZ (class (.toCharArray "")))
@@ -65,26 +65,26 @@
 (def ^:private SGCZ (class ""))
 
 (def ^String PATHSEP (System/getProperty "file.separator"))
-(def ^String USASCII "ISO-8859-1" )
-(def ^String UTF16 "UTF-16" )
-(def ^String UTF8 "UTF-8" )
-(def ^String SLASH   "/" )
+(def ^String USASCII "ISO-8859-1")
+(def ^String UTF16 "UTF-16")
+(def ^String UTF8 "UTF-8")
+(def ^String SLASH "/")
 
-(def BOOLS #{ "true", "yes", "on", "ok", "active", "1"} )
-(def ^String HEX_CHARS "0123456789ABCDEF")
-(def ^String HEX_CHS "0123456789abcdef")
+(def _empty-set_ #{})
+(def _empty-map_ {})
+(def _empty-vec_ [])
+
+(def BOOLS #{"true", "yes", "on", "ok", "active", "1"})
+(def ^String HEX-CHARS "0123456789ABCDEF")
+(def ^String HEX-CHS (cs/lower-case HEX-CHARS))
 
 (def KiloBytes 1024)
-(def BUF_SZ (* 4 KiloBytes))
+(def BUF-SZ (* 4 KiloBytes))
 (def MegaBytes (* KiloBytes KiloBytes))
 (def GigaBytes (* KiloBytes MegaBytes))
 
 (def OneK 1024)
 (def FourK (* 4 OneK))
-
-(def _empty-set_ #{})
-(def _empty-map_ {})
-(def _empty-vec_ [])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -107,16 +107,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro reset-atomic "" [statefulObj arg]
-  `(let [s# ~(with-meta statefulObj
+(defmacro reset-atomic "" [atomic arg]
+  `(let [s# ~(with-meta atomic
                         {:tag 'czlab.basal.Stateful})
          d# (.state s#)]
      (if (volatile? d#) (vreset! d# ~arg) (reset! d# ~arg)) s#))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro alter-atomic "" [statefulObj & args]
-  `(let [s# ~(with-meta statefulObj
+(defmacro alter-atomic "" [atomic & args]
+  `(let [s# ~(with-meta atomic
                         {:tag 'czlab.basal.Stateful})
          d# (.state s#)]
      (if (volatile? d#) (vswap! d# ~@args) (swap! d# ~@args)) s#))
@@ -127,7 +127,8 @@
   "Define a simple stateful type" [name & more]
   `(deftype ~name [~'_data]
      ~'czlab.basal.Stateful
-     ~'(deref [_] @_data) ~'(state [_] _data) ~@more))
+     ~'(deref [_] @_data)
+     ~'(state [_] _data) ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -153,7 +154,8 @@
   ([classname] `(atomic<> ~classname {}))
   ([classname seed] `(atomic<> ~classname ~seed false))
   ([classname seed volatile??]
-   `(let [s# ~seed]
+   `(let [s# ~seed
+          ~'_ (assert (map? s#))]
       (new ~classname (if-not ~volatile?? (atom s#) (volatile! s#))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -162,7 +164,9 @@
   "Create a new object"
   ([classname] `(object<> ~classname {}))
   ([classname seed]
-   `(let [s# ~seed ~'_ (assert (map? s#))] (merge (new ~classname) s#))))
+   `(let [s# ~seed
+          ~'_ (assert (map? s#))
+          r# (merge (new ~classname) s#)] (assert (record? r#)) r#)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -230,64 +234,61 @@
 ;;
 (defn vargs* "Coerce into java array" [clazz & args] (vargs clazz args))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn throwUOE
-  "Throw unsupported operation exception"
-  [fmt & xs]
-  (->> ^String (apply format fmt xs)
-       (trap! UnsupportedOperationException )))
+(defmacro ^:private decl-throw-xxx "" [name etype docs]
+  `(defn ~name ~docs
+     [~'fmt ~'& ~'xs]
+     (->> (apply format ~'fmt ~'xs) str (trap! ~etype ))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro ^:private decl-throw-exp "" [name etype docs]
+  `(defn ~name ~docs
+     [~'t]
+     (assert (instance? Throwable ~'t))
+     (trap! ~etype ~(with-meta 't {:tag 'Throwable}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn throwBadArg
-  "Throw bad parameter exception"
-  [fmt & xs]
-  (->> ^String (apply format fmt xs)
-       (trap! IllegalArgumentException )))
+(decl-throw-xxx
+  throwUOE
+  UnsupportedOperationException
+  "Throw unsupported operation exception")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn throwBadData
-  "Throw Bad Data Exception"
-  [fmt & xs]
-  (->> ^String (apply format fmt xs) (trap! DataError )))
+(decl-throw-xxx
+  throwBadArg
+  IllegalArgumentException
+  "Throw bad parameter exception")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti throwIOE "Throw IO Exception" (fn [a & xs] (class a)))
+(decl-throw-xxx
+  throwBadData
+  DataError
+  "Throw Bad Data Exception")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod throwIOE
-  Throwable
-  [^Throwable t & xs] (trap! java.io.IOException t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod throwIOE
-  String
-  [fmt & xs]
-  (->> ^String (apply format fmt xs)
-       (trap! java.io.IOException )))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmulti loadJavaProps
-  "Load java properties from source" {:tag Properties} class)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmulti fpath
-  "Nice format a path, no-backslash" {:tag String} class)
-
+(decl-throw-xxx
+  throwIOE
+  java.io.IOException
+  "Throw IO Exception")
+(decl-throw-exp
+  throwIOExp
+  java.io.IOException
+  "Throw IO Exception")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (meta nil) is fine, so no need to worry
 (defmacro getTypeId "typeId from metadata" [m] `(:typeid (meta ~m)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro do-with "" [bindings & more]
+(defmacro do-with
+  "e.g. (do-with [x expr] ... x)"
+  [bindings & more]
   (assert (= 2 (count bindings)))
   (let [a (first bindings)
         b (last bindings)]
@@ -300,14 +301,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro try!!
-  "Eat the exception, log and return a default value"
+  "Eat & log the exception, returning a default value"
   [defv & exprs]
   `(try ~@exprs (catch Throwable e# (log/warn e# "") ~defv)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro trye!
-  "Eat the exception and return a default value"
+  "Eat the exception, returning a default value"
   [defv & exprs]
   `(try ~@exprs
         (catch Throwable e#
@@ -316,7 +317,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro trye!!
-  "Eat the exception returning nil"
+  "Eat the exception, returning nil"
   [defv & exprs]
   `(try ~@exprs (catch Throwable e#  ~defv)))
 
@@ -324,7 +325,7 @@
 ;;
 (defmacro try! "Eat the exception, return nil" [& forms] `(try!! nil ~@forms))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro run-able+id<>
   "Create a RunnableWithId wrapper"
@@ -335,15 +336,13 @@
      Runnable
      (run [_] (czlab.basal.core/try! ~@forms))))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro run-able<>
   "Create a Runnable wrapper"
   [& forms]
   `(reify Runnable
-     (run [_] (czlab.basal.core/try! ~@forms ))))
-
+     (run [_] (czlab.basal.core/try! ~@forms))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -467,11 +466,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;;(defmacro same? "identical?" [x y] `(identical? ~x ~y))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro try-let
+(defmacro try!-let
   "a try let combo" [bindings & forms] `(try! (let ~bindings ~@forms)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -524,7 +519,7 @@
   (let [toggled (atom false)]
     (reify
       MonoFlop
-      (firstCall [_]
+      (isFirstCall [_]
         (if @toggled
           false
           (do->true (reset! toggled true)))))))
@@ -535,10 +530,9 @@
   "Use to mark elapsed time" ^Watch []
 
   (let [start (atom (System/nanoTime))
-        f #(. ^TimeUnit %
-              convert
-              (- (System/nanoTime) @start)
-              TimeUnit/NANOSECONDS)]
+        f #(.convert ^TimeUnit %
+                     (- (System/nanoTime) @start)
+                     TimeUnit/NANOSECONDS)]
     (reify
       Watch
       (reset [_] (reset! start (System/nanoTime)))
@@ -549,7 +543,6 @@
 ;; local hack
 (defn- get-czldr
   "" {:tag ClassLoader}
-
   ([] (get-czldr nil))
   ([cl] (or cl (. (Thread/currentThread) getContextClassLoader))))
 
@@ -560,7 +553,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro flatnil
-  "Get rid of nil(s) in seq"
+  "Get rid of nil(s) in seq, returning a vec"
   [seq] `(into [] (remove nil? ~seq)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -583,14 +576,6 @@
   `(let [e# ~e] (and (number? e#)(pos? e#))))
 (defmacro snneg? "Safe not neg?" [e]
   `(let [e# ~e] (or (szero? e#)(spos? e#))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;;(defmacro ndz "0.0 if param is nil" ^double [d] `(or ~d 0.0))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;;(defmacro nnz "0 is param is nil" ^long [n] `(or ~n 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -663,24 +648,20 @@
   "A java Charset of the encoding"
   {:tag Charset}
 
-  ([^String enc] (Charset/forName enc))
-  ([] (toCharset "utf-8")))
+  ([] (toCharset "utf-8"))
+  ([enc] (if (ist? Charset enc)
+           enc
+           (Charset/forName (or enc "utf-8")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod fpath
-  String
-  [^String fp]
-  (if-not (empty? fp) (cs/replace fp #"\\" "/") fp))
+(defn fpath
+  "Get the file path" ^String [arg]
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod fpath
-  File
-  [^File aFile]
-  (if (nil? aFile)
-    ""
-    (fpath (.getCanonicalPath aFile))))
+  (if (ist? File arg)
+    (fpath (.getCanonicalPath ^File arg))
+    (let [fp (str arg)]
+      (cs/replace fp #"\\" "/"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -696,21 +677,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro homeDir "Get user's home dir" [] `(io/file (sysProp "user.home")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro getUser "Get the user login name" [] `(sysProp "user.name"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro getCwd "Get current dir" [] `(io/file (sysProp "user.dir")))
+(defmacro homeDir "Get user's home dir" []
+  `(clojure.java.io/file (sysProp "user.home")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro getCwd "Get current dir" []
+  `(clojure.java.io/file (sysProp "user.dir")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn trimLastPathSep
   "Get rid of trailing dir paths"
-  ^String [path] (. (str path) replaceFirst "[/\\\\]+$"  ""))
+  ^String [path] (.replaceFirst (str path) "[/\\\\]+$" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -718,10 +701,10 @@
   "Object serialization"
   ^bytes [obj] {:pre [(some? obj)]}
 
-  (with-open [out (ByteArrayOutputStream. BUF_SZ)
+  (with-open [out (ByteArrayOutputStream. BUF-SZ)
               oos (ObjectOutputStream. out)]
-    (. oos writeObject ^Serializable obj)
-    (. out toByteArray)))
+    (.writeObject oos ^Serializable obj)
+    (.toByteArray out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -730,7 +713,7 @@
   ^Serializable [^bytes bits] {:pre [(some? bits)]}
 
   (with-open [in (ByteArrayInputStream. bits)
-              ois (ObjectInputStream. in)] (. ois readObject)))
+              ois (ObjectInputStream. in)] (.readObject ois)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -745,8 +728,8 @@
   "Get object's short class name" ^String [obj]
   (cond
     (nil? obj) ""
-    (ist? Class obj) (. ^Class obj getSimpleName)
-    :else (.. ^Object obj getClass getSimpleName)))
+    (ist? Class obj) (.getSimpleName ^Class obj)
+    :else (gczn (class obj))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -754,8 +737,8 @@
   "Get object's class name" ^String [obj]
   (cond
     (nil? obj) ""
-    (ist? Class obj) (. ^Class obj getName)
-    :else (.. ^Object obj getClass getName)))
+    (ist? Class obj) (.getName ^Class obj)
+    :else (getClassname (class obj))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -780,14 +763,19 @@
   [] (and (not (isWindows?))
           (not (isMacOS?))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- str!? "" [s] (or (nil? s)(string? s)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convLong
   "String as a long value" {:tag Long}
 
   ([s] (convLong s 0))
-  ([^String s dftLongVal]
-   (trye!! dftLongVal (Long/parseLong s) )))
+  ([s dftLongVal]
+   {:pre [(str!? s)]}
+   (trye!! dftLongVal (Long/parseLong ^String s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -795,8 +783,9 @@
   "String as an int value" {:tag Integer}
 
   ([s] (convInt s 0))
-  ([^String s dftIntVal]
-   (trye!! (int dftIntVal) (Integer/parseInt s))))
+  ([s dftIntVal]
+   {:pre [(str!? s)]}
+   (trye!! (int dftIntVal) (Integer/parseInt ^String s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -804,43 +793,39 @@
   "String as a double value" {:tag Double}
 
   ([s] (convDouble s 0.0))
-  ([^String s dftDblVal]
-   (trye!! dftDblVal (Double/parseDouble s) )))
+  ([s dftDblVal]
+   {:pre [(str!? s)]}
+   (trye!! dftDblVal (Double/parseDouble ^String s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn convBool
   "String as a boolean value"
-  [^String s] (contains? BOOLS (cs/lower-case (str s))))
+  [s] (contains? BOOLS (cs/lower-case (str s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod loadJavaProps
-  InputStream
-  [^InputStream inp] (doto (Properties.) (.load inp)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod loadJavaProps
-  File
-  [aFile] (loadJavaProps (io/as-url aFile)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod loadJavaProps
-  URL
-  [^URL aFile]
-  (with-open [inp (.openStream aFile)] (loadJavaProps inp)))
+(defn loadJavaProps
+  "Load properties from source"
+  ^Properties [arg]
+  (cond
+    (ist? File arg) (loadJavaProps (io/as-url arg))
+    (ist? URL arg) (with-open [inp (.openStream  ^URL arg)]
+                     (loadJavaProps inp))
+    :else
+    (do-with [p (Properties.)]
+            (if-some [inp (cast? InputStream arg)]
+              (.load p inp)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn strit
-  "Make a string from bytes or chars" {:tag String}
+  "Coerce to a string" {:tag String}
 
   ([obj] (strit obj "utf-8"))
-  ([obj ^String encoding]
+  ([obj encoding]
    (cond
-     (= BSCZ  (class obj)) (String. ^bytes obj encoding)
+     (= BSCZ  (class obj)) (String. ^bytes obj (toCharset encoding))
      (= CSCZ (class obj)) (String. ^chars obj)
      (string? obj) obj
      (some? obj) (str obj))))
@@ -859,11 +844,11 @@
   "Get bytes with the right encoding" {:tag "[B"}
 
   ([obj] (bytesit obj "utf-8"))
-  ([obj ^String encoding]
+  ([obj encoding]
    (cond
      (= BSCZ (class obj)) obj
      (string? obj)
-     (.getBytes ^String obj (or encoding "utf-8"))
+     (.getBytes ^String obj (toCharset encoding))
      (= CSCZ (class obj))
      (bytesit (String. ^chars obj) encoding))))
 
@@ -873,10 +858,11 @@
   "Load the resource as stream" {:tag InputStream}
 
   ([rcPath] (resStream rcPath nil))
-  ([^String rcPath ^ClassLoader ldr]
-    (when-not (empty? rcPath)
-      (-> (get-czldr ldr)
-          (.getResourceAsStream  rcPath)))))
+  ([rcPath ^ClassLoader ldr]
+   {:pre [(string? rcPath)]}
+   (when-not (empty? rcPath)
+     (-> (get-czldr ldr)
+         (.getResourceAsStream  ^String rcPath)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -884,42 +870,43 @@
   "Load the resource as URL" {:tag URL}
 
   ([rcPath] (resUrl rcPath nil))
-  ([^String rcPath ^ClassLoader ldr]
+  ([rcPath ^ClassLoader ldr]
+   {:pre [(string? rcPath)]}
    (when-not (empty? rcPath)
      (-> (get-czldr ldr)
-         (.getResource rcPath)))))
+         (.getResource ^String rcPath)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn resStr
   "Load the resource as string" {:tag String}
 
-  ([rcPath ^String encoding] (resStr rcPath encoding nil))
+  ([rcPath encoding] (resStr rcPath encoding nil))
   ([rcPath] (resStr rcPath "utf-8" nil))
-  ([^String rcPath
-    ^String encoding ^ClassLoader ldr]
+  ([rcPath encoding ^ClassLoader ldr]
    (if-some
      [res (resStream rcPath ldr)]
      (with-open
-       [out (ByteArrayOutputStream. BUF_SZ)
+       [out (ByteArrayOutputStream. BUF-SZ)
         inp res]
-       (io/copy inp out :buffer-size BUF_SZ)
+       (io/copy inp out :buffer-size BUF-SZ)
        (-> (.toByteArray out)
            (strit encoding))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn resBytes
-  "Load the resource as byte[]"
-  ^bytes [^String rcPath & [^ClassLoader ldr]]
+  "Load the resource as byte[]" {:tag "[B"}
 
+  ([rcPath] (resBytes rcPath nil))
+  ([rcPath ldr]
   (if-some
     [res (resStream rcPath ldr)]
     (with-open
-      [out (ByteArrayOutputStream. BUF_SZ)
+      [out (ByteArrayOutputStream. BUF-SZ)
        inp res]
-      (io/copy inp out :buffer-size BUF_SZ)
-      (.toByteArray out))))
+      (io/copy inp out :buffer-size BUF-SZ)
+      (.toByteArray out)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -927,12 +914,11 @@
   "Compress bytes" ^bytes [^bytes bits]
 
   (if (some? bits)
-    (let [buf (byte-array BUF_SZ)
-          cpz (Deflater.)]
-      (doto cpz
-        (.setLevel (Deflater/BEST_COMPRESSION))
-        (.setInput bits)
-        (.finish))
+    (let [buf (byte-array BUF-SZ)
+          cpz (doto (Deflater.)
+                (.setLevel Deflater/BEST_COMPRESSION)
+                (.setInput bits)
+                .finish)]
       (with-open
         [baos (ByteArrayOutputStream. (alength bits))]
         (loop []
@@ -949,10 +935,10 @@
   "Decompress bytes" ^bytes [^bytes bits]
 
   (if (some? bits)
-    (let [buf (byte-array BUF_SZ)
-          decr (Inflater.)
-          baos (ByteArrayOutputStream. (alength bits))]
-      (.setInput decr bits)
+    (let [baos (ByteArrayOutputStream. (alength bits))
+          buf (byte-array BUF-SZ)
+          decr (doto (Inflater.)
+                 (.setInput bits))]
       (loop []
         (if (.finished decr)
           (.toByteArray baos)
@@ -966,7 +952,7 @@
 (defn normalize
   "Hex-code all non-alpha
   chars in a file path"
-  ^String [^String fname]
+  ^String [fname]
 
   (sreduce<>
     (fn [^StringBuilder buf ^Character ch]
@@ -976,7 +962,7 @@
         (.append buf
                  (str "0x"
                       (Integer/toString (int ch) 16)))))
-    (.toCharArray fname)))
+    (charsit fname)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -995,7 +981,8 @@
 (defn fmtFileUrl
   "File path as URL" ^URL [path]
 
-  (when-not (empty? path)
+  (when (and (string? path)
+             (not-empty path))
     (io/as-url (if (cs/starts-with? path "file:")
                  path
                  (str "file:" path)))))
@@ -1005,42 +992,33 @@
 (defn getFPath
   "The file path only"
   ^String
-  [^String fileUrlPath]
+  [fileUrlPath]
   (str (some-> (fmtFileUrl fileUrlPath) .getPath)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test and assert funcs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmulti test-isa
-  "Is subclass of parent"
-  (fn [a b c] (if (class? c) :class :object)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod test-isa :class [reason parz cz]
-  (assert (and (some? cz)
-               (class? parz)) "NPE!")
-  (assert (. ^Class parz isAssignableFrom ^Class cz)
-          (str reason " not-isa " (gczn parz))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod test-isa :object [reason parz obj]
-  (assert (and (class? parz)
-               (some? obj)) "NPE!")
-  (assert (instance? parz obj)
-          (str reason " not-isa " (gczn parz))))
+(defn test-isa "" [reason par chi]
+  (do->true
+    (->
+      (cond
+        (and (class? par)(class? chi)) (isa? chi par)
+        (or (nil? par)(nil? chi)) false
+        (not (class? par)) (test-isa reason (class par) chi)
+        (not (class? chi)) (test-isa reason par (class chi)))
+      (assert (str chi " not-isa " par)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn test-some
   "Object is not null" [reason obj]
-  (assert (some? obj) (str reason " is null")))
+  (do->true (assert (some? obj) (str reason " is null"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn test-cond
-  "verify a true condition" [reason cnd] (assert cnd (str reason)))
+  "verify a true condition" [reason cnd]
+  (do->true (assert cnd (str reason))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1051,7 +1029,10 @@
 ;;
 (defn test-hgl
   "String is not empty"
-  [reason s] (assert (not (empty? s)) (str reason " is empty")))
+  [reason s]
+  (do->true
+    (assert (and (string? s)
+                 (not-empty s)) (str reason " is empty"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1082,40 +1063,40 @@
 (defmethod test-pos0
   :double
   [reason v]
-  (assert (snneg? v)
-          (str reason " must be >= 0")))
+  (do->true (assert (snneg? v)
+                    (str reason " must be >= 0"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod test-pos0
   :long
   [reason v]
-  (assert (snneg? v)
-          (str reason " must be >= 0")))
+  (do->true (assert (snneg? v)
+                    (str reason " must be >= 0"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod test-pos
   :double
   [reason v]
-  (assert (spos? v)
-          (str reason " must be > 0")))
+  (do->true (assert (spos? v)
+                    (str reason " must be > 0"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod test-pos
   :long
   [reason v]
-  (assert (spos? v)
-          (str reason " must be > 0")))
+  (do->true (assert (spos? v)
+                    (str reason " must be > 0"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn test-seq+
   "Check sequence is not empty"
   [reason v]
-  (assert (> (count v) 0)
-          (str reason  " must be non empty")))
+  (do->true (assert (> (count v) 0)
+                    (str reason  " must be non empty"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1143,7 +1124,7 @@
 
   ([ss] (sortJoin "" ss))
   ([sep ss]
-   (if (empty? ss) "" (cs/join sep (sort ss)))))
+   (if (nil? ss) "" (cs/join sep (sort ss)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1152,11 +1133,12 @@
   {:tag APersistentMap}
 
   ([props] (pmap<> props true))
-  ([^java.util.Map props key?]
+  ([props key?]
+   {:pre [(ist? Map props)]}
    (preduce<map>
      #(assoc! %1
               (if key? (keyword %2) (str %2))
-              (. props get %2)) (.keySet props))))
+              (.get ^Map props %2)) (.keySet ^Map props))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1168,16 +1150,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defprotocol Muable
-  ""
-  (get?setf! [_ k v] "")
-  (setf! [_ k v] "")
-  (unsetf! [_ k] "")
-  (wipe! [_] "")
-  (copy* [_ m] ""))
+  "Something that is mutable"
+  (get?setf! [_ k v] "Get or set a field")
+  (setf! [_ k v] "Set a field")
+  (unsetf! [_ k] "Clear a field")
+  (wipe! [_] "Clear all")
+  (copy* [_ mp] "Copy from this map"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro decl-muble-types "" [name dtype & more]
+(defmacro decl-muble-types
+  "deftype something mutable" [name dtype & more]
   `(deftype ~name
      [~(with-meta '_data {dtype true})]
   ~'czlab.basal.core.Muable
@@ -1200,7 +1183,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(decl-muble-types GenericMutable :unsynchronized-mutable )
+(decl-muble-types GenericMutable :unsynchronized-mutable)
 (decl-muble-types VolatileMutable :volatile-mutable)
 (ns-unmap *ns* '->VolatileMutable)
 (ns-unmap *ns* '->GenericMutable)
@@ -1211,14 +1194,14 @@
 ;;
 (defn prnMuable "Print this mutable"
 
-  ([ctx] (prnMuable ctx false))
+  ([ctx] (prnMuable ctx true))
   ([ctx dbg]
    (let [s (pr-str @ctx)]
      (if dbg (log/debug "%s" s)(log/info "%s" s)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn prtStk "Print stack" [e] (some-> ^Throwable e .printStackTrace))
+(defn prtStk "Print stack" [exp] (some-> ^Throwable exp .printStackTrace))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1226,7 +1209,7 @@
   "Dump stack trace" ^String [^Throwable e]
 
   (with-open
-    [out (ByteArrayOutputStream. BUF_SZ)
+    [out (ByteArrayOutputStream. BUF-SZ)
      ps (PrintStream. out true "utf-8")]
     (.printStackTrace e ps)
     (String. (.toByteArray out) "utf-8")))
@@ -1240,22 +1223,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn normalizeEmail
-  "Check email address" ^String [^String email]
+  "Check email address" ^String [email]
 
-  (cond
-    (empty? email)
-    email
+  (let [email (str email)]
+    (cond
+      (empty? email)
+      email
 
-    (or (not (> (.indexOf email (int \@)) 0))
-        (not= (.lastIndexOf email (int \@))
-              (.indexOf email (int \@))))
-    (throwBadData (str "Bad email address " email))
+      (or (not (> (.indexOf email (int \@)) 0))
+          (not= (.lastIndexOf email (int \@))
+                (.indexOf email (int \@))))
+      (throwBadData (str "Bad email address " email))
 
-    :else
-    (let [ss (.split email "@")]
-      (if (== 2 (alength ss))
-        (str (aget ss 0) "@" (cs/lower-case (aget ss 1)))
-        (throwBadData (str "Bad email address " email))))))
+      :else
+      (let [ss (.split email "@")]
+        (if (== 2 (alength ss))
+          (str (aget ss 0) "@" (cs/lower-case (aget ss 1)))
+          (throwBadData (str "Bad email address " email)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1266,31 +1250,28 @@
 (defn- convList
   "to Java List" ^ArrayList [obj]
 
-  (let [rc (ArrayList.)]
+  (do-with [rc (ArrayList.)]
     (doseq [v obj]
-      (.add rc (convToJava v)))
-    rc))
+      (.add rc (convToJava v)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- convSet
   "to Java Set" ^HashSet [obj]
 
-  (let [rc (HashSet.)]
+  (do-with [rc (HashSet.)]
     (doseq [v obj]
-      (.add rc (convToJava v)))
-    rc))
+      (.add rc (convToJava v)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- convMap
   "to Java Map" ^HashMap [obj]
 
-  (let [rc (HashMap.)]
+  (do-with [rc (HashMap.)]
     (doseq [[k v] obj]
       (.put rc
-            (stripNSPath (name k)) (convToJava v)))
-    rc))
+            (stripNSPath (name k)) (convToJava v)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1324,10 +1305,10 @@
   [n]
   (cond
     (ist? AtomicInteger n)
-    (. ^AtomicInteger n getAndIncrement)
+    (.getAndIncrement ^AtomicInteger n)
 
     (ist? AtomicLong n)
-    (. ^AtomicLong n getAndIncrement)
+    (.getAndIncrement ^AtomicLong n)
 
     :else
     (throwBadArg "expecting atomic-number type")))
@@ -1353,18 +1334,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro zarray
-  "Zero length java array" [type] `(make-array ~type 0))
+  "Zero length java array" [type] `(marray ~type 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn countCpus "How many cpus?"
-  [] (. (Runtime/getRuntime) availableProcessors))
+  [] (.availableProcessors (Runtime/getRuntime)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn pause
   "Block current thread for some millisecs"
-  [millisecs] (try! (if (spos? millisecs) (Thread/sleep millisecs))))
+  [millisecs] (trye! nil
+                     (if (spos? millisecs) (Thread/sleep millisecs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1380,7 +1362,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn objEQ? "" [this obj]
-  (and obj
+  (and this
+       obj
        (or (identical? this obj)
            (and (= (.getClass ^Object this)
                    (.getClass ^Object obj))
@@ -1391,8 +1374,8 @@
 ;;
 (defn idEQ? "" [this obj]
   (and (objEQ? this obj)
-       (= (.id ^Idable obj)
-          (.id ^Idable this))))
+       (= (id?? obj)
+          (id?? this))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1421,14 +1404,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn gvtbl'
-  "Find key from vtable"
+  "Find key from parent vtable"
   [vt kee]
   (gvtbl (:$proto vt) kee))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn rvtbl'
-  "Find key from vtable and run func"
+  "Find key from parent vtable and run func"
   [vt kee & args]
   (let [f (gvtbl' vt kee)]
     (if (fn? f) (apply f vt args) f)))
@@ -1471,10 +1454,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defprotocol JEnumProto
-  ""
-  (lookup-enum-str [_ s] "")
-  (get-enum-str [_ e] "")
-  (lookup-enum-int [_ n] ""))
+  "Mimic Java Enum"
+  (lookup-enum-str [_ s] "Get enum from string")
+  (get-enum-str [_ e] "Get string value of enum")
+  (lookup-enum-int [_ n] "Get enum from int"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1494,15 +1477,14 @@
 (defmacro decl-generic-enum "" [name base & more]
   (assert (and (not-empty more)
                (integer? base)))
-  (let []
-    `(def ~name
-       (czlab.basal.core/object<>
-         czlab.basal.core.JEnum
-         (-> {}
-             ~@(reduce
-                 #(conj %1
-                        `(assoc (keyword (str *ns*) ~(str %2))
-                                ~(+ base (count %1)))) [] more))))))
+  `(def ~name
+     (czlab.basal.core/object<>
+       czlab.basal.core.JEnum
+       (-> {}
+           ~@(reduce
+               #(conj %1
+                      `(assoc (keyword (str *ns*) ~(str %2))
+                              ~(+ base (count %1)))) [] more)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

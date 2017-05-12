@@ -70,14 +70,14 @@
 
   ([] (baos<> nil))
   ([size]
-   (ByteArrayOutputStream. (int (or size BUF_SZ)))))
+   (ByteArrayOutputStream. (int (or size BUF-SZ)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- copyAll
   "" [^InputStream input ^OutputStream output]
 
-  (loop [buf (byte-array BUF_SZ)
+  (loop [buf (byte-array BUF-SZ)
          cnt 0
          n (.read input buf)]
     (if (< n 0)
@@ -95,7 +95,7 @@
   "Copy certain number of bytes to output"
   [^InputStream input ^OutputStream output ^long kount]
 
-  (let [buf (byte-array BUF_SZ)
+  (let [buf (byte-array BUF-SZ)
         bsz (alength buf)]
     (loop [remain kount
            total 0]
@@ -208,7 +208,7 @@
   "Bytes into hex-chars" ^chars [^bytes bytess]
 
   (let [len (if (nil? bytess) 0 (* 2 (alength bytess)))
-        hx (.toCharArray HEX_CHS)
+        hx (charsit HEX-CHS)
         out (char-array len)]
     (loop [k 0 pos 0]
       (when-not (>= pos len)
@@ -402,7 +402,7 @@
 (defn- slurpb
   "Bytes from stream" ^XData [^InputStream inp limit]
 
-  (loop [bits (byte-array BUF_SZ)
+  (loop [bits (byte-array BUF-SZ)
          os (baos<>)
          fout nil
          cnt 0
@@ -432,8 +432,8 @@
 (defn- slurpc
   "Chars from reader" ^XData [^Reader rdr limit]
 
-  (loop [wtr (CharArrayWriter. (int BUF_SZ))
-         carr (char-array BUF_SZ)
+  (loop [wtr (CharArrayWriter. (int BUF-SZ))
+         carr (char-array BUF-SZ)
          fout nil
          cnt 0
          c (.read rdr carr)]
@@ -613,8 +613,8 @@
 ;;
 (defn slurpBytes
   "Read bytes from a file" ^bytes [f]
-  (with-open [out (baos<> BUF_SZ)]
-    (io/copy f out :buffer-size BUF_SZ)
+  (with-open [out (baos<> BUF-SZ)]
+    (io/copy f out :buffer-size BUF-SZ)
     (.toByteArray out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

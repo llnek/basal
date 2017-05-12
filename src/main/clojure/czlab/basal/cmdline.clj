@@ -17,7 +17,8 @@
   (:use [czlab.basal.core]
         [czlab.basal.str])
 
-  (:import [java.io
+  (:import [czlab.basal.core GenericMutable]
+           [java.io
             InputStreamReader
             OutputStreamWriter
             BufferedOutputStream]
@@ -31,9 +32,7 @@
 (defn- isOption? "" [option]
   (and (string? option)
        (not= "--" option)
-       (or (cs/starts-with? option "--")
-           (cs/starts-with? option "-")
-           (cs/starts-with? option "/"))))
+       (swAny? option ["--" "-" "/"])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -48,11 +47,11 @@
 ;;
 (defn parseOptions
   "Parse command line, returning options and args"
-  ([cmdline-args] (parseOptions cmdline-args true))
-  ([cmdline-args key?]
+  ([cargs] (parseOptions cargs true))
+  ([cargs key?]
    (loop [options (transient {})
           [p1 p2 & more
-           :as args] cmdline-args]
+           :as args] cargs]
      (if-some [o1 (maybeOption p1 key?)]
        (if (or (nil? p2)
                (isOption? p2))
@@ -61,67 +60,60 @@
                   more
                   (cons p2 more)))
          (recur (assoc! options o1 p2) more))
-       [(persistent! options)
-        (if (= "--" p1)
-          (if (some? p2)
-            (cons p2 more) [])
-          (or args []))]))))
+       (vector (pcoll! options)
+               (if (= "--" p1)
+                 (if p2 (cons p2 more)) args))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro ^:private rdr "" [r]
+  `(.read ~(with-meta r {:tag 'Reader})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- readData
-  "Read user input"
+  "Read user input: windows has \\r\\n linux has \\n"
   ^String
-  [^Writer cout ^Reader cin]
-  ;; windows has '\r\n' linux has '\n'
-  (let
-    [bf (strbf<>)
-     ms (loop
-          [c (.read cin)]
+  [in]
+  (let [[ms bf]
+        (loop [c (rdr in)
+            bf (strbf<>)]
           (let
             [m (cond
-                 (or (== c -1) (== c 4))
-                 #{:quit :break}
-                 (== c (int \newline))
-                 #{:break}
+                 (or (== c -1) (== c 4)) #{:quit :break}
+                 (== c (int \newline)) #{:break}
                  (or (== c (int \backspace))
-                     (== c (int \return))
-                     (== c 27))
-                 nil
-                 :else
-                 (do->nil
-                   (.append bf (char c))))]
+                     (== c (int \return)) (== c 27)) nil
+                 :else (do->nil (.append bf (char c))))]
             (if (in? m :break)
-              m
-              (recur (.read cin)))))]
-    (if-not (in? ms :quit) (strim bf))))
+              [m bf]
+              (recur (rdr in) bf))))]
+    (if-not
+      (in? ms :quit) (strim bf))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onAnswer
-
   "Process the answer, returning the next question"
   [^Writer cout
-   {:keys [default result id
-           must? next] :as cmdQ}
+   {:keys [default id
+           result must? next] :as cmdQ}
    props answer]
 
   (if (nil? answer)
-    (do->nil (. cout write "\n"))
+    (do->nil (.write cout "\n"))
     (let [rc (stror answer default)]
       (cond
         ;;if required to answer, repeat the question
         (and (nichts? rc) must?)
         id
-
         (keyword? result)
-        (do (swap! props
-                   assoc result rc) next)
-
+        (do (setf! props
+                   result rc) next)
         (fn? result)
         (let [[n p]
               (result rc @props)]
-          (reset! props p)
+          (doto props wipe! (copy* p))
           (if (nil? n) ::caio!! n))
 
         :else :caio!!))))
@@ -145,10 +137,10 @@
   ;; defaults ?
   (if (hgl? default)
     (.write cout (str "(" default ")")))
-  (doto cout (.write " ")(.flush))
+  (doto cout (.write " ") .flush)
   ;; get the input from user
   ;; return the next question, :end ends it
-  (->> (readData cout cin)
+  (->> (readData cin)
        (onAnswer cout cmdQ props)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -156,7 +148,7 @@
 (defn- popQ
   "Pop the question"
   [cout cin cmdQ props]
-  (if (some? cmdQ) (popQQ cout cin cmdQ props) :caio!!))
+  (if cmdQ (popQQ cout cin cmdQ props) :caio!!))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -181,8 +173,8 @@
   [cmdQs question1]
   {:pre [(map? cmdQs)]}
 
-  (let [cout (->> (BufferedOutputStream. (System/out))
-                  (OutputStreamWriter.))
+  (let [cout (-> System/out
+                 BufferedOutputStream. OutputStreamWriter.)
         cin (InputStreamReader. (System/in))
         func (partial cycleQ cout cin)]
     (.write cout (str ">>> Press "
@@ -192,7 +184,7 @@
           #(update-in %1 [%2] assoc :id %2)
           cmdQs
           (keys cmdQs))
-        (func question1 (atom {})))))
+        (func question1 (GenericMutable. {})))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

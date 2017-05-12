@@ -125,7 +125,7 @@
 
     (is (thrown? IllegalArgumentException (throwBadArg "%s" "a")))
 
-    (is (thrown? IOException (throwIOE (Exception.))))
+    (is (thrown? IOException (throwIOExp (Exception.))))
 
     (is (thrown? IOException (throwIOE "%s" "a")))
 
@@ -193,11 +193,11 @@
 
     (is (== 2 (some.. "hi" toString length)))
 
-    (is (false? (.firstCall (doto->> (monoFlop<>)
-                                     .firstCall
-                                     .firstCall))))
+    (is (false? (.isFirstCall (doto->> (monoFlop<>)
+                                     .isFirstCall
+                                     .isFirstCall))))
 
-    (is (.firstCall (monoFlop<>)))
+    (is (.isFirstCall (monoFlop<>)))
 
     (is (let [w (watch<>) _ (Thread/sleep 1000)
               m (.elapsedMillis w) n (.elapsedNanos w)]
@@ -505,7 +505,7 @@
     (is (!false? true))
     (is (not (!true? true)))
     (is (not (!false? false)))
-    (is (= (try-let [a 3 b 4]  (-> (inc a) (+ b)))
+    (is (= (try!-let [a 3 b 4]  (-> (inc a) (+ b)))
            8))
     (is (= (let-try [a 3 b "x"] (let [z (+ 3 a)] (inc z)))
            7)))
