@@ -107,10 +107,10 @@
   ([s sep] (splitTokens s sep false))
   ([^String s ^String sep incSep?]
    (let [t (StringTokenizer.
-             s sep (bool! incSep?))]
+             s sep (bc/bool! incSep?))]
      (loop [rc (transient [])]
        (if-not (.hasMoreTokens t)
-         (pcoll! rc)
+         (bc/pcoll! rc)
          (recur (conj! rc (.nextToken t))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -161,20 +161,21 @@
   (if (and (hgl? bigs)
            (hgl? s))
     (loop [len (.length s)
-           total 0
-           start 0]
-      (let [pos (.indexOf bigs s start)]
+           total 0 start 0]
+      (let [pos (.indexOf bigs
+                          s start)]
         (if (< pos 0)
           total
-          (recur len (inc total) (+ pos len)))))
-    0))
+          (recur len
+                 (inc total)
+                 (+ pos len))))) 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn countChar
   "Count the times this char appears in the big str"
-  [^String bigs ^Character ch]
-  (reduce #(if (= ch %2) (inc %1) %1) 0 (.toCharArray bigs)))
+  [bigs ch]
+  (reduce #(if (= ch %2) (inc %1) %1) 0 (bc/charsit bigs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -246,12 +247,12 @@
   "Strip source string of these unwanted chars"
   {:tag String}
 
-  ([src unwantedChars] (strimAny src unwantedChars false))
   ([^String src ^String unwantedChars whitespace?]
    (let [s (-> (if whitespace? (strim src) src)
                (triml unwantedChars)
                (trimr unwantedChars))]
-     (if whitespace? (strim s) s))))
+     (if whitespace? (strim s) s)))
+  ([src unwantedChars] (strimAny src unwantedChars false)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -261,12 +262,11 @@
   ^StringBuilder
   [^StringBuilder buf ^String delim ^String item]
 
-  (when (some? item)
-    (when (and (> (.length buf) 0)
-               (hgl? delim))
-      (.append buf delim))
-    (.append buf item))
-  buf)
+  (bc/do-with [buf buf]
+    (when item
+      (if (and (> (.length buf) 0)
+               (hgl? delim)) (.append buf delim))
+      (.append buf item))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -277,7 +277,7 @@
   [^String largeString chunkLength]
 
   (if (and (hgl? largeString)
-           (snneg? chunkLength))
+           (bc/snneg? chunkLength))
     (into [] (map #(cs/join "" %1)
                   (partition-all chunkLength largeString)))
     []))
@@ -502,8 +502,8 @@
   ([s] (urlEncode s "utf-8"))
   ([^String s enc]
    (if (hgl? s)
-     (URLEncoder/encode s (stror enc "utf-8"))
-     s)))
+     (URLEncoder/encode
+       s (bc/strCharset enc)) s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -515,7 +515,7 @@
   ([^String s enc]
    (if (hgl? s)
      (-> s;;(cs/replace s "+" (urlEncode "+" enc))
-         (URLDecoder/decode (stror enc "utf-8")))
+         (URLDecoder/decode (bc/strCharset enc)))
      s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

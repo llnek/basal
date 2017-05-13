@@ -11,14 +11,14 @@
 
   czlab.basal.ini
 
-  (:require [czlab.basal.io :refer [fileRead?]]
-            [czlab.basal.logging :as log]
+  (:require [czlab.basal.io :as i :refer [fileRead?]]
+            [czlab.basal.log :as log]
             [clojure.java.io :as io]
-            [clojure.string :as cs])
+            [clojure.string :as cs]
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s])
 
-  (:use [flatland.ordered.map]
-        [czlab.basal.core]
-        [czlab.basal.str])
+  (:use [flatland.ordered.map])
 
   (:import [czlab.jasal Win32Conf]
            [java.net URL]
@@ -36,17 +36,17 @@
 ;;
 (defn- throwBadIni
   "" [^LineNumberReader rdr]
-  (throwBadData "Bad ini line: %s" (.getLineNumber rdr)))
+  (c/throwBadData "Bad ini line: %s" (.getLineNumber rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private throwBadKey
-  "" [k] `(throwBadData "No such item %s" ~k))
+  "" [k] `(c/throwBadData "No such item %s" ~k))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ^:private throwBadMap
-  "" [s] `(throwBadData "No such heading %s" ~s))
+  "" [s] `(c/throwBadData "No such heading %s" ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -54,14 +54,13 @@
   "Look for a section storing the
   actual name in meta" [rdr ncmap line]
 
-  (if-some+ [s (strimAny line "[]" true)]
-    (let [k (keyword (lcase s))]
+  (c/if-some+ [s (s/strimAny line "[]" true)]
+    (c/do-with [k (keyword (s/lcase s))]
       (if-not (contains? @ncmap k)
         (->> (assoc @ncmap
                     k
                     (with-meta (ordered-map) {:name s}))
-             (reset! ncmap)))
-      k)
+             (reset! ncmap))))
     (throwBadIni rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -73,13 +72,13 @@
   (if-some [kvs (get @ncmap section)]
     (let [pos (.indexOf line (int \=))
           nm (if (> pos 0)
-               (strim (.substring line 0 pos)) "")]
-      (if (nichts? nm) (throwBadIni rdr))
-      (let [k (keyword (lcase nm))]
+               (s/strim (.substring line 0 pos)) "")]
+      (if (s/nichts? nm) (throwBadIni rdr))
+      (let [k (keyword (s/lcase nm))]
         (->> (assoc kvs
                     k
-                    [nm  (strim (.substring line
-                                            (inc pos)))])
+                    [nm  (s/strim (.substring line
+                                              (inc pos)))])
              (swap! ncmap assoc section)))
       section)
     (throwBadIni rdr)))
@@ -90,9 +89,9 @@
   "Parses a line in the file"
   [rdr ncmap curSec ^String line]
 
-  (let [ln (strim line)]
+  (let [ln (s/strim line)]
     (cond
-      (or (nichts? ln)
+      (or (s/nichts? ln)
           (.startsWith ln "#"))
       curSec
 
@@ -107,13 +106,13 @@
 (defn- getKV
   "" ^String [sects s k err]
 
-  (let [sn (keyword (lcase s))
-        kn (keyword (lcase k))
+  (let [sn (keyword (s/lcase s))
+        kn (keyword (s/lcase k))
         mp (get sects sn)]
     (cond
       (nil? mp) (if err (throwBadMap s))
       (nil? k) (if err (throwBadKey k))
-      (notin? mp kn) (if err (throwBadKey k))
+      (c/notin? mp kn) (if err (throwBadKey k))
       :else (str (last (get mp kn))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -123,12 +122,12 @@
   (reify Win32Conf
 
     (headings [_]
-      (preduce<set>
+      (c/preduce<set>
         #(conj! %1 (:name (meta %2)))
         (vals sects)))
 
     (heading [_ sect]
-      (let [sn (keyword (lcase sect))]
+      (let [sn (keyword (s/lcase sect))]
         (reduce #(assoc %1
                         (first %2) (last %2))
                 (ordered-map)
@@ -145,37 +144,37 @@
     (longValue [this sect prop dft]
       (if-some [rc (getKV sects
                           sect prop false)]
-        (convLong rc) dft))
+        (c/convLong rc) dft))
 
     (longValue [this sect prop]
-      (convLong (getKV sects sect prop true) 0))
+      (c/convLong (getKV sects sect prop true) 0))
 
     (intValue [this sect prop dft]
       (if-some [rc (getKV sects
                           sect prop false)]
-        (convInt rc dft) dft))
+        (c/convInt rc dft) dft))
 
     (intValue [this sect prop]
-      (convInt (getKV sects sect prop true)))
+      (c/convInt (getKV sects sect prop true)))
 
     (doubleValue [this sect prop dft]
       (if-some [rc (getKV sects sect prop false)]
-        (convDouble rc dft)
+        (c/convDouble rc dft)
         dft))
 
     (doubleValue [this sect prop]
-      (convDouble (getKV sects sect prop true)))
+      (c/convDouble (getKV sects sect prop true)))
 
     (boolValue [this sect prop dft]
       (if-some [rc (getKV sects
                           sect prop false)]
-        (convBool rc dft) dft))
+        (c/convBool rc dft) dft))
 
     (boolValue [this sect prop]
-      (convBool (getKV sects sect prop true)))
+      (c/convBool (getKV sects sect prop true)))
 
     (dbgShow [_]
-      (let [buf (strbf<>)]
+      (let [buf (s/strbf<>)]
         (doseq [v (vals sects)]
           (.append buf (str "[" (:name (meta v)) "]\n"))
           (doseq [[x y] (vals v)]
@@ -191,7 +190,7 @@
   ([fUrl enc]
    (with-open [inp (-> (.openStream ^URL fUrl)
                        (io/reader :encoding
-                                  (stror enc "utf8"))
+                                  (s/stror enc "utf8"))
                        LineNumberReader. )]
      (loop [total (atom (sorted-map))
             rdr inp
@@ -212,9 +211,11 @@
   ^Win32Conf
   [f]
   (cond
-    (string? f) (if (hgl? f) (w32ini<> (io/file f)))
-    (ist? File f) (if (fileRead? f) (w32ini<> (io/as-url f)))
-    (ist? URL f) (some-> f parseFile)))
+    (string? f) (if (s/hgl? f)
+                  (w32ini<> (io/file f)))
+    (c/ist? File f) (if (i/fileRead? f)
+                      (w32ini<> (io/as-url f)))
+    (c/ist? URL f) (some-> f parseFile)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

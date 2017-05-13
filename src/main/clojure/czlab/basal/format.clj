@@ -12,16 +12,16 @@
   czlab.basal.format
 
   (:require [czlab.basal.indent :refer [indent-dispatch]]
+            [czlab.basal.io :as i :refer [readAsStr]]
             [clojure.pprint
-             :refer [pprint with-pprint-dispatch]]
-            [czlab.basal.io :refer [readAsStr]]
-            [czlab.basal.logging :as log]
+             :refer [pprint
+                     with-pprint-dispatch]]
+            [czlab.basal.log :as log]
             [clojure.java.io :as io]
             [clojure.edn :as edn]
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s]
             [clojure.data.json :as js])
-
-  (:use [czlab.basal.core]
-        [czlab.basal.str])
 
   (:import [java.net URL]
            [java.io File StringWriter]))
@@ -34,10 +34,10 @@
 (defn writeEdnStr
   "Format to edn" ^String [obj]
 
-  (str (do-with [w (StringWriter.)]
-               (if obj
-                 (with-pprint-dispatch
-                   indent-dispatch (pprint obj w))))))
+  (str (c/do-with [w (StringWriter.)]
+                  (if obj
+                    (with-pprint-dispatch
+                      indent-dispatch (pprint obj w))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -46,8 +46,8 @@
   [arg]
 
   (cond
-    (ist? File arg) (readEdn (io/as-url arg))
-    (ist? URL arg) (readEdn (readAsStr arg))
+    (c/ist? File arg) (readEdn (io/as-url arg))
+    (c/ist? URL arg) (readEdn (i/readAsStr arg))
     :else (some-> arg str edn/read-string)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -59,7 +59,7 @@
 ;;
 (defn readJsonStrKW
   "Parses json. keys mapped to keywords"
-  [data] (if (hgl? data)
+  [data] (if (s/hgl? data)
            (js/read-str data :key-fn keyword)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -67,9 +67,9 @@
 (defn readJsonStr
   "Parses json" {:tag String}
 
-  ([data] (if (hgl? data) (js/read-str data)))
+  ([data] (if (s/hgl? data) (js/read-str data)))
   ([data keyfn]
-   (if (hgl? data) (js/read-str data :key-fn keyfn))))
+   (if (s/hgl? data) (js/read-str data :key-fn keyfn))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -77,8 +77,8 @@
   "Parses json" [arg]
 
   (cond
-    (ist? File arg) (readJson (io/as-url arg))
-    (ist? URL arg) (readJson (readAsStr arg))
+    (c/ist? File arg) (readJson (io/as-url arg))
+    (c/ist? URL arg) (readJson (i/readAsStr arg))
     :else (some-> arg str readJsonStrKW )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

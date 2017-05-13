@@ -11,13 +11,12 @@
 
   czlab.basal.io
 
-  (:require [czlab.basal.logging :as log]
+  (:require [czlab.basal.log :as log]
             [clojure.java.io :as io]
-            [clojure.string :as cs])
-
-  (:use [czlab.basal.meta]
-        [czlab.basal.core]
-        [czlab.basal.str])
+            [clojure.string :as cs]
+            [czlab.basal.meta :as m]
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s])
 
   (:import [java.nio.file Files CopyOption StandardCopyOption]
            [java.util.zip GZIPInputStream GZIPOutputStream]
@@ -52,8 +51,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
-(def ^:dynamic *tempfile-repo* (io/file (sysTmpDir)))
-(def ^:dynamic *membuf-limit* (* 4 MegaBytes))
+(def ^:dynamic *tempfile-repo* (io/file (c/sysTmpDir)))
+(def ^:dynamic *membuf-limit* (* 4 c/MegaBytes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -69,14 +68,14 @@
 
   ([] (baos<> nil))
   ([size]
-   (ByteArrayOutputStream. (int (or size BUF-SZ)))))
+   (ByteArrayOutputStream. (int (or size c/BUF-SZ)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- copyAll
   "" [^InputStream in ^OutputStream out]
 
-  (loop [buf (byte-array BUF-SZ)
+  (loop [buf (byte-array c/BUF-SZ)
          cnt 0
          n (.read in buf)]
     (if (< n 0)
@@ -94,7 +93,7 @@
   "Copy certain number of bytes to output"
   [^InputStream in ^OutputStream out ^long kount]
 
-  (let [buf (byte-array BUF-SZ)
+  (let [buf (byte-array c/BUF-SZ)
         bsz (alength buf)]
     (loop [remain kount
            total 0]
@@ -114,9 +113,9 @@
   "Copy bytes to output"
   [^InputStream in ^OutputStream out]
 
-  (do-with [cnt (copyAll in out)]
-    (if (> cnt Integer/MAX_VALUE)
-      (trap! IOException "size too large"))))
+  (c/do-with [cnt (copyAll in out)]
+             (if (> cnt Integer/MAX_VALUE)
+               (c/throwIOE "size too large"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -130,7 +129,7 @@
   "Coerce chars to bytes" {:tag "[B"}
   ([chs] (charsToBytes chs "utf-8"))
   ([chs enc]
-   (->> (toCharset enc)
+   (->> (c/toCharset enc)
         (.getBytes (String. ^chars chs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -139,7 +138,7 @@
   "Coerce bytes to chars" {:tag "[C"}
   ([bytess] (toChars bytess "utf-8"))
   ([bytess enc]
-   (->> (toCharset enc) (String. ^bytes bytess) .toCharArray)))
+   (->> (c/toCharset enc) (String. ^bytes bytess) .toCharArray)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -163,7 +162,7 @@
           (= numType Long/TYPE))
       (.readLong dis)
       :else
-      (throwBadData "Unsupported number type %s" numType))))
+      (c/throwBadData "Unsupported number type %s" numType))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -187,7 +186,7 @@
             (= numType Long/TYPE))
         (.writeLong dos (long nnum))
         :else
-        (throwBadData "Unsupported number type %s" numType))
+        (c/throwBadData "Unsupported number type %s" numType))
       (.flush dos)
       (.toByteArray baos))))
 
@@ -195,39 +194,39 @@
 ;;
 (defn closeQ
   "Close object (quietly)"
-  [obj] (trye!! nil (some-> (cast? Closeable obj) .close)))
+  [obj] (c/trye!! nil (some-> (c/cast? Closeable obj) .close)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn deleteQ
   "Delete file (quietly)"
-  [f] (trye!! nil (io/delete-file f true)))
+  [f] (c/trye!! nil (io/delete-file f true)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn bytesToHex
   "Bytes into hex-chars" ^chars [^bytes bytess]
 
-  (let [len (if (nil? bytess) 0 (* 2 (alength bytess)))
-        hx (charsit HEX-CHS)
-        out (char-array len)]
-    (loop [k 0 pos 0]
-      (when-not (>= pos len)
-        (let [n (bit-and (aget ^bytes bytess k) 0xff)]
-          ;; high 4 bits
-          (aset-char out pos
-                     (aget hx (unsigned-bit-shift-right n 4)))
-          ;; low 4 bits
-          (aset-char out (+ pos 1)
-                     (aget hx (bit-and n 0xf)))
-          (recur (inc k) (+ 2 pos)) )))
-    out))
+  (let [len (if (nil? bytess)
+              0 (* 2 (alength bytess)))
+        hx (c/charsit c/HEX-CHS)]
+    (c/do-with [out (char-array len)]
+      (loop [k 0 pos 0]
+        (when-not (>= pos len)
+          (let [n (bit-and (aget ^bytes bytess k) 0xff)]
+            ;; high 4 bits
+            (aset-char out pos
+                       (aget hx (unsigned-bit-shift-right n 4)))
+            ;; low 4 bits
+            (aset-char out (+ pos 1)
+                       (aget hx (bit-and n 0xf)))
+            (recur (inc k) (+ 2 pos)) ))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn hexify
   "Turn bytes into hex string"
-  ^String [^bytes bytess] (some-> bytess bytesToHex strit))
+  ^String [bytess] (some-> bytess bytesToHex c/strit))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -254,7 +253,7 @@
 ;;
 (defn resetStream!
   "Reset stream (safely)"
-  [^InputStream inp] (trye!! nil (some-> inp .reset)))
+  [^InputStream inp] (c/trye!! nil (some-> inp .reset)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -263,11 +262,11 @@
   ^APersistentVector
   [arg]
   (cond
-    (ist? File arg) [true (FileInputStream. ^File arg)]
-    (string? arg) [true (streamit (bytesit arg))]
-    (instBytes? arg) [true (streamit arg)]
-    (ist? InputStream arg) [false arg]
-    (ist? URL arg) [true (.openStream ^URL arg)]))
+    (c/ist? File arg) [true (FileInputStream. ^File arg)]
+    (string? arg) [true (streamit (c/bytesit arg))]
+    (m/instBytes? arg) [true (streamit arg)]
+    (c/ist? InputStream arg) [false arg]
+    (c/ist? URL arg) [true (.openStream ^URL arg)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -276,8 +275,8 @@
   ^InputStream [arg]
   (cond
     (string? arg) (openFile (io/file arg))
-    (ist? File arg) (openFile (io/as-url arg))
-    (ist? URL arg) (some-> arg io/input-stream)))
+    (c/ist? File arg) (openFile (io/as-url arg))
+    (c/ist? URL arg) (some-> arg io/input-stream)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -285,8 +284,8 @@
   "Unzip content which is base64 encoded + gziped"
   ^bytes
   [gzb64]
-  (if (hgl? gzb64)
-    (-> (Base64/getDecoder) (.decode  ^String gzb64) gunzip)))
+  (if (s/hgl? gzb64)
+    (-> (Base64/getDecoder) (.decode ^String gzb64) gunzip)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -311,13 +310,13 @@
 (defn tempFile
   "Create a temporary file" {:tag File}
 
-  ([pfx sux] (tempFile pfx sux *tempfile-repo*))
   ([pfx sux ^File dir]
    (File/createTempFile
      ^String (if (> (count pfx) 2) pfx "czlab")
-     (stror sux ".tmp")
+     (s/stror sux ".tmp")
      dir))
-  ([] (tempFile "" "")))
+  ([] (tempFile "" ""))
+  ([pfx sux] (tempFile pfx sux *tempfile-repo*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -348,8 +347,8 @@
   (if inpsrc
     (let [rdr (.getCharacterStream inpsrc)
           ism (.getByteStream inpsrc) ]
-      (trye!! nil (some-> ism .reset))
-      (trye!! nil (some-> rdr .reset)))))
+      (c/trye!! nil (some-> ism .reset))
+      (c/trye!! nil (some-> rdr .reset)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -371,11 +370,12 @@
 (defn- swapBytes
   "Swap bytes in buffer to file"
   [^ByteArrayOutputStream baos]
-  (let [[fp ^OutputStream os] (openTempFile)]
-    (doto os
-      (.write (.toByteArray baos)) .flush)
-    (closeQ baos)
-    [fp os]))
+  (c/do-with [rc (openTempFile)]
+             (doto
+               ^OutputStream
+               (last rc)
+               (.write (.toByteArray baos)) .flush)
+             (closeQ baos)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -395,7 +395,7 @@
   "Bytes from stream"
   ^XData [^InputStream in limit]
 
-  (loop [bits (byte-array BUF-SZ)
+  (loop [bits (byte-array c/BUF-SZ)
          os (baos<>)
          fout nil
          cnt 0
@@ -408,13 +408,13 @@
         (if (> c 0)
           (.write os bits 0 c))
         (let
-          [[f o]
+          [[f o']
            (if (and (nil? fout)
                     (> (+ c cnt) limit))
              (swapBytes os)
              [fout os])]
           (recur bits
-                 o f (+ c cnt) (.read in bits)))))))
+                 o' f (+ c cnt) (.read in bits)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -422,8 +422,8 @@
   "Chars from reader"
   ^XData [^Reader rdr limit]
 
-  (loop [wtr (CharArrayWriter. (int BUF-SZ))
-         carr (char-array BUF-SZ)
+  (loop [wtr (CharArrayWriter. (int c/BUF-SZ))
+         carr (char-array c/BUF-SZ)
          fout nil
          cnt 0
          c (.read rdr carr)]
@@ -445,35 +445,26 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn readBytes
+(defn readBytesXData
   "Read bytes from stream" {:tag XData}
 
-  ([in] (readBytes in false))
+  ([in] (readBytesXData in false))
   ([in usefile?]
    (slurpb in (if usefile? 1 *membuf-limit*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn readChars
+(defn readCharsXData
   "Read chars from reader" {:tag XData}
 
-  ([rdr] (readChars rdr false))
+  ([rdr] (readCharsXData rdr false))
   ([rdr usefile?]
    (slurpc rdr (if usefile? 1 *membuf-limit*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn workDirPath
-  "The working directory" ^String [] (fpath *tempfile-repo*))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn convBytes "" ^bytes [data]
-  (condp = (class data)
-    InputStream (toBytes data)
-    String (bytesit data)
-    (bytesClass) data
-    nil))
+  "The working directory" ^String [] (c/fpath *tempfile-repo*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -536,7 +527,7 @@
 ;;
 (defn parentPath
   "Path to parent" ^String [path]
-  (if (nichts? path) path (.getParent (io/file path))))
+  (if (s/nichts? path) path (.getParent (io/file path))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -561,8 +552,8 @@
   ([fout data enc]
    (io/copy data
             fout
-            :buffer-size FourK
-            :encoding (strCharset enc)))
+            :buffer-size c/FourK
+            :encoding (c/strCharset enc)))
   ([fout data] (writeFile fout data "utf-8")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -603,8 +594,10 @@
 ;;
 (defn slurpBytes
   "Read bytes from a file" ^bytes [f]
-  (with-open [out (baos<> BUF-SZ)]
-    (io/copy f out :buffer-size BUF-SZ)
+  (with-open [out (baos<> c/BUF-SZ)]
+    (io/copy f
+             out
+             :buffer-size c/BUF-SZ)
     (.toByteArray out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -612,7 +605,7 @@
 (defmacro readAsStr
   "Read data from source as string"
   ([s] `(readAsStr ~s "utf-8"))
-  ([s enc] `(slurp ~s :encoding (stror ~enc "utf-8"))))
+  ([s enc] `(slurp ~s :encoding (s/stror ~enc "utf-8"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -626,10 +619,10 @@
      (if del?
        (deleteQ fp)
        (if (.exists fp)
-         (throwIOE "file %s exists" fp)))
+         (c/throwIOE "file %s exists" fp)))
      (if-not (.isFile stuff)
        (writeFile fp (.getBytes stuff))
-       (let [opts (make-array CopyOption 1)]
+       (let [opts (c/marray CopyOption 1)]
          (aset #^"[Ljava.nio.file.CopyOption;"
                opts 0 StandardCopyOption/REPLACE_EXISTING)
          (Files/move (.. stuff
@@ -659,7 +652,7 @@
   ^File [arg]
   (cond
     (string? arg) (mkdirs (io/file arg))
-    (ist? File arg) (doto ^File arg .mkdirs)))
+    (c/ist? File arg) (doto ^File arg .mkdirs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -707,7 +700,7 @@
    that have files of this extension" [rootDir ext]
 
   (let [rootDir (io/file rootDir)
-        rlen  (.length ^String (fpath rootDir))
+        rlen  (.length ^String (c/fpath rootDir))
         rlen (inc rlen)
         bin (atom #{})
         dig
@@ -721,7 +714,7 @@
                 (when-not (contains? @bin p)
                   (swap! bin conj p))))))]
     (dig rootDir dig)
-    (mapv #(.substring ^String (fpath %) rlen) @bin)))
+    (mapv #(.substring ^String (c/fpath %) rlen) @bin)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -780,18 +773,19 @@
         (with-open [os (FileOutputStream. f)]))
       (when-not
         (.setLastModified f (System/currentTimeMillis))
-        (throwIOE "Unable to set the lastmodtime: %s" f)))))
+        (c/throwIOE "Unable to set the lastmodtime: %s" f)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn bytes??
   "Coerce to bytes" ^bytes [arg]
   (cond
-    (ist? File arg) (slurpBytes arg)
-    (string? arg) (bytesit arg)
-    (instBytes? arg) arg
-    (ist? InputStream arg) (toBytes arg)
-    (ist? URL arg)
+    (c/ist? InputStream arg) (toBytes arg)
+    (c/ist? File arg) (slurpBytes arg)
+    (m/instChars? arg) (c/bytesit arg)
+    (m/instBytes? arg) arg
+    (string? arg) (c/bytesit arg)
+    (c/ist? URL arg)
     (with-open [p (.openStream ^URL arg)] (bytes?? p))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

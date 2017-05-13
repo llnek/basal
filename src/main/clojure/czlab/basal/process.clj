@@ -11,11 +11,10 @@
 
   czlab.basal.process
 
-  (:require [czlab.basal.meta :refer [getCldr]]
-            [czlab.basal.logging :as log])
-
-  (:use [czlab.basal.core]
-        [czlab.basal.str])
+  (:require [czlab.basal.meta :as m :refer [getCldr]]
+            [czlab.basal.log :as log]
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s])
 
   (:import [czlab.jasal CU CallableWithArgs]
            [java.util.concurrent Callable]
@@ -38,12 +37,12 @@
   ([func start? {:keys [cl daemon
                         classLoader] :as arg}]
    {:pre [(fn? func)]}
-   (let [t (Thread. (run-able<> (func)))
+   (let [t (Thread. (c/run-able<> (func)))
          c (or cl
                classLoader (getCldr))]
-     (some->> (cast? ClassLoader c)
-              (. t setContextClassLoader))
-     (. t setDaemon (true? daemon))
+     (some->> (c/cast? ClassLoader c)
+              (.setContextClassLoader t))
+     (.setDaemon t (true? daemon))
      (if start? (.start t))
      (log/debug "thread#%s%s%s"
                 (.getName t)
@@ -56,8 +55,8 @@
 ;;
 (defn syncBlockExec
   "Run function synchronized"
-  [lockObj func & args] {:pre [(fn? func)]}
-
+  [lockObj func & args]
+  {:pre [(fn? func)]}
   (CU/syncExec
     lockObj
     (reify CallableWithArgs
@@ -98,7 +97,7 @@
 (defn processPid
   "Get process pid" ^String []
 
-  (if-some+
+  (c/if-some+
     [ss (-> (ManagementFactory/getRuntimeMXBean)
             .getName
             str
@@ -113,16 +112,16 @@
   [func delayMillis]
   {:pre [(fn? func)
          (number? delayMillis)]}
-  (. (Timer. true) schedule (tmtask<> func) ^long delayMillis))
+  (.schedule (Timer. true) (c/tmtask<> func) ^long delayMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn exitHook
   "Add a shutdown hook"
-  [func] {:pre [(fn? func)]}
-
+  [func]
+  {:pre [(fn? func)]}
   (->> (thread<> func false {:daemon true})
-       (. (Runtime/getRuntime) addShutdownHook )))
+       (.addShutdownHook (Runtime/getRuntime))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

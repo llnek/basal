@@ -11,13 +11,12 @@
 
   czlab.basal.resources
 
-  (:require [czlab.basal.meta :refer [getCldr]]
-            [czlab.basal.logging :as log]
+  (:require [czlab.basal.meta :as m :refer [getCldr]]
+            [czlab.basal.log :as log]
             [clojure.string :as cs]
-            [clojure.java.io :as io])
-
-  (:use [czlab.basal.core]
-        [czlab.basal.str])
+            [clojure.java.io :as io]
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s])
 
   (:import [java.io File FileInputStream]
            [java.util
@@ -31,29 +30,22 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti loadResource
-  "Load file with localized strings" {:tag ResourceBundle} class)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod loadResource File [aFile] (loadResource (io/as-url aFile)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod loadResource
-  URL
-  [^URL url]
-  (with-open [inp (.openStream url)] (PropertyResourceBundle. inp)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod loadResource
-  String
-  [^String path]
-  (with-open
-    [inp (some-> (getCldr)
-                 (.getResource path)
-                 .openStream)] (PropertyResourceBundle. inp)))
+(defn loadResource
+  "Load file with localized strings"
+  ^ResourceBundle
+  [arg]
+  (cond
+    (c/ist? File arg)
+    (loadResource (io/as-url arg))
+    (c/ist? URL arg)
+    (with-open
+      [inp (.openStream ^URL arg)]
+      (PropertyResourceBundle. inp))
+    (string? arg)
+    (with-open
+      [inp (some-> (m/getCldr)
+                   (.getResource ^String arg) .openStream)]
+      (PropertyResourceBundle. inp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -65,9 +57,9 @@
   ([^String baseName
     ^Locale locale
     ^ClassLoader cl]
-   (if (and locale (hgl? baseName))
+   (if (and locale (s/hgl? baseName))
      (ResourceBundle/getBundle baseName
-                               locale (getCldr cl)))))
+                               locale (m/getCldr cl)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -78,17 +70,16 @@
   ^String
   [^ResourceBundle bundle ^String pkey & pms]
 
-  (if (and bundle (hgl? pkey))
+  (if (and bundle (s/hgl? pkey))
     (let [kv (str (.getString bundle pkey))
           pc (count pms)]
       ;;(log/debug "RStr key = %s, value = %s" pkey kv)
       (loop [src kv pos 0]
         (if (>= pos pc)
          src
-         (recur (. src
-                   replaceFirst
-                   "\\{\\}" (str (nth pms pos)))
-                (inc pos)))))
+         (recur (.replaceFirst src
+                               "\\{\\}"
+                               (str (nth pms pos))) (inc pos)))))
     pkey))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

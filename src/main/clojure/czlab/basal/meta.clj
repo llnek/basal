@@ -11,10 +11,9 @@
 
   czlab.basal.meta
 
-  (:require [czlab.basal.logging :as log])
-
-  (:use [czlab.basal.core]
-        [czlab.basal.str])
+  (:require [czlab.basal.log :as log]
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s])
 
   (:import [clojure.lang RestFn APersistentVector]
            [java.lang.reflect Member Field Method Modifier]))
@@ -29,46 +28,34 @@
   arity counts and whether var-args are used.
   e.g.
   [#{0 1 2 3} true]"
-
-  [func] {:pre [(fn? func)]}
-
+  [func]
+  {:pre [(fn? func)]}
   (let [s
-        (persistent!
-          (reduce
-            #(let [^java.lang.reflect.Method m %2
-                   n (.getName m)]
-               (cond
-                 (= "getRequiredArity" n)
-                 (-> (conj! %1 (.getRequiredArity ^RestFn func))
-                     (conj! 709394))
-                 (= "invoke" n)
-                 (conj! %1 (.getParameterCount m))
-                 :else %1))
-            (transient #{})
-            (.getDeclaredMethods (class func))))
+        (c/preduce<set>
+          #(let [^java.lang.reflect.Method m %2
+                 n (.getName m)]
+             (cond
+               (= "getRequiredArity" n)
+               (-> (conj! %1 (.getRequiredArity ^RestFn func))
+                   (conj! 709394))
+               (= "invoke" n)
+               (conj! %1 (.getParameterCount m))
+               :else %1))
+          (.getDeclaredMethods (class func)))
         v? (contains? s 709394)]
     [(disj s 709394) v?]))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti isChild?
+(defn isChild?
   "If clazz is subclass of this base class"
-  (fn [_ b] (if (instance? Class b) :class :object)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod isChild?
-  :class
-  [basz cz]
-  (and (class? basz)
-       cz (. ^Class basz isAssignableFrom ^Class cz)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod isChild?
-  :object
-  [basz ^Object obj]
-  (and (class? basz) obj (instance? basz obj)))
+  [par chi]
+  (cond
+    (and (class? par)(class? chi)) (isa? chi par)
+    (or (nil? par)(nil? chi)) false
+    (not (class? par)) (isChild? (class par) chi)
+    (not (class? chi)) (isChild? par (class chi))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -89,7 +76,7 @@
 (defn- isXXX?
   "" [c classes]
   (-> (gcn (if-not
-             (class? c) (class c) c)) (eqAny? classes)))
+             (class? c) (class c) c)) (s/eqAny? classes)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -177,8 +164,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro instBytes? "Is object byte[]?" [b] `(isBytes? ~b))
-(defmacro instChars? "Is object char[]?" [c] `(isChars? ~c))
+(defmacro instBytes? "Is object byte[]?" [b] `(czlab.basal.meta/isBytes? ~b))
+(defmacro instChars? "Is object char[]?" [c] `(czlab.basal.meta/isChars? ~c))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -197,16 +184,16 @@
   "Get current classloader" {:tag ClassLoader}
 
   ([] (getCldr nil))
-  ([cl] (or cl (. (Thread/currentThread)
-                  getContextClassLoader ))))
+  ([cl] (or cl (.getContextClassLoader
+                 (Thread/currentThread)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn setCldr
   "Set classloader"
   [^ClassLoader cl]
-  (if (some? cl)
-    (. (Thread/currentThread) setContextClassLoader cl)))
+  (if cl
+    (.setContextClassLoader (Thread/currentThread) cl)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -215,8 +202,8 @@
 
   ([clazzName] (loadClass clazzName nil))
   ([^String clazzName cl]
-   (if (hgl? clazzName)
-     (. (getCldr cl) loadClass clazzName))))
+   (if (s/hgl? clazzName)
+     (.loadClass (getCldr cl) clazzName))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -235,8 +222,8 @@
 
   (let [args (partition 2 args)
         len (count args)
-        cargs (marray Object len)
-        ca (marray Class len)]
+        cargs (c/marray Object len)
+        ca (c/marray Class len)]
     (doseq [n (range len)
             :let [[z v] (nth args n)]]
       (aset #^"[Ljava.lang.Object;" cargs n v)
@@ -257,8 +244,8 @@
   ^Object [^Class cz]
 
   (some-> cz
-          (.getDeclaredConstructor (zarray Class))
-          (.newInstance (zarray Object))))
+          (.getDeclaredConstructor (c/zarray Class))
+          (.newInstance (c/zarray Object))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -267,8 +254,8 @@
   {:tag Object}
 
   ([clazzName] (new<> clazzName nil))
-  ([^String clazzName cl]
-   (if (hgl? clazzName)
+  ([clazzName cl]
+   (if (s/hgl? clazzName)
      (ctor<> (loadClass clazzName cl)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -283,7 +270,7 @@
     [rc (loop [sum (transient [])
                par javaClass]
           (if (nil? par)
-            (pcoll! sum)
+            (c/pcoll! sum)
             (recur (conj! sum par)
                    (.getSuperclass par))))]
     ;; since we always add the original class,
@@ -340,7 +327,7 @@
 
   (vals (if (nil? javaClass)
           {}
-          (pcoll! (listMtds javaClass 0 )))))
+          (c/pcoll! (listMtds javaClass 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -350,7 +337,7 @@
 
   (vals (if (nil? javaClass)
           {}
-          (pcoll! (listFlds javaClass 0)))))
+          (c/pcoll! (listFlds javaClass 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

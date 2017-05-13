@@ -11,12 +11,11 @@
 
   czlab.basal.guids
 
-  (:require [czlab.basal.io :refer [readNumber]]
+  (:require [czlab.basal.io :as i :refer [readNumber]]
             [clojure.string :as cs]
-            [czlab.basal.logging :as log])
-
-  (:use [czlab.basal.core]
-        [czlab.basal.str])
+            [czlab.basal.log :as log]
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s])
 
   (:import [java.lang StringBuilder]
            [czlab.jasal CU]
@@ -35,7 +34,7 @@
   _ss (CU/shuffle
         (let [s "abcdefghijklmnopqrstuvwxyz"]
           (str s "0123456789" (cs/upper-case s)))))
-(def ^:private _chars (charsit _ss))
+(def ^:private _chars (c/charsit _ss))
 (def ^:private _uuid-len (.length _ss))
 (def ^:private ^String int-mask "00000")
 (def ^:private ^String long-mask "0000000000")
@@ -49,7 +48,7 @@
         plen (.length pad)]
     (if (>= mlen plen)
       (.substring mask 0 plen)
-      (str (.replace (strbf<> pad)
+      (str (.replace (s/strbf<> pad)
                      (- plen mlen) plen mask)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -65,10 +64,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- splitTime "" []
-  (let [s (fmtLong (now<>))
+  (let [s (fmtLong (c/now<>))
         n (.length s)]
-    [(lefts s (/ n 2))
-     (rights s (max 0 (- n (/ n 2))))]))
+    [(s/lefts s (/ n 2))
+     (s/rights s (max 0 (- n (/ n 2))))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -77,10 +76,10 @@
         b (.getAddress neta)]
     (cond
       (.isLoopbackAddress neta)
-      (. (rand<>) nextLong)
+      (. (c/rand<>) nextLong)
       (== 4 (alength b))
-      (long (readNumber b Integer))
-      :else (readNumber b Long))))
+      (long (i/readNumber b Integer))
+      :else (i/readNumber b Long))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -95,7 +94,7 @@
   ;;at i==19 set the high bits of clock
   ;;sequence as per rfc4122, sec. 4.1.5
   (let [rc (char-array _uuid-len)
-        rnd (rand<>)]
+        rnd (c/rand<>)]
     (dotimes [n (alength rc)]
       (aset-char rc
                  n
@@ -115,13 +114,13 @@
 (defn wwid<>
   "uid based on time/ip" ^String []
 
-  (let [seed (.nextInt (rand<>)
+  (let [seed (.nextInt (c/rand<>)
                        (Integer/MAX_VALUE))
         ts (splitTime)]
     (str (nth ts 0)
          (fmtLong _IP)
          (fmtInt seed)
-         (fmtInt (seqint))
+         (fmtInt (c/seqint))
          (nth ts 1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

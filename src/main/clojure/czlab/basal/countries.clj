@@ -11,10 +11,9 @@
 
   czlab.basal.countries
 
-  (:require [czlab.basal.logging :as log]
-            [clojure.string :as cs])
-
-  (:use [czlab.basal.str]))
+  (:require [czlab.basal.log :as log]
+            [clojure.string :as cs]
+            [czlab.basal.str :as s]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -265,8 +264,8 @@
 (defn findCountry
   "The full country name"
   ^String
-  [^String code]
-  (get _ccodes (ucase code)))
+  [code]
+  (get _ccodes (s/ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -274,14 +273,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn isUSA? "If the code is US" [^String code] (= "US" (ucase code)))
+(defn isUSA? "If the code is US" [code] (= "US" (s/ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn findCountryCode
   "The country code"
   ^String
-  [^String country]
+  [country]
 
   (some-> (filter #(= (nth % 1)
                       country)
@@ -357,15 +356,15 @@
 (defn findState
   "The full state name"
   ^String
-  [^String code]
-  (get _states (ucase code)))
+  [code]
+  (get _states (s/ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn findStateCode
   "The abbreviated state code"
   ^String
-  [^String state]
+  [state]
   (some-> (filter #(= (nth % 1)
                       state)
                   _states-seq)

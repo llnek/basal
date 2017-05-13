@@ -11,11 +11,10 @@
 
   czlab.basal.dates
 
-  (:require [czlab.basal.logging :as log]
-            [clojure.string :as cs])
-
-  (:use [czlab.basal.core]
-        [czlab.basal.str])
+  (:require [czlab.basal.log :as log]
+            [clojure.string :as cs]
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s])
 
   (:import [java.text
             ParsePosition
@@ -60,9 +59,9 @@
 (defn- hastzpart?
   "String has time zone?" [^String s]
 
-  (let [pos (indexAny s ",; \t\r\n\f")
+  (let [pos (s/indexAny s ",; \t\r\n\f")
         ss (if (> pos 0) (.substring s (inc pos)) "")]
-    (or (hasAny? ss ["+" "-"])
+    (or (s/hasAny? ss ["+" "-"])
         (.matches ss "\\s*[a-zA-Z]+\\s*"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -96,7 +95,7 @@
   *tstr* conforming to the format
   \"yyyy-mm-dd hh:mm:ss.[fff...]\""
   ^Timestamp
-  [^String s] (trye! nil (Timestamp/valueOf s)))
+  [^String s] (c/trye! nil (Timestamp/valueOf s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -104,8 +103,8 @@
   "String to Date"
   ^Date [^String tstr ^String fmt]
 
-  (when (and (hgl? tstr)
-             (hgl? fmt))
+  (when (and (s/hgl? tstr)
+             (s/hgl? fmt))
     (.parse (SimpleDateFormat. fmt) tstr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -113,9 +112,9 @@
 (defn parseIso8601
   "To ISO8601 format" ^Date [^String tstr]
 
-  (when (hgl? tstr)
-    (let [fmt (if (has? tstr \:)
-                (if (has? tstr \.)
+  (when (s/hgl? tstr)
+    (let [fmt (if (s/has? tstr \:)
+                (if (s/has? tstr \.)
                   *dt-fmt-micro* *dt-fmt*)
                 *date-fmt*)]
       (parseDate tstr (if (hastz? tstr) (str fmt "Z") fmt)))))
@@ -133,7 +132,7 @@
   ([dt fmt] (fmtDate dt fmt nil))
   ([^Date dt fmt ^TimeZone tz]
    (if (or (nil? dt)
-           (nichts? fmt))
+           (s/nichts? fmt))
      ""
      (let [df (SimpleDateFormat. fmt)]
        (some->> tz (.setTimeZone df))
@@ -162,18 +161,18 @@
   ([] (gcal<> (Date.)))
   ([arg]
    (cond
-     (ist? TimeZone arg)
+     (c/ist? TimeZone arg)
      (GregorianCalendar. ^TimeZone arg)
 
-     (ist? Date arg)
+     (c/ist? Date arg)
      (doto
-      (GregorianCalendar.)
-      (.setTime ^Date arg))
+       (GregorianCalendar.)
+       (.setTime ^Date arg))
 
-     (spos? arg)
+     (c/spos? arg)
      (doto
-      (GregorianCalendar.)
-      (.setTimeInMillis ^long arg))
+       (GregorianCalendar.)
+       (.setTimeInMillis ^long arg))
 
      :else (gcal<>))))
 
@@ -217,9 +216,9 @@
   ([arg]
    (let [^Calendar c (gmt<>)]
      (cond
-       (ist? Date arg)
+       (c/ist? Date arg)
        (.setTime c ^Date arg)
-       (spos? arg)
+       (c/spos? arg)
        (.setTimeInMillis c ^long arg))
      c)))
 
@@ -227,7 +226,7 @@
 ;;
 (defn dtime
   "Get the time in millis"
-  ([] (now<>))
+  ([] (c/now<>))
   ([^java.util.Date d] (.getTime d)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -238,13 +237,13 @@
   (java.lang.String/format
     (Locale/getDefault)
     "%1$04d-%2$02d-%3$02dT%4$02d:%5$02d:%6$02d"
-    (vargs* Object
-            (.get cal Calendar/YEAR)
-            (+ 1 (.get cal Calendar/MONTH))
-            (.get cal Calendar/DAY_OF_MONTH)
-            (.get cal Calendar/HOUR_OF_DAY)
-            (.get cal Calendar/MINUTE)
-            (.get cal Calendar/SECOND))))
+    (c/vargs* Object
+              (.get cal Calendar/YEAR)
+              (+ 1 (.get cal Calendar/MONTH))
+              (.get cal Calendar/DAY_OF_MONTH)
+              (.get cal Calendar/HOUR_OF_DAY)
+              (.get cal Calendar/MINUTE)
+              (.get cal Calendar/SECOND))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
