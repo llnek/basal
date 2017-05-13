@@ -11,10 +11,9 @@
 
   czlab.basal.str
 
-  (:require [czlab.basal.logging :as log]
-            [clojure.string :as cs])
-
-  (:use [czlab.basal.core])
+  (:require [czlab.basal.log :as log]
+            [clojure.string :as cs]
+            [czlab.basal.core :as bc])
 
   (:import [java.util Arrays Collection Iterator StringTokenizer]
            [java.net URLEncoder URLDecoder]
@@ -38,7 +37,7 @@
   [s]
   (or (nil? s)
       (not (string? s))
-      (. ^String s isEmpty)))
+      (.isEmpty ^String s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -55,13 +54,13 @@
 ;;
 (defmacro lcase
   "Lowercase string safely"
-  [s] `(if-some [s# ~s] (cs/lower-case s#) ""))
+  [s] `(str (some-> ~s clojure.string/lower-case)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro ucase
   "Uppercase string safely"
-  [s] `(if-some [s# ~s] (cs/upper-case s#) ""))
+  [s] `(str (some-> ~s clojure.string/upper-case)))
 
 ;;#^"[Ljava.lang.Class;"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -76,10 +75,10 @@
     (loop [len (.length src)
            pos 0]
       (if (and (< pos len)
-               (>= (->> (int (. src charAt pos))
-                        (. unwantedChars indexOf)) 0))
+               (>= (->> (int (.charAt  src pos))
+                        (.indexOf unwantedChars)) 0))
         (recur len (inc pos))
-        (. src substring pos)))
+        (.substring src pos)))
     src))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -93,10 +92,10 @@
            (hgl? src))
     (loop [pos (.length src)]
       (if (and (> pos 0)
-               (>= (->> (int (. src charAt (dec pos)))
-                        (. unwantedChars indexOf)) 0))
+               (>= (->> (int (.charAt src (dec pos)))
+                        (.indexOf unwantedChars)) 0))
         (recur (dec pos))
-        (. src substring 0 pos)))
+        (.substring src 0 pos)))
     src))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -118,8 +117,10 @@
 ;;
 (defmacro embeds?
   "If sub-str is inside the big str"
-  [^String bigs ^String s]
-  `(>= (.indexOf (str ~bigs) (str ~s)) 0))
+  [bigs s]
+  (let [^String bs bigs
+        ^String ss s]
+    `(>= (.indexOf ~bs ~ss) 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -132,9 +133,10 @@
 ;;
 (defmacro has?
   "If the char is inside the big str"
-  [^String bigs ^Character ch]
-  (let [c# (int (.charValue ch))]
-    `(>= (.indexOf (str ~bigs) ~c#) 0)))
+  [bigs ch]
+  (let [c# (int (.charValue ^Character ch))
+        ^String bs bigs]
+    `(>= (.indexOf ~bs ~c#) 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -179,7 +181,7 @@
 (defmacro sname
   "Safely get the name of this object"
   [n]
-  `(if-some [n# ~n] (name n#) ""))
+  `(str (some-> ~n name)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -235,7 +237,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro strim "Safely trim this string" [s] `(cs/trim (str ~s)))
+(defmacro strim "Safely trim this string"
+  [s] `(str (some-> ~s clojure.string/trim)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -363,8 +366,10 @@
 ;;
 (defmacro eqic?
   "String.equalIgnoreCase()"
-  [^String src ^String other]
-  `(.equalsIgnoreCase (str ~src) (str ~other)))
+  [src other]
+  (let [^String ss src
+        ^String oo other]
+    `(.equalsIgnoreCase ~ss ~oo)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -405,7 +410,7 @@
 ;;
 (defmacro strbf<>
   "StringBuilder.new"
-  ([] `(StringBuilder.))
+  ([] `(strbf<> nil))
   ([s] `(StringBuilder. (str ~s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

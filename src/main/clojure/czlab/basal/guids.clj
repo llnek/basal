@@ -19,6 +19,7 @@
         [czlab.basal.str])
 
   (:import [java.lang StringBuilder]
+           [czlab.jasal CU]
            [java.net InetAddress]
            [java.util UUID]
            [java.lang Math]
@@ -29,15 +30,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;pre-shuffle the chars in string
-;;"0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz"
 (def ^{:private true
        :tag String}
-  _ss "YcQnPuzVAvpi7taGj1XwoJbIK3smye96NlHrR2DZS0CUxkLF5O4g8fBTqMEdhW")
-(def ^:private _chars (.toCharArray _ss))
+  _ss (CU/shuffle
+        (let [s "abcdefghijklmnopqrstuvwxyz"]
+          (str s "0123456789" (cs/upper-case s)))))
+(def ^:private _chars (charsit _ss))
 (def ^:private _uuid-len (.length _ss))
-
-(def ^:private ^String long-mask "0000000000")
 (def ^:private ^String int-mask "00000")
+(def ^:private ^String long-mask "0000000000")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

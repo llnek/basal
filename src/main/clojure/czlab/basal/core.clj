@@ -11,7 +11,7 @@
 
   czlab.basal.core
 
-  (:require [czlab.basal.logging :as log]
+  (:require [czlab.basal.log :as log]
             [clojure.java.io :as io]
             [clojure.string :as cs]
             [clojure.edn :as edn])
@@ -320,7 +320,7 @@
 (defmacro try!!
   "Eat & log the exception, returning a default value"
   [defv & exprs]
-  `(try ~@exprs (catch Throwable e# (log/warn e# "") ~defv)))
+  `(try ~@exprs (catch Throwable e# (czlab.basal.log/warn e# "") ~defv)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -329,7 +329,7 @@
   [defv & exprs]
   `(try ~@exprs
         (catch Throwable e#
-          (log/warn "Just ate a %s, yummy" e#) ~defv)))
+          (czlab.basal.log/warn "Just ate a %s, yummy" e#) ~defv)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -650,6 +650,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro date<> "A java Date" [] `(java.util.Date.))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn strCharset
+  "Charset as string"
+  ^String
+  [enc]
+  (if (ist? Charset enc)
+    (.name ^Charset enc)
+    (if (empty? enc) "utf-8" enc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

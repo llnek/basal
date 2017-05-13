@@ -34,64 +34,52 @@
 (defn writeEdnStr
   "Format to edn" ^String [obj]
 
-  (let [w (StringWriter.)]
-    (if (some? obj)
-      (with-pprint-dispatch
-        indent-dispatch (pprint obj w)))
-    (str w)))
+  (str (do-with [w (StringWriter.)]
+               (if obj
+                 (with-pprint-dispatch
+                   indent-dispatch (pprint obj w))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti readEdn "Parse EDN formatted text" class)
+(defn readEdn
+  "Parse EDN formatted text"
+  [arg]
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod readEdn File [fp] (readEdn (io/as-url fp)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod readEdn String [s] (edn/read-string s))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod readEdn URL [url] (edn/read-string (readAsStr url)))
+  (cond
+    (ist? File arg) (readEdn (io/as-url arg))
+    (ist? URL arg) (readEdn (readAsStr arg))
+    :else (some-> arg str edn/read-string)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn writeJsonStr
-  "Format to json" ^String [data] (js/write-str data))
+  "Format to json" ^String [data] (some-> data js/write-str))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn readJsonStrKW
   "Parses json. keys mapped to keywords"
-  [^String data] (if (hgl? data)
-                   (js/read-str data :key-fn keyword)))
+  [data] (if (hgl? data)
+           (js/read-str data :key-fn keyword)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn readJsonStr
   "Parses json" {:tag String}
 
-  ([^String data] (if (hgl? data) (js/read-str data)))
-  ([^String data keyfn]
+  ([data] (if (hgl? data) (js/read-str data)))
+  ([data keyfn]
    (if (hgl? data) (js/read-str data :key-fn keyfn))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti readJson "Parses json" class)
+(defn readJson
+  "Parses json" [arg]
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod readJson File [fp] (readJson (io/as-url fp)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod readJson String [s] (readJsonStrKW s))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod readJson URL [url] (readJson (readAsStr url)))
+  (cond
+    (ist? File arg) (readJson (io/as-url arg))
+    (ist? URL arg) (readJson (readAsStr arg))
+    :else (some-> arg str readJsonStrKW )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

@@ -9,7 +9,7 @@
 (ns ^{:doc "Logging api."
       :author "Kenneth Leung"}
 
-  czlab.basal.logging
+  czlab.basal.log
 
   (:require [clojure.tools.logging :as log]))
 
@@ -26,49 +26,49 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro trace "" [& args]
-  `(if (and czlab.basal.logging/*czlab-logger-flag*
+  `(if (and czlab.basal.log/*czlab-logger-flag*
             (clojure.tools.logging/enabled? :trace))
      (clojure.tools.logging/logf :trace ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro debug "" [& args]
-  `(if (and czlab.basal.logging/*czlab-logger-flag*
+  `(if (and czlab.basal.log/*czlab-logger-flag*
             (clojure.tools.logging/enabled? :debug))
      (clojure.tools.logging/logf :debug ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro info "" [& args]
-  `(if (and czlab.basal.logging/*czlab-logger-flag*
+  `(if (and czlab.basal.log/*czlab-logger-flag*
             (clojure.tools.logging/enabled? :info))
      (clojure.tools.logging/logf :info ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro warn "" [& args]
-  `(if (and czlab.basal.logging/*czlab-logger-flag*
+  `(if (and czlab.basal.log/*czlab-logger-flag*
             (clojure.tools.logging/enabled? :warn))
      (clojure.tools.logging/logf :warn ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro exception "" [e]
-  `(if (and czlab.basal.logging/*czlab-logger-flag*
+  `(if (and czlab.basal.log/*czlab-logger-flag*
             (clojure.tools.logging/enabled? :error))
      (clojure.tools.logging/logf :error ~e "")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro error "" [& args]
-  `(if (and czlab.basal.logging/*czlab-logger-flag*
+  `(if (and czlab.basal.log/*czlab-logger-flag*
             (clojure.tools.logging/enabled? :error))
      (clojure.tools.logging/logf :error ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro fatal "" [& args]
-  `(if (and czlab.basal.logging/*czlab-logger-flag*
+  `(if (and czlab.basal.log/*czlab-logger-flag*
             (clojure.tools.logging/enabled? :fatal))
      (clojure.tools.logging/logf :fatal ~@args)))
 

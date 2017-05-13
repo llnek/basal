@@ -23,9 +23,9 @@
            [java.util
             Locale
             TimeZone
-            SimpleTimeZone
             Date
             Calendar
+            SimpleTimeZone
             GregorianCalendar]
            [java.sql Timestamp]))
 
@@ -61,7 +61,7 @@
   "String has time zone?" [^String s]
 
   (let [pos (indexAny s ",; \t\r\n\f")
-        ss (if (> pos 0) (. s substring (inc pos)) "")]
+        ss (if (> pos 0) (.substring s (inc pos)) "")]
     (or (hasAny? ss ["+" "-"])
         (.matches ss "\\s*[a-zA-Z]+\\s*"))))
 
@@ -96,7 +96,7 @@
   *tstr* conforming to the format
   \"yyyy-mm-dd hh:mm:ss.[fff...]\""
   ^Timestamp
-  [^String s] (try! (Timestamp/valueOf s)))
+  [^String s] (trye! nil (Timestamp/valueOf s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -106,7 +106,7 @@
 
   (when (and (hgl? tstr)
              (hgl? fmt))
-    (. (SimpleDateFormat. fmt) parse tstr)))
+    (.parse (SimpleDateFormat. fmt) tstr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -136,7 +136,7 @@
            (nichts? fmt))
      ""
      (let [df (SimpleDateFormat. fmt)]
-       (some->> tz (. df setTimeZone))
+       (some->> tz (.setTimeZone df))
        (.format df dt)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -227,8 +227,8 @@
 ;;
 (defn dtime
   "Get the time in millis"
-  ([^java.util.Date d] (.getTime d))
-  ([] (now<>)))
+  ([] (now<>))
+  ([^java.util.Date d] (.getTime d)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

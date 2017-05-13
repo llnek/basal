@@ -34,11 +34,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmulti w32ini<>
-  "Parses a ini config file" {:tag Win32Conf} class)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn- throwBadIni
   "" [^LineNumberReader rdr]
   (throwBadData "Bad ini line: %s" (.getLineNumber rdr)))
@@ -190,26 +185,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod w32ini<>
-  String
-  [fpath] (if (hgl? fpath) (w32ini<> (io/file fpath))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod w32ini<>
-  File
-  [file] (if (fileRead? file) (w32ini<> (io/as-url file))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- parseFile "" {:tag Win32Conf}
+(defn- parseFile ""
 
   ([fUrl] (parseFile fUrl "utf-8"))
-  ([^URL fUrl enc]
-   (with-open [inp (-> (.openStream fUrl)
+  ([fUrl enc]
+   (with-open [inp (-> (.openStream ^URL fUrl)
                        (io/reader :encoding
                                   (stror enc "utf8"))
-                       (LineNumberReader. ))]
+                       LineNumberReader. )]
      (loop [total (atom (sorted-map))
             rdr inp
             line (.readLine rdr)
@@ -222,11 +205,16 @@
                 (evalOneLine rdr
                              total curSec line)))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod w32ini<>
-  URL
-  [fileUrl] (some-> fileUrl parseFile))
+(defn w32ini<>
+  "Parse a ini conf file"
+  ^Win32Conf
+  [f]
+  (cond
+    (string? f) (if (hgl? f) (w32ini<> (io/file f)))
+    (ist? File f) (if (fileRead? f) (w32ini<> (io/as-url f)))
+    (ist? URL f) (some-> f parseFile)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
