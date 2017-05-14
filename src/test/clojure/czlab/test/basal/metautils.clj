@@ -8,9 +8,10 @@
 
 (ns czlab.test.basal.metautils
 
-  (:use [czlab.basal.core]
-        [czlab.basal.meta]
-        [clojure.test])
+  (:require [czlab.basal.core :as c]
+            [czlab.basal.meta :as m])
+
+  (:use [clojure.test])
 
   (:import [czlab.jasal CU XData]))
 
@@ -37,17 +38,17 @@
 
   (testing
     "related to: fn arity"
-    (is (let [[r v?] (countArity f1)]
+    (is (let [[r v?] (m/countArity f1)]
           (and (false? v?)
                (contains? r 0)
                (contains? r 1)
                (contains? r 2)
                (contains? r 3))))
-    (is (let [[r v?] (countArity
+    (is (let [[r v?] (m/countArity
                        (fn [a b]))]
           (and (false? v?)
                (contains? r 2))))
-    (is (let [[r v?] (countArity f2)]
+    (is (let [[r v?] (m/countArity f2)]
           (and (true? v?)
                (contains? r 0)
                (contains? r 1)
@@ -57,46 +58,46 @@
 
   (testing
     "related to: class operations"
-    (is (isChild? Number Integer))
-    (is (isChild? Number (Integer. 3)))
+    (is (m/isChild? Number Integer))
+    (is (m/isChild? Number (Integer. 3)))
 
-    (is (identical? (bytesClass) (class (byte-array 0))))
-    (is (identical? (charsClass) (class (char-array 0))))
+    (is (identical? (m/bytesClass) (class (byte-array 0))))
+    (is (identical? (m/charsClass) (class (char-array 0))))
 
-    (is (isBoolean? (class (boolean true))))
-    (is (isChar? (class (char 3))))
-    (is (isInt? (class (int 3))))
-    (is (isLong? (class (long 3))))
-    (is (isFloat? (class (float 3.2))))
-    (is (isDouble? (class (double 3.2))))
-    (is (isByte? (class (aget (byte-array 1) 0))))
-    (is (isShort? (class (short 3))))
-    (is (isString? (class "")))
-    (is (isBytes? (class (byte-array 0))))
+    (is (m/isBoolean? (class (boolean true))))
+    (is (m/isChar? (class (char 3))))
+    (is (m/isInt? (class (int 3))))
+    (is (m/isLong? (class (long 3))))
+    (is (m/isFloat? (class (float 3.2))))
+    (is (m/isDouble? (class (double 3.2))))
+    (is (m/isByte? (class (aget (byte-array 1) 0))))
+    (is (m/isShort? (class (short 3))))
+    (is (m/isString? (class "")))
+    (is (m/isBytes? (class (byte-array 0))))
 
-    (is (not (isBytes? nil)))
-    (is (not (isChars? nil)))
+    (is (not (m/isBytes? nil)))
+    (is (not (m/isChars? nil)))
 
-    (is (not (nil? (forname "java.lang.String"))))
-    (is (not (nil? (getCldr))))
+    (is (not (nil? (m/forname "java.lang.String"))))
+    (is (not (nil? (m/getCldr))))
 
-    (is (do (setCldr (getCldr)) true))
+    (is (do (m/setCldr (m/getCldr)) true))
 
-    (is (not (nil? (loadClass "java.lang.String"))))
+    (is (not (nil? (m/loadClass "java.lang.String"))))
 
-    (is (ist? XData (objArgs<> "czlab.jasal.XData"
-                                Object ""
-                                Boolean/TYPE false)))
+    (is (c/ist? XData (m/objArgs<> "czlab.jasal.XData"
+                                   Object ""
+                                   Boolean/TYPE false)))
 
-    (is (string? (new<> "java.lang.String")))
+    (is (string? (m/new<> "java.lang.String")))
 
-    (is (= 1 (count (listParents
+    (is (= 1 (count (m/listParents
                       (Class/forName "java.lang.String")))))
 
-    (is (>= (count (listMethods
+    (is (>= (count (m/listMethods
                      (Class/forName "java.lang.String"))) 40))
 
-    (is (>= (count (listFields
+    (is (>= (count (m/listFields
                      (Class/forName "java.lang.String"))) 5)))
 
   (is (string? "That's all folks!")))

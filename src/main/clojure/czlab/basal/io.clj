@@ -406,7 +406,7 @@
         (finally (closeQ os)))
       (do
         (if (> c 0)
-          (.write os bits 0 c))
+          (.write ^OutputStream os bits 0 c))
         (let
           [[f o']
            (if (and (nil? fout)
@@ -433,7 +433,7 @@
         (finally (closeQ wtr)))
       (do
         (if (> c 0)
-          (.write wtr carr 0 c))
+          (.write ^Writer wtr carr 0 c))
         (let
           [[f w]
            (if (and (nil? fout)
@@ -445,19 +445,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn readBytesXData
+(defn rxBytes
   "Read bytes from stream" {:tag XData}
 
-  ([in] (readBytesXData in false))
+  ([in] (rxBytes in false))
   ([in usefile?]
    (slurpb in (if usefile? 1 *membuf-limit*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn readCharsXData
+(defn rxChars
   "Read chars from reader" {:tag XData}
 
-  ([rdr] (readCharsXData rdr false))
+  ([rdr] (rxChars rdr false))
   ([rdr usefile?]
    (slurpc rdr (if usefile? 1 *membuf-limit*))))
 

@@ -8,13 +8,14 @@
 
 (ns czlab.test.basal.misc
 
-  (:use [czlab.basal.resources]
-        [czlab.basal.countries]
-        [czlab.basal.format]
-        [czlab.basal.guids]
-        [czlab.basal.core]
-        [czlab.basal.io]
-        [clojure.test])
+  (:require [czlab.basal.resources :as r]
+            [czlab.basal.countries :as u]
+            [czlab.basal.format :as f]
+            [czlab.basal.guids :as g]
+            [czlab.basal.core :as c]
+            [czlab.basal.io :as i])
+
+  (:use [clojure.test])
 
   (:import [java.util ResourceBundle]))
 
@@ -24,65 +25,64 @@
 
   (testing
     "related to: country codes"
-    (is (= (findCountry "AU") (findCountry "au")))
-    (is (= "Australia" (findCountry "AU")))
-    (is (= "AU" (findCountryCode "Australia")))
-    (is (false? (isUSA? "aa")))
-    (is (and (isUSA? "US") (= (isUSA? "US") (isUSA? "us"))))
-    (is (> (count (listCodes)) 0))
+    (is (= (u/findCountry "AU") (u/findCountry "au")))
+    (is (= "Australia" (u/findCountry "AU")))
+    (is (= "AU" (u/findCountryCode "Australia")))
+    (is (false? (u/isUSA? "aa")))
+    (is (and (u/isUSA? "US") (= (u/isUSA? "US") (u/isUSA? "us"))))
+    (is (> (count (u/listCodes)) 0))
 
-    (is (= (findState "CA") (findState "ca")))
-    (is (= "California" (findState "ca")))
-    (is (= "CA" (findStateCode "California")))
-    (is (> (count (listStates)) 0)))
+    (is (= (u/findState "CA") (u/findState "ca")))
+    (is (= "California" (u/findState "ca")))
+    (is (= "CA" (u/findStateCode "California")))
+    (is (> (count (u/listStates)) 0)))
 
   (testing
     "related to: guids"
-    (is (not= (wwid<>) (wwid<>)))
-    (is (not= (uuid<>) (uuid<>)))
+    (is (not= (g/wwid<>) (g/wwid<>)))
+    (is (not= (c/uuid<>) (c/uuid<>)))
 
-    (is (> (.length (wwid<>)) 0))
-    (is (> (.length (uuid<>)) 0)))
+    (is (> (.length (g/wwid<>)) 0))
+    (is (> (.length (c/uuid<>)) 0)))
 
   (testing
     "related to: formats"
-    (is (string? (writeEdnStr
+    (is (string? (f/writeEdnStr
                    {:a 1 :b {:c {:e "hello"} :d 4}})))
 
-    (is (let [s (writeEdnStr
+    (is (let [s (f/writeEdnStr
                   {:a 1 :b {:c {:e "hello"} :d 4}})
-              t (tempFile)
+              t (i/tempFile)
               _ (spit t s)
-              e (readEdn t)]
-          (deleteQ t)
+              e (f/readEdn t)]
+          (i/deleteQ t)
           (and (string? s)
                (= "hello" (get-in e [:b :c :e])))))
 
-    (is (string? (writeJsonStr
+    (is (string? (f/writeJsonStr
                    {:a 1 :b {:c {:e "hello"} :d 4}})))
 
-    (is (let [s (writeJsonStr
+    (is (let [s (f/writeJsonStr
                   {:a 1 :b {:c {:e "hello"} :d 4}})
-              t (tempFile)
+              t (i/tempFile)
               _ (spit t s)
-              e (readJson t)]
-          (deleteQ t)
+              e (f/readJson t)]
+          (i/deleteQ t)
           (and (string? s)
                (= "hello" (get-in e [:b :c :e]))))))
 
   (testing
     "related to: resource bundles"
     (is (= "hello joe, how is your dawg"
-           (-> (loadResource (resUrl "czlab/basal/etc/Resources_en.properties"))
-               (rstr "test"  "joe" "dawg" ))))
+           (-> (r/loadResource (c/resUrl "czlab/basal/etc/Resources_en.properties"))
+               (r/rstr "test"  "joe" "dawg" ))))
 
     (is (= ["hello joe, how is your dawg" "hello joe, how is your dawg"]
-           (-> (loadResource (resUrl "czlab/basal/etc/Resources_en.properties"))
-               (rstr* ["test"  "joe" "dawg"] ["test2"  "joe" "dawg"] ))))
+           (-> (r/loadResource (c/resUrl "czlab/basal/etc/Resources_en.properties"))
+               (r/rstr* ["test"  "joe" "dawg"] ["test2"  "joe" "dawg"] ))))
 
-    (is (ist? ResourceBundle
-               (getResource "czlab/basal/etc/Resources"))))
-
+    (is (c/ist? ResourceBundle
+               (r/getResource "czlab/basal/etc/Resources"))))
 
   (is (string? "That's all folks!")))
 

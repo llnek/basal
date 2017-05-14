@@ -13,8 +13,8 @@
 
   (:require [czlab.basal.log :as log]
             [clojure.string :as cs]
-            [czlab.basal.core :as bc]
-            [czlab.basal.str :as bs])
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s])
 
   (:import [czlab.basal.core GenericMutable]
            [java.io
@@ -31,13 +31,13 @@
 (defn- isOption? "" [option]
   (and (string? option)
        (not= "--" option)
-       (bs/swAny? option ["--" "-" "/"])))
+       (s/swAny? option ["--" "-" "/"])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- maybeOption "" [option key?]
   (if (isOption? option)
-    (bc/if-some+
+    (c/if-some+
       [s (cs/replace option
                      #"^(-|/)+" "")]
       (if key? (keyword s) s))))
@@ -59,7 +59,7 @@
                   more
                   (cons p2 more)))
          (recur (assoc! options o1 p2) more))
-       (vector (bc/pcoll! options)
+       (vector (c/pcoll! options)
                (if (= "--" p1)
                  (if p2 (cons p2 more)) args))))))
 
@@ -76,19 +76,19 @@
   [in]
   (let [[ms bf]
         (loop [c (rdr in)
-               bf (bs/strbf<>)]
+               bf (s/strbf<>)]
           (let
             [m (cond
                  (or (== c -1) (== c 4)) #{:quit :break}
                  (== c (int \newline)) #{:break}
                  (or (== c (int \backspace))
                      (== c (int \return)) (== c 27)) nil
-                 :else (bc/do->nil (.append bf (char c))))]
-            (if (bc/in? m :break)
+                 :else (c/do->nil (.append bf (char c))))]
+            (if (c/in? m :break)
               [m bf]
               (recur (rdr in) bf))))]
     (if-not
-      (bc/in? ms :quit) (bs/strim bf))))
+      (c/in? ms :quit) (s/strim bf))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -100,19 +100,19 @@
    props answer]
 
   (if (nil? answer)
-    (bc/do->nil (.write cout "\n"))
-    (let [rc (bs/stror answer default)]
+    (c/do->nil (.write cout "\n"))
+    (let [rc (s/stror answer default)]
       (cond
         ;;if required to answer, repeat the question
-        (and (bs/nichts? rc) must?)
+        (and (s/nichts? rc) must?)
         id
         (keyword? result)
-        (do (bc/setf! props
+        (do (c/setf! props
                       result rc) next)
         (fn? result)
         (let [[n p]
               (result rc @props)]
-          (doto props bc/wipe! (bc/copy* p))
+          (doto props c/wipe! (c/copy* p))
           (if (nil? n) ::caio!! n))
 
         :else :caio!!))))
@@ -131,10 +131,10 @@
           (str question
                (if (:must? cmdQ) "*") "? "))
   ;; choices ?
-  (if (bs/hgl? choices)
+  (if (s/hgl? choices)
     (.write cout (str "[" choices "]")))
   ;; defaults ?
-  (if (bs/hgl? default)
+  (if (s/hgl? default)
     (.write cout (str "(" default ")")))
   (doto cout (.write " ") .flush)
   ;; get the input from user

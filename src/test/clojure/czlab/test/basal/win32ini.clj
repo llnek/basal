@@ -8,9 +8,10 @@
 
 (ns czlab.test.basal.win32ini
 
-  (:use [czlab.basal.core]
-        [czlab.basal.ini]
-        [clojure.test])
+  (:require [czlab.basal.core :as c]
+            [czlab.basal.ini :as n])
+
+  (:use [clojure.test])
 
   (:import [czlab.jasal Win32Conf]))
 
@@ -19,7 +20,7 @@
 (def
   ^{:private true
    :tag Win32Conf}
-  INIFILE (w32ini<> (resUrl "czlab/basal/etc/sample.ini")))
+  INIFILE (n/w32ini<> (c/resUrl "czlab/basal/etc/sample.ini")))
 
 ;;(println "->>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 ;;(.dbgShow INIFILE)

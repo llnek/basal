@@ -8,12 +8,12 @@
 
 (ns czlab.test.basal.procutils
 
-  (:require [clojure.java.io :as io])
+  (:require [czlab.basal.scheduler :as s]
+            [czlab.basal.core :as c]
+            [clojure.java.io :as io]
+            [czlab.basal.process :as p])
 
-  (:use [czlab.basal.scheduler]
-        [czlab.basal.core]
-        [czlab.basal.process]
-        [clojure.test])
+  (:use [clojure.test])
 
   (:import [java.io File]
            [czlab.jasal
@@ -25,20 +25,20 @@
 ;;(set! *warn-on-reflection* true)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^{:private true :tag File} CUR_FP (io/file (sysTmpDir) (str (now<>))))
+(def ^{:private true :tag File} CUR_FP (io/file (c/sysTmpDir) (str (c/now<>))))
 (def ^:private SCD (atom nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- setup []
-  (let [s (scheduler<>)]
+  (let [s (s/scheduler<>)]
     (reset! SCD s)
     (.activate s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- tearDown []
-  (. ^Schedulable @SCD deactivate)
+  (.deactivate ^Schedulable @SCD)
   (reset! SCD nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,55 +52,53 @@
   (testing
     "related to: process scheduling"
 
-    (is (do->true (setup)))
+    (is (c/do->true (setup)))
 
     (is (== 1
             (let [x (atom 0)]
-              (. ^Schedulable
-                 @SCD
-                 run
-                 (run-able<> (swap! x inc)))
-              (pause 500)
+              (.run ^Schedulable
+                    @SCD
+                    (c/run-able<> (swap! x inc)))
+              (c/pause 500)
               @x)))
 
     (is (== 1
             (let
               [x (atom 0)]
-              (. ^Schedulable
+              (.postpone ^Schedulable
                  @SCD
-                 postpone
-                 (run-able<> (swap! x inc)) 500)
-              (pause 1000)
+                 (c/run-able<> (swap! x inc)) 500)
+              (c/pause 1000)
               @x)))
 
     (is (== 1
             (let
               [^Schedulable s @SCD
                x (atom 0)
-               r (run-able+id<>
+               r (c/run-able+id<>
                    "117" (swap! x inc))]
-              (. s hold r)
-              (pause 500)
-              (. s wakeup r)
-              (pause 500)
+              (.hold s r)
+              (c/pause 500)
+              (.wakeup s r)
+              (c/pause 500)
               @x)))
 
     (is (do
-          (async!
+          (p/async!
             #(spit CUR_FP "123"))
-          (pause 500)
+          (c/pause 500)
           (and (.exists CUR_FP)
                (>= (.length CUR_FP) 3))))
 
     (is (do
-          (delayExec
+          (p/delayExec
             #(spit CUR_FP "123456") 500)
-          (pause 1000)
+          (c/pause 1000)
           (and (.exists CUR_FP)
                (>= (.length CUR_FP) 6))))
 
     (is (do
-          (syncBlockExec
+          (p/syncBlockExec
             (String. "lock")
             (fn [a & xs]
               (spit CUR_FP
@@ -109,9 +107,9 @@
           (and (.exists CUR_FP)
                (>= (.length CUR_FP) 9))))
 
-    (is (> (.length (processPid)) 0))
+    (is (> (.length (p/processPid)) 0))
 
-    (is (do->true (tearDown))))
+    (is (c/do->true (tearDown))))
 
   (is (string? "That's all folks!")))
 

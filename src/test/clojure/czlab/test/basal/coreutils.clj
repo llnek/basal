@@ -8,15 +8,15 @@
 
 (ns czlab.test.basal.coreutils
 
-  (:require [czlab.basal.logging :as log]
+  (:require [czlab.basal.log :as log]
             [clojure.string :as cs]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [czlab.basal.cmdline :as cl]
+            [czlab.basal.core :as c])
 
-  (:use [czlab.basal.cmdline]
-        [czlab.basal.core]
-        [clojure.test])
+  (:use [clojure.test])
 
-  (:import [czlab.basal.core GenericMutable VolatileMutable]
+  (:import [czlab.basal.core Muable GenericMutable VolatileMutable]
            [czlab.jasal Idable DataError]
            [java.security SecureRandom]
            [clojure.lang IDeref]
@@ -60,38 +60,38 @@
   (. dummyProperties put "2" "hello${PATH}")
   (. dummyProperties put "3" "${user.name}${PATH}")))
 
-(decl-special-enum YYY a 1 b (+ 2 3))
-(decl-generic-enum xxx 0 a b c)
+(c/decl-special-enum YYY a 1 b (+ 2 3))
+(c/decl-generic-enum xxx 0 a b c)
 
-(decl-atomic TestEnt
+(c/decl-atomic TestEnt
   czlab.jasal.Idable
   (id [_] (:id @_data))
   Object
-  (toString [_] (str (id?? _)))
+  (toString [_] (str (c/id?? _)))
   (hashCode [_] 999)
   czlab.jasal.Initable
   (init [_ arg] (swap! _data assoc :id arg)))
 
-(decl-volatile TestCtxV
+(c/decl-volatile TestCtxV
   czlab.jasal.Idable
   (id [me] (:id @me)))
 
-(decl-mutable TestCtx
+(c/decl-mutable TestCtx
   czlab.jasal.Idable
   (id [me] (:id @me)))
 
-(decl-object TestClass
+(c/decl-object TestClass
   Idable
   (id [_] (:id _)))
 
 (def ^:private
-  TestVT-C (vtbl* :c (fn [_ a b] (* a b))))
+  TestVT-C (c/vtbl* :c (fn [_ a b] (* a b))))
 
 (def ^:private
-  TestVT-D (vtbl** TestVT-C :d (fn [_ a b] (/ a b))))
+  TestVT-D (c/vtbl** TestVT-C :d (fn [_ a b] (/ a b))))
 
 (def ^:private
-  TestVT-E (vtbl**
+  TestVT-E (c/vtbl**
              TestVT-D
              :c (fn [_ a b] (- a b)) :e (fn [_ a b] (+ a b))))
 
@@ -101,284 +101,276 @@
 
   (testing
     "related to: core functions"
-    (is (let [a (vargs String ["a" "b"])]
+    (is (let [a (c/vargs String ["a" "b"])]
           (== 2 (alength #^"[Ljava.lang.String;" a))))
 
-    (is (map? (pcoll! (transient {}))))
+    (is (map? (c/pcoll! (transient {}))))
 
-    (is (== 1 (:a (preduce<map> #(assoc! %1 :a %2) [1]))))
+    (is (== 1 (:a (c/preduce<map> #(assoc! %1 :a %2) [1]))))
 
-    (is (== 1 (last (preduce<vec> #(conj! %1 %2) [1]))))
+    (is (== 1 (last (c/preduce<vec> #(conj! %1 %2) [1]))))
 
     (is (= "a"
-           (sreduce<>
+           (c/sreduce<>
              #(.append ^StringBuilder %1 %2) ["a"])))
 
-    (is (= "a" (.getMessage (exp! Exception "a"))))
+    (is (= "a" (.getMessage (c/exp! Exception "a"))))
 
-    (is (thrown? IOException (trap! IOException "a")))
+    (is (thrown? IOException (c/trap! IOException "a")))
 
-    (is (let [a (vargs* String "a" "b")]
+    (is (let [a (c/vargs* String "a" "b")]
           (== 2 (alength #^"[Ljava.lang.String;" a))))
 
-    (is (thrown? UnsupportedOperationException (throwUOE "%s" "a")))
+    (is (thrown? UnsupportedOperationException (c/throwUOE "%s" "a")))
 
-    (is (thrown? IllegalArgumentException (throwBadArg "%s" "a")))
+    (is (thrown? IllegalArgumentException (c/throwBadArg "%s" "a")))
 
-    (is (thrown? IOException (throwIOExp (Exception.))))
+    (is (thrown? IOException (c/throwIOExp (Exception.))))
 
-    (is (thrown? IOException (throwIOE "%s" "a")))
+    (is (thrown? IOException (c/throwIOE "%s" "a")))
 
-    (is (thrown? DataError (throwBadData "bad")))
+    (is (thrown? DataError (c/throwBadData "bad")))
 
-    (is (= ::yo (getTypeId (with-meta {} {:typeid ::yo}))))
+    (is (= ::yo (c/getTypeId (with-meta {} {:typeid ::yo}))))
 
-    ;;(is (= "a" (try!! "a" (let [] (/ 1 0)))))
+    (is (instance? Runnable (c/run-able<> (let [] 0))))
 
-    ;;(is (= "a" (trye! "a" (let [] (/ 1 0)))))
+    (is (= "a" (c/when-some+ [a "a"] a)))
 
-    ;;(is (nil? (try! (let [] (/ 1 0)))))
+    (is (nil? (c/when-some+ [a ""] a)))
 
-    (is (instance? Runnable (run-able<> (let [] 0))))
+    (is (= "a" (c/if-some+ [a "a"] a)))
 
-    (is (= "a" (when-some+ [a "a"] a)))
+    (is (= "b" (c/if-some+ [a ""] a "b")))
 
-    (is (nil? (when-some+ [a ""] a)))
+    (is (== 3 (c/when-fn? [f inc] nil (f 2))))
+    (is (== 6 (c/if-fn? [f "x"] (f 2) (inc 5))))
+    (is (== 3 (c/if-fn? [f inc] (f 2))))
 
-    (is (= "a" (if-some+ [a "a"] a)))
+    (is (c/notin? #{:a :b} :c))
 
-    (is (= "b" (if-some+ [a ""] a "b")))
+    (is (c/in? #{:a :b} :a))
 
-    (is (== 3 (when-fn? [f inc] nil (f 2))))
-    (is (== 6 (if-fn? [f "x"] (f 2) (inc 5))))
-    (is (== 3 (if-fn? [f inc] (f 2))))
+    (is (false? (c/do->false nil nil "")))
 
-    (is (notin? #{:a :b} :c))
+    (is (nil? (c/do->nil nil nil "")))
 
-    (is (in? #{:a :b} :a))
+    (is (true? (c/do->true nil nil "")))
 
-    (is (false? (do->false nil nil "")))
+    (is (c/ist? String ""))
 
-    (is (nil? (do->nil nil nil "")))
+    (is (== 3 (c/let-when [a 1 b 2] (pos? a) (+ a b))))
 
-    (is (true? (do->true nil nil "")))
-
-    (is (ist? String ""))
-
-    (is (== 3 (let-when [a 1 b 2] (pos? a) (+ a b))))
-
-    (is (nil? (let-when [a 1 b 0] (pos? b) (+ a b))))
+    (is (nil? (c/let-when [a 1 b 0] (pos? b) (+ a b))))
 
     (is (true? (let [x (atom 9)
                      y (atom false)]
-                 (do-with [a (+ 3 4)]
+                 (c/do-with [a (+ 3 4)]
                           (->> (-> (+ a 2) (* 3))
                                (reset! x))
                           (if (= 27 @x)
                             (reset! y true)))
                  @y)))
 
-    (is (ist? String (cast? String (.cast String "a"))))
+    (is (c/ist? String (c/cast? String (.cast String "a"))))
 
-    (is (cexp? (Exception. "a")))
+    (is (c/cexp? (Exception. "a")))
 
     (is (let [x (Exception. "ho" nil)
               e (Exception. "hi" nil)]
-          (nil? (some.. e getCause getCause))))
+          (nil? (c/some** e getCause getCause))))
 
     (is (let [y (Exception. "yo")
               x (Exception. "ho" y)
               e (Exception. "hi" x)]
-          (= "yo" (some.. e getCause getCause getMessage))))
+          (= "yo" (c/some** e getCause getCause getMessage))))
 
-    (is (== 2 (some.. "hi" toString length)))
+    (is (== 2 (c/some** "hi" toString length)))
 
-    (is (false? (.isFirstCall (doto->> (monoFlop<>)
+    (is (false? (.isFirstCall (c/doto->> (c/monoFlop<>)
                                      .isFirstCall
                                      .isFirstCall))))
 
-    (is (.isFirstCall (monoFlop<>)))
+    (is (.isFirstCall (c/monoFlop<>)))
 
-    (is (let [w (watch<>) _ (Thread/sleep 1000)
+    (is (let [w (c/watch<>) _ (Thread/sleep 1000)
               m (.elapsedMillis w) n (.elapsedNanos w)]
           (and (>= m 1000) (>= n 1000000 ))))
 
-    (is (== 3 (count (rnil [1 2 nil 3]))))
+    (is (== 3 (count (c/rnil [1 2 nil 3]))))
 
-    (is (not (vector? (rnil [1 2 nil 3]))))
+    (is (not (vector? (c/rnil [1 2 nil 3]))))
 
-    (is (== 3 (count (flatnil [1 2 nil 3]))))
+    (is (== 3 (count (c/flatnil [1 2 nil 3]))))
 
-    (is (vector? (flatnil [1 2 nil 3])))
+    (is (vector? (c/flatnil [1 2 nil 3])))
 
-    (is (not (szero? nil)))
-    (is (not (sneg? nil)))
-    (is (not (spos? nil)))
-    (is (snneg? 1))
+    (is (not (c/szero? nil)))
+    (is (not (c/sneg? nil)))
+    (is (not (c/spos? nil)))
+    (is (c/snneg? 1))
 
-    (is (> (.indexOf (envVar "PATH") "/bin") 0))
+    (is (> (.indexOf (c/envVar "PATH") "/bin") 0))
 
-    ;;(is (= ::yo (asFQKeyword "yo")))
+    (is (not (c/isFQKeyword? :a)))
+    (is (c/isFQKeyword? ::a))
 
-    (is (not (isFQKeyword? :a)))
-    (is (isFQKeyword? ::a))
+    (is (< (.indexOf (c/jid<>) ":\\-") 0))
 
-    (is (< (.indexOf (jid<>) ":\\-") 0))
+    (is (let [r (c/randSign)] (or (pos? r)(neg? r))))
 
-    (is (let [r (randSign)] (or (pos? r)(neg? r))))
+    (is (let [b (c/randBool)] (or (false? b)(true? b))))
 
-    (is (let [b (randBool)] (or (false? b)(true? b))))
+    (is (c/ist? SecureRandom (c/rand<>)))
+    (is (c/ist? Date (c/date<>)))
 
-    (is (ist? SecureRandom (rand<>)))
-    (is (ist? Date (date<>)))
-
-    (is (ist? Charset (toCharset "utf-16")))
-    (is (> (.indexOf (fpath "/tmp/abc/def.txt") "/abc/") 0))
-    (is (> (.indexOf (fpath (io/file "/t/a/d.txt")) "/a/") 0))
+    (is (c/ist? Charset (c/toCharset "utf-16")))
+    (is (> (.indexOf (c/fpath "/tmp/abc/def.txt") "/abc/") 0))
+    (is (> (.indexOf (c/fpath (io/file "/t/a/d.txt")) "/a/") 0))
     (is (= "joe"
-           (do (sysProp! "hello" "joe") (sysProp "hello"))))
+           (do (c/sysProp! "hello" "joe") (c/sysProp "hello"))))
 
-    (is (ist? File (homeDir)))
-    (is (not-empty (getUser)))
-    (is (ist? File (getCwd)))
+    (is (c/ist? File (c/homeDir)))
+    (is (not-empty (c/getUser)))
+    (is (c/ist? File (c/getCwd)))
 
-    (is (= "a/b/c" (trimLastPathSep "a/b/c/")))
-    (is (= "a\\b" (trimLastPathSep "a\\b\\")))
+    (is (= "a/b/c" (c/trimLastPathSep "a/b/c/")))
+    (is (= "a\\b" (c/trimLastPathSep "a\\b\\")))
 
-    (is (let [s (deserialize (serialize "a"))]
+    (is (let [s (c/deserialize (c/serialize "a"))]
           (and (string? s)
                (= "a" s))))
 
-    (is (= "java.lang.String" (getClassname String)))
-    (is (= "java.lang.String" (getClassname "")))
-    (is (= "String" (gczn String)))
+    (is (= "java.lang.String" (c/getClassname String)))
+    (is (= "java.lang.String" (c/getClassname "")))
+    (is (= "String" (c/gczn String)))
 
-    (is (> (.indexOf (filePath "c/tmp/a.txt") "/tmp/") 0))
+    (is (> (.indexOf (c/fpath "c/tmp/a.txt") "/tmp/") 0))
     (is (> (.indexOf
-             (filePath (io/file "c/tmp/a.txt")) "/tmp/") 0))
+             (c/fpath (io/file "c/tmp/a.txt")) "/tmp/") 0))
 
-    (is (if-not (isWindows?)
-          (or (isLinux?)(isMacOS?)) true))
-    (is (if (isMacOS?) (not (isWindows?)) true))
-    (is (if (isLinux?) (not (isWindows?)) true))
+    (is (if-not (c/isWindows?)
+          (or (c/isLinux?)(c/isMacOS?)) true))
+    (is (if (c/isMacOS?) (not (c/isWindows?)) true))
+    (is (if (c/isLinux?) (not (c/isWindows?)) true))
 
-    (is (and (= -1 (numSign -233))
-             (= 1 (numSign 675))
-             (= 0 (numSign 0))))
+    (is (and (= -1 (c/numSign -233))
+             (= 1 (c/numSign 675))
+             (= 0 (c/numSign 0))))
 
-    (is (and (== 911 (convLong "911"))
-             (== 111 (convLong nil 111))))
+    (is (and (== 911 (c/convLong "911"))
+             (== 111 (c/convLong nil 111))))
 
-    (is (and (== 911 (convInt "911"))
-             (== 111 (convInt nil 111))))
+    (is (and (== 911 (c/convInt "911"))
+             (== 111 (c/convInt nil 111))))
 
-    (is (and (> (convDouble "911.123") 911.0)
-             (> (convDouble nil 111.333) 111.0)))
+    (is (and (> (c/convDouble "911.123") 911.0)
+             (> (c/convDouble nil 111.333) 111.0)))
 
-    (is (and (convBool "true")
-             (false? (convBool "false"))
-             (false? (convBool "555"))))
+    (is (and (c/convBool "true")
+             (false? (c/convBool "false"))
+             (false? (c/convBool "555"))))
 
     (is (= "AAA"
            (let [p (-> (.getBytes "a=AAA")
                        ByteArrayInputStream.
-                       loadJavaProps)]
+                       c/loadJavaProps)]
              (.getProperty p "a"))))
 
     (is (= "AAA"
            (let [p (-> (doto (io/file
-                               (sysProp "java.io.tmpdir") (jid<>))
+                               (c/sysProp "java.io.tmpdir") (c/jid<>))
                          (spit "a=AAA"))
-                       loadJavaProps)]
+                       c/loadJavaProps)]
              (.getProperty p "a"))))
 
-    (is (= "aaa" (strit (.toCharArray "aaa"))))
-    (is (= "aaa" (strit "aaa")))
-    (is (= "" (strit nil)))
-    (is (= "3" (strit 3)))
+    (is (= "aaa" (c/strit (.toCharArray "aaa"))))
+    (is (= "aaa" (c/strit "aaa")))
+    (is (= "" (c/strit nil)))
+    (is (= "3" (c/strit 3)))
 
     (is (= "aaa"
-           (strit (.getBytes "aaa" "utf-8") "utf-8")))
+           (c/strit (.getBytes "aaa" "utf-8") "utf-8")))
 
-    (is (== 97 (aget (bytesit "a" "utf-8") 0)))
+    (is (== 97 (aget (c/bytesit "a" "utf-8") 0)))
 
-    (is (= \e (aget (charsit "hello") 1)))
+    (is (= \e (aget (c/charsit "hello") 1)))
 
     (is (with-open
-          [s (resStream "czlab/basal/etc/sample.ini")]
-          (ist? InputStream s)))
+          [s (c/resStream "czlab/basal/etc/sample.ini")]
+          (c/ist? InputStream s)))
 
-    (is (ist? URL (resUrl "czlab/basal/etc/sample.ini")))
+    (is (c/ist? URL (c/resUrl "czlab/basal/etc/sample.ini")))
 
-    (is (string? (resStr "czlab/basal/etc/sample.ini")))
+    (is (string? (c/resStr "czlab/basal/etc/sample.ini")))
 
-    (is (> (alength (resBytes "czlab/basal/etc/sample.ini")) 0))
+    (is (> (alength (c/resBytes "czlab/basal/etc/sample.ini")) 0))
 
     (is (= "aaa"
-           (strit (inflate (deflate (bytesit "aaa"))))))
+           (c/strit (c/inflate (c/deflate (c/bytesit "aaa"))))))
 
     (is (not (.endsWith
-               (normalize "/a/b/c!@#*.dat") "!@#*")))
+               (c/normalize "/a/b/c!@#*.dat") "!@#*")))
 
-    (is (<= (now<>) (now<>)))
+    (is (<= (c/now<>) (c/now<>)))
 
-    (is (= "/tmp/a.txt" (getFPath "/tmp/a.txt")))
+    (is (= "/tmp/a.txt" (c/getFPath "/tmp/a.txt")))
     (is (= "/tmp/a.txt"
-           (.getPath (fmtFileUrl "/tmp/a.txt"))))
+           (.getPath (c/fmtFileUrl "/tmp/a.txt"))))
     (is (= "/tmp/a.txt"
-           (.getPath (fmtFileUrl "file:/tmp/a.txt"))))
+           (.getPath (c/fmtFileUrl "file:/tmp/a.txt"))))
 
-    (is (thrown? Throwable (test-isa "reason" InputStream String)))
-    (is (thrown? Throwable (test-isa "reason" InputStream "")))
-    (is (thrown? Throwable (test-some "reason" nil)))
-    (is (thrown? Throwable (test-cond "reason" (= 1 2))))
-    (is (thrown? Throwable (assert-not (= 1 1))))
-    (is (thrown? Throwable (test-hgl "reason" "")))
+    (is (thrown? Throwable (c/test-isa "reason" InputStream String)))
+    (is (thrown? Throwable (c/test-isa "reason" InputStream "")))
+    (is (thrown? Throwable (c/test-some "reason" nil)))
+    (is (thrown? Throwable (c/test-cond "reason" (= 1 2))))
+    (is (thrown? Throwable (c/assert-not (= 1 1))))
+    (is (thrown? Throwable (c/test-hgl "reason" "")))
 
-    (is (do->true (test-pos0 "reason" 0)))
-    (is (do->true (test-pos0 "reason" 1)))
-    (is (thrown? Throwable (test-pos0 "reason" -1)))
+    (is (c/do->true (c/test-pos0 "reason" 0)))
+    (is (c/do->true (c/test-pos0 "reason" 1)))
+    (is (thrown? Throwable (c/test-pos0 "reason" -1)))
 
-    (is (do->true (test-pos "reason" 1)))
-    (is (thrown? Throwable (test-pos "reason" 0)))
+    (is (c/do->true (c/test-pos "reason" 1)))
+    (is (thrown? Throwable (c/test-pos "reason" 0)))
 
-    (is (do->true (test-seq+ "reason" [1 2 3])))
-    (is (thrown? Throwable (test-seq+ "reason" [])))
+    (is (c/do->true (c/test-seq+ "reason" [1 2 3])))
+    (is (thrown? Throwable (c/test-seq+ "reason" [])))
 
     (is (let [a (Exception.) b (Exception. a)
-              c (Exception. b) r (rootCause c)]
+              c (Exception. b) r (c/rootCause c)]
           (identical? a r)))
 
     (is (= "a" (let [a (Exception. "a") b (Exception. a)
                      c (Exception. b)]
-                 (rootCauseMsg c))))
+                 (c/rootCauseMsg c))))
 
-    (is (= "a,p,z" (sortJoin "," ["z" "p" "a"])))
+    (is (= "a,p,z" (c/sortJoin "," ["z" "p" "a"])))
 
     (is (= "A" (let [m (doto (HashMap.)
                          (.put "a" "A")
-                         (.put "z" "Z"))] (:a (pmap<> m)))))
+                         (.put "z" "Z"))] (:a (c/pmap<> m)))))
 
     (is (== 1 (:a (.deref (VolatileMutable. {:a 1})))))
     (is (== 1 (:a (.deref (GenericMutable. {:a 1})))))
 
-    (is (string? (dumpStk (Exception. "a"))))
+    (is (string? (c/dumpStk (Exception. "a"))))
 
-    (is (not= \: (.charAt (stripNSPath (str ::yo)) 0)))
+    (is (not= \: (.charAt (c/stripNSPath (str ::yo)) 0)))
 
-    (is (ist? TimerTask (tmtask<> #(let [] 1))))
-    (is (do->true (cancelTimerTask (tmtask<> #(let [] 1)))))
+    (is (c/ist? TimerTask (c/tmtask<> #(let [] 1))))
+    (is (c/do->true (c/cancelTimerTask (c/tmtask<> #(let [] 1)))))
 
-    (is (== 9 (do (setf! MUBLE :a 9)
+    (is (== 9 (do (c/setf! MUBLE :a 9)
                   (get @MUBLE :a))))
 
-    (is (nil? (do (unsetf! MUBLE :b)
+    (is (nil? (do (c/unsetf! MUBLE :b)
                   (get @MUBLE :b))))
 
-    (is (== 7 (do (get?setf! MUBLE :b 7)
+    (is (== 7 (do (c/get?setf! MUBLE :b 7)
                   (get @MUBLE :b))))
 
-    (is (== 7 (do (get?setf! MUBLE :b 6)
+    (is (== 7 (do (c/get?setf! MUBLE :b 6)
                   (get @MUBLE :b))))
 
     (is (string? (pr-str @MUBLE)))
@@ -392,7 +384,7 @@
 
     (is (== 4 (count (seq @MUBLE))))
 
-    (is (== 2 (do (copy* MUBLE MUBLE)
+    (is (== 2 (do (c/copy* MUBLE MUBLE)
                   (get @MUBLE :z))))
 
     (is (== 6 (do (.wipe! MUBLE)
@@ -405,109 +397,109 @@
 
     (is (nil? (do (.wipe! MUBLE) (get @MUBLE :q))))
 
-    (is (thrown? DataError (normalizeEmail "xxxx@@@ddddd")))
-    (is (thrown? DataError (normalizeEmail "xxxx")))
-    (is (= "abc@abc.com" (normalizeEmail "abc@ABC.cOm")))
+    (is (thrown? DataError (c/normalizeEmail "xxxx@@@ddddd")))
+    (is (thrown? DataError (c/normalizeEmail "xxxx")))
+    (is (= "abc@abc.com" (c/normalizeEmail "abc@ABC.cOm")))
 
-    (is (== 1 (.get ^Map (convToJava {:a 1}) "a")))
-    (is (== 3 (.get ^List (convToJava [1 2 3]) 2)))
-    (is (.contains ^Set (convToJava #{1 2 3}) 3))
+    (is (== 1 (.get ^Map (c/convToJava {:a 1}) "a")))
+    (is (== 3 (.get ^List (c/convToJava [1 2 3]) 2)))
+    (is (.contains ^Set (c/convToJava #{1 2 3}) 3))
 
-    (is (== 1 (seqint2)))
-    (is (== 1 (seqint)))
-    (is (== 2 (seqint2)))
-    (is (== 2 (seqint)))
+    (is (== 1 (c/seqint2)))
+    (is (== 1 (c/seqint)))
+    (is (== 2 (c/seqint2)))
+    (is (== 2 (c/seqint)))
 
-    (is (= "23\n" (with-out-str (prn!! "%d%d" 2 3))))
-    (is (= "23" (with-out-str (prn! "%d%d" 2 3))))
+    (is (= "23\n" (with-out-str (c/prn!! "%d%d" 2 3))))
+    (is (= "23" (with-out-str (c/prn! "%d%d" 2 3))))
 
-    (is (spos? (countCpus)))
+    (is (c/spos? (c/countCpus)))
 
-    (is (let [s (now<>)
-              _ (pause 1000)
-              z (now<>)]
+    (is (let [s (c/now<>)
+              _ (c/pause 1000)
+              z (c/now<>)]
           (>= z (+ s 1000))))
 
-    (is (> (.length (sysTmpDir)) 0))
+    (is (> (.length (c/sysTmpDir)) 0))
 
-    (is (> (seqint2) 0))
-    (is (> (seqint) 0)))
+    (is (> (c/seqint2) 0))
+    (is (> (c/seqint) 0)))
 
   (testing
     "cmdline options"
-    (is (let [[o v] (parseOptions ["--a" "b" "/c" "d" "-e" "f" "g"])]
+    (is (let [[o v] (cl/parseOptions ["--a" "b" "/c" "d" "-e" "f" "g"])]
           (and (= "b" (:a o))
                (= "d" (:c o))
                (= "f" (:e o))
                (= "g" (cs/join "" v)))))
-    (is (let [[o v] (parseOptions ["--" "a" "b" "c"])]
+    (is (let [[o v] (cl/parseOptions ["--" "a" "b" "c"])]
           (and (empty? o)
                (= "abc" (cs/join "" v)))))
-    (is (let [[o v] (parseOptions ["a" "b" "c"])]
+    (is (let [[o v] (cl/parseOptions ["a" "b" "c"])]
           (and (empty? o)
                (= "abc" (cs/join "" v))))))
 
   (testing
     "related to: vtable"
     (is (let []
-          (= 2 (rvtbl TestVT-E :c 5 3))))
+          (= 2 (c/rvtbl TestVT-E :c 5 3))))
     (is (let []
-          (= 15 (rvtbl' TestVT-E :c 5 3))))
+          (= 15 (c/rvtbl' TestVT-E :c 5 3))))
     (is (let []
-          (nil? (rvtbl TestVT-D :e 3 5))))
+          (nil? (c/rvtbl TestVT-D :e 3 5))))
     (is (let [z {:z 99}
-              x (svtbl TestVT-C z)]
-          (= 99 (rvtbl x :z 3 5))))
+              x (c/svtbl TestVT-C z)]
+          (= 99 (c/rvtbl x :z 3 5))))
     (is (let [c {:a (fn [_ a b] (+ a b))}]
-          (= 8 (rvtbl c :a 3 5)))))
+          (= 8 (c/rvtbl c :a 3 5)))))
 
   (testing
     "related to: entity"
-    (is (let [e (object<> TestClass {:a 999})]
+    (is (let [e (c/object<> TestClass {:a 999})]
           (= 999 (:a e))))
-    (is (let [e (object<> TestClass {})]
+    (is (let [e (c/object<> TestClass {})]
           (nil? (:a e))))
-    (is (let [e (object<> TestClass {:id 8})]
-          (= 8 (id?? e))))
-    (is (let [e (mutable<> TestCtxV {:id 8})]
-          (= 8 (id?? e))))
-    (is (let [e (mutable<> TestCtx {:id 8})]
-          (setf! e :z 9)
-          (copy* e {:w 3 :q 4})
-          (get?setf! e :z 444)
-          (get?setf! e :k 444)
-          (and (= 8 (id?? e))
+    (is (let [e (c/object<> TestClass {:id 8})]
+          (= 8 (c/id?? e))))
+    (is (let [e (c/mutable<> TestCtxV {:id 8})]
+          (= 8 (c/id?? e))))
+    (is (let [e (c/mutable<> TestCtx {:id 8})]
+          (c/setf! e :z 9)
+          (c/copy* e {:w 3 :q 4})
+          (c/get?setf! e :z 444)
+          (c/get?setf! e :k 444)
+          (and (= 8 (c/id?? e))
                (= 7 (+ (:w @e) (:q @e)))
                (= 9 (:z @e))
                (= 444 (:k @e)))))
-    (is (let [e (atomic<> TestEnt)]
+    (is (let [e (c/atomic<> TestEnt)]
           (.init e "hello")
           (= "hello" (.id e))))
-    (is (let [e (atomic<> TestEnt)]
+    (is (let [e (c/atomic<> TestEnt)]
           (.init e "hello")
-          (alter-atomic e update-in [:w] assoc :y 9)
+          (c/alter-atomic e update-in [:w] assoc :y 9)
           (= 9 (get-in @e [:w :y]))))
-    (is (let [e (atomic<> TestEnt)]
-          (alter-atomic e assoc :a 3 :id 4)
+    (is (let [e (c/atomic<> TestEnt)]
+          (c/alter-atomic e assoc :a 3 :id 4)
           (and (= 4 (.id e))
                (= 999 (.hashCode e))
                (= 3 (:a @e))))))
 
   (testing
     "extra macros"
-    (is (= "hello" (id?? idobj)))
-    (is (= ::b (lookup-enum-str xxx "czlab.test.basal.coreutils/b")))
-    (is (= "czlab.test.basal.coreutils/a" (get-enum-str xxx ::a)))
-    (is (= ::c (lookup-enum-int xxx 2)))
-    (is (self? MUBLE MUBLE))
-    (is (!self? MUBLE VMU))
-    (is (!true? false))
-    (is (!false? true))
-    (is (not (!true? true)))
-    (is (not (!false? false)))
-    (is (= (try!-let [a 3 b 4]  (-> (inc a) (+ b)))
+    (is (= "hello" (c/id?? idobj)))
+    (is (= ::b (c/lookup-enum-str xxx "czlab.test.basal.coreutils/b")))
+    (is (= "czlab.test.basal.coreutils/a" (c/get-enum-str xxx ::a)))
+    (is (= ::c (c/lookup-enum-int xxx 2)))
+    (is (c/self? MUBLE MUBLE))
+    (is (c/!self? MUBLE VMU))
+    (is (c/!true? false))
+    (is (c/!false? true))
+    (is (not (c/!true? true)))
+    (is (not (c/!false? false)))
+    (is (= (c/try!-let [a 3 b 4]  (-> (inc a) (+ b)))
            8))
-    (is (= (let-try [a 3 b "x"] (let [z (+ 3 a)] (inc z)))
+    (is (= (c/let-try [a 3 b "x"] (let [z (+ 3 a)] (inc z)))
            7)))
 
   (is (string? "that's all folks!")))

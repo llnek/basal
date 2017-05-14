@@ -417,11 +417,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro some.. "Safely handle nil"
+(defmacro some** "Safely handle nil"
   ([x form]
    `(let [x# ~x] (if-not (nil? x#) (. x# ~form))))
   ([x form & more]
-   `(let [x# ~x] (if-not (nil? x#) (some.. (. x# ~form) ~@more)))))
+   `(let [x# ~x] (if-not (nil? x#) (some** (. x# ~form) ~@more)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -758,10 +758,6 @@
     (nil? obj) ""
     (ist? Class obj) (.getName ^Class obj)
     :else (getClassname (class obj))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro filePath "Get the file path" [aFile] `(fpath ~aFile))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1179,14 +1175,14 @@
      [~(with-meta '_data {dtype true})]
   ~'czlab.basal.core.Muable
   ~'(get?setf! [me k v]
-      (when-not (contains? _data k) (setf! me k v)) (get _data k))
+      (when-not (contains? _data k) (.setf! me k v)) (get _data k))
   ~'(wipe! [_ ] (set! _data {}))
   ~'(copy* [me x]
       (let [m (if (and (satisfies? czlab.basal.core/Muable x)
                        (instance? clojure.lang.IDeref x)) @x x)
             m (if (map? m) m nil)
-            m (if (!self? _data m) m)]
-        (do->nil  (if m (set! _data (merge _data m))))))
+            m (if (czlab.basal.core/!self? _data m) m)]
+        (czlab.basal.core/do->nil  (if m (set! _data (merge _data m))))))
   ~'(setf! [_ k v] (set! _data (assoc _data k v)) v)
   ~'(unsetf! [_ k] (let [v (get _data k)]
                      (set! _data (dissoc _data k)) v))

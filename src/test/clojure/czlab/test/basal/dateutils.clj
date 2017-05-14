@@ -8,9 +8,10 @@
 
 (ns czlab.test.basal.dateutils
 
-  (:use [czlab.basal.dates]
-        [czlab.basal.core]
-        [clojure.test])
+  (:require [czlab.basal.dates :as d]
+            [czlab.basal.core :as c])
+
+  (:use [clojure.test])
 
   (:import [java.sql Timestamp]
            [java.util TimeZone Calendar Date]))
@@ -27,80 +28,80 @@
 
   (testing
     "related to: leap years"
-    (is (false? (leapYear? 1999)))
-    (is (leapYear? 2000))
-    (is (leapYear? 2020)))
+    (is (false? (d/leapYear? 1999)))
+    (is (d/leapYear? 2000))
+    (is (d/leapYear? 2020)))
 
   (testing
     "related to: parsing dates"
-    (is (ist? Date (parseDate "1999/12/12 13:13:13" "yyyy/MM/dd HH:mm:ss")))
-    (is (ist? Timestamp (parseTimestamp "2000-12-31 13:14:15")))
-    (is (ist? Date (parseIso8601 "1999-12-25T11:12:13.444"))))
+    (is (c/ist? Date (d/parseDate "1999/12/12 13:13:13" "yyyy/MM/dd HH:mm:ss")))
+    (is (c/ist? Timestamp (d/parseTimestamp "2000-12-31 13:14:15")))
+    (is (c/ist? Date (d/parseIso8601 "1999-12-25T11:12:13.444"))))
 
   (testing
     "related to: formatting dates"
-    (is (ist? String (fmtDate (Date.) "yyyy/MM/dd HH:mm:ss Z")))
-    (is (ist? String (fmtTime "yyyy/MM/dd HH:mm:ss Z")))
-    (is (string? (fmtTimestamp (Timestamp. (now<>)))))
-    (is (string? (fmtDate (date<>))))
-    (is (string? (fmtGMT (date<>)))))
+    (is (c/ist? String (d/fmtDate (Date.) "yyyy/MM/dd HH:mm:ss Z")))
+    (is (c/ist? String (d/fmtTime "yyyy/MM/dd HH:mm:ss Z")))
+    (is (string? (d/fmtTimestamp (Timestamp. (c/now<>)))))
+    (is (string? (d/fmtDate (c/date<>))))
+    (is (string? (d/fmtGMT (c/date<>)))))
 
   (testing
     "related to: calendars"
-    (is (ist? Calendar (gcal<> (TimeZone/getTimeZone "GMT"))))
-    (is (ist? Calendar (gcal<> (date<>))))
-    (is (ist? Calendar (gcal<> (now<>))))
-    (is (ist? Calendar (gcal<>)))
-    (is (ist? Calendar (gmt<> (date<>))))
-    (is (ist? Calendar (gmt<> (now<>))))
-    (is (ist? Calendar (gmt<>)))
+    (is (c/ist? Calendar (d/gcal<> (TimeZone/getTimeZone "GMT"))))
+    (is (c/ist? Calendar (d/gcal<> (c/date<>))))
+    (is (c/ist? Calendar (d/gcal<> (c/now<>))))
+    (is (c/ist? Calendar (d/gcal<>)))
+    (is (c/ist? Calendar (d/gmt<> (c/date<>))))
+    (is (c/ist? Calendar (d/gmt<> (c/now<>))))
+    (is (c/ist? Calendar (d/gmt<>)))
 
-    (is (let [c (gcal<>)
+    (is (let [c (d/gcal<>)
               y (.get c Calendar/YEAR)
-              _ (addYears c 5)
+              _ (d/addYears c 5)
               y2 (.get c Calendar/YEAR)]
           (== 5 (- y2 y))))
 
-    (is (let [c (gcal<>)
+    (is (let [c (d/gcal<>)
               m (.get c Calendar/MONTH)
-              _ (addMonths c (if (> m 5) -2 2))
+              _ (d/addMonths c (if (> m 5) -2 2))
               m2 (.get c Calendar/MONTH)]
           (if (> m 5)
             (== 2 (- m m2))
             (== 2 (- m2 m)))))
 
-    (is (let [c (gcal<>)
+    (is (let [c (d/gcal<>)
               d (.get c Calendar/DAY_OF_MONTH)
-              _ (addDays c (if (> d 15) -5 5))
+              _ (d/addDays c (if (> d 15) -5 5))
               d2 (.get c Calendar/DAY_OF_MONTH)]
           (if (> d 15)
             (== 5 (- d d2))
             (== 5 (- d2 d)))))
 
-    (is (let [c (gcal<>)
+    (is (let [c (d/gcal<>)
               y (.get c Calendar/YEAR)
-              c2 (addYears 5)
+              c2 (d/addYears 5)
               y2 (.get c2 Calendar/YEAR)]
           (== 5 (- y2 y))))
 
-    (is (let [c (gcal<>)
+    (is (let [c (d/gcal<>)
               m (.get c Calendar/MONTH)
-              c2 (addMonths (if (> m 5) -2 2))
+              c2 (d/addMonths (if (> m 5) -2 2))
               m2 (.get c2 Calendar/MONTH)]
           (if (> m 5)
             (== 2 (- m m2))
             (== 2 (- m2 m)))))
 
-    (is (let [c (gcal<>)
+    (is (let [c (d/gcal<>)
               d (.get c Calendar/DAY_OF_MONTH)
-              c2 (addDays (if (> d 15) -5 5))
+              c2 (d/addDays (if (> d 15) -5 5))
               d2 (.get c2 Calendar/DAY_OF_MONTH)]
           (if (> d 15)
             (== 5 (- d d2))
             (== 5 (- d2 d)))))
 
-    (is (> (dtime) 0))
-    (is (string? (debugCal (gcal<>)))))
+    (is (> (d/dtime) 0))
+    (is (string? (d/debugCal (d/gcal<>)))))
 
   (is (string? "That's all folks!")))
 
