@@ -53,12 +53,16 @@
 ;;(set! *warn-on-reflection* true)
 (def ^:dynamic *tempfile-repo* (io/file (c/sysTmpDir)))
 (def ^:dynamic *membuf-limit* (* 4 c/MegaBytes))
-
+(declare bytes??)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn streamit
   "Wrapped these bytes in an input-stream"
-  ^InputStream [^bytes bytess] (some-> bytess ByteArrayInputStream. ))
+  ^InputStream [arg]
+  (if
+    (c/ist? InputStream arg) arg
+    (some-> (bytes?? arg)
+            ByteArrayInputStream. )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -780,6 +784,7 @@
 (defn bytes??
   "Coerce to bytes" ^bytes [arg]
   (cond
+    (c/ist? ByteArrayOutputStream arg) (c/bytesit arg)
     (c/ist? InputStream arg) (toBytes arg)
     (c/ist? File arg) (slurpBytes arg)
     (m/instChars? arg) (c/bytesit arg)

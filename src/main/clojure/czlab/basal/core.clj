@@ -858,6 +858,8 @@
   ([obj] (bytesit obj "utf-8"))
   ([obj enc]
    (cond
+     (= ByteArrayOutputStream (class obj))
+     (.toByteArray ^ByteArrayOutputStream obj)
      (= BSCZ (class obj)) obj
      (= CSCZ (class obj)) (bytesit (strit obj) enc)
      (string? obj) (.getBytes ^String obj (toCharset enc)))))
