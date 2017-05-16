@@ -115,12 +115,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro embeds?
+(defn embeds?
   "If sub-str is inside the big str"
-  [bigs s]
-  (let [^String bs bigs
-        ^String ss s]
-    `(>= (.indexOf ~bs ~ss) 0)))
+  [^String bigs ^String s]
+  (if (and bigs s)
+    (>= (.indexOf bigs s) 0) false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -131,12 +130,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro has?
+(defn has?
   "If the char is inside the big str"
-  [bigs ch]
-  (let [c# (int (.charValue ^Character ch))
-        ^String bs bigs]
-    `(>= (.indexOf ~bs ~c#) 0)))
+  [^String bigs ch]
+  (let [n
+        (cond
+          (nil? bigs) -1
+          (instance? Character ch)
+          (.charValue ^Character ch)
+          (integer? ch) ch)]
+    (if (< n 0)
+      false
+      (>= (.indexOf bigs (int n)) 0))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
