@@ -52,6 +52,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn stror*
+  "If not s then s2...etc"
+  ^String
+  [& args] (loop [[a & more] args]
+             (if (or (hgl? a)
+                     (empty? more))
+               a
+               (recur more))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defmacro lcase
   "Lowercase string safely"
   [s] `(str (some-> ~s clojure.string/lower-case)))
