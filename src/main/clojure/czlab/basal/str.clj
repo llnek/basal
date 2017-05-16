@@ -115,33 +115,37 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn embeds?
+(defn has?
+  "If the char is inside the big str"
+  [^String bigs arg]
+
+  (let
+    [rc
+     (cond
+       (or (nil? bigs)
+           (nil? arg))
+       false
+       (string? arg)
+       (>= (.indexOf bigs ^String arg) 0)
+       (instance? Character arg)
+       (int (.charValue ^Character arg))
+       (integer? arg) (int arg))]
+    (if (number? rc)
+      (>= (.indexOf bigs (int rc)) 0) rc)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro embeds?
   "If sub-str is inside the big str"
-  [^String bigs ^String s]
-  (if (and bigs s)
-    (>= (.indexOf bigs s) 0) false))
+  [bigs s] `(czlab.basal.str/has? ~bigs ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro hasNoCase?
   "If sub-str is inside the big str - ignore case"
   [bigs s]
-  `(embeds? (lcase ~bigs) (lcase ~s)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn has?
-  "If the char is inside the big str"
-  [^String bigs ch]
-  (let [n
-        (cond
-          (nil? bigs) -1
-          (instance? Character ch)
-          (.charValue ^Character ch)
-          (integer? ch) ch)]
-    (if (< n 0)
-      false
-      (>= (.indexOf bigs (int n)) 0))))
+  `(czlab.basal.str/has?
+     (czlab.basal.str/lcase ~bigs) (czlab.basal.str/lcase ~s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
