@@ -265,6 +265,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (decl-throw-xxx
+  throwISE
+  IllegalStateException
+  "Throw illegal state exception")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(decl-throw-xxx
   throwUOE
   UnsupportedOperationException
   "Throw unsupported operation exception")
