@@ -314,6 +314,24 @@
 
     (is (<= (c/now<>) (c/now<>)))
 
+    (is (let [x (c/decl-long-var 5)
+              y (c/long-var x + 3)
+              z (c/long-var x - 2)
+              _ (c/long-var x 99)
+              k (c/long-var x)]
+          (and (= y 8)
+               (= k 99)
+               (= z 6))))
+
+    (is (let [x (c/decl-int-var 5)
+              y (c/int-var x + 3)
+              z (c/int-var x - 2)
+              _ (c/int-var x 99)
+              k (c/int-var x)]
+          (and (= y 8)
+               (= k 99)
+               (= z 6))))
+
     (is (= "/tmp/a.txt" (c/getFPath "/tmp/a.txt")))
     (is (= "/tmp/a.txt"
            (.getPath (c/fmtFileUrl "/tmp/a.txt"))))

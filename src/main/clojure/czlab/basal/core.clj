@@ -88,33 +88,31 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro long-var "Define a long array[1] for local operation"
-  ([] `(long-var 0))
+(defmacro decl-long-var "Define a long array[1] for local operation"
+  ([] `(decl-long-var 0))
   ([n] `(long-array 1 ~n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmacro int-var "Define a int array[1] for local operation"
-  ([] `(int-var 0))
+(defmacro decl-int-var "Define a int array[1] for local operation"
+  ([] `(decl-int-var 0))
   ([n] `(int-array 1 ~n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn ivar ""
+(defn int-var ""
+  ([^ints arr v] (aset arr 0 (int v)) (int v))
   ([^ints arr] (aget arr 0))
-  ([^ints arr op new-value]
-   (let [acc (int (op (aget arr 0) new-value))]
-     (aset arr 0 acc)
-     acc)))
+  ([^ints arr op nv]
+   (let [v (int (op (aget arr 0) nv))] (aset arr 0 v) v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn lvar ""
+(defn long-var ""
+  ([^longs arr ^long v] (aset arr 0 v) v)
   ([^longs arr] (aget arr 0))
-  ([^longs arr op new-value]
-   (let [acc (long (op (aget arr 0) new-value))]
-     (aset arr 0 acc)
-     acc)))
+  ([^longs arr op nv]
+   (let [v (long (op (aget arr 0) nv))] (aset arr 0 v) v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
