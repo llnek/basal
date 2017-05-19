@@ -86,6 +86,36 @@
 (def OneK 1024)
 (def FourK (* 4 OneK))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro long-var "Define a long array[1] for local operation"
+  ([] `(long-var 0))
+  ([n] `(long-array 1 ~n)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro int-var "Define a int array[1] for local operation"
+  ([] `(int-var 0))
+  ([n] `(int-array 1 ~n)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn ivar ""
+  ([^ints arr] (aget arr 0))
+  ([^ints arr op new-value]
+   (let [acc (int (op (aget arr 0) new-value))]
+     (aset arr 0 acc)
+     acc)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn lvar ""
+  ([^longs arr] (aget arr 0))
+  ([^longs arr op new-value]
+   (let [acc (long (op (aget arr 0) new-value))]
+     (aset arr 0 acc)
+     acc)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro decl-var-docstring
@@ -1507,5 +1537,4 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
-
 
