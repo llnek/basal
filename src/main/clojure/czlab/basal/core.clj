@@ -554,6 +554,13 @@
 ;;
 (defmacro ^:private !nil? "is x not nil" [x] `(not (nil? ~x)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn sortby "" [kfn cmp coll]
+  (sort-by kfn
+           (reify java.util.Comparator
+             (compare [_ t1 t2] (cmp t1 t2))) coll))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn monoFlop<>

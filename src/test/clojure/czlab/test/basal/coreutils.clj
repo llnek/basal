@@ -520,6 +520,20 @@
     (is (= (c/let-try [a 3 b "x"] (let [z (+ 3 a)] (inc z)))
            7)))
 
+  (testing
+    ""
+    (is (let [c (c/sortby :start
+                          (fn [^long t1 ^long t2]
+                            (.compareTo (Long/valueOf t1) t2))
+                          [{:start 100 :end 4}
+                           {:start 2 :end 5 }
+                           {:start 60 :end 89}
+                           {:start 43 :end 33}])
+              f1 (first c)
+              fe (last c)]
+          (and (== 5 (:end f1))
+               (== 4 (:end fe))))))
+
   (is (string? "that's all folks!")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
