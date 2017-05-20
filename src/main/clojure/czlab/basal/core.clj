@@ -1276,27 +1276,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn normalizeEmail
-  "Check email address" ^String [email]
-
-  (let [email (str email)]
-    (cond
-      (empty? email)
-      email
-
-      (or (not (> (.indexOf email (int \@)) 0))
-          (not= (.lastIndexOf email (int \@))
-                (.indexOf email (int \@))))
-      (throwBadData (str "Bad email address " email))
-
-      :else
-      (let [ss (.split email "@")]
-        (if (== 2 (alength ss))
-          (str (aget ss 0) "@" (cs/lower-case (aget ss 1)))
-          (throwBadData (str "Bad email address " email)))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (declare convToJava)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -415,10 +415,6 @@
 
     (is (nil? (do (.wipe! MUBLE) (get @MUBLE :q))))
 
-    (is (thrown? DataError (c/normalizeEmail "xxxx@@@ddddd")))
-    (is (thrown? DataError (c/normalizeEmail "xxxx")))
-    (is (= "abc@abc.com" (c/normalizeEmail "abc@ABC.cOm")))
-
     (is (== 1 (.get ^Map (c/convToJava {:a 1}) "a")))
     (is (== 3 (.get ^List (c/convToJava [1 2 3]) 2)))
     (is (.contains ^Set (c/convToJava #{1 2 3}) 3))
