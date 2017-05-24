@@ -54,6 +54,8 @@
 (def ^:dynamic *tempfile-repo* (io/file (c/sysTmpDir)))
 (def ^:dynamic *membuf-limit* (* 4 c/MegaBytes))
 (declare bytes??)
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn streamit
@@ -792,6 +794,24 @@
     (string? arg) (c/bytesit arg)
     (c/ist? URL arg)
     (with-open [p (.openStream ^URL arg)] (bytes?? p))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn chunkReadStream "Reads through this data, and for each chunk
+                      calls the function" [data cb]
+   (let [[z? ^InputStream inp] (inputStream?? data)
+         b (byte-array c/FourK)]
+     (try
+       (loop [c (if inp (.read inp b) 0)
+              t 0]
+         (if (> c 0)
+           (do
+             (cb b 0 c false)
+             (recur (.read inp b)
+                    (long (+ t c))))
+           (cb b 0 0 true)))
+       (finally
+         (if z? (closeQ inp))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
