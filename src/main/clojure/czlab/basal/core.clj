@@ -891,8 +891,7 @@
   (cond
     (= CSCZ (class obj)) obj
     (string? obj) (.toCharArray ^String obj)
-    :else
-    (charsit (str obj))))
+    (some? obj) (charsit (str obj))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
