@@ -127,7 +127,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro prn!!
-  "println with format" [fmt & args] `(print (apply format (str ~fmt "\n") ~@args [])))
+  "println with format" [fmt & args] `(println (apply format ~fmt ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -890,7 +890,9 @@
   ^chars [obj]
   (cond
     (= CSCZ (class obj)) obj
-    (string? obj) (.toCharArray ^String obj)))
+    (string? obj) (.toCharArray ^String obj)
+    :else
+    (charsit (str obj))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
