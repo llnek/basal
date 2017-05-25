@@ -269,7 +269,10 @@
   [arg]
   (cond
     (c/ist? File arg) [true (FileInputStream. ^File arg)]
-    (string? arg) [true (streamit (c/bytesit arg))]
+    (string? arg)
+    (if (.startsWith ^String arg "file:")
+      (inputStream?? (io/file arg))
+      [true (streamit (c/bytesit arg))])
     (m/instBytes? arg) [true (streamit arg)]
     (c/ist? InputStream arg) [false arg]
     (c/ist? URL arg) [true (.openStream ^URL arg)]))
@@ -791,7 +794,10 @@
     (c/ist? File arg) (slurpBytes arg)
     (m/instChars? arg) (c/bytesit arg)
     (m/instBytes? arg) arg
-    (string? arg) (c/bytesit arg)
+    (string? arg)
+    (if (.startsWith ^String arg "file:")
+      (bytes?? (io/file arg))
+      (c/bytesit arg))
     (c/ist? URL arg)
     (with-open [p (.openStream ^URL arg)] (bytes?? p))))
 
