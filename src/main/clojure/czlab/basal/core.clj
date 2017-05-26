@@ -139,6 +139,13 @@
 (defmacro ist? "instance?" [type obj] `(instance? ~type ~obj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn nth?? "Safely get the nth element"
+  [coll pos]
+  {:pre [(> pos 0)]}
+  (first (drop (dec pos) coll)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;hack to wrap a macro as fn so that you can use *apply* on it
 (defmacro ^:private make-fn [m]
  `(fn [& args#] (eval (cons '~m args#))))

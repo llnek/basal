@@ -516,6 +516,13 @@
     (is (= (c/let-try [a 3 b "x"] (let [z (+ 3 a)] (inc z)))
            7)))
 
+  (is (= (c/nth?? [1 2 3] 3) 3))
+  (is (= (c/nth?? [1 2 3] 2) 2))
+  (is (= (c/nth?? [1 2 3] 1) 1))
+  (is (= (c/nth?? [1] 2) nil))
+  (is (= (c/nth?? [] 2) nil))
+  (is (= (c/nth?? [1 2 3] 50) nil))
+
   (testing
     ""
     (is (let [c (c/sortby :start
