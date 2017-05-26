@@ -35,6 +35,7 @@
 
   :jvm-opts ["-Dlog4j.configurationFile=file:attic/log4j2.xml"
              "-Dczlabloggerflag=true"]
+
   :javac-options ["-source" "8"
                   "-Xlint:unchecked" "-Xlint:-options" "-Xlint:deprecation"])
 
