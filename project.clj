@@ -8,9 +8,9 @@
   :description "General clojure helper functions"
   :url "https://github.com/llnek/basal"
 
-  :dependencies [[org.clojure/tools.logging "0.3.1"]
-                 [org.flatland/ordered "1.5.4"]
-                 [org.clojure/data.json "0.2.6"]
+  :dependencies [[org.clojure/tools.logging "0.3.1" :exclusions [org.clojure/clojure]]
+                 [org.flatland/ordered "1.5.4" :exclusions [org.clojure/clojure]]
+                 [org.clojure/data.json "0.2.6" :exclusions [org.clojure/clojure]]
                  [io.czlab/jasal "1.0.0"]]
 
   :plugins [[cider/cider-nrepl "0.14.0"]
