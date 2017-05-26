@@ -33,6 +33,7 @@
   :test-paths ["src/test/clojure"]
   :resource-paths ["src/main/resources"]
 
+
   :jvm-opts ["-Dlog4j.configurationFile=file:attic/log4j2.xml"
              "-Dczlabloggerflag=true"]
 
