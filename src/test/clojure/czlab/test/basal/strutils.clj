@@ -137,6 +137,10 @@
     (is (= "abc def" (s/urlDecode (s/urlEncode "abc def"))))
     (is (not= "abc def" (s/urlEncode "abc def")))
 
+    (is (= (str (s/sb+ (s/strbf<>) "hello" "joe")) "hellojoe"))
+    (is (= (str (s/sb+ (s/strbf<>) "hello")) "hello"))
+    (is (= (str (s/sb+ (s/strbf<>))) ""))
+
     (is (= "-world" (s/drophead "hello-world" 5)))
     (is (= "hello-" (s/droptail "hello-world" 5)))
     (is (= "" (s/drophead "hello-world" 50)))
