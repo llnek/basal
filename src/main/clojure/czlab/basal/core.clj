@@ -98,6 +98,10 @@
   ([] `(decl-int-var 0))
   ([n] `(int-array 1 ~n)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn concatv "" [a b] (into [] (concat a b)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn int-var ""
@@ -514,6 +518,11 @@
 (defmacro do->false "Do and return false" [& forms] `(do ~@forms false))
 (defmacro do->nil "Do and return nil" [& forms] `(do ~@forms nil))
 (defmacro do->true "Do and return true" [& forms] `(do ~@forms true))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defmacro let->nil
+  "a try let combo" [bindings & forms] `(let ~bindings ~@forms nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

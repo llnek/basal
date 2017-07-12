@@ -12,12 +12,20 @@
             [czlab.basal.countries :as u]
             [czlab.basal.format :as f]
             [czlab.basal.guids :as g]
+            [czlab.basal.ebus :as e]
             [czlab.basal.core :as c]
             [czlab.basal.io :as i])
 
   (:use [clojure.test])
 
   (:import [java.util ResourceBundle]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(def ^:private EBUS (e/eventBus<>))
+(defn- sub "" [& args])
+(let [[x y z] (e/ev-sub** EBUS "/a/b/c /a/** /a/*/c" sub)]
+  (println (e/ev-dbg EBUS)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
