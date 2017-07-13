@@ -22,12 +22,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private EBUS (e/eventBus<> ))
+(def ^:private EBUS (e/eventBus<> true))
 (defn- sub "" [subto topic msg]
   (println (str "!!!!!!!!!!!!!!subto: " subto ", topic: " topic )))
 
 (let [[x y z] (e/ev-sub+ EBUS "/a/b/c /a/** /a/*/c" sub)]
-  (e/ev-match? EBUS "/a/b/c"))
+  (e/ev-pub EBUS "/a/b/c" {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

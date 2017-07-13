@@ -19,18 +19,19 @@
 ;;(set! *warn-on-reflection* true)
 
 (def ^:private _SEED (atom 1))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- splitTopic "" [topic] (if (and (string? topic)
-                                      (not-empty topic))
-                               (->> (cs/split topic #"/")
-                                    (filterv #(if (> (count %) 0) %)))
-                               []))
+(defn- XnextSEQ "" []
+  (let [n @_SEED] (swap! _SEED inc) n))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- nextSEQ "" [] (let [n @_SEED] (swap! _SEED inc) n))
+(defn- nextSEQ "" [] (c/seqint2))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- splitTopic "" [topic]
+  (if (string? topic)
+    (->> (cs/split topic #"/")
+         (filter #(if (> (count %) 0) %))) []))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -69,7 +70,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; nodes - children
 ;; subscribers
-(defn- mkTreeNode "" [] {:nodes {} :subcs {}})
+(defn- mkLevelNode "" [] {:levels {} :subcs {}})
+(defn- mkTreeNode "" [] {:topics {} :subcs {}})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -84,7 +86,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- interleavePath "" [path]
-  (into [] (mapcat #(doto [:nodes %]) path)))
+  (into [] (mapcat #(doto [:levels %]) path)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -123,58 +125,67 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- run "" [{:keys [subcs]} topic msg]
-  (doseq [z subcs
-          :let [{:keys [repeat? action status]} z]
-          :when (pos? (aget ^longs status 0))]
-    (action topic msg)
-    ;;if one time only, turn off flag
-    (if-not repeat?
-      (aset ^longs status 0 -1))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- dump "" [{:keys [subcs]} topic]
+(defn- run "" [subcs topic msg]
   (doseq [[_ z] subcs
           :let [{:keys [repeat? action status]} z]
           :when (pos? (aget ^longs status 0))]
-    (action (:topic z) topic nil)
-    ;;if one time only, turn off flag
-    (if-not repeat?
-      (aset ^longs status 0 -1))))
+    (action (:topic z) topic msg)
+    (if-not repeat? (aset ^longs status 0 -1))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- runLevel "" [{:keys [subcs]} topic msg]
+  (let [a (try (longs msg) (catch Throwable _ nil))]
+    (if a
+      (aset ^longs a 0 1)
+      (run subcs topic msg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- walkTree "" [func branch pathTokens & args]
-  (let [{:keys [nodes subcs]} branch
+(defn- walk "" [branch pathTokens topic msg]
+  (let [{:keys [levels subcs]} branch
         [p & more] pathTokens
-        cur (get nodes p)
-        s1 (get nodes "*")
-        s1c (:nodes s1)
-        s2 (get nodes "**")]
-    (println "walkteee " pathTokens)
-    (println "cur " cur)
-    (println "s1 " s1)
-    (println "s2 " s2)
+        cur (get levels p)
+        s1 (get levels "*")
+        s1c (:levels s1)
+        s2 (get levels "**")]
     (if s2
-      (apply func s2 args))
+      (runLevel s2 topic msg))
     (if s1
       (cond
         (and (empty? more)
              (empty? s1c))
-        (apply func s1 args)
+        (runLevel s1 topic msg)
         (and (not-empty s1c)
              (not-empty more))
-        (apply walkTree func s1 more args)))
+        (walk s1 more topic msg)))
     (if cur
       (if (not-empty more)
-        (apply walkTree func cur more args)
-        (apply func cur args)))))
+        (walk cur more topic msg)
+        (runLevel cur topic msg)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- resume "" [root hd]
+  (c/let->nil
+    [sub (get (:subcs root) hd)
+     st (if sub (:status sub))
+     sv (if st (aget ^longs st 0) -1)]
+    (if (= 0 sv) (aset ^longs st 0 1))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- pause "" [root hd]
+  (c/let->nil
+    [sub (get (:subcs root) hd)
+     st (if sub (:status sub))
+     sv (if st (aget ^longs st 0) -1)]
+    (if (pos? sv) (aset ^longs st 0 0))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- rbus<> "" []
-  (let [state (atom (mkTreeNode))]
+  (let [state (atom (mkLevelNode))]
     (reify EventBus
       ;; subscribe once to 1+ topics, return a list of handles
       ;; topics => "/hello/**  /goodbye/*/xyz"
@@ -186,31 +197,25 @@
         (c/let->nil
           [tokens (splitTopic topic)]
           (if (not-empty tokens)
-            (walkTree run @state tokens topic msg))))
+            (walk @state tokens topic msg))))
       (ev-resume [_ hd]
-        (c/let->nil
-          [sub (get (:subcs @state) hd)
-           st (if sub (:status sub))
-           sv (if st (aget ^longs st 0) -1)]
-          (if (= 0 sv) (aset ^longs st 0 1))))
+        (resume @state hd))
       (ev-pause [_ hd]
-        (c/let->nil
-          [sub (get (:subcs @state) hd)
-           st (if sub (:status sub))
-           sv (if st (aget ^longs st 0) -1)]
-          (if (pos? sv) (aset ^longs st 0 0))))
+        (pause @state hd))
       (ev-unsub [_ hd]
         (c/do->nil
           (some->> (get (:subcs @state) hd)
                    (unSub state :rbus))))
       (ev-match? [_ topic]
-        (c/let->nil
-          [tokens (splitTopic topic)]
+        (let
+          [tokens (splitTopic topic)
+           z (long-array 1 0)]
           (if (not-empty tokens)
-            (walkTree dump @state tokens topic))))
+            (walk @state tokens topic z))
+          (pos? (aget ^longs z 0))))
       (ev-dbg [_] (f/writeEdnStr @state))
       (ev-removeAll [_]
-        (c/do->nil (reset! state (mkTreeNode)))))))
+        (c/do->nil (reset! state (mkLevelNode)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -218,7 +223,7 @@
                               kind
                               {:keys [topic] :as sub}]
   (-> (update-in top
-                 [:nodes topic]
+                 [:topics topic]
                  assoc (:id sub) sub)
       (update-in [:subcs] assoc (:id sub) sub)))
 
@@ -230,7 +235,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod delOneTopic :ebus [top kind {:keys [topic] :as sub}]
-  (-> (update-in top [:nodes topic] dissoc (:id sub))
+  (-> (update-in top [:topics topic] dissoc (:id sub))
       (update-in [:subcs] dissoc (:id sub))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -253,26 +258,18 @@
         (listen state :ebus true topics listener))
       (ev-pub [_ topic msg]
         (c/let->nil
-          [sub (get (:nodes @state) topic)]
+          [sub (get (:topics @state) topic)]
           (if sub (run sub topic msg))))
       (ev-resume [_ hd]
-        (c/let->nil
-          [sub (get (:subcs @state) hd)
-           st (if sub (:status sub))
-           sv (if st (aget ^longs st 0) -1)]
-          (if (= 0 sv) (aset ^longs st 0 1))))
+        (resume @state hd))
       (ev-pause [_ hd]
-        (c/let->nil
-          [sub (get (:subcs @state) hd)
-           st (if sub (:status sub))
-           sv (if st (aget ^longs st 0) -1)]
-          (if (pos? sv) (aset ^longs st 0 0))))
+        (pause @state hd))
       (ev-unsub [_ hd]
         (c/do->nil
           (some->> (get (:subcs @state) hd)
                    (unSub state :ebus))))
       (ev-match? [_ topic]
-        (contains? (:nodes @state) topic))
+        (contains? (:topics @state) topic))
       (ev-dbg [_] (f/writeEdnStr @state))
       (ev-removeAll [_]
         (c/do->nil (reset! state (mkTreeNode)))))))
