@@ -22,16 +22,98 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(def ^:private EBUS (e/eventBus<> true))
-(defn- sub "" [subto topic msg]
-  (println (str "!!!!!!!!!!!!!!subto: " subto ", topic: " topic )))
-
-(let [[x y z] (e/ev-sub+ EBUS "/a/b/c /a/** /a/*/c" sub)]
-  (e/ev-pub EBUS "/a/b/c" {}))
+(def ^:private BC (atom {}))
+(defn- incv "" [v] (if (number? v) (inc v) 1))
+(defn- sub-func "" [subto topic msg]
+  (swap! BC update-in [subto] incv))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestbasal-misc
+
+  (testing
+    "related to: eventbus"
+    (is (let [bus (e/eventBus<> true)]
+          (reset! BC {})
+          (e/ev-sub+ bus "/a/b/c /a/** /a/*/c" sub-func)
+          (e/ev-pub bus "/a/b/c" {})
+          (and (= 1 (get @BC "/a/b/c"))
+               (= 1 (get @BC "/a/**"))
+               (= 1 (get @BC "/a/*/c")))))
+    (is (let [bus (e/eventBus<>)]
+          (reset! BC {})
+          (e/ev-sub+ bus "/a/b/c" sub-func)
+          (e/ev-pub bus "/a/b/c" {})
+          (and (= 1 (get @BC "/a/b/c")))))
+    (is (let [bus (e/eventBus<> true)]
+          (reset! BC {})
+          (e/ev-sub+ bus "/a/b/c /**" sub-func)
+          (e/ev-pub bus "/x/b/c" {})
+          (and (= 1 (get @BC "/**"))
+               (= 1 (count @BC)))))
+    (is (let [bus (e/eventBus<> true)
+              _ (reset! BC {})
+              [x y] (e/ev-sub+ bus "/a/b/c /**" sub-func)]
+          (e/ev-unsub bus y)
+          (e/ev-pub bus "/x/b/c" {})
+          (= 0 (count @BC))))
+    (is (let [bus (e/eventBus<> true)
+              _ (reset! BC {})
+              _ (e/ev-sub+ bus "/a/b/c" sub-func)
+              _ (e/ev-sub* bus "/a/*/c" sub-func)]
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-pub bus "/a/b/c" {})
+          (and (= 2 (get @BC "/a/b/c"))
+               (= 1 (get @BC "/a/*/c")))))
+    (is (let [bus (e/eventBus<> true)
+              _ (reset! BC {})
+              x (e/ev-sub+ bus "/a/b/c" sub-func)]
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-pause bus x)
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-resume bus x)
+          (e/ev-pub bus "/a/b/c" {})
+          (= 2 (get @BC "/a/b/c"))))
+    (is (let [bus (e/eventBus<> true)
+              _ (reset! BC {})
+              x (e/ev-sub+ bus "/a/b/c" sub-func)]
+          (e/ev-removeAll bus)
+          (e/ev-pub bus "/a/b/c" {})
+          (= 0 (count @BC))))
+
+    (is (let [bus (e/eventBus<>)]
+          (reset! BC {})
+          (e/ev-sub+ bus "/a/b/c /a" sub-func)
+          (e/ev-pub bus "/a" {})
+          (and (= 1 (get @BC "/a"))
+               (= 1 (count @BC)))))
+    (is (let [bus (e/eventBus<>)
+              _ (reset! BC {})
+              [x y] (e/ev-sub+ bus "/a/b/c /a" sub-func)]
+          (e/ev-unsub bus y)
+          (e/ev-pub bus "/a" {})
+          (= 0 (count @BC))))
+    (is (let [bus (e/eventBus<>)
+              _ (reset! BC {})
+              _ (e/ev-sub* bus "/a/b/c" sub-func)]
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-pub bus "/a/b/c" {})
+          (= 1 (get @BC "/a/b/c"))))
+    (is (let [bus (e/eventBus<>)
+              _ (reset! BC {})
+              x (e/ev-sub+ bus "/a/b/c" sub-func)]
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-pause bus x)
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-resume bus x)
+          (e/ev-pub bus "/a/b/c" {})
+          (= 2 (get @BC "/a/b/c"))))
+    (is (let [bus (e/eventBus<>)
+              _ (reset! BC {})
+              x (e/ev-sub+ bus "/a/b/c" sub-func)]
+          (e/ev-removeAll bus)
+          (e/ev-pub bus "/a/b/c" {})
+          (= 0 (count @BC)))))
 
   (testing
     "related to: country codes"

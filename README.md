@@ -7,7 +7,7 @@
 
 Add the following dependency to your `project.clj` file:
 
-    [io.czlab/basal "1.0.4"]
+    [io.czlab/basal "1.0.5"]
 
 ## Documentation
 

@@ -36,16 +36,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defprotocol EventBus
-  ""
-  (ev-sub+ [_ topics listener] "1+")
-  (ev-sub* [_ topics listener] "1")
-  (ev-pub [_ topic msg] "")
-  (ev-dbg [_] "test")
-  (ev-match? [_ topic] "test")
-  (ev-resume [_ handle] "")
-  (ev-pause [_ handle] "")
-  (ev-unsub [_ handle] "")
-  (ev-removeAll [_] ""))
+  "Event Pub-Sub interface"
+  (ev-sub* [_ topics listener] "one time only subscription")
+  (ev-sub+ [_ topics listener] "standard subscription")
+  (ev-pub [_ topic msg] "send a message")
+  (ev-match? [_ topic] "internal: test only")
+  (ev-dbg [_] "internal: test only")
+  (ev-resume [_ handle] "resume this subscriber")
+  (ev-pause [_ handle] "pause this subscriber")
+  (ev-unsub [_ handle] "remove this subscriber")
+  (ev-removeAll [_] "remove all subscribers"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -103,11 +103,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; for each topic, subscribe to it.
 (defn- listen [root kind repeat? topics listener]
-  (->> (-> (or topics "") cs/trim (cs/split #"\s+"))
-       (filter #(if (> (count %) 0) %))
-       (mapv #(addTopic root
-                        kind
-                        (mkSubSCR % repeat? listener)))))
+  (let [r
+        (->> (-> (or topics "") cs/trim (cs/split #"\s+"))
+             (filter #(if (> (count %) 0) %))
+             (mapv #(addTopic root
+                              kind
+                              (mkSubSCR % repeat? listener))))]
+    (if (= 1 (count r)) (first r) r)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -276,7 +278,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn eventBus<> ""
+(defn eventBus<>
+  "A Publish Subscribe event manager.  If subject based is
+  used, a more advanced matching scheme will be used - such as
+  wild-card matches."
   ([] (eventBus<> false))
   ([subjectBased?]
    (if subjectBased? (rbus<>) (ebus<>))))
