@@ -9,6 +9,7 @@
   :url "https://github.com/llnek/basal"
 
   :dependencies [[org.clojure/tools.logging "0.4.0"]
+                 [org.clojure/core.async "0.3.443"]
                  [org.flatland/ordered "1.5.4"]
                  [org.clojure/data.json "0.2.6"]
                  [io.czlab/jasal "1.0.0"]]

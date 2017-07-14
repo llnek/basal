@@ -13,10 +13,22 @@
 
   (:require [czlab.basal.core :as c]
             [clojure.string :as cs]
+            [clojure.core.async
+             :as ca
+             :refer [>!
+                     <!
+                     go-loop
+                     go
+                     chan
+                     close!
+                     sliding-buffer]]
             [czlab.basal.format :as f]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
+
+(def ^:dynamic *sba-delim* "/")
+(def ^:dynamic *chan-bufsz* 16)
 
 (def ^:private _SEED (atom 1))
 (defn- XnextSEQ "" []
@@ -28,9 +40,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(def ^:private re-space #"\s+")
+(def ^:private re-slash #"/")
+(def ^:private re-dot #"\.")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn- splitTopic "" [topic]
   (if (string? topic)
-    (->> (cs/split topic #"/")
+    (->> (cs/split topic (if (= *sba-delim* ".") re-dot re-slash))
          (filter #(if (> (count %) 0) %))) []))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -49,16 +67,30 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn- asyncAction "" [action wanted]
+  (let [in (chan (sliding-buffer (or *chan-bufsz* 16)))]
+    (go-loop [data (<! in)]
+             (when data
+               (action wanted {:topic data} {:msg data})
+               (recur (<! in))))
+    in))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn- mkSubSCR
   ""
-  [topic repeat? listener]
+  [topic repeat? listener async?]
   {:pre [(fn? listener)]}
 
-  {:id (keyword (str "s#" (nextSEQ)))
-   :repeat? repeat?
-   :action listener
-   :topic topic
-   :status (long-array 1 1)})
+  (-> (if (true? async?)
+        {:action (asyncAction listener topic)}
+        {:action listener})
+      (merge
+        {:id (keyword (str "s#" (nextSEQ)))
+         :async? (boolean async?)
+         :repeat? repeat?
+         :topic topic
+         :status (long-array 1 1)})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -75,12 +107,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn- finzAsync "" [subcs]
+  (doseq [[_ z] subcs
+          :let [{:keys [async? action]} z]
+          :when async?]
+    (close! action)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 (defn- addOneSub "" [node sub]
   (update-in node [:subcs] assoc (:id sub) sub))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- remOneSub "" [node sub]
+  (if (:async? sub) (close! (:action sub)))
   (update-in node [:subcs] dissoc (:id sub)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -102,13 +143,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; for each topic, subscribe to it.
-(defn- listen [root kind repeat? topics listener]
+(defn- listen [root kind repeat? topics listener async?]
   (let [r
-        (->> (-> (or topics "") cs/trim (cs/split #"\s+"))
+        (->> (-> (or topics "") cs/trim (cs/split re-space))
              (filter #(if (> (count %) 0) %))
              (mapv #(addTopic root
                               kind
-                              (mkSubSCR % repeat? listener))))]
+                              (mkSubSCR % repeat? listener async?))))]
     (if (= 1 (count r)) (first r) r)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -127,44 +168,50 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- run "" [subcs topic msg]
-  (doseq [[_ z] subcs
-          :let [{:keys [repeat? action status]} z]
-          :when (pos? (aget ^longs status 0))]
-    (action (:topic z) topic msg)
-    (if-not repeat? (aset ^longs status 0 -1))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- runLevel "" [{:keys [subcs]} topic msg]
-  (let [a (try (longs msg) (catch Throwable _ nil))]
-    (if a
-      (aset ^longs a 0 1)
-      (run subcs topic msg))))
+(defn- run "" [async? subcs topic msg]
+  (let [data {:topic topic :msg msg}]
+    (if (true? async?)
+      (go
+        (doseq [[_ z] subcs
+                :let [{:keys [repeat? action ^longs status]} z]
+                :when (pos? (aget status 0))]
+          (>! action data)
+          (if-not repeat? (aset status 0 -1))))
+      (doseq [[_ z] subcs
+              :let [{:keys [repeat? action status]} z]
+              :when (pos? (aget ^longs status 0))]
+        (action (:topic z) topic msg)
+        (if-not repeat? (aset ^longs status 0 -1))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- walk "" [branch pathTokens topic msg]
+(defn- walk "" [async? branch pathTokens topic msg tst]
   (let [{:keys [levels subcs]} branch
         [p & more] pathTokens
         cur (get levels p)
         s1 (get levels "*")
         s1c (:levels s1)
         s2 (get levels "**")]
-    (if s2
-      (runLevel s2 topic msg))
+    (when s2
+      (if tst
+        (swap! tst inc)
+        (run async? (:subcs s2) topic msg)))
     (if s1
       (cond
         (and (empty? more)
              (empty? s1c))
-        (runLevel s1 topic msg)
+        (if tst
+          (swap! tst inc)
+          (run async? (:subcs s1) topic msg))
         (and (not-empty s1c)
              (not-empty more))
-        (walk s1 more topic msg)))
-    (if cur
+        (walk async? s1 more topic msg tst)))
+    (when cur
       (if (not-empty more)
-        (walk cur more topic msg)
-        (runLevel cur topic msg)))))
+        (walk async? cur more topic msg tst)
+        (if tst
+          (swap! tst inc)
+          (run async? (:subcs cur) topic msg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -186,20 +233,25 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- rbus<> "" []
+(defn- rbus<> "" [{:keys [bufsz
+                          subjectDelimiter] :as options} async?]
   (let [state (atom (mkLevelNode))]
     (reify EventBus
-      ;; subscribe once to 1+ topics, return a list of handles
-      ;; topics => "/hello/**  /goodbye/*/xyz"
       (ev-sub* [_ topics listener]
-        (listen state :rbus false topics listener))
+        (binding [*sba-delim* subjectDelimiter
+                  *chan-bufsz* bufsz]
+          (listen state :rbus false topics listener async?)))
       (ev-sub+ [_ topics listener]
-        (listen state :rbus true topics listener))
+        (binding [*sba-delim* subjectDelimiter
+                  *chan-bufsz* bufsz]
+          (listen state :rbus true topics listener async?)))
       (ev-pub [_ topic msg]
-        (c/let->nil
-          [tokens (splitTopic topic)]
-          (if (not-empty tokens)
-            (walk @state tokens topic msg))))
+        (binding [*sba-delim* subjectDelimiter
+                  *chan-bufsz* bufsz]
+          (c/let->nil
+            [tokens (splitTopic topic)]
+            (if (not-empty tokens)
+              (walk async? @state tokens topic msg nil)))))
       (ev-resume [_ hd]
         (resume @state hd))
       (ev-pause [_ hd]
@@ -209,15 +261,18 @@
           (some->> (get (:subcs @state) hd)
                    (unSub state :rbus))))
       (ev-match? [_ topic]
-        (let
-          [tokens (splitTopic topic)
-           z (long-array 1 0)]
-          (if (not-empty tokens)
-            (walk @state tokens topic z))
-          (pos? (aget ^longs z 0))))
+        (binding [*sba-delim* subjectDelimiter
+                  *chan-bufsz* bufsz]
+          (let [tokens (splitTopic topic)
+                z (atom 0)]
+            (if (not-empty tokens)
+              (walk async? @state tokens topic nil z))
+            (pos? @z))))
       (ev-dbg [_] (f/writeEdnStr @state))
       (ev-removeAll [_]
-        (c/do->nil (reset! state (mkLevelNode)))))))
+        (c/do->nil
+          (finzAsync (:subcs @state))
+          (reset! state (mkLevelNode)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -237,6 +292,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmethod delOneTopic :ebus [top kind {:keys [topic] :as sub}]
+  (if (:async? sub) (close! (:action sub)))
   (-> (update-in top [:topics topic] dissoc (:id sub))
       (update-in [:subcs] dissoc (:id sub))))
 
@@ -249,19 +305,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- ebus<> "" []
+(defn- ebus<> "" [async?]
   (let [state (atom (mkTreeNode))]
     (reify EventBus
-      ;; subscribe once to 1+ topics, return a list of handles
-      ;; topics => "/hello/**  /goodbye/*/xyz"
       (ev-sub* [_ topics listener]
-        (listen state :ebus false topics listener))
+        (listen state :ebus false topics listener async?))
       (ev-sub+ [_ topics listener]
-        (listen state :ebus true topics listener))
+        (listen state :ebus true topics listener async?))
       (ev-pub [_ topic msg]
         (c/let->nil
           [sub (get (:topics @state) topic)]
-          (if sub (run sub topic msg))))
+          (if sub (run async? sub topic msg ))))
       (ev-resume [_ hd]
         (resume @state hd))
       (ev-pause [_ hd]
@@ -274,7 +328,9 @@
         (contains? (:topics @state) topic))
       (ev-dbg [_] (f/writeEdnStr @state))
       (ev-removeAll [_]
-        (c/do->nil (reset! state (mkTreeNode)))))))
+        (c/do->nil
+          (finzAsync (:subcs @state))
+          (reset! state (mkTreeNode)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -282,9 +338,19 @@
   "A Publish Subscribe event manager.  If subject based is
   used, a more advanced matching scheme will be used - such as
   wild-card matches."
-  ([] (eventBus<> false))
-  ([subjectBased?]
-   (if subjectBased? (rbus<>) (ebus<>))))
+  ([] (eventBus<> nil))
+  ([{:keys [subjectBased?] :as options}]
+   (if subjectBased? (rbus<> options false) (ebus<> false))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn goBus<>
+  "A Publish Subscribe async event manager.  If subject based is
+  used, a more advanced matching scheme will be used - such as
+  wild-card matches."
+  ([] (goBus<> nil))
+  ([{:keys [subjectBased?] :as options}]
+   (if subjectBased? (rbus<> options true) (ebus<> true))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

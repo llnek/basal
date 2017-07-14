@@ -22,6 +22,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(def ^:private SBA {:subjectBased? true})
 (def ^:private BC (atom {}))
 (defn- incv "" [v] (if (number? v) (inc v) 1))
 (defn- sub-func "" [subto topic msg]
@@ -33,7 +34,7 @@
 
   (testing
     "related to: eventbus"
-    (is (let [bus (e/eventBus<> true)]
+    (is (let [bus (e/eventBus<> SBA)]
           (reset! BC {})
           (e/ev-sub+ bus "/a/b/c /a/** /a/*/c" sub-func)
           (e/ev-pub bus "/a/b/c" {})
@@ -45,19 +46,19 @@
           (e/ev-sub+ bus "/a/b/c" sub-func)
           (e/ev-pub bus "/a/b/c" {})
           (and (= 1 (get @BC "/a/b/c")))))
-    (is (let [bus (e/eventBus<> true)]
+    (is (let [bus (e/eventBus<> SBA)]
           (reset! BC {})
           (e/ev-sub+ bus "/a/b/c /**" sub-func)
           (e/ev-pub bus "/x/b/c" {})
           (and (= 1 (get @BC "/**"))
                (= 1 (count @BC)))))
-    (is (let [bus (e/eventBus<> true)
+    (is (let [bus (e/eventBus<> SBA)
               _ (reset! BC {})
               [x y] (e/ev-sub+ bus "/a/b/c /**" sub-func)]
           (e/ev-unsub bus y)
           (e/ev-pub bus "/x/b/c" {})
           (= 0 (count @BC))))
-    (is (let [bus (e/eventBus<> true)
+    (is (let [bus (e/eventBus<> SBA)
               _ (reset! BC {})
               _ (e/ev-sub+ bus "/a/b/c" sub-func)
               _ (e/ev-sub* bus "/a/*/c" sub-func)]
@@ -65,7 +66,7 @@
           (e/ev-pub bus "/a/b/c" {})
           (and (= 2 (get @BC "/a/b/c"))
                (= 1 (get @BC "/a/*/c")))))
-    (is (let [bus (e/eventBus<> true)
+    (is (let [bus (e/eventBus<> SBA)
               _ (reset! BC {})
               x (e/ev-sub+ bus "/a/b/c" sub-func)]
           (e/ev-pub bus "/a/b/c" {})
@@ -74,7 +75,7 @@
           (e/ev-resume bus x)
           (e/ev-pub bus "/a/b/c" {})
           (= 2 (get @BC "/a/b/c"))))
-    (is (let [bus (e/eventBus<> true)
+    (is (let [bus (e/eventBus<> SBA)
               _ (reset! BC {})
               x (e/ev-sub+ bus "/a/b/c" sub-func)]
           (e/ev-removeAll bus)
@@ -113,6 +114,102 @@
               x (e/ev-sub+ bus "/a/b/c" sub-func)]
           (e/ev-removeAll bus)
           (e/ev-pub bus "/a/b/c" {})
+          (= 0 (count @BC)))))
+
+  (testing
+    "related to: gobus"
+    (is (let [bus (e/goBus<> SBA)]
+          (reset! BC {})
+          (e/ev-sub+ bus "/a/b/c /a/** /a/*/c" sub-func)
+          (e/ev-pub bus "/a/b/c" {})
+          (c/pause 1500)
+          (and (= 1 (get @BC "/a/b/c"))
+               (= 1 (get @BC "/a/**"))
+               (= 1 (get @BC "/a/*/c")))))
+    (is (let [bus (e/goBus<>)]
+          (reset! BC {})
+          (e/ev-sub+ bus "/a/b/c" sub-func)
+          (e/ev-pub bus "/a/b/c" {})
+          (c/pause 1500)
+          (and (= 1 (get @BC "/a/b/c")))))
+    (is (let [bus (e/goBus<> SBA)]
+          (reset! BC {})
+          (e/ev-sub+ bus "/a/b/c /**" sub-func)
+          (e/ev-pub bus "/x/b/c" {})
+          (c/pause 1500)
+          (and (= 1 (get @BC "/**"))
+               (= 1 (count @BC)))))
+    (is (let [bus (e/goBus<> SBA)
+              _ (reset! BC {})
+              [x y] (e/ev-sub+ bus "/a/b/c /**" sub-func)]
+          (e/ev-unsub bus y)
+          (e/ev-pub bus "/x/b/c" {})
+          (c/pause 1500)
+          (= 0 (count @BC))))
+    (is (let [bus (e/goBus<> SBA)
+              _ (reset! BC {})
+              _ (e/ev-sub+ bus "/a/b/c" sub-func)
+              _ (e/ev-sub* bus "/a/*/c" sub-func)]
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-pub bus "/a/b/c" {})
+          (c/pause 1500)
+          (and (= 2 (get @BC "/a/b/c"))
+               (= 1 (get @BC "/a/*/c")))))
+    (is (let [bus (e/goBus<> SBA)
+              _ (reset! BC {})
+              x (e/ev-sub+ bus "/a/b/c" sub-func)]
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-pause bus x)
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-resume bus x)
+          (e/ev-pub bus "/a/b/c" {})
+          (c/pause 1500)
+          (= 2 (get @BC "/a/b/c"))))
+    (is (let [bus (e/goBus<> SBA)
+              _ (reset! BC {})
+              x (e/ev-sub+ bus "/a/b/c" sub-func)]
+          (e/ev-removeAll bus)
+          (e/ev-pub bus "/a/b/c" {})
+          (c/pause 1500)
+          (= 0 (count @BC))))
+
+    (is (let [bus (e/goBus<>)]
+          (reset! BC {})
+          (e/ev-sub+ bus "/a/b/c /a" sub-func)
+          (e/ev-pub bus "/a" {})
+          (c/pause 1500)
+          (and (= 1 (get @BC "/a"))
+               (= 1 (count @BC)))))
+    (is (let [bus (e/goBus<>)
+              _ (reset! BC {})
+              [x y] (e/ev-sub+ bus "/a/b/c /a" sub-func)]
+          (e/ev-unsub bus y)
+          (e/ev-pub bus "/a" {})
+          (c/pause 1500)
+          (= 0 (count @BC))))
+    (is (let [bus (e/goBus<>)
+              _ (reset! BC {})
+              _ (e/ev-sub* bus "/a/b/c" sub-func)]
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-pub bus "/a/b/c" {})
+          (c/pause 1500)
+          (= 1 (get @BC "/a/b/c"))))
+    (is (let [bus (e/goBus<>)
+              _ (reset! BC {})
+              x (e/ev-sub+ bus "/a/b/c" sub-func)]
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-pause bus x)
+          (e/ev-pub bus "/a/b/c" {})
+          (e/ev-resume bus x)
+          (e/ev-pub bus "/a/b/c" {})
+          (c/pause 1500)
+          (= 2 (get @BC "/a/b/c"))))
+    (is (let [bus (e/goBus<>)
+              _ (reset! BC {})
+              x (e/ev-sub+ bus "/a/b/c" sub-func)]
+          (e/ev-removeAll bus)
+          (e/ev-pub bus "/a/b/c" {})
+          (c/pause 1500)
           (= 0 (count @BC)))))
 
   (testing
