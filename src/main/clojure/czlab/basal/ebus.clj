@@ -27,9 +27,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
-(def ^:dynamic *sba-delim* "/")
-(def ^:dynamic *chan-bufsz* 16)
-
 (def ^:private _SEED (atom 1))
 (defn- XnextSEQ "" []
   (let [n @_SEED] (swap! _SEED inc) n))
@@ -46,9 +43,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- splitTopic "" [topic]
+(defn- splitTopic "" [topic sep]
   (if (string? topic)
-    (->> (cs/split topic (if (= *sba-delim* ".") re-dot re-slash))
+    (->> (cs/split topic (if (= sep ".") re-dot re-slash))
          (filter #(if (> (count %) 0) %))) []))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -63,15 +60,15 @@
   (ev-resume [_ handle] "resume this subscriber")
   (ev-pause [_ handle] "pause this subscriber")
   (ev-unsub [_ handle] "remove this subscriber")
-  (ev-removeAll [_] "remove all subscribers"))
+  (ev-finz [_] "remove all"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- asyncAction "" [action wanted]
-  (let [in (chan (sliding-buffer (or *chan-bufsz* 16)))]
+(defn- asyncAction "" [bufsz action wanted]
+  (let [in (chan (sliding-buffer (or bufsz 16)))]
     (go-loop [data (<! in)]
              (when data
-               (action wanted {:topic data} {:msg data})
+               (action wanted (:topic data) (:msg data))
                (recur (<! in))))
     in))
 
@@ -79,18 +76,21 @@
 ;;
 (defn- mkSubSCR
   ""
-  [topic repeat? listener async?]
+  [topic listener options]
   {:pre [(fn? listener)]}
 
-  (-> (if (true? async?)
-        {:action (asyncAction listener topic)}
-        {:action listener})
-      (merge
-        {:id (keyword (str "s#" (nextSEQ)))
-         :async? (boolean async?)
-         :repeat? repeat?
-         :topic topic
-         :status (long-array 1 1)})))
+  (let [{:keys [subjectDelimiter
+                repeat? bufsz async?]} options]
+    (-> (if (true? async?)
+          {:action (asyncAction bufsz listener topic)}
+          {:action listener})
+        (merge
+          {:id (keyword (str "s#" (nextSEQ)))
+           :subjDelim subjectDelimiter
+           :async? (boolean async?)
+           :repeat? repeat?
+           :topic topic
+           :status (long-array 1 1)}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -131,8 +131,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod addOneTopic :rbus [top kind {:keys [topic] :as sub}]
-  (let [path (interleavePath (splitTopic topic))]
+(defmethod addOneTopic :rbus [top kind {:keys [topic subjDelim] :as sub}]
+  (let [path (interleavePath (splitTopic topic subjDelim))]
     (-> (update-in top path addOneSub sub)
         (update-in [:subcs] assoc (:id sub) sub))))
 
@@ -143,19 +143,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; for each topic, subscribe to it.
-(defn- listen [root kind repeat? topics listener async?]
+(defn- listen [root kind topics listener options]
   (let [r
         (->> (-> (or topics "") cs/trim (cs/split re-space))
              (filter #(if (> (count %) 0) %))
              (mapv #(addTopic root
                               kind
-                              (mkSubSCR % repeat? listener async?))))]
+                              (mkSubSCR % listener options))))]
     (if (= 1 (count r)) (first r) r)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defmethod delOneTopic :rbus [top kind {:keys [topic] :as sub}]
-  (let [path (interleavePath (splitTopic topic))]
+(defmethod delOneTopic :rbus [top kind {:keys [topic subjDelim] :as sub}]
+  (let [path (interleavePath (splitTopic topic subjDelim))]
     (-> (update-in top path remOneSub sub)
         (update-in [:subcs] dissoc (:id sub)))))
 
@@ -175,8 +175,11 @@
         (doseq [[_ z] subcs
                 :let [{:keys [repeat? action ^longs status]} z]
                 :when (pos? (aget status 0))]
-          (>! action data)
-          (if-not repeat? (aset status 0 -1))))
+          ;;must change the status first to prevent race condition
+          ;;when incoming messages are fast
+          (if-not repeat?
+            (aset status 0 -1))
+          (>! action data)))
       (doseq [[_ z] subcs
               :let [{:keys [repeat? action status]} z]
               :when (pos? (aget ^longs status 0))]
@@ -235,41 +238,42 @@
 ;;
 (defn- rbus<> "" [{:keys [bufsz
                           subjectDelimiter] :as options} async?]
-  (let [state (atom (mkLevelNode))]
+  (let [state (atom (mkLevelNode))
+        sep (:subjectDelimiter options)]
     (reify EventBus
       (ev-sub* [_ topics listener]
-        (binding [*sba-delim* subjectDelimiter
-                  *chan-bufsz* bufsz]
-          (listen state :rbus false topics listener async?)))
+        (listen state :rbus
+                topics
+                listener
+                (merge options
+                       {:repeat? false
+                        :async? async?})))
       (ev-sub+ [_ topics listener]
-        (binding [*sba-delim* subjectDelimiter
-                  *chan-bufsz* bufsz]
-          (listen state :rbus true topics listener async?)))
+        (listen state :rbus
+                topics
+                listener
+                (merge options
+                       {:repeat? true
+                        :async? async?})))
       (ev-pub [_ topic msg]
-        (binding [*sba-delim* subjectDelimiter
-                  *chan-bufsz* bufsz]
-          (c/let->nil
-            [tokens (splitTopic topic)]
-            (if (not-empty tokens)
-              (walk async? @state tokens topic msg nil)))))
-      (ev-resume [_ hd]
-        (resume @state hd))
-      (ev-pause [_ hd]
-        (pause @state hd))
+        (c/let->nil
+          [tokens (splitTopic topic sep)]
+          (if (not-empty tokens)
+            (walk async? @state tokens topic msg nil))))
+      (ev-resume [_ hd] (resume @state hd))
+      (ev-pause [_ hd] (pause @state hd))
       (ev-unsub [_ hd]
         (c/do->nil
           (some->> (get (:subcs @state) hd)
                    (unSub state :rbus))))
       (ev-match? [_ topic]
-        (binding [*sba-delim* subjectDelimiter
-                  *chan-bufsz* bufsz]
-          (let [tokens (splitTopic topic)
-                z (atom 0)]
-            (if (not-empty tokens)
-              (walk async? @state tokens topic nil z))
-            (pos? @z))))
+        (let [tokens (splitTopic topic sep)
+              z (atom 0)]
+          (if (not-empty tokens)
+            (walk async? @state tokens topic nil z))
+          (pos? @z)))
       (ev-dbg [_] (f/writeEdnStr @state))
-      (ev-removeAll [_]
+      (ev-finz [_]
         (c/do->nil
           (finzAsync (:subcs @state))
           (reset! state (mkLevelNode)))))))
@@ -309,9 +313,13 @@
   (let [state (atom (mkTreeNode))]
     (reify EventBus
       (ev-sub* [_ topics listener]
-        (listen state :ebus false topics listener async?))
+        (listen state :ebus
+                topics listener
+                {:repeat? false :async? async?}))
       (ev-sub+ [_ topics listener]
-        (listen state :ebus true topics listener async?))
+        (listen state :ebus
+                topics listener
+                {:repeat? true :async? async?}))
       (ev-pub [_ topic msg]
         (c/let->nil
           [sub (get (:topics @state) topic)]
@@ -327,7 +335,7 @@
       (ev-match? [_ topic]
         (contains? (:topics @state) topic))
       (ev-dbg [_] (f/writeEdnStr @state))
-      (ev-removeAll [_]
+      (ev-finz [_]
         (c/do->nil
           (finzAsync (:subcs @state))
           (reset! state (mkTreeNode)))))))
