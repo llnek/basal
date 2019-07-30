@@ -1,4 +1,4 @@
-;; Copyright (c) 2013-2017, Kenneth Leung. All rights reserved.
+;; Copyright © 2013-2019, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -6,216 +6,194 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Access to a win32 .ini file."
+(ns ^{:doc "Access to a windows style .ini file."
       :author "Kenneth Leung"}
 
   czlab.basal.ini
 
-  (:require [czlab.basal.io :as i :refer [fileRead?]]
-            [czlab.basal.log :as log]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
             [clojure.string :as cs]
-            [czlab.basal.core :as c]
-            [czlab.basal.str :as s])
+            [czlab.basal.util :as u]
+            [czlab.basal.str :as s]
+            [czlab.basal.core :as c])
 
   (:use [flatland.ordered.map])
 
-  (:import [czlab.jasal Win32Conf]
-           [java.net URL]
+  (:import [java.net
+            URL]
            [java.io
             File
-            PrintStream
-            IOException
-            InputStreamReader
             LineNumberReader]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- throwBadIni
-  "" [^LineNumberReader rdr]
-  (c/throwBadData "Bad ini line: %s" (.getLineNumber rdr)))
+(defmacro ^:private throw-bad-key
+  [k] `(u/throw-BadData "No such item %s" ~k))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ^:private throwBadKey
-  "" [k] `(c/throwBadData "No such item %s" ~k))
+(defmacro ^:private throw-bad-map
+  [s] `(u/throw-BadData "No such heading %s" ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ^:private throwBadMap
-  "" [s] `(c/throwBadData "No such heading %s" ~s))
+(defn- throw-bad-ini [rdr]
+  (u/throw-BadData "Bad ini line: %s"
+                   (.getLineNumber ^LineNumberReader rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- maybeSection
+(defn- maybe-section
   "Look for a section storing the
-  actual name in meta" [rdr ncmap line]
-
-  (c/if-some+ [s (s/strimAny line "[]" true)]
+  actual name in meta."
+  [rdr ncmap line]
+  (c/if-some+ [s (s/strim-any line "[]" true)]
     (c/do-with [k (keyword (s/lcase s))]
       (if-not (contains? @ncmap k)
-        (->> (assoc @ncmap
-                    k
-                    (with-meta (ordered-map) {:name s}))
-             (reset! ncmap))))
-    (throwBadIni rdr)))
+        (c/assoc!! ncmap
+                   k
+                   (with-meta (ordered-map) {:name s}))))
+    ;else
+    (throw-bad-ini rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- maybeLine
-  "Parse a line (name=value) under a section"
-  [rdr ncmap section ^String line]
-
-  (if-some [kvs (get @ncmap section)]
-    (let [pos (.indexOf line (int \=))
-          nm (if (> pos 0)
-               (s/strim (.substring line 0 pos)) "")]
-      (if (s/nichts? nm) (throwBadIni rdr))
-      (let [k (keyword (s/lcase nm))]
-        (->> (assoc kvs
-                    k
-                    [nm  (s/strim (.substring line
-                                              (inc pos)))])
-             (swap! ncmap assoc section)))
+(defn- maybe-line
+  "Parse a line (name=value) under a section."
+  [rdr ncmap section line]
+  (if-some [_ (get @ncmap section)]
+    (let [pos (cs/index-of line \=)
+          nm (if (c/spos? pos)
+               (s/strim (.substring ^String
+                                    line 0 pos)) "")
+          k (if (s/hgl? nm)
+              (keyword (s/lcase nm)) (throw-bad-ini rdr))]
+      (swap! ncmap
+             #(update-in %
+                         [section]
+                         assoc
+                         k
+                         [nm (s/strim (.substring ^String
+                                                  line (+ 1 pos)))]))
       section)
-    (throwBadIni rdr)))
+    ;else
+    (throw-bad-ini rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- evalOneLine
-  "Parses a line in the file"
-  [rdr ncmap curSec ^String line]
-
+(defn- eval-one-line
+  "Parses a line in the file."
+  [rdr ncmap cursec ^String line]
   (let [ln (s/strim line)]
-    (cond
-      (or (s/nichts? ln)
-          (.startsWith ln "#"))
-      curSec
-
-      (.matches ln "^\\[.*\\]$")
-      (maybeSection rdr ncmap ln)
-
-      :else
-      (maybeLine rdr ncmap curSec ln))))
+    (cond (or (s/nichts? ln)
+              (cs/starts-with? ln "#"))
+          ;comment
+          cursec
+          (.matches ln "^\\[.*\\]$")
+          (maybe-section rdr ncmap ln)
+          :else
+          (maybe-line rdr ncmap cursec ln))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- getKV
-  "" ^String [sects s k err]
-
+(defn- getkv ^String [sects s k err]
   (let [sn (keyword (s/lcase s))
         kn (keyword (s/lcase k))
-        mp (get sects sn)]
-    (cond
-      (nil? mp) (if err (throwBadMap s))
-      (nil? k) (if err (throwBadKey k))
-      (c/notin? mp kn) (if err (throwBadKey k))
-      :else (str (last (get mp kn))))))
+        mp (get @sects sn)]
+    (cond (nil? mp) (if err (throw-bad-map s))
+          (nil? k) (if err (throw-bad-key k))
+          (c/!in? mp kn) (if err (throw-bad-key k))
+          :else (str (last (get mp kn))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- makeWinini "" [sects]
-
-  (reify Win32Conf
-
-    (headings [_]
-      (c/preduce<set>
-        #(conj! %1 (:name (meta %2)))
-        (vals sects)))
-
-    (heading [_ sect]
-      (let [sn (keyword (s/lcase sect))]
-        (reduce #(assoc %1
-                        (first %2) (last %2))
-                (ordered-map)
-                (or (vals (get sects sn)) []))))
-
-    (strValue [this sect prop]
-      (str (getKV sects sect prop true)))
-
-    (strValue [this sect prop dft]
-      (if-some [rc (getKV sects
-                          sect prop false)]
-        rc dft))
-
-    (longValue [this sect prop dft]
-      (if-some [rc (getKV sects
-                          sect prop false)]
-        (c/convLong rc) dft))
-
-    (longValue [this sect prop]
-      (c/convLong (getKV sects sect prop true) 0))
-
-    (intValue [this sect prop dft]
-      (if-some [rc (getKV sects
-                          sect prop false)]
-        (c/convInt rc dft) dft))
-
-    (intValue [this sect prop]
-      (c/convInt (getKV sects sect prop true)))
-
-    (doubleValue [this sect prop dft]
-      (if-some [rc (getKV sects sect prop false)]
-        (c/convDouble rc dft)
-        dft))
-
-    (doubleValue [this sect prop]
-      (c/convDouble (getKV sects sect prop true)))
-
-    (boolValue [this sect prop dft]
-      (if-some [rc (getKV sects
-                          sect prop false)]
-        (c/convBool rc dft) dft))
-
-    (boolValue [this sect prop]
-      (c/convBool (getKV sects sect prop true)))
-
-    (dbgShow [_]
-      (let [buf (s/strbf<>)]
-        (doseq [v (vals sects)]
-          (.append buf (str "[" (:name (meta v)) "]\n"))
-          (doseq [[x y] (vals v)]
-            (.append buf (str x "=" y "\n")))
-          (.append buf "\n"))
-        (println (.toString buf))))))
+(defn headings
+  "List all section names." [ini]
+  (c/preduce<set> #(conj! %1 (:name (meta %2))) (vals @ini)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- parseFile ""
+(defn heading "" [ini sect]
+  (let [sn (keyword (s/lcase sect))]
+    (reduce #(assoc %1
+                    (first %2) (last %2))
+            (ordered-map)
+            (or (vals (get @ini sn)) []))))
 
-  ([fUrl] (parseFile fUrl "utf-8"))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn str-value
+  ""
+  ([ini sect prop] (str (getkv ini sect prop true)))
+  ([ini sect prop dft]
+   (if-some [rc (getkv ini sect prop false)] rc dft)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn long-value
+  ""
+  ([ini sect prop dft]
+   (if-some [rc (getkv ini
+                       sect prop false)] (c/s->long rc) dft))
+  ([ini sect prop]
+   (c/s->long (getkv ini sect prop true) 0)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn int-value
+  ""
+  ([ini sect prop dft]
+   (if-some [rc (getkv ini
+                       sect prop false)] (c/s->int rc dft) dft))
+  ([ini sect prop] (c/s->int (getkv ini sect prop true))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn double-value
+  ""
+  ([ini sect prop dft]
+   (if-some [rc (getkv ini
+                       sect prop false)] (c/s->double rc dft) dft))
+  ([ini sect prop]
+   (c/s->double (getkv ini sect prop true))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn bool-value
+  ""
+  ([ini sect prop dft]
+   (if-some [rc (getkv ini
+                       sect prop false)] (c/s->bool rc dft) dft))
+  ([ini sect prop] (c/s->bool (getkv ini sect prop true))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn dbg-show
+  "Dump ini as string." [ini]
+  (let [buf (s/sbf<>)]
+    (doseq [v (vals @ini)]
+      (s/sbf+ buf "[" (:name (meta v)) "]\n")
+      (doseq [[x y] (vals v)]
+        (s/sbf+ buf x "=" y "\n"))
+      (s/sbf+ buf "\n"))
+    (println (str buf))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn- parse-file
+  ([fUrl] (parse-file fUrl "utf-8"))
   ([fUrl enc]
-   (with-open [inp (-> (.openStream ^URL fUrl)
-                       (io/reader :encoding
-                                  (s/stror enc "utf8"))
-                       LineNumberReader. )]
+   (c/wo* [inp (-> (io/input-stream fUrl)
+                   (io/reader :encoding
+                              (s/stror enc "utf8"))
+                   LineNumberReader. )]
      (loop [total (atom (sorted-map))
             rdr inp
             line (.readLine rdr)
             curSec nil]
        (if (nil? line)
-         (makeWinini @total)
+         total
          (recur total
                 rdr
                 (.readLine rdr)
-                (evalOneLine rdr
-                             total curSec line)))))))
+                (eval-one-line rdr
+                               total curSec line)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn w32ini<>
-  "Parse a ini conf file"
-  ^Win32Conf
+(defn win-ini<>
+  "Parse a ini conf file."
   [f]
-  (cond
-    (string? f) (if (s/hgl? f)
-                  (w32ini<> (io/file f)))
-    (c/ist? File f) (if (i/fileRead? f)
-                      (w32ini<> (io/as-url f)))
-    (c/ist? URL f) (some-> f parseFile)))
+  (cond (c/is? File f) (win-ini<> (io/as-url f))
+        (string? f) (if (s/hgl? f)
+                      (win-ini<> (io/file f)))
+        (c/is? URL f) (parse-file f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

@@ -1,4 +1,4 @@
-;; Copyright (c) 2013-2017, Kenneth Leung. All rights reserved.
+;; Copyright (c) 2013-2019, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -9,17 +9,14 @@
 (ns ^{:doc "Country-codes and country-names."
       :author "Kenneth Leung"}
 
-  czlab.basal.countries
+  czlab.basal.ccodes
 
-  (:require [czlab.basal.log :as log]
-            [clojure.string :as cs]
-            [czlab.basal.str :as s]))
+  (:require [czlab.basal.str :as s]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (def ^:private _ccodes {
     "AF"  "Afghanistan"
     "AL"  "Albania"
@@ -256,40 +253,27 @@
 })
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (def ^:private _ccodes-seq (seq _ccodes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn findCountry
-  "The full country name"
-  ^String
-  [code]
-  (get _ccodes (s/ucase code)))
+(defn find-country
+  "The full country name."
+  ^String [code] (get _ccodes (s/ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn listCodes "List all the country codes" [] (keys _ccodes))
+(defn list-codes "List all the country codes." [] (keys _ccodes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn isUSA? "If the code is US" [code] (= "US" (s/ucase code)))
+(defn is-usa? "If the code is US?" [code] (= "US" (s/ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn findCountryCode
-  "The country code"
+(defn find-country-code
+  "The country code."
   ^String
   [country]
-
-  (some-> (filter #(= (nth % 1)
-                      country)
-                  _ccodes-seq)
-          first
-          (nth 0)))
+  (some-> (filter #(= (nth % 1) country) _ccodes-seq) first (nth 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (def ^:private _states {
     "AL"  "Alabama"
     "AK"  "Alaska"
@@ -344,34 +328,23 @@
 })
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (def ^:private _states-seq (seq _states))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn listStates "List all the abbreviated states" [] (keys _states))
+(defn list-states "List all the abbreviated states." [] (keys _states))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn findState
-  "The full state name"
-  ^String
-  [code]
-  (get _states (s/ucase code)))
+(defn find-state
+  "The full state name."
+  ^String [code] (get _states (s/ucase code)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn findStateCode
-  "The abbreviated state code"
+(defn find-state-code
+  "The abbreviated state code."
   ^String
   [state]
-  (some-> (filter #(= (nth % 1)
-                      state)
-                  _states-seq)
-          first
-          (nth 0)))
+  (some-> (filter #(= (nth % 1) state) _states-seq) first (nth 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
-
 

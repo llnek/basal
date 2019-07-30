@@ -1,4 +1,4 @@
-;; Copyright (c) 2013-2017, Kenneth Leung. All rights reserved.
+;; Copyright © 2013-2019, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -11,1453 +11,584 @@
 
   czlab.basal.core
 
-  (:require [czlab.basal.log :as log]
-            [clojure.java.io :as io]
-            [clojure.string :as cs]
-            [clojure.edn :as edn])
+  (:require [clojure.set :as ct]
+            [clojure.string :as cs])
 
-  (:use [clojure.walk])
-
-  (:import [czlab.jasal Idable DataError MonoFlop Watch RunnableWithId]
-           [java.util.concurrent.atomic AtomicLong AtomicInteger]
-           [java.util.zip DataFormatException Deflater Inflater]
-           [java.util.concurrent TimeUnit]
-           [java.security SecureRandom]
-           [java.nio.charset Charset]
-           [czlab.basal Stateful]
-           [clojure.lang
-            PersistentList
-            Keyword
-            APersistentMap
-            APersistentVector]
-           [java.net URL]
-           [java.io
-            Serializable
-            InputStream
-            PrintStream
-            File
-            FileInputStream
-            ObjectOutputStream
-            ObjectInputStream
-            ByteArrayInputStream
-            ByteArrayOutputStream]
-           [java.util
-            TimerTask
-            Map
-            Properties
-            Date
-            Calendar
-            HashMap
-            HashSet
-            ArrayList
-            GregorianCalendar
-            TimeZone]
-           [java.sql Timestamp]
-           [java.rmi.server UID]))
+  ;need this for running tests
+  (:import [java.util Date]
+           [java.lang System]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
-;;{:keys [a] {:keys []} :b} - destruct nested map b
 ;; #^"[Ljava.lang.Object;"
 
-(def ^:private CSCZ (class (.toCharArray "")))
-(def ^:private BSCZ (class (.getBytes "")))
-(def ^:private SGCZ (class ""))
-
-(def ^String PATHSEP (System/getProperty "file.separator"))
+(def BOOLS #{"true" "yes" "on" "ok" "active" "1"})
+(def ^String HEX-CHAR-STR "0123456789ABCDEF")
+(def ^String hex-char-str "0123456789abcdef")
+(def HEX-CHARS (.toCharArray HEX-CHAR-STR))
+(def hex-chars (.toCharArray hex-char-str))
 (def ^String USASCII "ISO-8859-1")
 (def ^String UTF16 "UTF-16")
 (def ^String UTF8 "UTF-8")
 (def ^String SLASH "/")
 
-(def _empty-set_ #{})
-(def _empty-map_ {})
-(def _empty-vec_ [])
-
-(def BOOLS #{"true", "yes", "on", "ok", "active", "1"})
-(def ^String HEX-CHARS "0123456789ABCDEF")
-(def ^String HEX-CHS (cs/lower-case HEX-CHARS))
-
 (def KiloBytes 1024)
 (def BUF-SZ (* 4 KiloBytes))
 (def MegaBytes (* KiloBytes KiloBytes))
-(def GigaBytes (* KiloBytes MegaBytes))
+(def GigaBytes (* KiloBytes KiloBytes KiloBytes))
 
 (def OneK 1024)
 (def FourK (* 4 OneK))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro decl-long-var "Define a long array[1] for local operation"
-  ([] `(decl-long-var 0))
-  ([n] `(long-array 1 ~n)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro decl-int-var "Define a int array[1] for local operation"
-  ([] `(decl-int-var 0))
-  ([n] `(int-array 1 ~n)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro atom?
+  "If obj is an atom?" [x] `(instance? clojure.lang.Atom ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn concatv "" [a b] (into [] (concat a b)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn int-var ""
-  ([^ints arr v] (aset arr 0 (int v)) (int v))
-  ([^ints arr] (aget arr 0))
-  ([^ints arr op nv]
-   (let [v (int (op (aget arr 0) nv))] (aset arr 0 v) v)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn long-var ""
-  ([^longs arr ^long v] (aset arr 0 v) v)
-  ([^longs arr] (aget arr 0))
-  ([^longs arr op nv]
-   (let [v (long (op (aget arr 0) nv))] (aset arr 0 v) v)))
+(defmacro is?
+  "Alias instance?" [& more] `(instance? ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro decl-var-docstring
-  "Add docstring to var" [v s] `(alter-meta! ~v assoc :doc ~s))
+(defmacro map->
+  "Alias into {} ..." [& more] `(into {} ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro decl-var-private
-  "Make var private" [v] `(alter-meta! ~v assoc :private true))
+(defmacro vec->
+  "Alias into [] ..." [& more] `(into [] ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
+(defmacro cc+1
+  "Alias concat" [a & more] `(concat [~a] ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro cc+
+  "Alias concat" [& more] `(concat ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro _2 "Alias second." [x] `(second ~x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro _1 "Alias first." [x] `(first ~x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro _3 "Alias 3rd." [x] `(nth ~x 2))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro _E "Alias last." [x] `(last ~x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro !zero? "If not-zero?" [n] `(not (zero? ~n)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro n# "Alias count." [c] `(count ~c))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro car "Alias first." [x] `(first ~x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro cdr "Alias rest." [x] `(rest ~x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro dissoc!!
+  "Mutable dissoc (atom)."
+  [a & args]
+  (let [X (gensym)]
+    `(let [~X ~a] (swap! ~X #(dissoc % ~@args)) ~X)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro assoc!!
+  "Mutable assoc (atom)."
+  [a & args]
+  (let [X (gensym)]
+    `(let [~X ~a] (swap! ~X #(assoc % ~@args)) ~X)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro fn_*
+  "Wrap code into a fn(...)."
+  [& forms] `(fn [& ~'____xs] ~@forms))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro fn_3
+  "Wrap code into a fn(a1,a2,a3)."
+  [& forms] `(fn [~'____1 ~'____2 ~'____3] ~@forms))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro fn_2
+  "Wrap code into a fn(a1,a2)."
+  [& forms] `(fn [~'____1 ~'____2] ~@forms))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro fn_1
+  "Wrap code into a fn(a1)." [& forms] `(fn [~'____1] ~@forms))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro fn_0
+  "Wrap code into a fn()." [& forms] `(fn [] ~@forms))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro tvec*
+  "A transient vector."
+  ([] `(tvec* nil))
+  ([x] `(transient (or ~x []))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro tmap*
+  "A transient map."
+  ([] `(tmap* nil))
+  ([x] `(transient (or ~x {}))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro ps!
+  "Alias persistent!." [c] `(persistent! ~c))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro atomic
+  "Atomize fields as map." [& args] `(atom (hash-map ~@args)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro mapfv
+  "Apply a binary-op to the value over the forms."
+  [op v & forms]
+  `(vector ~@(map (fn [f] `(~op ~f ~v)) forms)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro last-index "Length - 1." [c] `(- (count ~c) 1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro nexth
+  "The next item after i." [c i] `(nth ~c (+ 1 ~i)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro chop
+  "Alias partition" [& args] `(partition ~@args))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro o+ "Alias for x+1" [X] `(+ 1 ~X))
+(defmacro o- "Alias for x-1" [X] `(- ~X 1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro do#false "Do returns false." [& forms] `(do ~@forms false))
+(defmacro do#true "Do returns true." [& forms] `(do ~@forms true))
+(defmacro do#nil "Do returns nil." [& forms] `(do ~@forms nil))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro let#false "Let returns false." [& forms] `(let ~@forms false))
+(defmacro let#true "Let returns true." [& forms] `(let ~@forms true))
+(defmacro let#nil "Let returns nil." [& forms] `(let ~@forms nil))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro defenum
+  "Enum definition. e.g. (defenum xyz a 1 b c) will
+  generate
+  (def xyz-a 1)
+  (def xyz-b 2)
+  (def xyz-c 3)"
+  [name_ & args]
+  (let [[e1 n] (take 2 args)
+        more (cc+1 e1 (drop 2 args))]
+    (assert (number? n) "enum expecting a number")
+    `(do ~@(loop [v n [m & ms] more out []]
+            (if (nil? m)
+              out
+              (recur (+ 1 v)
+                     ms
+                     (conj out
+                           `(def ~(symbol (str (name name_)
+                                               "-" (name m))) ~v))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro if-number
+  "bindings => binding-form test
+  If test is a number, evaluates 'then'
+  with binding-form bound to the value of test."
+  ([bindings then] `(if-number ~bindings ~then nil))
+  ([bindings then else & oldform]
+   (do (assert (= 2 (count bindings))
+               "too many (> 2) in bindings")
+       (let [X (gensym)]
+         `(let [~X ~(last bindings)
+                ~(first bindings) ~X] (if (number? ~X) ~then ~else))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro if-string
+  "bindings => binding-form test
+  If test is a string, evaluates 'then'
+  with binding-form bound to the value of test."
+  ([bindings then] `(if-string ~bindings ~then nil))
+  ([bindings then else & oldform]
+   (do (assert (= 2 (count bindings))
+               "too many (> 2) in bindings")
+       (let [X (gensym)]
+         `(let [~X ~(last bindings)
+                ~(first bindings) ~X] (if (string? ~X) ~then ~else))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro nloop
+  "Loop over code n times."
+  [n & forms] `(dotimes [~'_ ~n] ~@forms))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro each*
+  "Evals function for each element, indexed."
+  [func coll]
+  (let [C (gensym)
+        I (gensym)
+        T (gensym)]
+    `(let [~C ~coll
+           ~T (count ~C)]
+       (dotimes [~I ~T] (~func (nth ~C ~I) ~I)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro each
+  "Evals function for each element."
+  [func coll] (let [I (gensym)]
+                `(doseq [~I ~coll] (~func ~I))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;testing stuff
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro deftest
+  "A test group."
+  [name & body]
+  `(def ~name (fn [] (filter #(not (nil? %)) [~@body]))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro ensure??
+  "Assert test ok."
+  [msg form] `(czlab.basal.core/ensure-test ~form ~msg))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro ensure-thrown??
+  "Assert error was thrown."
+  [msg expected form]
+  `(try ~form
+        (czlab.basal.core/ensure-test-thrown ~expected nil ~msg)
+        (catch Throwable e#
+          (czlab.basal.core/ensure-test-thrown ~expected e# ~msg))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro var-doc!
+  "Add docstring to var." [v s] `(alter-meta! (var ~v) assoc :doc ~s))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro var-private!
+  "Make var private." [v] `(alter-meta! (var ~v) assoc :private true))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro prn!!
-  "println with format" [fmt & args] `(println (apply format ~fmt ~@args [])))
+  "Println with format."
+  [fmt & args] `(println (apply format ~fmt ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro prn!
-  "print with format" [fmt & args] `(print (apply format ~fmt ~@args [])))
+  "Print with format."
+  [fmt & args] `(print (apply format ~fmt ~@args [])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ist? "instance?" [type obj] `(instance? ~type ~obj))
+(defmacro ^:private make-fn
+  "Hack to wrap a macro as fn
+  so you can use *apply* on it."
+  [m] `(fn [& xs#] (eval (cons '~m xs#))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn nth?? "Safely get the nth element"
-  [coll pos]
-  {:pre [(> pos 0)]}
-  (first (drop (dec pos) coll)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;hack to wrap a macro as fn so that you can use *apply* on it
-(defmacro ^:private make-fn [m]
- `(fn [& args#] (eval (cons '~m args#))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro reset-atomic
-  "Do a reset on the atom/volatile"
-  [atomic arg]
-  `(let [s# ~(with-meta atomic
-                        {:tag 'czlab.basal.Stateful})
-         d# (.state s#)]
-     (if (volatile? d#) (vreset! d# ~arg) (reset! d# ~arg)) s#))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro alter-atomic
-  "Do a swap on the atom/volatile"
-  [atomic & args]
-  `(let [s# ~(with-meta atomic
-                        {:tag 'czlab.basal.Stateful})
-         d# (.state s#)]
-     (if (volatile? d#) (vswap! d# ~@args) (swap! d# ~@args)) s#))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;using defrecord causes issues with print-match#multimethod(IDeref,IRecord clash)
-(defmacro decl-atomic
-  "Define a simple stateful type" [name & more]
-  `(deftype ~name [~'_data]
-     ~'czlab.basal.Stateful
-     ~'(deref [_] @_data)
-     ~'(state [_] _data) ~@more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro decl-volatile
-  "Define a simple type" [name & more]
-  `(decl-muble-types ~name :volatile-mutable ~@more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro decl-mutable
-  "Define a simple type" [name & more]
-  `(decl-muble-types ~name :unsynchronized-mutable ~@more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro decl-object
-  "Define a simple type" [name & more] `(defrecord ~name [] ~@more))
+  "Define a simple type."
+  [name & more] `(defrecord ~name [] ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro atomic<>
-  "Create a new entity"
+  "Create a new entity."
   ([classname] `(atomic<> ~classname {}))
   ([classname seed] `(atomic<> ~classname ~seed false))
   ([classname seed volatile??]
-   `(let [s# ~seed
-          ~'_ (assert (map? s#))]
-      (new ~classname (if-not ~volatile?? (atom s#) (volatile! s#))))))
+   (let [S (gensym)]
+     `(let [~S ~seed]
+        (assert (map? ~S))
+        (new ~classname (if-not ~volatile?? (atom ~S) (volatile! ~S)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro object<>
   "Create a new object"
   ([classname] `(object<> ~classname {}))
   ([classname seed]
-   `(let [s# ~seed
-          ~'_ (assert (map? s#))
-          r# (merge (new ~classname) s#)] (assert (record? r#)) r#)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro mutable<>
-  "Create a new object"
-  ([classname] `(mutable<> ~classname {}))
-  ([classname seed]
-   `(let [s# ~seed
-          ~'_ (assert (map? s#))
-          r# (new ~classname s#)]
-      (assert (satisfies? czlab.basal.core/Muable r#)) r#)))
+   (let [S (gensym) Z (gensym) R (gensym)]
+     `(let [~S ~seed
+            ~Z (assert (map? ~S))
+            ~R (merge (new ~classname) ~S)] (assert (record? ~R)) ~R))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro vargs "Coerce into java vargs" [z c] `(into-array ~z ~c))
+(defmacro vargs
+  "Coerce into java vargs." [z c] `(into-array ~z ~c))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro pcoll! "Persist a transient" [t] `(persistent! ~t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro preduce<map>
-  "Reduce with a transient map, returning a map"
+  "Reduce with a transient map accumulator, returning a map."
   [f c] `(persistent! (reduce ~f (transient {}) ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro preduce<set>
-  "Reduce with a transient set, returning a set"
+  "Reduce with a transient set accumulator, returning a set."
   [f c] `(persistent! (reduce ~f (transient #{}) ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro preduce<vec>
-  "Reduce with a transient vec, returning a vec"
+  "Reduce with a transient vec accumulator, returning a vec."
   [f c] `(persistent! (reduce ~f (transient []) ~c)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro sreduce<>
-  "Reduce with a string builder, returning a string"
-  [f c] `(str (reduce ~f (StringBuilder.) ~c)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro rset!
-  "Reset a atom"
+  "Reset a atom."
   ([a] `(rset! ~a nil))
   ([a v] `(reset! ~a ~v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro exp!
-  "Create an exception instance"
+  "Create an exception instance."
   [e & args]
   (if (empty? args) `(new ~e) `(new ~e ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro trap! "Throw this exception" [e & args] `(throw (exp! ~e ~@args)))
+(defmacro trap!
+  "Throw an exception." [e & args] `(throw (exp! ~e ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn vargs* "Coerce into java array" [clazz & args] (vargs clazz args))
+(defmacro raise!
+  "Throw an exception." [& args]
+  `(throw (exp! ~'Exception (str ~@args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ^:private decl-throw-xxx "" [name etype docs]
-  `(defn ~name ~docs
-     [~'fmt ~'& ~'xs]
-     (->> (apply format ~'fmt ~'xs) str (trap! ~etype ))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ^:private decl-throw-exp "" [name etype docs]
-  `(defn ~name ~docs
-     [~'t]
-     (assert (instance? Throwable ~'t))
-     (trap! ~etype ~(with-meta 't {:tag 'Throwable}))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(decl-throw-xxx
-  throwISE
-  IllegalStateException
-  "Throw illegal state exception")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(decl-throw-xxx
-  throwUOE
-  UnsupportedOperationException
-  "Throw unsupported operation exception")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(decl-throw-xxx
-  throwBadArg
-  IllegalArgumentException
-  "Throw bad parameter exception")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(decl-throw-xxx
-  throwBadData
-  DataError
-  "Throw Bad Data Exception")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(decl-throw-xxx
-  throwIOE
-  java.io.IOException
-  "Throw IO Exception")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(decl-throw-exp
-  throwIOExp
-  java.io.IOException
-  "Throw IO Exception")
+(defmacro decl-throw-exp
+  "Generate a function which when called will
+  throw the desired exception."
+  ([name etype] `(decl-throw-exp ~name ~etype ""))
+  ([name etype doc]
+  `(defn ~name ~doc [~'arg & ~'xs]
+     (cond
+       (string? ~'arg)
+       (trap! ~etype (str (apply format ~'arg ~'xs)))
+       (instance? Throwable ~'arg)
+       (trap! ~etype
+              ~(with-meta 'arg {:tag 'Throwable}))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; (meta nil) is fine, so no need to worry
-(defmacro getTypeId "typeId from metadata" [m] `(:typeid (meta ~m)))
+(defmacro get-type-id
+  "typeId from metadata." [m] `(:typeid (meta ~m)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro do-with-atom
+  "binding=> symbol init-expr
+  Eval the body in a context in which the symbol is always the
+  returned value deref'ed.
+  e.g. (do-with-atom [a (atom 0)] ... (deref a))"
+  [bindings & forms]
+  (let [f (first bindings)
+        sz (count bindings)]
+    (assert (or (= sz 1)
+                (= sz 2))
+            "(not 1 or 2) in bindings")
+    (if (= sz 1)
+      `(let [~f ~f] ~@forms (deref ~f))
+      `(let [~f ~(last bindings)] ~@forms (deref ~f)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do-with
-  "e.g. (do-with [x expr] ... x)"
-  [bindings & more]
-  (assert (= 2 (count bindings)))
-  (let [a (first bindings)
-        b (last bindings)]
-      `(let [~a ~b] ~@more ~a)))
+  "binding=> symbol init-expr
+  Evals the body in a context in which the symbol is always the
+  returned value."
+  [bindings & forms]
+  (let [f (first bindings)
+        sz (count bindings)]
+    (assert (or (= sz 1)
+                (= sz 2))
+            "(not 1 or 2) in bindings")
+    (if (= sz 1)
+      `(let [~f ~f] ~@forms ~f)
+      `(let [~f ~(last bindings)] ~@forms ~f))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro bool! "Shorthand for boolean" [x] `(boolean ~x))
+(defmacro bool! "Alias for boolean" [x] `(boolean ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro try!!
-  "Eat & log the exception, returning a default value"
-  [defv & exprs]
-  `(try ~@exprs (catch Throwable e# (czlab.basal.log/warn e# "") ~defv)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro trye!
-  "Eat the exception, returning a default value"
-  [defv & exprs]
-  `(try ~@exprs
-        (catch Throwable e#
-          (czlab.basal.log/warn "Just ate a %s, yummy" e#) ~defv)))
+  "Eat exception and return a value."
+  [value & forms]
+  `(try ~@forms (catch Throwable e# ~value)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro trye!!
-  "Eat the exception, returning nil"
-  [defv & exprs]
-  `(try ~@exprs (catch Throwable e#  ~defv)))
+(defmacro try!
+  "Eat exception and return nil."
+  [& forms] `(try ~@forms (catch Throwable e# nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro try! "Eat the exp, return nil" [& forms] `(try!! nil ~@forms))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro run-able+id<>
-  "Create a RunnableWithId wrapper"
-  [rid & forms]
-  `(reify
-     czlab.jasal.Idable
-     (id [_] ~rid)
-     Runnable
-     (run [_] (czlab.basal.core/try! ~@forms))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro run-able<>
-  "Create a Runnable wrapper"
-  [& forms]
-  `(reify Runnable
-     (run [_] (czlab.basal.core/try! ~@forms))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro if-some+
   "bindings => binding-form test. When test is not empty, evaluates body
-  with binding-form bound to the value of test"
+  with binding-form bound to the value of test."
   ([bindings then]
    `(if-some+ ~bindings ~then nil))
   ([bindings then else & oldform]
-   (let [form (bindings 0)
-         tst (bindings 1)]
-     `(let [temp# ~tst]
-        (if (empty? temp#)
-          ~else
-          (let [~form temp#] ~then))))))
+   (let [form (first bindings)
+         tst (last bindings)]
+     (assert (= 2 (count bindings))
+             "not = 2 in bindings")
+     (let [T (gensym)]
+       `(let [~T ~tst]
+          (if (empty? ~T)
+            ~else (let [~form ~T] ~then)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro when-some+
   "bindings => binding-form test. When test is not empty, evaluates body
-  with binding-form bound to the value of test"
+  with binding-form bound to the value of test."
   [bindings & body]
-  (let [form (bindings 0)
-        tst (bindings 1)]
-    `(let [temp# ~tst]
-       (if-not (empty? temp#)
-         (let [~form temp#] ~@body)))))
+  (let [form (first bindings)
+        tst (last bindings)]
+    (assert (= 2 (count bindings))
+            "not = 2 in bindings")
+    (let [T (gensym)]
+      `(let [~T ~tst]
+         (if-not (empty? ~T)
+           (let [~form ~T] ~@body))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro if-fn?
   "bindings => binding-form test. When test is a fn?, evaluates body
-  with binding-form bound to the value of test"
+  with binding-form bound to the value of test."
   ([bindings then]
    `(if-fn? ~bindings ~then nil))
   ([bindings then else & oldform]
-   (let [form (bindings 0)
-         tst (bindings 1)]
-     `(let [temp# ~tst]
-        (if-not (fn? temp#)
-          ~else
-          (let [~form temp#] ~then))))))
+   (let [form (first bindings)
+         tst (last bindings)]
+     (assert (= 2 (count bindings))
+             "not = 2 in bindings")
+     (let [T (gensym)]
+       `(let [~T ~tst]
+          (if-not (fn? ~T)
+            ~else (let [~form ~T] ~then)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro when-fn?
   "bindings => binding-form test. When test is a fn?, evaluates body
-  with binding-form bound to the value of test"
+  with binding-form bound to the value of test."
   [bindings & body]
-  (let [form (bindings 0)
-        tst (bindings 1)]
-    `(let [temp# ~tst]
-       (if (fn? temp#)
-         (let [~form temp#] ~@body)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro some** "Safely handle nil"
-  ([x form]
-   `(let [x# ~x] (if-not (nil? x#) (. x# ~form))))
-  ([x form & more]
-   `(let [x# ~x] (if-not (nil? x#) (some** (. x# ~form) ~@more)))))
+  (let [form (first bindings)
+        tst (last bindings)]
+    (assert (= 2 (count bindings))
+            "not = 2 in bindings")
+    (let [T (gensym)]
+      `(let [~T ~tst]
+         (if (fn? ~T)
+           (let [~form ~T] ~@body))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro doto->>
-  "Combine doto and ->>" [x & forms]
-
-  (let [gx (gensym)]
-    `(let [~gx ~x]
-       ~@(map (fn [f]
-                (if (seq? f)
-                  `(~@f ~gx)
-                  `(~f ~gx)))
-              forms)
-       ~gx)))
+  "Combine doto and ->>." [x & forms]
+  (let [X (gensym)]
+    `(let [~X ~x]
+       ~@(map (fn [f] (if (seq? f)
+                        `(~@f ~X) `(~f ~X))) forms) ~X)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro
-  ^:private doto->
+  doto->
   "Combine doto and ->" [x & forms]
-
-  (let [gx (gensym)]
-    `(let [~gx ~x]
+  (let [X (gensym)]
+    `(let [~X ~x]
        ~@(map (fn [f]
                 (if (seq? f)
-                  (let [z (first f) r (rest f)]
-                    `(~z ~gx ~@r))
-                  `(~f ~gx)))
-              forms)
-       ~gx)))
+                  (let [z (first f)
+                        r (rest f)]
+                    `(~z ~X ~@r)) `(~f ~X))) forms) ~X)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro !self?
-  "Shorthand for not identical?" [me other] `(not (identical? ~me ~other)))
-(defmacro self?
-  "Shorthand for identical?" [me other] `(identical? ~me ~other))
+(defmacro !=? "Alias for not identical?" [& more] `(not (identical? ~@more)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro notin?
-  "Shorthand for not contains?" [coll k] `(not (contains? ~coll ~k)))
-(defmacro in?
-  "Shorthand for contains?" [coll k] `(contains? ~coll ~k))
+(defmacro =? "Alias for identical?" [& more] `(identical? ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro do->false "Do and return false" [& forms] `(do ~@forms false))
-(defmacro do->nil "Do and return nil" [& forms] `(do ~@forms nil))
-(defmacro do->true "Do and return true" [& forms] `(do ~@forms true))
+(defmacro !in? "Alias for not contains?" [& more] `(not (contains? ~@more)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro let->nil
-  "a try let combo" [bindings & forms] `(let ~bindings ~@forms nil))
+(defmacro in? "Alias for contains?" [& more] `(contains? ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro try!-let
-  "a try let combo" [bindings & forms] `(try! (let ~bindings ~@forms)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro let-try
-  "a let try combo" [bindings & forms] `(let ~bindings (try ~@forms)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro let-when
-  "a let when combo"
-  [bindings kond & forms] `(let ~bindings (when ~kond ~@forms)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 #_
 (defmacro XXcast?
-  ""
   [someType obj]
-
   `^{:tag ~someType}
   ((fn []
     (let [x# ~obj]
-      (if (instance? ~someType x#)
-        (.cast ~someType x#))))))
+      (if (instance? ~someType x#) (.cast ~someType x#))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;had to use this trick to prevent reflection warning
 (defmacro cast?
-  "Cast object of this type else nil"
+  "Cast object of this type else nil."
   [someType obj]
-  `(let [x# ~obj]
-     (if (instance? ~someType x#)
-          ^{:tag ~someType} (identity (.cast ~someType x#)))))
+  (let [X (gensym)]
+    `(let [~X ~obj]
+       (if (instance? ~someType ~X)
+         ^{:tag ~someType} (identity (.cast ~someType ~X))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro cexp? "Try casting to Throwable" [e] `(cast? Throwable ~e))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ^:private !nil? "is x not nil" [x] `(not (nil? ~x)))
+(defmacro !nil? "is x not nil" [x] `(not (nil? ~x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro rnil "Get rid of nil(s) in seq." [seq] `(remove nil? ~seq))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro rnilv
+  "Get rid of nil(s), returning a vec." [seq] `(into [] (remove nil? ~seq)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro szero?
+  "Safe zero?" [e]
+  (let [E (gensym)]
+    `(let [~E ~e] (and (number? ~E)(zero? ~E)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn sortby "" [kfn cmp coll]
-  (sort-by kfn
-           (reify java.util.Comparator
-             (compare [_ t1 t2] (cmp t1 t2))) coll))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn monoFlop<>
-  "Flip on first call,
-  useful for one-time logic" ^MonoFlop []
-
-  (let [toggled (atom false)]
-    (reify
-      MonoFlop
-      (isFirstCall [_]
-        (if @toggled
-          false
-          (do->true (reset! toggled true)))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn watch<>
-  "Use to mark elapsed time" ^Watch []
-
-  (let [start (atom (System/nanoTime))
-        f #(.convert ^TimeUnit %
-                     (- (System/nanoTime) @start)
-                     TimeUnit/NANOSECONDS)]
-    (reify
-      Watch
-      (reset [_] (reset! start (System/nanoTime)))
-      (elapsedMillis [_] (f TimeUnit/MILLISECONDS))
-      (elapsedNanos [_] (f TimeUnit/NANOSECONDS)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; local hack
-(defn- get-czldr
-  "" {:tag ClassLoader}
-  ([] (get-czldr nil))
-  ([cl] (or cl (. (Thread/currentThread) getContextClassLoader))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro rnil "Get rid of nil(s) in seq" [seq] `(remove nil? ~seq))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro flatnil
-  "Get rid of nil(s) in seq, returning a vec"
-  [seq] `(into [] (remove nil? ~seq)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- interject
-  "Run the function on the current field value,
-   replacing the key with the returned value.
-   function(pojo oldvalue) -> newvalue"
-  [pojo field func]
-  {:pre [(map? pojo) (fn? func)]}
-  (assoc pojo field (func pojo field)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro szero? "Safe zero?" [e]
-  `(let [e# ~e] (and (number? e#)(zero? e#))))
-(defmacro sneg? "Safe neg?" [e]
-  `(let [e# ~e] (and (number? e#)(neg? e#))))
-(defmacro spos? "Safe pos?" [e]
-  `(let [e# ~e] (and (number? e#)(pos? e#))))
-(defmacro snneg? "Safe not neg?" [e]
-  `(let [e# ~e] (or (szero? e#)(spos? e#))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro envVar
-  "Get value for this env var"
-  ^String [vname] `(if-some+ [e# ~vname] (System/getenv e#)))
+(defmacro sneg?
+  "Safe neg?" [e]
+  (let [E (gensym)]
+    `(let [~E ~e] (and (number? ~E)(neg? ~E)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn asFQKeyword
-  "Scope name as a fully-qualified keyword"
-  [t]
-  {:pre [(string? t)
-         (and (< (.indexOf ^String t (int \/)) 0)
-              (< (.indexOf ^String t (int \:)) 0))]}
-  (keyword (str *ns*) t))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn isFQKeyword?
-  "true if this is a scoped keyword"
-  [kw] (and (keyword? kw) (> (.indexOf (str kw) (int \/)) 0)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro uuid<> "RFC4122, v4 format" [] `(str (java.util.UUID/randomUUID)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;happens to be all hex chars
-(defn jid<>
-  "Generate a unique id using std java"
-  ^String [] (.replaceAll (str (UID.)) "[:\\-]+" ""))
+(defmacro spos?
+  "Safe pos?" [e]
+  (let [E (gensym)]
+    `(let [~E ~e] (and (number? ~E)(pos? ~E)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn uid<> "UUID, no dash" ^String [] (cs/replace (uuid<>) #"-" ""))
+(defmacro snneg?
+  "Safe not neg?" [e]
+  (let [E (gensym)]
+    `(let [~E ~e] (or (szero? ~E)(spos? ~E)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn randSign
-  "Randomly choose a sign"
-  ^long [] (if (even? (rand-int Integer/MAX_VALUE)) 1 -1))
+(defmacro !false? "Explicit not false." [x] `(not (false? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn randBool
-  "Randomly choose a boolean value"
-  [] (if (even? (rand-int Integer/MAX_VALUE)) true false))
+(defmacro !true? "Explicit not true." [x] `(not (true? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn rand<>
-  "A new random object"
-  {:tag SecureRandom}
-
-  ([] (rand<> false))
-  ([strong?]
-   (doto (if strong?
-           (SecureRandom/getInstanceStrong)
-           (SecureRandom.))
-     (.setSeed (SecureRandom/getSeed 4)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro date<> "A java Date" [] `(java.util.Date.))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn strCharset
-  "Charset as string"
-  ^String
-  [enc]
-  (if (ist? Charset enc)
-    (.name ^Charset enc)
-    (if (empty? enc) "utf-8" enc)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn toCharset
-  "A java Charset of the encoding"
-  {:tag Charset}
-
-  ([] (toCharset "utf-8"))
-  ([enc] (if (ist? Charset enc)
-           enc
-           (Charset/forName (or enc "utf-8")))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn fpath
-  "Get the file path" ^String [arg]
-
-  (if (ist? File arg)
-    (fpath (.getCanonicalPath ^File arg))
-    (let [fp (str arg)]
-      (cs/replace fp #"\\" "/"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro sysProp!
-  "Set a system property"
-  [prop value] `(System/setProperty ~prop ~value))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro sysProp
-  "Get value of a system property"
-  [prop] `(System/getProperty (str ~prop) ""))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro getUser "Get the user login name" [] `(sysProp "user.name"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro homeDir "Get user's home dir" []
-  `(clojure.java.io/file (sysProp "user.home")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro getCwd "Get current dir" []
-  `(clojure.java.io/file (sysProp "user.dir")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn trimLastPathSep
-  "Get rid of trailing dir paths"
-  ^String [path] (.replaceFirst (str path) "[/\\\\]+$" ""))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn serialize
-  "Object serialization"
-  ^bytes [obj] {:pre [(some? obj)]}
-
-  (with-open [out (ByteArrayOutputStream. BUF-SZ)
-              oos (ObjectOutputStream. out)]
-    (.writeObject oos ^Serializable obj)
-    (.toByteArray out)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn deserialize
-  "Object deserialization"
-  ^Serializable [^bytes bits] {:pre [(some? bits)]}
-
-  (with-open [in (ByteArrayInputStream. bits)
-              ois (ObjectInputStream. in)] (.readObject ois)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn numSign
-  "Find the sign of a number" [n]
-  {:pre [(number? n)]}
-  (cond (> n 0) 1 (< n 0) -1 :else 0))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn gczn
-  "Get object's short class name" ^String [obj]
-  (cond
-    (nil? obj) ""
-    (ist? Class obj) (.getSimpleName ^Class obj)
-    :else (gczn (class obj))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn getClassname
-  "Get object's class name" ^String [obj]
-  (cond
-    (nil? obj) ""
-    (ist? Class obj) (.getName ^Class obj)
-    :else (getClassname (class obj))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn isWindows?
-  "Is Windows OS?" []
-  (>= (.indexOf (cs/lower-case (sysProp "os.name")) "windows") 0))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn isMacOS?
-  "Is Mac OS?" [] (>= (.indexOf (sysProp "os.name") "Mac ") 0))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn isLinux?
-  "Is Linux OS?" [] (and (not (isWindows?)) (not (isMacOS?))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ^:private str!? "" [s] `(or (nil? ~s)(string? ~s)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn convLong
-  "String as a long value" {:tag Long}
-
-  ([s] (convLong s 0))
-  ([s dftLongVal]
-   {:pre [(str!? s)]}
-   (trye!! dftLongVal (Long/parseLong ^String s))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn convInt
-  "String as an int value" {:tag Integer}
-
-  ([s] (convInt s 0))
-  ([s dftIntVal]
-   {:pre [(str!? s)]}
-   (trye!! (int dftIntVal) (Integer/parseInt ^String s))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn convDouble
-  "String as a double value" {:tag Double}
-
-  ([s] (convDouble s 0.0))
-  ([s dftDblVal]
-   {:pre [(str!? s)]}
-   (trye!! dftDblVal (Double/parseDouble ^String s))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn convBool
-  "String as a boolean value"
-  [s] (contains? BOOLS (cs/lower-case (str s))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn loadJavaProps
-  "Load properties from source"
-  ^Properties [arg]
-  (cond
-    (ist? File arg) (loadJavaProps (io/as-url arg))
-    (ist? URL arg) (with-open [inp (.openStream  ^URL arg)]
-                     (loadJavaProps inp))
-    :else
-    (do-with [p (Properties.)]
-             (some->> (cast? InputStream arg) (.load p )))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn strit
-  "Coerce to a string"
-  {:tag String}
-  ([obj] (strit obj "utf-8"))
-  ([obj enc]
-   (cond
-     (string? obj) obj
-     (= CSCZ (class obj)) (String. ^chars obj)
-     (= BSCZ  (class obj)) (String. ^bytes obj (toCharset enc))
-     :else (str obj))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn charsit
-  "Get chars from string"
-  ^chars [obj]
-  (cond
-    (= CSCZ (class obj)) obj
-    (string? obj) (.toCharArray ^String obj)
-    (some? obj) (charsit (str obj))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn bytesit
-  "Get bytes with the right encoding"
-  {:tag "[B"}
-  ([obj] (bytesit obj "utf-8"))
-  ([obj enc]
-   (cond
-     (= ByteArrayOutputStream (class obj))
-     (.toByteArray ^ByteArrayOutputStream obj)
-     (= BSCZ (class obj)) obj
-     (= CSCZ (class obj)) (bytesit (strit obj) enc)
-     (string? obj) (.getBytes ^String obj (toCharset enc)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn resStream
-  "Load the resource as stream" {:tag InputStream}
-
-  ([rcPath] (resStream rcPath nil))
-  ([rcPath ^ClassLoader ldr]
-   {:pre [(string? rcPath)]}
-   (when (not-empty rcPath)
-     (-> (get-czldr ldr)
-         (.getResourceAsStream  ^String rcPath)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn resUrl
-  "Load the resource as URL" {:tag URL}
-
-  ([rcPath] (resUrl rcPath nil))
-  ([rcPath ^ClassLoader ldr]
-   {:pre [(string? rcPath)]}
-   (when (not-empty rcPath)
-     (-> (get-czldr ldr)
-         (.getResource ^String rcPath)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn resStr
-  "Load the resource as string" {:tag String}
-
-  ([rcPath encoding] (resStr rcPath encoding nil))
-  ([rcPath] (resStr rcPath "utf-8" nil))
-  ([rcPath encoding ^ClassLoader ldr]
-   (if-some
-     [res (resStream rcPath ldr)]
-     (with-open
-       [out (ByteArrayOutputStream. BUF-SZ)
-        inp res]
-       (io/copy inp out :buffer-size BUF-SZ)
-       (-> (.toByteArray out)
-           (strit encoding))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn resBytes
-  "Load the resource as byte[]" {:tag "[B"}
-
-  ([rcPath] (resBytes rcPath nil))
-  ([rcPath ldr]
-  (if-some
-    [res (resStream rcPath ldr)]
-    (with-open
-      [out (ByteArrayOutputStream. BUF-SZ)
-       inp res]
-      (io/copy inp out :buffer-size BUF-SZ)
-      (.toByteArray out)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn deflate
-  "Compress bytes" ^bytes [^bytes bits]
-
-  (if (some? bits)
-    (let [buf (byte-array BUF-SZ)
-          cpz (doto (Deflater.)
-                (.setLevel Deflater/BEST_COMPRESSION)
-                (.setInput bits)
-                .finish)]
-      (with-open
-        [baos (ByteArrayOutputStream. (alength bits))]
-        (loop []
-          (if (.finished cpz)
-            (.toByteArray baos)
-            (do
-              (.write baos
-                      buf 0 (.deflate cpz buf))
-              (recur))))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn inflate
-  "Decompress bytes" ^bytes [^bytes bits]
-
-  (if (some? bits)
-    (let [baos (ByteArrayOutputStream. (alength bits))
-          buf (byte-array BUF-SZ)
-          decr (doto (Inflater.)
-                 (.setInput bits))]
-      (loop []
-        (if (.finished decr)
-          (.toByteArray baos)
-          (do
-            (.write baos
-                    buf 0 (.inflate decr buf))
-            (recur)))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn normalize
-  "Hex-code all non-alpha
-  chars in a file path"
-  ^String [fname]
-
-  (sreduce<>
-    (fn [^StringBuilder buf ^Character ch]
-      (if (or (java.lang.Character/isLetterOrDigit ch)
-              (contains? #{\_ \- \.} ch))
-        (.append buf ch)
-        (.append buf
-                 (str "0x"
-                      (Integer/toString (int ch) 16)))))
-    (charsit fname)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro now<> "current time in millis" [] `(System/currentTimeMillis))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro !false? "Explicit not false" [x] `(not (false? ~x)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro !true? "Explicit not true" [x] `(not (true? ~x)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
-(defn fmtFileUrl
-  "File path as URL" ^URL [path]
-
-  (when (and (string? path)
-             (not-empty path))
-    (io/as-url (if (cs/starts-with? path "file:")
-                 path
-                 (str "file:" path)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn getFPath
-  "The file path only"
-  ^String
-  [fileUrlPath]
-  (str (some-> (fmtFileUrl fileUrlPath) .getPath)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; test and assert funcs
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn test-isa "" [reason par chi]
-  (do->true
-    (->
-      (cond
-        (and (class? par)(class? chi)) (isa? chi par)
-        (or (nil? par)(nil? chi)) false
-        (not (class? par)) (test-isa reason (class par) chi)
-        (not (class? chi)) (test-isa reason par (class chi)))
-      (assert (str chi " not-isa " par)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn test-some
-  "Object is not null" [reason obj]
-  (do->true (assert (some? obj) (str reason " is null"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn test-cond
-  "verify a true condition" [reason cnd]
-  (do->true (assert cnd (str reason))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro assert-not
-  "verify a false condition" [cnd] `(assert (not ~cnd)))
+  "Verify a false condition?" [cnd] `(assert (not ~cnd)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn test-hgl
-  "String is not empty"
-  [reason s]
-  (do->true
-    (assert (and (string? s)
-                 (not-empty s)) (str reason " is empty"))))
+(defmacro marray
+  "n-size java array." [type n] `(make-array ~type ~n))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmulti test-pos0
-  "Check number is not negative"
-  (fn [a b]
-    (condp instance? b
-      Double  :double
-      Long  :long
-      Float  :double
-      Integer  :long
-      (throwBadArg "allow numbers only"))))
+(defmacro zarray
+  "0-size java array." [type] `(make-array ~type 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmulti test-pos
-  "Check number is positive"
-  (fn [a b]
-    (condp instance? b
-      Double  :double
-      Long  :long
-      Float  :double
-      Integer  :long
-      (throwBadArg "allow numbers only"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod test-pos0
-  :double
-  [reason v]
-  (do->true (assert (snneg? v)
-                    (str reason " must be >= 0"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod test-pos0
-  :long
-  [reason v]
-  (do->true (assert (snneg? v)
-                    (str reason " must be >= 0"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod test-pos
-  :double
-  [reason v]
-  (do->true (assert (spos? v)
-                    (str reason " must be > 0"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmethod test-pos
-  :long
-  [reason v]
-  (do->true (assert (spos? v)
-                    (str reason " must be > 0"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn test-seq+
-  "Check sequence is not empty"
-  [reason v]
-  (do->true (assert (> (count v) 0)
-                    (str reason  " must be non empty"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn rootCause
-  "Find root error"
-  ^Throwable
-  [root]
-  (loop [r root
-         t (some-> ^Throwable
-                   root .getCause)]
-    (if (nil? t)
-      r
-      (recur t (.getCause t)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn rootCauseMsg
-  "Find root error msg"
-  [root] (str (some-> (rootCause root) .getMessage)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn sortJoin
-  "Sort a list of strings and then concatenate them"
-
-  ([ss] (sortJoin "" ss))
-  ([sep ss]
-   (if (nil? ss) "" (cs/join sep (sort ss)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn pmap<>
-  "Java Map into Clojure Map"
-  {:tag APersistentMap}
-
-  ([props] (pmap<> props true))
-  ([props key?]
-   {:pre [(ist? Map props)]}
-   (preduce<map>
-     #(assoc! %1
-              (if key? (keyword %2) (str %2))
-              (.get ^Map props %2)) (.keySet ^Map props))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn tmtask<>
-  "A timer task"
-  ^TimerTask [func] {:pre [(fn? func)]}
-  (proxy [TimerTask][] (run [] (try! (func)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defprotocol Muable
-  "Something that is mutable"
-  (get?setf! [_ k v] "Get or set a field")
-  (setf! [_ k v] "Set a field")
-  (unsetf! [_ k] "Clear a field")
-  (wipe! [_] "Clear all")
-  (copy* [_ mp] "Copy from this map"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro decl-muble-types
-  "deftype something mutable" [name dtype & more]
-  `(deftype ~name
-     [~(with-meta '_data {dtype true})]
-  ~'czlab.basal.core.Muable
-  ~'(get?setf! [me k v]
-      (when-not (contains? _data k) (.setf! me k v)) (get _data k))
-  ~'(wipe! [_ ] (set! _data {}))
-  ~'(copy* [me x]
-      (let [m (if (and (satisfies? czlab.basal.core/Muable x)
-                       (instance? clojure.lang.IDeref x)) @x x)
-            m (if (map? m) m nil)
-            m (if (czlab.basal.core/!self? _data m) m)]
-        (czlab.basal.core/do->nil  (if m (set! _data (merge _data m))))))
-  ~'(setf! [_ k v] (set! _data (assoc _data k v)) v)
-  ~'(unsetf! [_ k] (let [v (get _data k)]
-                     (set! _data (dissoc _data k)) v))
-  ~'czlab.basal.Stateful
-  ~'(deref [_] _data)
-  ~'(state [_] _data)
-  ~@more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(decl-muble-types GenericMutable :unsynchronized-mutable)
-(decl-var-private #'->GenericMutable)
-;(ns-unmap *ns* '->GenericMutable)
-(decl-muble-types VolatileMutable :volatile-mutable)
-(decl-var-private #'->VolatileMutable)
-;(ns-unmap *ns* '->VolatileMutable)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn prnMuable "Print this mutable"
-  ([ctx] (prnMuable ctx true))
-  ([ctx dbg]
-   (let [s (pr-str @ctx)]
-     (if dbg (log/debug "%s" s)(log/info "%s" s)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn prtStk "Print stack" [exp] (some-> ^Throwable exp .printStackTrace))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn dumpStk
-  "Dump stack trace"
-  ^String
-  [^Throwable e]
-  (with-open
-    [out (ByteArrayOutputStream. BUF-SZ)
-     ps (PrintStream. out true "utf-8")]
-    (.printStackTrace e ps)
-    (String. (.toByteArray out) "utf-8")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn stripNSPath
-  "Remove the leading colon"
-  ^String [path] (cs/replace (str path) #"^:" ""))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(declare convToJava)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- convList
-  "To Java List"
-  ^ArrayList [obj]
-  (do-with [rc (ArrayList.)]
-    (doseq [v obj]
-      (.add rc (convToJava v)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- convSet
-  "To Java Set"
-  ^HashSet [obj]
-  (do-with [rc (HashSet.)]
-    (doseq [v obj]
-      (.add rc (convToJava v)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- convMap
-  "To Java Map"
-  ^HashMap [obj]
-  (do-with [rc (HashMap.)]
-    (doseq [[k v] obj]
-      (.put rc
-            (stripNSPath k) (convToJava v)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn convToJava
-  "Convert a clojure data structure
-  to its Java equivalent"
-  ^Object [obj]
-
-  (cond
-    (map? obj)
-    (convMap obj)
-
-    (set? obj)
-    (convSet obj)
-
-    (or (vector? obj)
-        (list? obj))
-    (convList obj)
-
-    :else obj))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defonce ^:private ^AtomicInteger _numInt (AtomicInteger. 1))
-(defonce ^:private ^AtomicLong _numLng (AtomicLong. 1))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn seqint
-  "A sequence number (int)" [] (.getAndIncrement _numInt))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn seqint2
-  "A sequence number (long)" [] (.getAndIncrement _numLng))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn cancelTimerTask
-  "Cancel a timer task" [^TimerTask t] (trye! nil (some-> t .cancel)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro marray "n-size java array" [type n] `(make-array ~type ~n))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro zarray "Zero length java array" [type] `(marray ~type 0))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro countCpus "How many cpus?"
-  [] `(.availableProcessors (Runtime/getRuntime)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn pause
-  "Block current thread for some millisecs"
-  [millisecs] (trye! nil
-                     (if (spos? millisecs) (Thread/sleep millisecs))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro sysTmpDir "Java tmp dir" [] `(sysProp "java.io.tmpdir"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn id??
-  "Get id of this object"
-  [obj] (if (ist? Idable obj)
-          (.id ^Idable obj) (if (map? obj) (:id obj))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn objEQ?
-  "Are these 2 objects identical?"
-  [^Object this ^Object obj]
-  (and this
-       obj
-       (or (identical? this obj)
-           (and (= (.getClass this)
-                   (.getClass obj))
-                (= (.hashCode obj)
-                   (.hashCode this))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn idEQ?
-  "Do these 2 objects have same id?"
-  [this obj] (and (objEQ? this obj) (= (id?? obj) (id?? this))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn svtbl "Hook parent vtable" [vt par] (assoc vt :$proto par))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn gvtbl
-  "Find key from vtable"
-  [vt kee]
-  (if (map? vt)
-    (if (in? vt kee)
-      (vt kee) (gvtbl (:$proto vt) kee))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn cvtbl?
-  "key in vtable?"
-  [vt kee]
-  (if (map? vt)
-    (if (in? vt kee)
-      (vt kee) (gvtbl (:$proto vt) kee)) false))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn gvtbl'
-  "Find key from parent vtable" [vt kee] (gvtbl (:$proto vt) kee))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn rvtbl'
-  "Find key from parent vtable and run func"
-  [vt kee & args]
-  (let [f (gvtbl' vt kee)] (if (fn? f) (apply f vt args) f)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn rvtbl
-  "Find key from vtable and run func"
-  [vt kee & args]
-  (let [f (gvtbl vt kee)] (if (fn? f) (apply f vt args) f)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro ^:private _defvtable_
-  "" [name & args]
+  [name & args]
   (assert (even? (count args)))
   `(def ~name
      (-> {}
@@ -1465,76 +596,488 @@
                     (conj acc `(assoc ~k ~v))) [] (partition 2 args)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro vtbl**
   "Make a virtual table - op1 f1 op2 f2, with parent vtbl"
   [par & args]
-  (assert (even? (count args))) `(hash-map :$proto ~par ~@args))
+  (assert (even? (count args))) `(hash-map :____proto ~par ~@args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defmacro vtbl*
   "Make a virtual table - op1 f1 op2 f2" [& args] `(vtbl** nil ~@args))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defprotocol JEnumProto
-  "Mimic Java Enum"
-  (lookup-enum-str [_ s] "Get enum from string")
-  (get-enum-str [_ e] "Get string value of enum")
-  (lookup-enum-int [_ n] "Get enum from int"))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro wo*
+  "Alias with-open" [bindings & forms] `(with-open ~bindings ~@forms))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;monads
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro run-bind
+  "Run the bind operator."
+  [binder steps expr]
+  (let [[a1 mv] (take 2 steps) more (drop 2 steps)]
+    `(~binder ~mv
+              (fn [~a1]
+                ~(if (not-empty more)
+                   `(run-bind ~binder ~more ~expr) `(do ~expr))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro defmonad
+  "Define a named monad by defining the monad operations. The definitions
+   are written like bindings to the monad operations bind and
+   unit (required) and zero and plus (optional)."
+  ([name ops] `(defmonad ~name "" ~ops))
+  ([name docs ops]
+   (let []
+     (assert (not-empty ops) "no monad ops!")
+     `(def ~name (merge {:bind nil
+                         :unit nil
+                         :zero nil
+                         :plus nil}
+                        (into {} (map #(vec %) (partition 2 ~ops))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;Loose equivalent of a Java Enum
-(decl-object JEnum
-             JEnumProto
-             (get-enum-str [me e]
-               (if (in? me e)
-                 (cs/replace (str e) #"^:" "")))
-             (lookup-enum-str [me s]
-               (let [kee (keyword s)]
-                 (some #(if (= kee (first %)) (first %)) me)))
-             (lookup-enum-int [me n]
-              (some #(if (= n (last %)) (first %)) me)))
+(defmacro domonad
+  "Monad comprehension. Takes the name of a monad, a vector of steps
+   given as binding-form, and a result value
+   specified by body."
+  ([monad steps] `(domonad ~monad ~steps nil))
+  ([monad steps body]
+   (let [E (gensym)
+         B (gensym)
+         U (gensym)
+         Z (gensym)]
+     `(let [{~B :bind ~U :unit ~Z :zero} ~monad
+            ~E #(if (and (nil? %)
+                         (some? ~Z)) ~Z (~U %))] (run-bind ~B ~steps (~E ~body))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;end-macros
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;monads
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmonad m-identity
+  "Monad describing plain computations. This monad does in fact nothing
+  at all. It is useful for testing, for combination with monad
+  transformers, and for code that is parameterized with a monad."
+  (vector :bind (fn [mv mf] (mf mv)) :unit identity))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmonad m-maybe
+  "Monad describing computations with possible failures. Failure is
+  represented by nil, any other value is considered valid. As soon as
+  a step returns nil, the whole computation will yield nil as well."
+  (vector :unit identity
+          :bind (fn [mv mf] (if-not (nil? mv) (mf mv)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmonad m-list
+  "Monad describing multi-valued computations, i.e. computations
+  that can yield multiple values. Any object implementing the seq
+  protocol can be used as a monadic value."
+  (vector :bind (fn [mv mf] (flatten (map mf mv)))
+          :unit (fn_1 (vector ____1))
+          :zero []
+          :plus (fn_* (flatten ____xs))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmonad m-state
+  "Monad describing stateful computations. The monadic values have the
+  structure (fn [old-state] [result new-state])."
+  (vector :unit (fn [v] (fn [s] [v s]))
+          :bind (fn [mv mf]
+                  (fn [s]
+                    (let [[v s'] (mv s)] ((mf v) s'))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmonad m-continuation
+  "Monad describing computations in continuation-passing style. The monadic
+  values are functions that are called with a single argument representing
+  the continuation of the computation, to which they pass their result."
+  (vector :unit (fn [v] (fn [cont] (cont v)))
+          :bind (fn [mv mf]
+                  (fn [cont]
+                    (mv (fn [v] ((mf v) cont)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn run-cont
+  "Execute the computation cont
+  in the cont monad and return its result."
+  [cont]
+  (cont identity))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; end-monad
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn repeat-str
+  "Repeat string n times." [n s] (cs/join "" (repeat n s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn num??
+  "If n is not a number, return other."
+  [n other] (if (number? n) n other))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn flip
+  "Invert number if not zero."
+  [x] {:pre [(number? x)]} (if (zero? x) 0 (/ 1 x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn percent
+  "Return the percentage."
+  [numerator denominator]
+  (* 100.0 (/ numerator denominator)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn split-seq
+  "Split a collection into 2 parts."
+  [coll cnt]
+  (if (< cnt (count coll))
+    (list (take cnt coll) (drop cnt coll))
+    (list (concat [] coll) () )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn compare-asc*
+  "A generic compare function."
+  [f]
+  (fn_2 (cond (< (f ____1) (f ____2)) -1
+              (> (f ____1) (f ____2)) 1 :else 0)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn compare-des*
+  "A generic compare function."
+  [f]
+  (fn_2 (cond (< (f ____1) (f ____2)) 1
+              (> (f ____1) (f ____2)) -1 :else 0)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn- xxx-by
+  "Used by min-by & max-by - internal."
+  [cb coll]
+  (if (not-empty coll)
+    (reduce cb (_1 coll) (rest coll))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn min-by
+  "Find item with minimum value as defined by the function."
+  [f coll]
+  (xxx-by #(if (< (f %1) (f %2)) %1 %2) coll))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn max-by
+  "Find item with maximum value as defined by the function."
+  [f coll]
+  (xxx-by #(if (< (f %1) (f %2)) %2 %1) coll))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(def ^:private t-bad "FAILED")
+(def ^:private t-ok "PASSED")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn ensure-test
+  "Assert a test condition, returning a message."
+  [cnd msg]
+  (str (try (if cnd t-ok t-bad)
+            (catch Throwable _ t-bad)) ": " msg))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn ensure-test-thrown
+  "Assert an exception is thrown during test."
+  [expected error msg]
+  (str (if (nil? error)
+         t-bad
+         (cond (or (= expected :any)
+                   (instance? expected error))
+               t-ok
+               :else
+               t-bad)) ": " msg))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn runtest
+  "Run a test group, returning the summary."
+  ([test] (runtest test nil))
+  ([test title]
+   {:pre [(fn? test)]}
+   (let [mark (System/currentTimeMillis)
+         f #(cs/starts-with? % "P")
+         lsep (repeat-str 78 "+")
+         esep (repeat-str 78 "=")
+         res (test)
+         sum (count res)
+         ok (count (filter f res))
+         perc (int (* 100 (/ ok sum)))
+         diff (- (System/currentTimeMillis) mark)
+         result
+         (cs/join "\n"
+                  [lsep
+                   (or title "test")
+                   (Date.)
+                   lsep
+                   (cs/join "\n" res)
+                   esep
+                   (cs/join "" ["Passed: " ok "/" sum " [" perc "%]"])
+                   (str "Failed: " (- sum ok))
+                   (cs/join "" ["cpu-time: " diff "ms"])])]
+     [(number? (cs/index-of result
+                            "100%"
+                            (cs/last-index-of result esep))) result])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro decl-generic-enum
-  "e.g. (decl-generic-enum
-          weather
-          hot
-          cold)"
-  [name base & more]
-  (assert (and (not-empty more)
-               (integer? base)))
-  `(def ~name
-     (czlab.basal.core/object<>
-       czlab.basal.core.JEnum
-       (-> {}
-           ~@(reduce
-               #(conj %1
-                      `(assoc (keyword (str *ns*) ~(str %2))
-                              ~(+ base (count %1)))) [] more)))))
+(defn int-var "Like a mutable int."
+  ([^ints arr v] (aset arr 0 (int v)) (int v))
+  ([] (int-array 1 0))
+  ([^ints arr] (aget arr 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;how to make it private
-;;(alter-meta! #'weather assoc :private true)
-(defmacro decl-special-enum
-  "e.g. (decl-special-enum
-          weather
-          hot 3
-          cold 7)"
-  [name & more]
-  (assert (even? (count more)))
-  (let [ps (partition 2 more)]
-    `(def ~name
-       (czlab.basal.core/object<>
-         czlab.basal.core.JEnum
-         (-> {}
-             ~@(mapv #(do
-                        `(assoc (keyword (str *ns*)
-                                         ~(str (first %)))
-                                ~(last %))) ps))))))
+(defn long-var "like a mutable long."
+  ([^longs arr v] (aset arr 0 (long v)) (long v))
+  ([] (long-array 1 0))
+  ([^longs arr] (aget arr 0)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn nth??
+  "Get the nth element, 1-indexed."
+  [coll pos] {:pre [(> pos 0)]} (first (drop (- pos 1) coll)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn vargs*
+  "Coerce into java array."
+  [clazz & args] (vargs clazz args))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn- interject
+  "Run the function on the current field value,
+   replacing the key with the returned value.
+   function(pojo oldvalue) -> newvalue."
+  [pojo field func]
+  {:pre [(map? pojo) (fn? func)]}
+  (assoc pojo field (func pojo field)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn scoped-keyword
+  "Scope name as a fully-qualified keyword."
+  [t]
+  {:pre [(string? t)
+         (nil? (cs/index-of t "/"))
+         (nil? (cs/index-of t ":"))]}
+  (keyword (str *ns*) t))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn is-scoped-keyword?
+  "If a scoped keyword?"
+  [kw] (and (keyword? kw)
+            (cs/includes? (str kw) "/")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn rand-sign
+  "Randomly choose a sign."
+  [] (if (even? (rand-int Integer/MAX_VALUE)) 1 -1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn rand-bool
+  "Randomly choose a boolean value."
+  [] (if (even? (rand-int Integer/MAX_VALUE)) true false))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn num-sign
+  "Find the sign of a number." [n]
+  {:pre [(number? n)]}
+  (cond (> n 0) 1 (< n 0) -1 :else 0))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn s->long
+  "String as a long value."
+  {:tag Long}
+  ([s] (s->long s 0))
+  ([s dv]
+   {:pre [(string? s)(number? dv)]}
+   (trye! (long dv) (Long/parseLong ^String s))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn s->int
+  "String as an int value."
+  {:tag Integer}
+  ([s] (s->int s 0))
+  ([s dv]
+   {:pre [(string? s)(number? dv)]}
+   (trye! (int dv) (Integer/parseInt ^String s))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn s->double
+  "String as a double value."
+  {:tag Double}
+  ([s] (s->double s 0.0))
+  ([s dv]
+   {:pre [(string? s)(number? dv)]}
+   (trye! (double dv) (Double/parseDouble ^String s))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn s->bool
+  "String as a boolean value."
+  [s] (contains? BOOLS (cs/lower-case (str s))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; test and assert funcs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn test-isa "Is child of parent?"  [reason par chi]
+  (do#true (-> (cond
+                 (and (class? par)(class? chi)) (isa? chi par)
+                 (or (nil? par)(nil? chi)) false
+                 (not (class? par)) (test-isa reason (class par) chi)
+                 (not (class? chi)) (test-isa reason par (class chi)))
+               (assert (str chi " not-isa " par)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn test-some
+  "Object is not null?" [reason obj]
+  (do#true (assert (some? obj) (str reason " is null"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn test-cond
+  "A true condition?" [reason cnd]
+  (do#true (assert cnd (str reason))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn test-hgl
+  "String is not empty?"
+  [reason s]
+  (do#true
+    (assert (and (string? s)
+                 (not-empty s)) (str reason " is empty"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmulti test-pos0
+  "Check number is not negative?"
+  (fn [a b]
+    (condp instance? b
+      Double  :double
+      Long  :long
+      Float  :double
+      Integer  :long
+      (trap! Exception "allow numbers only"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmulti test-pos
+  "Check number is positive?"
+  (fn [a b]
+    (condp instance? b
+      Double  :double
+      Long  :long
+      Float  :double
+      Integer  :long
+      (trap! Exception "allow numbers only"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmethod test-pos0 :double [reason v]
+  (do#true (assert (snneg? v) (str reason " must be >= 0"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmethod test-pos0 :long [reason v]
+  (do#true (assert (snneg? v) (str reason " must be >= 0"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmethod test-pos :double [reason v]
+  (do#true (assert (spos? v) (str reason " must be > 0"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmethod test-pos :long [reason v]
+  (do#true (assert (spos? v) (str reason " must be > 0"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn test-seq+
+  "Check sequence is not empty?"
+  [reason v]
+  (do#true (assert (> (count v) 0) (str reason " must be non empty"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn sort-join
+  "Sort a list of strings and then concatenate them"
+  ([ss] (sort-join "" ss))
+  ([sep ss]
+   (if (nil? ss) "" (cs/join sep (sort ss)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn strip-ns-path
+  "Remove the leading colon."
+  ^String [path] (cs/replace (str path) #"^:" ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn svtbl
+  "Hook parent vtable."
+  [vt par] (assoc vt :____proto par))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn gvtbl
+  "Find key from vtable."
+  [vt kee]
+  (if (map? vt)
+    (if (in? vt kee)
+      (vt kee) (gvtbl (:____proto vt) kee))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn cvtbl?
+  "key in vtable?"
+  [vt kee]
+  (if (map? vt)
+    (if (in? vt kee)
+      (vt kee) (gvtbl (:____proto vt) kee)) false))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn gvtbl'
+  "Find key from parent vtable."
+  [vt kee] (gvtbl (:____proto vt) kee))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn rvtbl'
+  "Find key from parent vtable and run func."
+  [vt kee & args]
+  (let [f (gvtbl' vt kee)]
+    (if (fn? f) (apply f vt args) f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn rvtbl
+  "Find key from vtable and run func."
+  [vt kee & args]
+  (let [f (gvtbl vt kee)] (if (fn? f) (apply f vt args) f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn identity-n
+  "Like identity but returns positional param.
+  e.g. (def get-2nd (identity-n 2))
+       (get-2nd a b c) => b"
+  ([n] (identity-n n false))
+  ([n index-zero?]
+   {:pre [(number? n)]}
+     (fn [& xs]
+       (let [z (count xs)]
+         (if index-zero?
+           (assert (and (>= n 0) (< n z)) "index out of bound")
+           (assert (and (>= (- n 1) 0) (< (- n 1) z)) "index out of bound"))
+         (if index-zero? (nth xs n) (nth xs (- n 1)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn merge+
+  "Merge (deep) of clojure data."
+  [a b & more]
+  (loop [[z & M] (seq b)
+         tmp (tmap* a)]
+    (if (nil? z)
+      (ps! tmp)
+      (let [[k vb] z
+            va (get a k)]
+        (recur M
+               (assoc! tmp
+                       k
+                       (if-not (in? a k)
+                         vb
+                         (cond (and (map? vb)
+                                    (map? va))
+                               (merge+ va vb)
+                               (and (set? vb)
+                                    (set? va))
+                               (ct/union va vb)
+                               :else vb))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

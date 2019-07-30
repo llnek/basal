@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defproject io.czlab/basal "1.0.5"
+(defproject io.czlab/basal "1.1.0"
 
   :license {:url "http://www.eclipse.org/legal/epl-v10.html"
             :name "Eclipse Public License"}
@@ -8,20 +8,20 @@
   :description "General clojure helper functions"
   :url "https://github.com/llnek/basal"
 
-  :dependencies [[org.clojure/tools.logging "0.4.0"]
-                 [org.clojure/core.async "0.3.443"]
-                 [org.flatland/ordered "1.5.4"]
+  :dependencies [[org.clojure/tools.logging "0.4.1"]
+                 [org.clojure/core.async "0.4.500"]
+                 [org.flatland/ordered "1.5.7"]
                  [org.clojure/data.json "0.2.6"]
                  [io.czlab/jasal "1.0.0"]]
 
   :exclusions [org.clojure/clojure]
 
-  :plugins [[cider/cider-nrepl "0.14.0"]
-            [lein-cprint "1.2.0"]
-            [lein-codox "0.10.3"]]
+  :plugins [[cider/cider-nrepl "0.21.1"]
+            [lein-cprint "1.3.1"]
+            [lein-codox "0.10.7"]]
 
   :profiles {:provided {:dependencies [[org.clojure/clojure
-                                        "1.8.0" :scope "provided"]]}
+                                        "1.10.1" :scope "provided"]]}
              :uberjar {:aot :all}}
 
   :global-vars {*warn-on-reflection* true}
@@ -36,6 +36,16 @@
   :test-paths ["src/test/clojure"]
   :resource-paths ["src/main/resources"]
 
+  :test-selectors {:core :test-core
+                   :str :test-str
+                   :misc :test-misc
+                   :psub :test-psub
+                   :proc :test-proc
+                   :ini :test-ini
+                   :io :test-io
+                   :meta :test-meta
+                   :dates :test-dates
+                   :util :test-util}
 
   :jvm-opts ["-Dlog4j.configurationFile=file:attic/log4j2.xml"
              "-Dczlabloggerflag=true"]

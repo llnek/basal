@@ -1,4 +1,4 @@
-;; Copyright (c) 2013-2017, Kenneth Leung. All rights reserved.
+;; Copyright © 2013-2019, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -9,124 +9,112 @@
 (ns ^{:doc "Console interactions."
       :author "Kenneth Leung"}
 
-  czlab.basal.cmdline
+  czlab.basal.cli
 
-  (:require [czlab.basal.log :as log]
-            [clojure.string :as cs]
-            [czlab.basal.core :as c]
-            [czlab.basal.str :as s])
+  (:require [clojure.string :as cs]
+            [czlab.basal.str :as s]
+            [czlab.basal.core :as c])
 
-  (:import [czlab.basal.core GenericMutable]
-           [java.io
+  (:import [java.io
+            Reader
+            Writer
             InputStreamReader
             OutputStreamWriter
-            BufferedOutputStream]
-           [java.io Reader Writer]))
+            BufferedOutputStream]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- isOption? "" [option]
-  (and (string? option)
-       (not= "--" option)
-       (s/swAny? option ["--" "-" "/"])))
+(defmacro ^:private rdr [r] `(.read ~(with-meta r {:tag 'Reader})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- maybeOption "" [option key?]
-  (if (isOption? option)
+(defn- is-option? [option]
+  (and (string? option)
+       (not= "--" option)
+       (s/sw-any? option ["--" "-" "/"])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn- maybe-option [option key?]
+  (if (is-option? option)
     (c/if-some+
       [s (cs/replace option
                      #"^(-|/)+" "")]
       (if key? (keyword s) s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn parseOptions
-  "Parse command line, returning options and args"
-  ([cargs] (parseOptions cargs true))
+(defn parse-options
+  "Parse command line, returning options and args."
+  ([cargs] (parse-options cargs true))
   ([cargs key?]
-   (loop [options (transient {})
-          [p1 p2 & more
-           :as args] cargs]
-     (if-some [o1 (maybeOption p1 key?)]
-       (if (or (nil? p2)
-               (isOption? p2))
-         (recur (assoc! options o1 true)
-                (if (nil? p2)
-                  more
-                  (cons p2 more)))
-         (recur (assoc! options o1 p2) more))
-       (vector (c/pcoll! options)
+   (loop [options (c/tmap*)
+          [p1 p2 & more :as args] cargs]
+     (if-some [o1 (maybe-option p1 key?)]
+       (let [b? (or (nil? p2)
+                    (is-option? p2))]
+         (recur (assoc! options
+                        o1 (if b? true p2))
+                (if b?
+                  (if (nil? p2)
+                    more (cons p2 more)) more)))
+       ;else
+       (vector (c/ps! options)
                (if (= "--" p1)
                  (if p2 (cons p2 more)) args))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ^:private rdr "" [r]
-  `(.read ~(with-meta r {:tag 'Reader})))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- readData
-  "Read user input: windows has \\r\\n linux has \\n"
+(defn- read-data
+  "Read user input: windows has \\r\\n linux has \\n."
   ^String
   [in]
   (let [[ms bf]
         (loop [c (rdr in)
-               bf (s/strbf<>)]
+               bf (s/sbf<>)]
           (let
             [m (cond
                  (or (== c -1) (== c 4)) #{:quit :break}
                  (== c (int \newline)) #{:break}
-                 (or (== c (int \backspace))
-                     (== c (int \return)) (== c 27)) nil
-                 :else (c/do->nil (.append bf (char c))))]
+                 (or (== c (int \return))
+                     (== c 27)
+                     (== c (int \backspace))) nil
+                 :else (c/do#nil (s/sbf+ bf (char c))))]
             (if (c/in? m :break)
               [m bf]
               (recur (rdr in) bf))))]
     (if-not
-      (c/in? ms :quit) (s/strim bf))))
+      (c/in? ms :quit) (s/strim (str bf)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- onAnswer
-  "Process the answer, returning the next question"
+(defn- on-answer
+  "Process the answer, returning the next question."
   [^Writer cout
-   {:keys [default id
-           result must? next] :as cmdQ}
-   props answer]
-
+   {:keys [result id
+           default must? next] :as cmdQ} props answer]
   (if (nil? answer)
-    (c/do->nil (.write cout "\n"))
+    (c/do#nil (.write cout "\n"))
     (let [rc (s/stror answer default)]
       (cond
         ;;if required to answer, repeat the question
         (and (s/nichts? rc) must?)
         id
         (keyword? result)
-        (do (c/setf! props
-                      result rc) next)
+        (do (swap! props
+                   #(assoc % result rc)) next)
         (fn? result)
         (let [[n p]
               (result rc @props)]
-          (doto props c/wipe! (c/copy* p))
+          (reset! props p)
           (if (nil? n) ::caio!! n))
-
-        :else :caio!!))))
+        :else ::caio!!))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- popQQ
-  "Pop the question"
+(defn- pop-QQ
+  "Pop the question."
   [^Writer cout
    ^Reader cin
    {:keys [question
            choices
            default] :as cmdQ} props]
-
   (.write cout
           (str question
                (if (:must? cmdQ) "*") "? "))
@@ -139,54 +127,46 @@
   (doto cout (.write " ") .flush)
   ;; get the input from user
   ;; return the next question, :end ends it
-  (->> (readData cin)
-       (onAnswer cout cmdQ props)))
+  (->> (read-data cin)
+       (on-answer cout cmdQ props)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- popQ
+(defn- pop-Q
   "Pop the question"
   [cout cin cmdQ props]
-  (if cmdQ (popQQ cout cin cmdQ props) :caio!!))
+  (if cmdQ (pop-QQ cout cin cmdQ props) ::caio!!))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- cycleQ
-  "Cycle through the questions"
+(defn- cycle-Q
+  "Cycle through the questions."
   [cout cin cmdQNs start props]
-
-  (loop [rc (popQ cout
-                  cin
-                  (cmdQNs start) props)]
+  (loop [rc (pop-Q cout cin (cmdQNs start) props)]
     (cond
-      (= :caio!! rc) @props
+      (= ::caio!! rc) @props
       (nil? rc) {}
-      :else (recur (popQ cout
-                         cin
-                         (cmdQNs rc) props)))))
+      :else (recur (pop-Q cout cin (cmdQNs rc) props)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn termio
-  "Prompt a sequence of questions via console"
+  "Prompt a sequence of questions via console."
   [cmdQs question1]
   {:pre [(map? cmdQs)]}
-
   (let [cout (-> System/out
                  BufferedOutputStream. OutputStreamWriter.)
         cin (InputStreamReader. (System/in))
-        func (partial cycleQ cout cin)]
+        func (partial cycle-Q cout cin)]
     (.write cout (str ">>> Press "
                       "<ctrl-c> or <ctrl-d>"
                       "<Enter> to cancel...\n"))
     (-> (reduce
-          #(update-in %1 [%2] assoc :id %2)
+          #(update-in %1
+                      [%2]
+                      assoc :id %2)
           cmdQs
           (keys cmdQs))
-        (func question1 (GenericMutable. {})))))
+        (func question1 (atom {})))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 #_
 (def ExampleQuestions
   {:q1 {:question "hello ken"

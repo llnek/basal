@@ -1,4 +1,4 @@
-;; Copyright (c) 2013-2017, Kenneth Leung. All rights reserved.
+;; Copyright © 2013-2019, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -11,90 +11,80 @@
 
   czlab.basal.guids
 
-  (:require [czlab.basal.io :as i :refer [readNumber]]
-            [clojure.string :as cs]
-            [czlab.basal.log :as log]
-            [czlab.basal.core :as c]
-            [czlab.basal.str :as s])
+  (:require [czlab.basal.core :as c]
+            [czlab.basal.str :as s]
+            [clojure.java.io :as io]
+            [czlab.basal.util :as u])
 
-  (:import [java.lang StringBuilder]
-           [czlab.jasal CU]
-           [java.net InetAddress]
-           [java.util UUID]
-           [java.lang Math]
-           [java.security SecureRandom]))
+  (:import [java.util
+            UUID]
+           [java.lang
+            Math]
+           [java.net
+            InetAddress]
+           [java.io
+            DataInputStream]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;pre-shuffle the chars in string
-(def ^{:private true
-       :tag String}
-  _ss (CU/shuffle
-        (let [s "abcdefghijklmnopqrstuvwxyz"]
-          (str s "0123456789" (cs/upper-case s)))))
-(def ^:private _chars (c/charsit _ss))
-(def ^:private _uuid-len (.length _ss))
+(def ^{:private true :tag String} _ss
+  (s/shuffle-str (str "abcdefghijklmnopqrstuvwxyz"
+                      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")))
+(def ^:private _chars (.toCharArray _ss))
+(def ^:private _uuid-len (count _ss))
 (def ^:private ^String int-mask "00000")
 (def ^:private ^String long-mask "0000000000")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- fmt
-  "" ^String [^String pad ^String mask]
+(defmacro ^:private fmt-int
+  [nm] `(fmt int-mask (Integer/toHexString ~nm)))
 
-  (let [mlen (.length mask)
-        plen (.length pad)]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro ^:private fmt-long
+  [nm] `(fmt long-mask (Long/toHexString ~nm)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn- fmt ^String [pad mask]
+  (let [plen (count pad)
+        mlen (count mask)]
     (if (>= mlen plen)
-      (.substring mask 0 plen)
-      (str (.replace (s/strbf<> pad)
-                     (- plen mlen) plen mask)))))
+      (.substring ^String mask 0 plen)
+      (str (.replace (s/sbf<> pad)
+                     (int (- plen mlen)) (int plen) ^String mask)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ^:private fmtInt
-  "" [nm] `(fmt int-mask (Integer/toHexString ~nm)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro ^:private fmtLong
-  "" [nm] `(fmt long-mask (Long/toHexString ~nm)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- splitTime "" []
-  (let [s (fmtLong (c/now<>))
-        n (.length s)]
+(defn- split-time []
+  (let [s (fmt-long (System/currentTimeMillis))
+        n (count s)]
     [(s/lefts s (/ n 2))
      (s/rights s (max 0 (- n (/ n 2))))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- maybeSetIP "" []
+(defn- maybe-set-iP []
   (let [neta (InetAddress/getLocalHost)
         b (.getAddress neta)]
-    (cond
-      (.isLoopbackAddress neta)
-      (. (c/rand<>) nextLong)
-      (== 4 (alength b))
-      (long (i/readNumber b Integer))
-      :else (i/readNumber b Long))))
+    (cond (.isLoopbackAddress neta)
+          (.nextLong (u/rand<>))
+          :else
+          (c/wo* [dis (DataInputStream.
+                        (io/input-stream b))]
+            (if (= 4 (alength b))
+              (long (.readInt dis)) (.readLong dis))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(def ^:private ^long _IP (Math/abs ^long (maybeSetIP)))
+(def ^:private ^long _IP (Math/abs ^long (maybe-set-iP)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn myOwnNewUUid
+(defn uuid<>
   "rfc4122, v4 format"
-  {:tag String :no-doc true} []
-
+  ^String []
   ;;at i==19 set the high bits of clock
   ;;sequence as per rfc4122, sec. 4.1.5
   (let [rc (char-array _uuid-len)
-        rnd (c/rand<>)]
+        rnd (u/rand<>)]
     (dotimes [n (alength rc)]
       (aset-char rc
                  n
@@ -110,18 +100,13 @@
     (String. rc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
 (defn wwid<>
-  "uid based on time/ip" ^String []
-
-  (let [seed (.nextInt (c/rand<>)
+  "uid based on time/ip"
+  ^String []
+  (let [seed (.nextInt (u/rand<>)
                        (Integer/MAX_VALUE))
-        ts (splitTime)]
-    (str (nth ts 0)
-         (fmtLong _IP)
-         (fmtInt seed)
-         (fmtInt (c/seqint))
-         (nth ts 1))))
+        [hi lo] (split-time)]
+    (str hi (fmt-long _IP) (fmt-int seed) (fmt-int (u/seqint)) lo)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

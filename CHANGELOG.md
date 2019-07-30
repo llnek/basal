@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file. This change
 
 ## [Unreleased]
 
+## 1.1.0 - 2019-07-29
+### Changed
+- Revised all APIs 
+
+
 ## 1.0.5 - 2017-07-13
 ### Changed
 - Added event bus module

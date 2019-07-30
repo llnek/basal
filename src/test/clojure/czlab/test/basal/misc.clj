@@ -1,4 +1,4 @@
-;; Copyright (c) 2013-2017, Kenneth Leung. All rights reserved.
+;; Copyright ©  2013-2019, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -6,293 +6,80 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns czlab.test.basal.misc
+(ns ^{:doc ""
+      :author "Kenneth Leung"}
 
-  (:require [czlab.basal.resources :as r]
-            [czlab.basal.countries :as u]
-            [czlab.basal.format :as f]
+  czlab.test.basal.misc
+
+  (:require [czlab.basal.ccodes :as cc]
             [czlab.basal.guids :as g]
-            [czlab.basal.ebus :as e]
-            [czlab.basal.core :as c]
-            [czlab.basal.io :as i])
-
-  (:use [clojure.test])
-
-  (:import [java.util ResourceBundle]))
+            [clojure.string :as cs]
+            [clojure.test :as ct]
+            [czlab.basal.cli :as i]
+            [czlab.basal.core
+             :refer [ensure?? ensure-thrown??] :as c]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(def ^:private SBA {:subjectBased? true})
-(defn- incv "" [v] (if (number? v) (inc v) 1))
-(defn- sub-func "" [subto topic msg]
-  ;;msg is an atom
-  (swap! msg update-in [subto] incv))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(deftest czlabtestbasal-misc
+(c/deftest test-misc
 
-  (testing
-    "related to: eventbus"
-    (is (let [bus (e/eventBus<> SBA)
-              msg (atom {})]
-          (e/ev-sub+ bus "/a/b/c /a/** /a/*/c" sub-func)
-          (e/ev-pub bus "/a/b/c" msg)
-          (and (= 1 (get @msg "/a/b/c"))
-               (= 1 (get @msg "/a/**"))
-               (= 1 (get @msg "/a/*/c")))))
-    (is (let [bus (e/eventBus<>)
-              msg (atom {})]
-          (e/ev-sub+ bus "/a/b/c" sub-func)
-          (e/ev-pub bus "/a/b/c" msg)
-          (and (= 1 (get @msg "/a/b/c")))))
-    (is (let [bus (e/eventBus<> SBA)
-              msg (atom {})]
-          (e/ev-sub+ bus "/a/b/c /**" sub-func)
-          (e/ev-pub bus "/x/b/c" msg)
-          (and (= 1 (get @msg "/**"))
-               (= 1 (count @msg)))))
-    (is (let [bus (e/eventBus<> SBA)
-              msg (atom {})
-              [x y] (e/ev-sub+ bus "/a/b/c /**" sub-func)]
-          (e/ev-unsub bus y)
-          (e/ev-pub bus "/x/b/c" msg)
-          (= 0 (count @msg))))
-    (is (let [bus (e/eventBus<> SBA)
-              msg (atom {})
-              _ (e/ev-sub+ bus "/a/b/c" sub-func)
-              _ (e/ev-sub* bus "/a/*/c" sub-func)]
-          (e/ev-pub bus "/a/b/c" msg)
-          (e/ev-pub bus "/a/b/c" msg)
-          (and (= 2 (get @msg "/a/b/c"))
-               (= 1 (get @msg "/a/*/c")))))
-    (is (let [bus (e/eventBus<> SBA)
-              msg (atom {})
-              x (e/ev-sub+ bus "/a/b/c" sub-func)]
-          (e/ev-pub bus "/a/b/c" msg)
-          (e/ev-pause bus x)
-          (e/ev-pub bus "/a/b/c" msg)
-          (e/ev-resume bus x)
-          (e/ev-pub bus "/a/b/c" msg)
-          (= 2 (get @msg "/a/b/c"))))
-    (is (let [bus (e/eventBus<> SBA)
-              msg (atom {})
-              x (e/ev-sub+ bus "/a/b/c" sub-func)]
-          (e/ev-finz bus)
-          (e/ev-pub bus "/a/b/c" msg)
-          (= 0 (count @msg))))
+  (ensure?? "find-country" (= (cc/find-country "AU")
+                              (cc/find-country "au")))
 
-    (is (let [bus (e/eventBus<>)
-              msg (atom {})]
-          (e/ev-sub+ bus "/a/b/c /a" sub-func)
-          (e/ev-pub bus "/a" msg)
-          (and (= 1 (get @msg "/a"))
-               (= 1 (count @msg)))))
-    (is (let [bus (e/eventBus<>)
-              msg (atom {})
-              [x y] (e/ev-sub+ bus "/a/b/c /a" sub-func)]
-          (e/ev-unsub bus y)
-          (e/ev-pub bus "/a" msg)
-          (= 0 (count @msg))))
-    (is (let [bus (e/eventBus<>)
-              msg (atom {})
-              _ (e/ev-sub* bus "/a/b/c" sub-func)]
-          (e/ev-pub bus "/a/b/c" msg)
-          (e/ev-pub bus "/a/b/c" msg)
-          (= 1 (get @msg "/a/b/c"))))
-    (is (let [bus (e/eventBus<>)
-              msg (atom {})
-              x (e/ev-sub+ bus "/a/b/c" sub-func)]
-          (e/ev-pub bus "/a/b/c" msg)
-          (e/ev-pause bus x)
-          (e/ev-pub bus "/a/b/c" msg)
-          (e/ev-resume bus x)
-          (e/ev-pub bus "/a/b/c" msg)
-          (= 2 (get @msg "/a/b/c"))))
-    (is (let [bus (e/eventBus<>)
-              msg (atom {})
-              x (e/ev-sub+ bus "/a/b/c" sub-func)]
-          (e/ev-finz bus)
-          (e/ev-pub bus "/a/b/c" msg)
-          (= 0 (count @msg)))))
+  (ensure?? "find-country" (= "Australia" (cc/find-country "AU")))
 
-  (testing
-    "related to: gobus"
+  (ensure?? "find-country-code" (= "AU" (cc/find-country-code "Australia")))
 
-    (is (let [bus (e/goBus<> SBA)
-              msg (atom {})]
-          (e/ev-sub+ bus "/a/b/c /a/** /a/*/c" sub-func)
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 1000)
-          (e/ev-finz bus)
-          (and (= 1 (get @msg "/a/b/c"))
-               (= 1 (get @msg "/a/**"))
-               (= 1 (get @msg "/a/*/c")))))
-    (is (let [bus (e/goBus<>)
-              msg (atom {})]
-          (e/ev-sub+ bus "/a/b/c" sub-func)
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 1000)
-          (e/ev-finz bus)
-          (and (= 1 (get @msg "/a/b/c")))))
-    (is (let [bus (e/goBus<> SBA)
-              msg (atom {})]
-          (e/ev-sub+ bus "/a/b/c /**" sub-func)
-          (e/ev-pub bus "/x/b/c" msg)
-          (c/pause 1000)
-          (e/ev-finz bus)
-          (and (= 1 (get @msg "/**"))
-               (= 1 (count @msg)))))
-    (is (let [bus (e/goBus<> SBA)
-              msg (atom {})
-              [x y] (e/ev-sub+ bus "/a/b/c /**" sub-func)]
-          (e/ev-unsub bus y)
-          (e/ev-pub bus "/x/b/c" msg)
-          (c/pause 1000)
-          (e/ev-finz bus)
-          (= 0 (count @msg))))
-    (is (let [bus (e/goBus<> SBA)
-              msg (atom {})
-              _ (e/ev-sub+ bus "/a/b/c" sub-func)
-              _ (e/ev-sub* bus "/a/*/c" sub-func)]
-          (e/ev-pub bus "/a/b/c" msg)
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 3500)
-          (e/ev-finz bus)
-          (and (= 2 (get @msg "/a/b/c"))
-               (= 1 (get @msg "/a/*/c")))))
-    (is (let [bus (e/goBus<> SBA)
-              msg (atom {})
-              x (e/ev-sub+ bus "/a/b/c" sub-func)]
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 1000)
-          (e/ev-pause bus x)
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 1000)
-          (e/ev-resume bus x)
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 1000)
-          (e/ev-finz bus)
-          (= 2 (get @msg "/a/b/c"))))
-    (is (let [bus (e/goBus<> SBA)
-              msg (atom {})
-              x (e/ev-sub+ bus "/a/b/c" sub-func)]
-          (e/ev-finz bus)
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 1000)
-          (e/ev-finz bus)
-          (= 0 (count @msg))))
-    (is (let [bus (e/goBus<>)
-              msg (atom {})]
-          (e/ev-sub+ bus "/a/b/c /a" sub-func)
-          (e/ev-pub bus "/a" msg)
-          (c/pause 1000)
-          (e/ev-finz bus)
-          (and (= 1 (get @msg "/a"))
-               (= 1 (count @msg)))))
-    (is (let [bus (e/goBus<>)
-              msg (atom {})
-              [x y] (e/ev-sub+ bus "/a/b/c /a" sub-func)]
-          (e/ev-unsub bus y)
-          (e/ev-pub bus "/a" msg)
-          (c/pause 1000)
-          (e/ev-finz bus)
-          (= 0 (count @msg))))
-    (is (let [bus (e/goBus<>)
-              msg (atom {})
-              _ (e/ev-sub* bus "/a/b/c" sub-func)]
-          (e/ev-pub bus "/a/b/c" msg)
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 3500)
-          (e/ev-finz bus)
-          (= 1 (get @msg "/a/b/c"))))
-    (is (let [bus (e/goBus<>)
-              msg (atom {})
-              x (e/ev-sub+ bus "/a/b/c" sub-func)]
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 1000)
-          (e/ev-pause bus x)
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 1000)
-          (e/ev-resume bus x)
-          (c/pause 1000)
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 1000)
-          (e/ev-finz bus)
-          (= 2 (get @msg "/a/b/c"))))
-    (is (let [bus (e/goBus<>)
-              msg (atom {})
-              x (e/ev-sub+ bus "/a/b/c" sub-func)]
-          (e/ev-finz bus)
-          (e/ev-pub bus "/a/b/c" msg)
-          (c/pause 1000)
-          (e/ev-finz bus)
-          (= 0 (count @msg)))))
+  (ensure?? "is-usa?" (false? (cc/is-usa? "aa")))
 
-  (testing
-    "related to: country codes"
-    (is (= (u/findCountry "AU") (u/findCountry "au")))
-    (is (= "Australia" (u/findCountry "AU")))
-    (is (= "AU" (u/findCountryCode "Australia")))
-    (is (false? (u/isUSA? "aa")))
-    (is (and (u/isUSA? "US") (= (u/isUSA? "US") (u/isUSA? "us"))))
-    (is (> (count (u/listCodes)) 0))
+  (ensure?? "is-usa?" (and (cc/is-usa? "US")
+                           (= (cc/is-usa? "US") (cc/is-usa? "us"))))
 
-    (is (= (u/findState "CA") (u/findState "ca")))
-    (is (= "California" (u/findState "ca")))
-    (is (= "CA" (u/findStateCode "California")))
-    (is (> (count (u/listStates)) 0)))
+  (ensure?? "list-codes" (> (count (cc/list-codes)) 0))
 
-  (testing
-    "related to: guids"
-    (is (not= (g/wwid<>) (g/wwid<>)))
-    (is (not= (c/uuid<>) (c/uuid<>)))
+  (ensure?? "find-state"
+            (= (cc/find-state "CA") (cc/find-state "ca")))
 
-    (is (> (.length (g/wwid<>)) 0))
-    (is (> (.length (c/uuid<>)) 0)))
+  (ensure?? "find-state" (= "California" (cc/find-state "ca")))
 
-  (testing
-    "related to: formats"
-    (is (string? (f/writeEdnStr
-                   {:a 1 :b {:c {:e "hello"} :d 4}})))
+  (ensure?? "find-state-code" (= "CA" (cc/find-state-code "California")))
 
-    (is (let [s (f/writeEdnStr
-                  {:a 1 :b {:c {:e "hello"} :d 4}})
-              t (i/tempFile)
-              _ (spit t s)
-              e (f/readEdn t)]
-          (i/deleteQ t)
-          (and (string? s)
-               (= "hello" (get-in e [:b :c :e])))))
+  (ensure?? "list-states" (> (count (cc/list-states)) 0))
 
-    (is (string? (f/writeJsonStr
-                   {:a 1 :b {:c {:e "hello"} :d 4}})))
+  (ensure?? "wwid<>" (not= (g/wwid<>) (g/wwid<>)))
 
-    (is (let [s (f/writeJsonStr
-                  {:a 1 :b {:c {:e "hello"} :d 4}})
-              t (i/tempFile)
-              _ (spit t s)
-              e (f/readJson t)]
-          (i/deleteQ t)
-          (and (string? s)
-               (= "hello" (get-in e [:b :c :e]))))))
+  (ensure?? "uuid<>" (not= (g/uuid<>) (g/uuid<>)))
 
-  (testing
-    "related to: resource bundles"
-    (is (= "hello joe, how is your dawg"
-           (-> (r/loadResource (c/resUrl "czlab/basal/etc/Resources_en.properties"))
-               (r/rstr "test"  "joe" "dawg" ))))
+  (ensure?? "wwid<>" (> (count (g/wwid<>)) 0))
 
-    (is (= ["hello joe, how is your dawg" "hello joe, how is your dawg"]
-           (-> (r/loadResource (c/resUrl "czlab/basal/etc/Resources_en.properties"))
-               (r/rstr* ["test"  "joe" "dawg"] ["test2"  "joe" "dawg"] ))))
+  (ensure?? "uuid<>" (> (count (g/uuid<>)) 0))
 
-    (is (c/ist? ResourceBundle
-               (r/getResource "czlab/basal/etc/Resources"))))
+  (ensure?? "parse-options"
+            (let [[o v] (i/parse-options ["--a" "b" "/c" "d" "-e" "f" "g"])]
+              (and (= "b" (:a o))
+                   (= "d" (:c o))
+                   (= "f" (:e o))
+                   (= "g" (cs/join "" v)))))
 
-  (is (string? "That's all folks!")))
+  (ensure?? "parse-options"
+            (let [[o v] (i/parse-options ["--" "a" "b" "c"])]
+              (and (empty? o)
+                   (= "abc" (cs/join "" v)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  (ensure?? "parse-options"
+            (let [[o v] (i/parse-options ["a" "b" "c"])]
+              (and (empty? o)
+                   (= "abc" (cs/join "" v)))))
+
+  (ensure?? "test-end" (= 1 1)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(ct/deftest ^:test-misc basal-test-misc
+  (ct/is (let [[ok? r]
+               (c/runtest test-misc "test-misc")] (println r) ok?)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
 
 
