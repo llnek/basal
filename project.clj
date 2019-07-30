@@ -11,8 +11,7 @@
   :dependencies [[org.clojure/tools.logging "0.4.1"]
                  [org.clojure/core.async "0.4.500"]
                  [org.flatland/ordered "1.5.7"]
-                 [org.clojure/data.json "0.2.6"]
-                 [io.czlab/jasal "1.0.0"]]
+                 [org.clojure/data.json "0.2.6"]]
 
   :exclusions [org.clojure/clojure]
 

@@ -39,12 +39,6 @@
 
   (ensure?? "system-time" (pos? (u/system-time)))
 
-  (ensure?? "run<id>" (let [a (atom 0)
-                            r (u/run<id> :111
-                                         (reset! a (+ 1 (+ 2 3))))]
-                        (.run r)
-                        (and (= 6 @a) (= :111 (.id r)))))
-
   (ensure?? "run<>" (let [a (atom 0)
                           r (u/run<> (reset! a (+ 1 (+ 2 3))))]
                         (.run r)
@@ -78,19 +72,19 @@
             (= "\\tmp\\abc" (u/trim-last-pathsep "\\tmp\\abc\\")))
 
 
-  (ensure?? "monoFlop<>" (let [out (atom 0)
-                               m (u/monoFlop<>)]
+  (ensure?? "mono-flop<>" (let [out (atom 0)
+                               m (u/mono-flop<>)]
                            (dotimes [_ 10]
-                             (if (.isFirstCall m)
+                             (if (u/is-first-call? m)
                                (swap! out inc))) (= 1 @out)))
 
   (ensure?? "watch<>,pause" (let [w (u/watch<>)]
                               (u/pause 100)
-                              (and (pos? (.elapsedMillis w))
-                                   (pos? (.elapsedNanos w))
+                              (and (pos? (u/watch-elapsed-millis w))
+                                   (pos? (u/watch-elapsed-nanos w))
                                    (pos? (do (u/pause 100)
-                                             (.reset w)
-                                             (.elapsedNanos w))))))
+                                             (u/watch-reset! w)
+                                             (u/watch-elapsed-nanos w))))))
 
   (ensure?? "jid<>" (let [s (u/jid<>)]
                       (and (string? s)
@@ -233,18 +227,9 @@
   (ensure?? "sys-tmp-dir" (let [f (new File (u/sys-tmp-dir))]
                             (.exists f)))
 
-  (ensure?? "id??" (let [r (u/run<id> 4 #(+ 1 2))
-                         m {:id 3}]
-                     (and (= 4 (u/id?? r))
-                          (= 3 (u/id?? m)))))
-
   (ensure?? "obj-eq?" (let [a (String. "a")
                             b (String. "a")]
                         (u/obj-eq? a b)))
-
-  (ensure?? "id-eq?" (let [a {:id 4}
-                           b {:id 4 :a 3}]
-                       (u/id-eq? a b)))
 
   (ensure?? "url-encode,url-decode"
             (let [s (u/url-encode "a+c+b")

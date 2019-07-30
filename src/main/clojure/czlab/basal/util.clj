@@ -22,13 +22,7 @@
 
   ;(:use [clojure.walk])
 
-  (:import [czlab.jasal
-            Idable
-            DataError
-            MonoFlop
-            Watch
-            RunnableWithId]
-           [java.util.zip
+  (:import [java.util.zip
             Deflater
             Inflater
             DataFormatException]
@@ -92,6 +86,16 @@
 (def CSCZ (class (.toCharArray "")))
 (def BSCZ (class (.getBytes "")))
 (def ^:private SGCZ (class ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defprotocol MonoFlop
+  (is-first-call? [_] ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defprotocol Watch
+  (watch-elapsed-millis [_] )
+  (watch-reset! [_] )
+  (watch-elapsed-nanos [_] ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro try!!
@@ -194,22 +198,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/decl-throw-exp throw-BadData
-                  DataError
+                  RuntimeException
                   "Throw Bad Data Exception")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/decl-throw-exp throw-IOE
                   java.io.IOException "Throw IO Exception")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro run<id>
-  "A RunnableWithId wrapper."
-  [rid & forms]
-  `(reify
-     ~'czlab.jasal.Idable
-     (~'id [~'_] ~rid)
-     ~'java.lang.Runnable
-     (~'run [~'_] (~'czlab.basal.core/try! ~@forms))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro run<>
@@ -297,14 +291,14 @@
   ^String [path] (.replaceFirst (str path) "[/\\\\]+$" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn monoFlop<>
+(defn mono-flop<>
   "Flip on first call,
-  useful for one-time logic."
-  ^MonoFlop []
+  for one-time logic."
+  []
   (let [toggled (atom false)]
     (reify
       MonoFlop
-      (isFirstCall [_]
+      (is-first-call? [_]
         (if @toggled
           false
           (c/do#true (reset! toggled true)))))))
@@ -312,15 +306,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn watch<>
   "Use to mark elapsed time"
-  ^Watch []
+  []
   (let [start (atom (System/nanoTime))
         f #(.convert ^TimeUnit
                      %
                      (- (System/nanoTime) @start) TimeUnit/NANOSECONDS)]
     (reify Watch
-      (reset [_] (reset! start (System/nanoTime)))
-      (elapsedMillis [_] (f TimeUnit/MILLISECONDS))
-      (elapsedNanos [_] (f TimeUnit/NANOSECONDS)))))
+      (watch-reset! [_] (reset! start (System/nanoTime)))
+      (watch-elapsed-millis [_] (f TimeUnit/MILLISECONDS))
+      (watch-elapsed-nanos [_] (f TimeUnit/NANOSECONDS)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; local hack
@@ -702,13 +696,6 @@
   "Java tmp dir." [] `(sys-prop "java.io.tmpdir"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn id??
-  "Get id of this object."
-  [obj] (if (instance? Idable obj)
-          (.id ^Idable obj)
-          (if (map? obj) (:id obj))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- same-obj?
   "Are these 2 objects identical?"
   [^Object this ^Object obj]
@@ -729,11 +716,6 @@
         (or (nil? a) (nil? b))
         false
         :else (.equals ^Object a b)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn id-eq?
-  "Do these 2 objects have same id?"
-  [this obj] (= (id?? obj) (id?? this)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol JEnumProto

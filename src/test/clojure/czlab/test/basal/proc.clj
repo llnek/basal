@@ -48,7 +48,7 @@
 
   (ensure?? "hold,wakeup"
             (= 1 (let [x (atom 0)
-                       r (u/run<id> "117" (swap! x inc))]
+                       r (u/run<> (swap! x inc))]
                       (p/hold @SCD r)
                       (u/pause 500)
                       (p/wakeup @SCD r)
