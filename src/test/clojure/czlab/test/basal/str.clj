@@ -149,17 +149,21 @@
                              (= "aaa" (s/drop-tail  "aaa" 0))
                              (= "" (s/drop-tail "hello joe" 30))))
 
+  (ensure?? "sreduce<>"
+            (= "123"
+               (s/sreduce<> #(s/sbf+ %1 %2) [1 2 3])))
+
   (ensure?? "split-str"
             (and (= ["a" "b" "c"]
                     (s/split-str "/a/b/c/" "/"))
                  (= ["/" "a" "/" "b" "/" "c" "/"]
                     (s/split-str "/a/b/c/" "/" true))))
 
-  (ensure?? "shuffle-str" (let [s "abcdefg"
-                                z (s/shuffle-str s)]
-                            (and (count s)
-                                 (count z)
-                                 (not= s z))))
+  (ensure?? "shuffle" (let [s "abcdefg"
+                            z (s/shuffle s)]
+                        (and (count s)
+                             (count z)
+                             (not= s z))))
 
   (ensure?? "esc-xml" (= (s/esc-xml "<abc\"'&>")
                          "&lt;abc&quot;&apos;&amp;&gt;"))

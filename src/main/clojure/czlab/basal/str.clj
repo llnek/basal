@@ -11,6 +11,8 @@
 
   czlab.basal.str
 
+  (:refer-clojure :exclude [shuffle])
+
   (:require [clojure.string :as cs]
             [czlab.basal.core :as c])
 
@@ -19,6 +21,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro sreduce<>
+  "Reduce with a string-builder, returning a string."
+  [f c] `(str (reduce ~f (StringBuilder.) ~c)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro fmt
+  "Alias format." [f & args] `(format ~f ~@args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbf<>
@@ -408,7 +418,7 @@
          (recur (conj! rc (.nextToken t))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn shuffle-str
+(defn shuffle
   "Shuffle characters in string." [s]
   (let [lst (java.util.ArrayList.)]
     (doseq [c (seq s)] (.add lst c))

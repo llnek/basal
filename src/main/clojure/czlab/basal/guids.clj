@@ -31,7 +31,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;pre-shuffle the chars in string
 (def ^{:private true :tag String} _ss
-  (s/shuffle-str (str "abcdefghijklmnopqrstuvwxyz"
+  (s/shuffle (str "abcdefghijklmnopqrstuvwxyz"
                       "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")))
 (def ^:private _chars (.toCharArray _ss))
 (def ^:private _uuid-len (count _ss))

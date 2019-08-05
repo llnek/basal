@@ -291,6 +291,8 @@
              (c/is? URL arg)
              (c/is? u/BSCZ arg))
          [true (io/input-stream arg)]
+         (c/is? ByteArrayOutputStream arg)
+         (input-stream?? (x->bytes arg))
          (c/is? u/CSCZ arg)
          (input-stream?? (x->bytes arg enc))
          (or (nil? arg)
@@ -332,6 +334,11 @@
          :else 0)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn tmpfile
+  "Create f in temp dir."
+  [f] (io/file (u/sys-tmp-dir) f))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn temp-file
   "Create a temporary file."
   {:tag File}
@@ -352,11 +359,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->file
   "Copy content to a temp file."
-  ^File [in]
-  (let [fp (temp-file)]
-    (try (io/copy in fp)
-         fp
-         (catch Throwable _ (fdelete fp) nil))))
+  ([in] (x->file in nil))
+  ([in fout]
+   (let [fp (or fout (temp-file))]
+     (try (io/copy in fp)
+          fp
+          (catch Throwable _
+            (if (nil? fout) (fdelete fp)) nil)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn reset-source!

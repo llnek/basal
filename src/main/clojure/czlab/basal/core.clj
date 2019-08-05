@@ -124,6 +124,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fn_0
   "Wrap code into a fn()." [& forms] `(fn [] ~@forms))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro tset*
+  "A transient set."
+  ([] `(tset* nil))
+  ([x] `(transient (or ~x #{}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro tvec*
@@ -827,13 +832,17 @@
 (defn int-var "Like a mutable int."
   ([^ints arr v] (aset arr 0 (int v)) (int v))
   ([] (int-array 1 0))
-  ([^ints arr] (aget arr 0)))
+  ([^ints arr] (aget arr 0))
+  ([^ints arr op nv]
+   (let [v (int (op (aget arr 0) nv))] (aset arr 0 v) v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn long-var "like a mutable long."
   ([^longs arr v] (aset arr 0 (long v)) (long v))
   ([] (long-array 1 0))
-  ([^longs arr] (aget arr 0)))
+  ([^longs arr] (aget arr 0))
+  ([^longs arr op nv]
+   (let [v (long (op (aget arr 0) nv))] (aset arr 0 v) v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn nth??

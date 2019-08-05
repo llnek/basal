@@ -177,11 +177,6 @@
   `(decl-muble-types ~name :unsynchronized-mutable ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro sreduce<>
-  "Reduce with a string-builder, returning a string."
-  [f c] `(str (reduce ~f (StringBuilder.) ~c)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/decl-throw-exp throw-ISE
                   IllegalStateException
                   "Throw illegal state exception")
@@ -525,7 +520,7 @@
 (defn safe-fpath
   "Hex-code all non-alpha chars in a file path."
   ^String [fname]
-  (sreduce<>
+  (s/sreduce<>
     (fn [^StringBuilder buf ^Character ch]
       (if (or (java.lang.Character/isLetterOrDigit ch)
               (contains? #{\_ \- \. } ch))
