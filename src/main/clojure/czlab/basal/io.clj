@@ -96,6 +96,11 @@
   (if-some [f (c/cast? File in)] (.length f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn fname
+  "Get name of file." ^String [in]
+  (if-some [f (io/file in)] (.getName f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn copy
   "Copy certain number of bytes to output."
   ([in out] (copy in out -1))
@@ -128,6 +133,8 @@
                            (CharBuffer/wrap ^chars in))]
            (Arrays/copyOfRange (.array bb)
                                (.position bb) (.limit bb)))
+         (c/is? StringBuilder in)
+         (x->bytes (.toString ^Object in) enc)
          (string? in)
          (.getBytes ^String in
                     (u/encoding?? enc))
@@ -149,6 +156,8 @@
          (or (nil? in)
              (c/is? u/CSCZ in))
          in
+         (c/is? StringBuilder in)
+         (x->chars (.toString ^Object in))
          (string? in)
          (.toCharArray ^String in)
          (c/is? u/BSCZ in)
@@ -168,6 +177,8 @@
   ([in enc] (cond (or (nil? in)
                       (string? in))
                   in
+                  (c/is? StringBuilder in)
+                  (.toString ^Object in)
                   :else (String. (x->chars in enc)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

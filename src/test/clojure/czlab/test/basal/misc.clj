@@ -16,6 +16,7 @@
             [clojure.string :as cs]
             [clojure.test :as ct]
             [czlab.basal.cli :as i]
+            [czlab.basal.cljrt :as rt]
             [czlab.basal.core
              :refer [ensure?? ensure-thrown??] :as c]))
 
@@ -23,6 +24,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/deftest test-misc
+
+  (ensure?? "cljrt<>"
+            (c/wo* [^java.io.Closeable z (rt/cljrt<>)]
+              (satisfies? czlab.basal.cljrt/CljrtAPI z)))
+
+  (ensure?? "cljrt.call*"
+            (c/wo* [^java.io.Closeable z (rt/cljrt<>)]
+              (let [r (rt/call* z
+                                :clojure.template/apply-template
+                                ['[x] '(+ x x) '[2]])]
+                (and (list? r)
+                     (= 3 (count r))))))
 
   (ensure?? "find-country" (= (cc/find-country "AU")
                               (cc/find-country "au")))

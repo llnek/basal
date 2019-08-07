@@ -739,8 +739,7 @@
   {:tag String}
   ([s] (url-encode s "utf-8"))
   ([s enc]
-   (if (string? s)
-     (URLEncoder/encode ^String s (encoding?? enc)))))
+   (URLEncoder/encode (str s) (encoding?? enc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn url-decode
