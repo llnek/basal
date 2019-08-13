@@ -13,6 +13,7 @@
 
   (:require [czlab.basal.indent :as in]
             [czlab.basal.core :as c]
+            [czlab.basal.log :as l]
             [czlab.basal.str :as s]
             [clojure.string :as cs]
             [clojure.edn :as edn]
@@ -346,6 +347,13 @@
   ([rand-obj num-bytes]
    (c/do-with
      [b (byte-array num-bytes)] (.nextBytes ^SecureRandom rand-obj b))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn objid??
+  "Java object id, which is actually it's hashcode." [obj]
+  (if-some [obj (c/cast? Object obj)]
+    (str (-> (class obj) .getSimpleName)
+         "@" (Integer/toHexString (.hashCode obj))) "null@null"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn encoding??
@@ -751,6 +759,12 @@
      (URLDecoder/decode ^String s (encoding?? enc)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn sortby "" [kfn cmp coll]
+  (sort-by kfn
+           (reify java.util.Comparator
+             (compare [_ t1 t2] (cmp t1 t2))) coll))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;in memory store
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn new-memset
@@ -882,6 +896,27 @@
   (rstr bundle [\"k1\" p1 p2] [\"k2\" p3 p4] )."
   [bundle & pms]
   (mapv #(apply rstr bundle (first %) (drop 1 %)) pms))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn block!
+  "Block forever, or wait on this lock."
+  ([]
+   (try (.join (Thread/currentThread))
+        (catch Throwable _ (l/exception _))))
+  ([^Object lock waitMillis]
+   (try (locking lock
+          (if (pos? waitMillis)
+            (.wait lock waitMillis)
+            (.wait lock)))
+        (catch Throwable _ (l/exception _)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn unblock!
+  "Notify all threads waiting on this lock."
+  [^Object lock]
+  (try (locking lock
+         (.notifyAll lock))
+       (catch Throwable _ (l/exception _))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

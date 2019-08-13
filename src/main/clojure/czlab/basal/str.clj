@@ -410,6 +410,12 @@
         (.substring src 0 (- n len))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn split
+  "String.split."
+  ([^String src ^String regex] (.split src regex))
+  ([^String src ^String regex limit] (.split src regex (int limit))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn split-str
   "String tokenizer."
   ([s sep] (split-str s sep false))

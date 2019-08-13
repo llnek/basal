@@ -840,6 +840,9 @@
   ([^ints arr op nv]
    (let [v (int (op (aget arr 0) nv))] (aset arr 0 v) v)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn int-var* "" [i] {:pre [(number? i)]} (doto (int-var) (int-var i)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn long-var "like a mutable long."
   ([^longs arr v] (aset arr 0 (long v)) (long v))
@@ -847,6 +850,9 @@
   ([^longs arr] (aget arr 0))
   ([^longs arr op nv]
    (let [v (long (op (aget arr 0) nv))] (aset arr 0 v) v)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn long-var* "" [n] {:pre [(number? n)]} (doto (long-var) (long-var n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn nth??
@@ -904,7 +910,7 @@
   {:tag Long}
   ([s] (s->long s 0))
   ([s dv]
-   {:pre [(string? s)(number? dv)]}
+   {:pre [(or (nil? s)(string? s))(number? dv)]}
    (trye! (long dv) (Long/parseLong ^String s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -913,7 +919,7 @@
   {:tag Integer}
   ([s] (s->int s 0))
   ([s dv]
-   {:pre [(string? s)(number? dv)]}
+   {:pre [(or (nil? s)(string? s))(number? dv)]}
    (trye! (int dv) (Integer/parseInt ^String s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -922,7 +928,7 @@
   {:tag Double}
   ([s] (s->double s 0.0))
   ([s dv]
-   {:pre [(string? s)(number? dv)]}
+   {:pre [(or (nil? s)(string? s))(number? dv)]}
    (trye! (double dv) (Double/parseDouble ^String s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -8,10 +8,13 @@
   :description "General clojure helper functions"
   :url "https://github.com/llnek/basal"
 
-  :dependencies [[org.clojure/tools.logging "0.4.1"]
+  :dependencies [[org.apache.logging.log4j/log4j-slf4j-impl "2.12.0"]
+                 [org.apache.logging.log4j/log4j-core "2.12.0"]
+                 [org.slf4j/slf4j-api "1.7.26" ]
                  [org.clojure/core.async "0.4.500"]
                  [org.flatland/ordered "1.5.7"]
-                 [org.clojure/data.json "0.2.6"]]
+                 [org.clojure/data.json "0.2.6"]
+                 [org.clojure/tools.logging "0.5.0"]]
 
   :exclusions [org.clojure/clojure]
 

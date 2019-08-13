@@ -23,13 +23,16 @@
             [czlab.basal.indent :as in])
 
   (:import [java.nio.file
-            Files]
+            Files
+            CopyOption
+            StandardCopyOption]
            [java.util.zip
             GZIPInputStream
             GZIPOutputStream]
            [java.nio
             ByteBuffer
             CharBuffer]
+           [czlab.basal XData]
            [java.nio.charset
             Charset]
            [java.util
@@ -465,6 +468,7 @@
        (finally
           (if c? (klose rdr)))))))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn work-dir-path
   "The working directory." ^String [] (u/fpath *tempfile-repo*))
@@ -516,6 +520,41 @@
 (defn parent-path
   "Path to parent" ^String [path]
   (if (s/hgl? path) (.getParent (io/file path)) ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn get-file
+  "Get a file from a directory"
+  [dir fname]
+  ;;(l/debug "getting file: %s" fname)
+  (let [fp (io/file dir fname)]
+    (if (file-read? fp) (XData. fp false))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn save-file
+  "Save a file to a directory"
+
+  ([dir fname stuff]
+   (save-file dir fname stuff false))
+
+  ([dir fname stuff del?]
+   ;;(l/debug "saving file: %s" fname)
+   (let [fp (io/file dir fname)
+         ^XData
+         in (if (c/is? XData stuff)
+              stuff (XData. stuff false))]
+     (if del?
+       (fdelete fp)
+       (if (.exists fp)
+         (u/throw-IOE "file %s exists" fp)))
+     (if-not (.isFile in)
+       (io/copy (.getBytes in) fp)
+       (let [opts (c/marray CopyOption 1)]
+         (aset #^"[Ljava.nio.file.CopyOption;"
+               opts 0 StandardCopyOption/REPLACE_EXISTING)
+         (Files/move (.. in fileRef toPath) (.toPath fp) opts)
+         ;;since file has moved, update stuff
+         (.setDeleteFlag in false)
+         (.reset in nil))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn change-content
