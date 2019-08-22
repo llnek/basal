@@ -17,12 +17,13 @@
             [clojure.java.io :as io]
             [clojure.test :as ct]
             [czlab.basal.proc :as p]
+            [czlab.basal.proto :as po]
             [czlab.basal.core
              :refer [ensure?? ensure-thrown??] :as c]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def ^{:private true :tag java.io.File}
-  CUR-FP (io/file (u/sys-tmp-dir) (u/jid<>)))
+(def ^{:private true
+       :tag java.io.File} CUR-FP (i/tmpfile (u/jid<>)))
 (def ^:private SCD (atom nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,7 +31,7 @@
 
   (ensure?? "init"
             (c/let#true
-              [s (p/scheduler<>)] (reset! SCD s) (p/activate s)))
+              [s (p/scheduler<>)] (reset! SCD s) (po/activate s)))
 
   (ensure?? "run" (= 1
                      (let [x (atom 0)]
@@ -80,7 +81,7 @@
 
   (ensure?? "process-pid" (> (.length (p/process-pid)) 0))
 
-  (ensure?? "finz" (c/do#true (p/deactivate @SCD)))
+  (ensure?? "finz" (c/do#true (po/deactivate @SCD)))
 
   (ensure?? "test-end" (= 1 1)))
 

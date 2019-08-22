@@ -15,7 +15,8 @@
             [czlab.basal.meta :as m]
             [czlab.basal.str :as s]
             [czlab.basal.log :as l]
-            [czlab.basal.core :as c])
+            [czlab.basal.core :as c]
+            [czlab.basal.proto :as po])
 
   (:import [java.util
             Map
@@ -45,58 +46,47 @@
   ([id tds trace?] (tcore<> id tds 60000 trace?))
   ([id tds keepAliveMillis trace?]
    (let [^ThreadPoolExecutor
-         p (proxy [ThreadPoolExecutor RejectedExecutionHandler]
-             [(int (max 1 tds))
-              (int (max 1 tds))
-              ^long keepAliveMillis
-              TimeUnit/MILLISECONDS
-              (LinkedBlockingQueue.)]
-             (rejectedExecution [r x]
-               ;;TODO: deal with too much work for the core...
-               (if trace?
-                 (l/error "tcore rejecting work!"))))]
-     (->> (reify ThreadFactory
-            (newThread [_ r]
-              (c/do-with [t (Thread. r)]
-                (.setName t (str id "#" (u/seqint2)))
-                (.setContextClassLoader t (u/get-cldr)))))
-          (.setThreadFactory p))
-     (.setRejectedExecutionHandler p ^RejectedExecutionHandler p)
+         core (proxy [ThreadPoolExecutor]
+                [(int (max 1 tds))
+                 (int (max 1 tds))
+                 ^long keepAliveMillis
+                 TimeUnit/MILLISECONDS
+                 (LinkedBlockingQueue.)])
+         paused? (c/int-var)
+         rex (reify
+               RejectedExecutionHandler
+               (rejectedExecution [_ r x]
+                 (if trace? (l/error "TCore rejecting work!"))))]
+     (.setRejectedExecutionHandler core rex)
+     (.setThreadFactory core
+                        (reify ThreadFactory
+                          (newThread [_ r]
+                            (c/do-with [t (Thread. r)]
+                              (.setName t (str id "#" (u/seqint2)))
+                              (.setContextClassLoader t (u/get-cldr))))))
      (if trace?
        (l/debug
-         (str "tcore#" id " ctor: threads = " (.getCorePoolSize p))))
-     (atom {:id id :core p :paused? false :trace? trace?}))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn tcore-start "" [t]
-  (c/assoc!! t :paused? false))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn tcore-stop "" [t]
-  (c/assoc!! t :paused? true))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn tcore-dispose "" [t]
-  (let [{:keys [id trace? core]} @t]
-    (tcore-stop t)
-    (.shutdown ^ThreadPoolExecutor core)
-    (if trace?
-      (l/debug
-        "tcore#" id " disposed and shut down"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn tcore-exec "" [t r]
-  (let [{:keys [paused? core]} @t]
-    (if-not paused?
-      (.execute ^ThreadPoolExecutor core ^Runnable r)
-      (l/warn
-        "Ignoring the runnable, core is not running"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn tcore-info "" [t]
-  (let [{:keys [id core]} @t]
-    (str "tcore#" id " with threads = "
-         (.getCorePoolSize ^ThreadPoolExecutor core))))
+         "TCore#%s - ctor: threads = %s" id (.getCorePoolSize core)))
+     (reify
+       Object
+       (toString [_]
+         (s/fmt "TCore#%s - threads = %s." id (.getCorePoolSize core)))
+       po/Startable
+       (start [me] (.start me nil))
+       (start [me _] (locking me (c/int-var paused? 0)))
+       (stop [me] (locking me (c/int-var paused? 1)))
+       po/Enqueable
+       (put [_ r]
+         (if (zero? (c/int-var paused?))
+           (.execute core ^Runnable r)
+           (l/warn "TCore is not running!")))
+       po/Disposable
+       (dispose [me]
+         (.stop me)
+         (.shutdown core)
+         (if trace?
+           (l/debug
+             "TCore#%s - disposed and shut down." id)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -104,7 +94,10 @@
 (defn thread<>
   "Run code in a separate thread."
   {:tag Thread}
-  ([func start?] (thread<> func start? nil))
+
+  ([func start?]
+   (thread<> func start? nil))
+
   ([func start? {:keys [cldr daemon] :as options}]
    {:pre [(fn? func)]}
    (c/do-with [t (Thread. (u/run<> (func)))]
@@ -120,24 +113,29 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn async!
   "Run function async."
-  ([func] (async! func nil))
-  ([func options] (thread<> func true options)))
+  ([func]
+   (async! func nil))
+  ([func options]
+   (thread<> func true options)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defrecord JvmInfo [])
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn jvm-info "Get info on the jvm." []
   (let [os (ManagementFactory/getOperatingSystemMXBean)
         rt (ManagementFactory/getRuntimeMXBean)]
-    {:processors (.getAvailableProcessors os)
-     :spec-version (.getSpecVersion rt)
-     :vm-version (.getVmVersion rt)
-     :spec-vendor (.getSpecVendor rt)
-     :vm-vendor (.getVmVendor rt)
-     :spec-name (.getSpecName rt)
-     :vm-name (.getVmName rt)
-     :name (.getName rt)
-     :arch (.getArch os)
-     :os-name (.getName os)
-     :os-version (.getVersion os)}))
+    (c/object<> JvmInfo
+                :spec-version (.getSpecVersion rt)
+                :vm-version (.getVmVersion rt)
+                :spec-vendor (.getSpecVendor rt)
+                :vm-vendor (.getVmVendor rt)
+                :spec-name (.getSpecName rt)
+                :vm-name (.getVmName rt)
+                :name (.getName rt)
+                :arch (.getArch os)
+                :os-name (.getName os)
+                :os-version (.getVersion os)
+                :processors (.getAvailableProcessors os))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn process-pid
@@ -172,82 +170,70 @@
              timer ^TimerTask task ^long delayMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn alarm
-  [sch delayMillis f & args]
-  {:pre [(fn? f)(c/spos? delayMillis)]}
-  (c/do-with
-    [tt (u/tmtask<> #(apply f args))]
-    (add-timer (:timer @sch) tt delayMillis)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn purge
-  "Drop all pending timer tasks."
-  [sch] (.purge ^Timer (:timer @sch)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;(defn dequeue "" [sch w] )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn run "Execute task." [sch w]
-  (when-some
-    [w' (c/cast? Runnable w)]
-    (prerun (:hq @sch) w')
-    (tcore-exec (:cpu @sch) w')))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn hold "Pause a task."
-  [sch w] (if w (.put ^Map (:hq @sch) w w)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn wakeup "Restart a task." [sch w] (run sch w))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn postpone "" [sch w delayMillis]
-  {:pre [(number? delayMillis)]}
-  (cond (zero? delayMillis)
-        (c/do#nil (run sch w))
-        (neg? delayMillis)
-        (c/do#nil (hold sch w))
-        :else
-        (c/do-with [tt (u/tmtask<>
-                         #(wakeup sch w))]
-          (add-timer (:timer @sch) tt delayMillis))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn reschedule "" [sch w] (run sch w))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn activate
-  "Start the scheduler." [sch] (tcore-start (:cpu @sch)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn deactivate
-  "Stop the scheduler." [sch]
-  (let [{:keys [^Timer timer hq cpu]} @sch]
-    (tcore-stop cpu)
-    (.clear ^Map hq)
-    (doto timer .cancel .purge)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn dispose
-  "Stop and tear down." [sch]
-  (deactivate sch)
-  (tcore-dispose (:cpu @sch)))
+(defprotocol Scheduler ""
+  (alarm [_ delayMillis f args] "")
+  (purge [_] "")
+  (run [_ w] "")
+  (hold [_ w] "")
+  (wakeup [_ w] "")
+  (reschedule [_ w] "")
+  (postpone [_ w delayMillis] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn scheduler<>
   "Make a Scheduler."
-  ([] (scheduler<> (u/jid<>) nil))
+  ([]
+   (scheduler<> (u/jid<>) nil))
   ([named options]
-   (let [id (s/sname named)
-         {:keys [threads trace?]} options]
-     (atom {:cpu (tcore<> id
-                          ^long
-                          (c/num?? threads 0)
-                          (c/!false? trace?))
-            :id id
-            :timer (Timer. id true)
-            :hq (ConcurrentHashMap.)}))))
+   (let [{:keys [threads trace?]} options
+         id (s/sname named)
+         cpu (tcore<> id
+                      ^long
+                      (c/num?? threads 0)
+                      (c/!false? trace?))
+         timer (Timer. id true)
+         hq (ConcurrentHashMap.)]
+  (reify
+    Scheduler
+    (alarm [_ delayMillis f args]
+      {:pre [(fn? f)
+             (c/spos? delayMillis)
+             (or (nil? args)
+                 (sequential? args))]}
+      (c/do-with
+        [tt (u/tmtask<> #(apply f args))]
+        (add-timer timer tt delayMillis)))
+    (purge [_]
+      (.purge timer))
+    (run [_ w]
+      (when-some
+        [w' (c/cast? Runnable w)]
+        (prerun hq w')
+        (po/put cpu w')))
+    (hold [_ w]
+      (if w (.put hq w w)))
+    (wakeup [me w] (.run me w))
+    (postpone [me w delayMillis]
+      {:pre [(number? delayMillis)]}
+      (cond (zero? delayMillis)
+            (c/do#nil (.run me w))
+            (neg? delayMillis)
+            (c/do#nil (.hold me w))
+            :else
+            (c/do-with [tt (u/tmtask<>
+                             #(.wakeup me w))]
+              (add-timer timer tt delayMillis))))
+    (reschedule [me w] (.run me w))
+    po/Activable
+    (activate [_] (po/start cpu))
+    (deactivate [me]
+      (po/stop cpu)
+      (.clear hq)
+      (doto timer .cancel .purge))
+    po/Disposable
+    (dispose [me]
+      (.deactivate me)
+      (po/dispose cpu))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

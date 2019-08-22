@@ -14,6 +14,7 @@
   (:require [czlab.basal.util :as u]
             [czlab.basal.core :as c]
             [czlab.basal.io :as i]
+            [czlab.basal.str :as s]
             [clojure.core.async
              :as ca
              :refer [>!
@@ -34,16 +35,16 @@
    (c/do-with [in (chan (sliding-buffer
                           (c/num?? bufsz 16)))]
      (go-loop [res (<! in)]
-       (when res
-         (if (= t (:topic res))
-           (action t t (:msg res))) (recur (<! in)))))))
+       (when-some [{:keys [topic msg]} res]
+         (if (= t topic)
+           (action t t msg)) (recur (<! in)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- mk-sub
   "Create a subscriber object."
-  [bus topic cb]
-  (let [{:keys [async? bufsz]} @bus]
-    {:id (keyword (str "s-" (u/seqint2)))
+  [impl topic cb]
+  (let [{:keys [async? bufsz]} @impl]
+    {:id (s/x->kw (u/jid<>) "-" (u/seqint2))
      :topic topic
      :action (if async?
                (mk-async cb topic bufsz) cb)}))
@@ -53,78 +54,63 @@
   (let [data {:topic topic :msg msg}]
     (if async?
       (go (doseq [[_ z] subcs
-                  :let [{expected :topic
-                         :keys [action]} z]]
+                  :let [{:keys [action]
+                         expected :topic} z]]
             (>! action (assoc data :expected expected))))
-      ;else
       (doseq [[_ z] subcs
-              :let [{expected :topic
-                     :keys [action]} z]]
+              :let [{:keys [action]
+                     expected :topic} z]]
         (if (= expected topic) (action expected topic msg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn ev-sub
-  "Subscribe to a topic."
-  [bus topic listener]
-  (let [{:keys [id] :as sub}
-        (mk-sub bus topic listener)]
-    (swap! bus
-           (c/fn_1 (-> (update-in ____1
-                                  [:topics topic]
-                                  assoc id sub)
-                       (update-in [:subcs]
-                                  assoc id sub)))) id))
+(defprotocol EventBus ""
+  (ev-pub [_ topic msg] "")
+  (ev-match? [_ topic] "")
+  (ev-dbg [_] "")
+  (ev-finz [_] "")
+  (ev-unsub [_ subid] "")
+  (ev-sub [_ topic listener] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn ev-pub
-  "Publish to a topic."
-  [bus topic msg]
-  (let [{:keys [async? topics]} @bus
-        cbs (get topics topic)]
-    (if (not-empty cbs)
-      (run async? cbs topic msg)) bus))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn ev-unsub
-  "Remove this subscription."
-  [bus subid]
-  (let [sub ((:subcs @bus) subid)
-        {:keys [action topic]} sub]
-    (if sub
-      (swap! bus
-             (c/fn_1 (if (:async? ____1) (close! action))
-                     (-> (update-in ____1
-                                    [:topics topic]
-                                    dissoc subid)
-                         (update-in [:subcs]
-                                    dissoc subid))))) bus))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn ev-match?
-  "Topic is registered?" [bus topic]
-  (contains? (get @bus :topics) topic))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn ev-dbg "" [bus] (i/fmt->edn @bus))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn ev-dispose
-  "Tear down this bus object."
-  [bus]
-  (let [{:keys [async? subcs]} @bus]
-    ;maybe close all go channels
-    (if async?
-      (doseq [[_ z] subcs] (close! (:action z))))
-    (swap! bus
-           #(assoc % :topics {} :subcs {})) bus))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn event-bus<>
   "A Publish Subscribe event manager."
   ([] (event-bus<> nil))
   ([options]
-   (atom (merge {:topics {}
-                 :subcs {} :async? false} options))))
+   (let [impl (atom (merge {:topics {}
+                            :subcs {} :async? false} options))]
+     (reify EventBus
+       (ev-sub [bus topic listener]
+         (let [{:keys [id] :as sub}
+               (mk-sub impl topic listener)]
+           (swap! impl
+                  (c/fn_1 (-> (update-in ____1
+                                         [:topics topic] assoc id sub)
+                              (update-in [:subcs] assoc id sub)))) id))
+       (ev-pub [bus topic msg]
+         (let [{:keys [async? topics]} @impl
+               cbs (get topics topic)]
+           (if-not (empty? cbs)
+             (run async? cbs topic msg)) bus))
+       (ev-unsub [bus subid]
+         (let [sub ((:subcs @impl) subid)
+               {:keys [action topic]} sub]
+           (if sub
+             (swap! impl
+                    (c/fn_1 (if (:async? ____1) (close! action))
+                            (-> (update-in ____1
+                                           [:topics topic] dissoc subid)
+                                (update-in [:subcs] dissoc subid))))) bus))
+       (ev-match? [bus topic]
+         (contains? (get @impl :topics) topic))
+       (ev-dbg [bus] (i/fmt->edn @impl))
+       (ev-finz [bus]
+         (let [{:keys [async? subcs]} @impl]
+           (if async? ;maybe close all go channels
+             (doseq [[_ z] subcs] (close! (:action z))))
+           (swap! impl
+                  #(assoc % :topics {} :subcs {})) bus))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

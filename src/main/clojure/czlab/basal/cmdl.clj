@@ -9,7 +9,7 @@
 (ns ^{:doc "Console interactions."
       :author "Kenneth Leung"}
 
-  czlab.basal.cli
+  czlab.basal.cmdl
 
   (:require [clojure.string :as cs]
             [czlab.basal.str :as s]
@@ -24,7 +24,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ^:private rdr [r] `(.read ~(with-meta r {:tag 'Reader})))
 
@@ -39,13 +38,13 @@
   (if (is-option? option)
     (c/if-some+
       [s (cs/replace option
-                     #"^(-|/)+" "")]
-      (if key? (keyword s) s))))
+                     #"^(-|/)+" "")] (if key? (keyword s) s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-options
   "Parse command line, returning options and args."
-  ([cargs] (parse-options cargs true))
+  ([cargs]
+   (parse-options cargs true))
   ([cargs key?]
    (loop [options (c/tmap*)
           [p1 p2 & more :as args] cargs]
@@ -57,7 +56,6 @@
                 (if b?
                   (if (nil? p2)
                     more (cons p2 more)) more)))
-       ;else
        (vector (c/ps! options)
                (if (= "--" p1)
                  (if p2 (cons p2 more)) args))))))
@@ -65,19 +63,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- read-data
   "Read user input: windows has \\r\\n linux has \\n."
-  ^String
-  [in]
+  ^String [in]
   (let [[ms bf]
         (loop [c (rdr in)
                bf (s/sbf<>)]
-          (let
-            [m (cond
-                 (or (== c -1) (== c 4)) #{:quit :break}
-                 (== c (int \newline)) #{:break}
-                 (or (== c (int \return))
-                     (== c 27)
-                     (== c (int \backspace))) nil
-                 :else (c/do#nil (s/sbf+ bf (char c))))]
+          (let [m (cond
+                    (or (== c -1) (== c 4)) #{:quit :break}
+                    (== c (int \newline)) #{:break}
+                    (or (== c (int \return))
+                        (== c 27)
+                        (== c (int \backspace))) nil
+                    :else (c/do#nil (s/sbf+ bf (char c))))]
             (if (c/in? m :break)
               [m bf]
               (recur (rdr in) bf))))]
@@ -87,37 +83,30 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- on-answer
   "Process the answer, returning the next question."
-  [^Writer cout
-   {:keys [result id
-           default must? next] :as cmdQ} props answer]
+  [^Writer cout {:keys [result id
+                        must?
+                        default next] :as cmdQ} props answer]
   (if (nil? answer)
     (c/do#nil (.write cout "\n"))
     (let [rc (s/stror answer default)]
-      (cond
-        ;;if required to answer, repeat the question
-        (and (s/nichts? rc) must?)
-        id
-        (keyword? result)
-        (do (swap! props
-                   #(assoc % result rc)) next)
-        (fn? result)
-        (let [[n p]
-              (result rc @props)]
-          (reset! props p)
-          (if (nil? n) ::caio!! n))
-        :else ::caio!!))))
+      (or (cond (and must?
+                     (s/nichts? rc))
+                id ;no answer, loop try again
+                (keyword? result)
+                (do (swap! props
+                           #(assoc % result rc)) next)
+                (fn? result)
+                (let [[nxt p]
+                      (result rc @props)]
+                  (reset! props p)
+                  (or nxt ::caio!!))) ::caio!!))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- pop-QQ
   "Pop the question."
-  [^Writer cout
-   ^Reader cin
-   {:keys [question
-           choices
-           default] :as cmdQ} props]
-  (.write cout
-          (str question
-               (if (:must? cmdQ) "*") "? "))
+  [^Writer cout ^Reader cin {:keys [question must?
+                                    choices default] :as cmdQ} props]
+  (.write cout (str question (if must? "*") "? "))
   ;; choices ?
   (if (s/hgl? choices)
     (.write cout (str "[" choices "]")))
@@ -141,10 +130,9 @@
   "Cycle through the questions."
   [cout cin cmdQNs start props]
   (loop [rc (pop-Q cout cin (cmdQNs start) props)]
-    (cond
-      (= ::caio!! rc) @props
-      (nil? rc) {}
-      :else (recur (pop-Q cout cin (cmdQNs rc) props)))))
+    (cond (nil? rc) {}
+          (= ::caio!! rc) @props
+          :else (recur (pop-Q cout cin (cmdQNs rc) props)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn termio
@@ -152,18 +140,18 @@
   [cmdQs question1]
   {:pre [(map? cmdQs)]}
   (let [cout (-> System/out
-                 BufferedOutputStream. OutputStreamWriter.)
-        cin (InputStreamReader. (System/in))
-        func (partial cycle-Q cout cin)]
+                 BufferedOutputStream.
+                 OutputStreamWriter.)
+        func (->> System/in
+                  InputStreamReader.
+                  (partial cycle-Q cout))]
     (.write cout (str ">>> Press "
                       "<ctrl-c> or <ctrl-d>"
                       "<Enter> to cancel...\n"))
-    (-> (reduce
-          #(update-in %1
-                      [%2]
-                      assoc :id %2)
-          cmdQs
-          (keys cmdQs))
+    (-> (reduce #(update-in %1
+                            [%2]
+                            assoc :id %2)
+                cmdQs (keys cmdQs))
         (func question1 (atom {})))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -27,15 +27,17 @@
   [f c] `(str (reduce ~f (StringBuilder.) ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro fmt
-  "Alias format." [f & args] `(format ~f ~@args))
+(defn fmt
+  "Like format." ^String [f & args] (apply format f args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbf<>
   "StringBuilder.new"
   {:tag StringBuilder}
-  ([] (sbf<> nil))
-  ([s] (StringBuilder. (str s))))
+  ([]
+   (sbf<> nil))
+  ([s]
+   (StringBuilder. (str s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbf-join
@@ -113,14 +115,14 @@
   "Get rid of unwanted chars from left."
   ^String
   [^String src ^String unwantedChars]
-  (if (and (hgl? unwantedChars)
-           (hgl? src))
+  (if (and (hgl? src)
+           (hgl? unwantedChars))
     (loop [len (.length src) pos 0]
-      (if (and (< pos len)
-               (>= (->> (int (.charAt  src pos))
-                        (.indexOf unwantedChars)) 0))
-        (recur len (+ 1 pos))
-        (.substring src pos)))
+      (if-not (and (< pos len)
+                   (cs/index-of unwantedChars
+                                (.charAt src pos)))
+        (subs src pos)
+        (recur len (+ 1 pos))))
     src))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -128,25 +130,25 @@
   "Get rid of unwanted chars from right."
   ^String
   [^String src ^String unwantedChars]
-  (if (and (hgl? unwantedChars)
-           (hgl? src))
+  (if (and (hgl? src)
+           (hgl? unwantedChars))
     (loop [pos (.length src)]
-      (if (and (> pos 0)
-               (>= (->> (int (.charAt src (dec pos)))
-                        (.indexOf unwantedChars)) 0))
-        (recur (- pos 1))
-        (.substring src 0 pos)))
+      (if-not (and (pos? pos)
+                   (cs/index-of unwantedChars
+                                (.charAt src (- pos 1))))
+        (subs src 0 pos)
+        (recur (- pos 1))))
     src))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn has?
   "If the char is inside the big str?"
   [^String bigs arg]
-  (let [rc (cond (or (nil? bigs)
-                     (nil? arg)) false
-                 (string? arg) (>= (.indexOf bigs ^String arg) 0)
-                 (c/is? Character arg) (int (.charValue ^Character arg))
-                 (integer? arg) (int arg))]
+  (let [rc (cond (or (nil? arg)
+                     (nil? bigs)) false
+                 (integer? arg) (int arg)
+                 (string? arg) (number? (cs/index-of bigs arg))
+                 (c/is? Character arg) (int (.charValue ^Character arg)))]
     (if (number? rc)
       (>= (.indexOf bigs (int rc)) 0) rc)))
 
@@ -166,26 +168,25 @@
 (defn index-any
   "If any one char is inside the big str, return the position."
   [^String bigs ^String chStr]
-  (if (and (hgl? chStr)
-           (hgl? bigs))
-    (let [rc (some #(let [x (.indexOf bigs (int %))]
-                      (if (< x 0) nil x))
-                   (.toCharArray chStr))] (if (nil? rc) -1 (int rc)))
-    -1))
+  (if (and (hgl? bigs)
+           (hgl? chStr))
+    (let [rc (some #(cs/index-of bigs %)
+                   (.toCharArray chStr))] (if (nil? rc) -1 (int rc))) -1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn count-str
   "Count the times the sub-str appears in the big str."
   [^String bigs ^String s]
-  (if (and (hgl? bigs) (hgl? s))
+  (if (and (hgl? s)
+           (hgl? bigs))
     (loop [len (.length s)
            total 0 start 0]
-      (let [pos (.indexOf bigs s start)]
-        (if (< pos 0)
+      (let [pos (cs/index-of bigs s start)]
+        (if (nil? pos)
           total
           (recur len
                  (+ 1 total)
-                 (+ pos len))))) 0))
+                 (long (+ pos len)))))) 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn count-char
@@ -235,12 +236,15 @@
 (defn strim-any
   "Strip source string of these unwanted chars."
   {:tag String}
+
+  ([src unwantedChars]
+   (strim-any src unwantedChars false))
+
   ([^String src ^String unwantedChars whitespace?]
    (let [s (-> (if whitespace? (strim src) src)
                (triml unwantedChars)
                (trimr unwantedChars))]
-     (if whitespace? (strim s) s)))
-  ([src unwantedChars] (strim-any src unwantedChars false)))
+     (if whitespace? (strim s) s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn splunk
@@ -257,79 +261,71 @@
   "If bigs contains any one of these strs - ignore case?"
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
-  (if (or (empty? substrs) (nichts? bigs))
-    false
+  (if-not (or (empty? substrs) (nichts? bigs))
     (let [lc (lcase bigs)]
-      (true? (some #(>= (.indexOf lc (lcase %)) 0) substrs)))))
+      (true? (some #(number? (cs/index-of lc (lcase %))) substrs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn has-any?
   "If bigs contains any one of these strs?"
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
-  (if (or (empty? substrs)
-          (nichts? bigs))
-    false
-    (true? (some #(>= (.indexOf bigs ^String %) 0) substrs))))
+  (if-not (or (nichts? bigs)
+              (empty? substrs))
+    (true? (some #(number? (cs/index-of bigs %)) substrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ewic-any?
   "If bigs endsWith any one of the strs, no-case?"
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
-  (if (or (empty? substrs)
-          (nichts? bigs))
-    false
+  (if-not (or (nichts? bigs)
+              (empty? substrs))
     (let [lc (lcase bigs)]
-      (true? (some #(.endsWith lc (lcase %)) substrs)))))
+      (true? (some #(cs/ends-with? lc (lcase %)) substrs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ew-any?
   "If bigs endsWith any one of the strs?"
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
-  (if (or (empty? substrs)
-          (nichts? bigs))
-    false
-    (true? (some #(.endsWith bigs ^String %) substrs))))
+  (if-not (or (nichts? bigs)
+          (empty? substrs))
+    (true? (some #(cs/ends-with? bigs %) substrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn swic-any?
   "If bigs startWith any one of the strs - no case?"
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
-  (if (or (empty? substrs)
-          (nichts? bigs))
-    false
+  (if-not (or (nichts? bigs)
+              (empty? substrs))
     (let [lc (lcase bigs)]
-      (true? (some #(.startsWith lc (lcase %)) substrs)))))
+      (true? (some #(cs/starts-with? lc (lcase %)) substrs)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sw-any?
   "If bigs startWith any one of the strs?"
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
-  (if (or (empty? substrs)
-          (nichts? bigs))
-    false
-    (true? (some #(.startsWith bigs ^String %) substrs))))
+  (if-not (or (nichts? bigs)
+              (empty? substrs))
+    (true? (some #(cs/starts-with? bigs %) substrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro eqic?
   "String.equalIgnoreCase()?"
   [src other]
   (let [^String ss src
-        ^String oo other]
-    `(.equalsIgnoreCase ~ss ~oo)))
+        ^String oo other] `(.equalsIgnoreCase ~ss ~oo)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn eqic-any?
   "String.equalIgnoreCase() on any one of the strs?"
   [^String src substrs]
   {:pre [(sequential? substrs)]}
-  (if (or (empty? substrs)
-          (nichts? src))
-    false
+  (if-not (or (nichts? src)
+              (empty? substrs))
     (let [lc (lcase src)]
       (true? (some #(= lc (lcase %)) substrs)))))
 
@@ -338,8 +334,7 @@
   "If String.equals() on any one of the strs?"
   [^String src substrs]
   {:pre [(sequential? substrs)]}
-  (if (empty? substrs)
-    false
+  (if-not (empty? substrs)
     (true? (some #(= src %) substrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -348,7 +343,7 @@
   [^String src ^String head ^String tail]
   (if (and (hgl? src)
            (hgl? head) (hgl? tail))
-    (and (.startsWith src head) (.endsWith src tail))))
+    (and (cs/starts-with? src head) (cs/ends-with? src tail))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rights
@@ -361,7 +356,7 @@
     ""
     (if (< (.length src) len)
       src
-      (.substring src (- (.length src) len)))))
+      (subs src (- (.length src) len)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn lefts
@@ -374,7 +369,7 @@
     ""
     (if (< (.length src) len)
       src
-      (.substring src 0 len))))
+      (subs src 0 len))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn drop-head
@@ -390,7 +385,7 @@
     :else
     (if (< (.length src) len)
       ""
-      (.substring src len))))
+      (subs src len))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn drop-tail
@@ -407,21 +402,24 @@
     (let [n (.length src)]
       (if (< n len)
         ""
-        (.substring src 0 (- n len))))))
+        (subs src 0 (- n len))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn split
   "String.split."
-  ([^String src ^String regex] (.split src regex))
-  ([^String src ^String regex limit] (.split src regex (int limit))))
+  ([^String src ^String regex]
+   (.split src regex))
+  ([^String src ^String regex limit]
+   (.split src regex (int limit))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn split-str
   "String tokenizer."
-  ([s sep] (split-str s sep false))
+  ([s sep]
+   (split-str s sep false))
   ([s sep incSep?]
    (let [t (new java.util.StringTokenizer
-                ^String s ^String sep (c/bool! incSep?))]
+                ^String s ^String sep (boolean incSep?))]
      (loop [rc (c/tvec*)]
        (if-not (.hasMoreTokens t)
          (c/ps! rc)
@@ -442,7 +440,6 @@
                        i
                        (.get lst i))
             (recur (+ 1 i) SZ out))))))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn esc-xml

@@ -27,10 +27,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ^:private throw-bad-key
-  [k] `(u/throw-BadData "No such item %s" ~k))
+  [k] `(u/throw-BadData "No such item %s." ~k))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ^:private throw-bad-map
@@ -38,7 +37,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- throw-bad-ini [rdr]
-  (u/throw-BadData "Bad ini line: %s"
+  (u/throw-BadData "Bad ini line: %s."
                    (.getLineNumber ^LineNumberReader rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -48,11 +47,10 @@
   [rdr ncmap line]
   (c/if-some+ [s (s/strim-any line "[]" true)]
     (c/do-with [k (keyword (s/lcase s))]
-      (if-not (contains? @ncmap k)
+      (if-not (c/in? @ncmap k)
         (c/assoc!! ncmap
                    k
                    (with-meta (ordered-map) {:name s}))))
-    ;else
     (throw-bad-ini rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -62,8 +60,7 @@
   (if-some [_ (get @ncmap section)]
     (let [pos (cs/index-of line \=)
           nm (if (c/spos? pos)
-               (s/strim (.substring ^String
-                                    line 0 pos)) "")
+               (s/strim (subs line 0 pos)) "")
           k (if (s/hgl? nm)
               (keyword (s/lcase nm)) (throw-bad-ini rdr))]
       (swap! ncmap
@@ -71,10 +68,8 @@
                          [section]
                          assoc
                          k
-                         [nm (s/strim (.substring ^String
-                                                  line (+ 1 pos)))]))
+                         [nm (s/strim (subs line (+ 1 pos)))]))
       section)
-    ;else
     (throw-bad-ini rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -84,8 +79,7 @@
   (let [ln (s/strim line)]
     (cond (or (s/nichts? ln)
               (cs/starts-with? ln "#"))
-          ;comment
-          cursec
+          cursec ;comment line
           (.matches ln "^\\[.*\\]$")
           (maybe-section rdr ncmap ln)
           :else
@@ -95,80 +89,76 @@
 (defn- getkv ^String [sects s k err]
   (let [sn (keyword (s/lcase s))
         kn (keyword (s/lcase k))
-        mp (get @sects sn)]
+        mp (get sects sn)]
     (cond (nil? mp) (if err (throw-bad-map s))
           (nil? k) (if err (throw-bad-key k))
           (c/!in? mp kn) (if err (throw-bad-key k))
           :else (str (last (get mp kn))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defprotocol WinINI ""
+    (heading [_ sect] "")
+    (headings [_] "")
+    (dbg-str [_] "")
+    (str-value [_ sect prop]
+               [_ sect prop dft] "")
+    (long-value [_ sect prop]
+                [_ sect prop dft] "")
+    (int-value [_ sect prop]
+               [_ sect prop dft] "")
+    (double-value [_ sect prop]
+                  [_ sect prop dft] "")
+    (bool-value [_ sect prop]
+                [_ sect prop dft] ""))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn headings
-  "List all section names." [ini]
-  (c/preduce<set> #(conj! %1 (:name (meta %2))) (vals @ini)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn heading "" [ini sect]
-  (let [sn (keyword (s/lcase sect))]
-    (reduce #(assoc %1
-                    (first %2) (last %2))
-            (ordered-map)
-            (or (vals (get @ini sn)) []))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn str-value
-  ""
-  ([ini sect prop] (str (getkv ini sect prop true)))
-  ([ini sect prop dft]
-   (if-some [rc (getkv ini sect prop false)] rc dft)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn long-value
-  ""
-  ([ini sect prop dft]
-   (if-some [rc (getkv ini
-                       sect prop false)] (c/s->long rc) dft))
-  ([ini sect prop]
-   (c/s->long (getkv ini sect prop true) 0)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn int-value
-  ""
-  ([ini sect prop dft]
-   (if-some [rc (getkv ini
-                       sect prop false)] (c/s->int rc dft) dft))
-  ([ini sect prop] (c/s->int (getkv ini sect prop true))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn double-value
-  ""
-  ([ini sect prop dft]
-   (if-some [rc (getkv ini
-                       sect prop false)] (c/s->double rc dft) dft))
-  ([ini sect prop]
-   (c/s->double (getkv ini sect prop true))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn bool-value
-  ""
-  ([ini sect prop dft]
-   (if-some [rc (getkv ini
-                       sect prop false)] (c/s->bool rc dft) dft))
-  ([ini sect prop] (c/s->bool (getkv ini sect prop true))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn dbg-show
-  "Dump ini as string." [ini]
-  (let [buf (s/sbf<>)]
-    (doseq [v (vals @ini)]
-      (s/sbf+ buf "[" (:name (meta v)) "]\n")
-      (doseq [[x y] (vals v)]
-        (s/sbf+ buf x "=" y "\n"))
-      (s/sbf+ buf "\n"))
-    (println (str buf))))
+(defn- wrap->ini [M]
+  (reify WinINI
+    (headings [_]
+      (c/preduce<set> #(conj! %1 (:name (meta %2))) (vals M)))
+    (heading [_ sect]
+      (let [sn (keyword (s/lcase sect))]
+        (reduce #(assoc %1
+                        (c/_1 %2) (c/_E %2))
+                (ordered-map)
+                (or (vals (get M sn)) []))))
+    (str-value [_ sect prop]
+      (str (getkv M sect prop true)))
+    (str-value [_ sect prop dft]
+      (if-some [rc (getkv M sect prop false)] rc dft))
+    (long-value [_ sect prop dft]
+      (if-some [rc (getkv M
+                          sect prop false)] (c/s->long rc) dft))
+    (long-value [_ sect prop]
+      (c/s->long (getkv M sect prop true) 0))
+    (int-value [_ sect prop dft]
+      (if-some [rc (getkv M
+                          sect prop false)] (c/s->int rc dft) dft))
+    (int-value [_ sect prop]
+      (c/s->int (getkv M sect prop true)))
+    (double-value [_ sect prop dft]
+      (if-some [rc (getkv M
+                          sect prop false)] (c/s->double rc dft) dft))
+    (double-value [_ sect prop]
+      (c/s->double (getkv M sect prop true)))
+    (bool-value [_ sect prop dft]
+      (if-some [rc (getkv M
+                          sect prop false)] (c/s->bool rc dft) dft))
+    (bool-value [_ sect prop]
+      (c/s->bool (getkv M sect prop true)))
+    (dbg-str [_]
+      (let [buf (s/sbf<>)]
+        (doseq [v (vals M)]
+          (s/sbf+ buf "[" (:name (meta v)) "]\n")
+          (doseq [[x y] (vals v)]
+            (s/sbf+ buf x "=" y "\n"))
+          (s/sbf+ buf "\n"))
+        (str buf)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- parse-file
-  ([fUrl] (parse-file fUrl "utf-8"))
+  ([fUrl]
+   (parse-file fUrl "utf-8"))
   ([fUrl enc]
    (c/wo* [inp (-> (io/input-stream fUrl)
                    (io/reader :encoding
@@ -179,7 +169,7 @@
             line (.readLine rdr)
             curSec nil]
        (if (nil? line)
-         total
+         (wrap->ini @total)
          (recur total
                 rdr
                 (.readLine rdr)
@@ -190,10 +180,13 @@
 (defn win-ini<>
   "Parse a ini conf file."
   [f]
-  (cond (c/is? File f) (win-ini<> (io/as-url f))
-        (string? f) (if (s/hgl? f)
-                      (win-ini<> (io/file f)))
-        (c/is? URL f) (parse-file f)))
+  (cond (c/is? File f)
+        (win-ini<> (io/as-url f))
+        (string? f)
+        (if (s/hgl? f)
+          (win-ini<> (io/file f)))
+        (c/is? URL f)
+        (parse-file f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

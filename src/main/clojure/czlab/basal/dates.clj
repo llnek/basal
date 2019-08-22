@@ -45,11 +45,11 @@
                        "JUL" "AUG" "SEP" "OCT" "NOV" "DEC"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro fmt-time "Format current time."
-  [fmt] `(fmt-date (new java.util.Date) ~fmt))
+(defmacro fmt-timestamp "Timestamp as stringvalue." [ts] `(str ~ts))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro fmt-timestamp "Timestamp as stringvalue." [ts] `(str ~ts))
+(defmacro fmt-time "Format current time."
+  [fmt] `(fmt-date (new java.util.Date) ~fmt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-leap-year?
@@ -63,8 +63,7 @@
   "String has time zone?" [s]
   (let [pos (s/index-any s ",; \t\r\n\f")
         ss (if (pos? pos)
-             (.substring ^String
-                         s (+ 1 pos)) "")]
+             (subs s (+ 1 pos)) "")]
     (or (s/has-any? ss ["+" "-"])
         (.matches ss "\\s*[a-zA-Z]+\\s*"))))
 
@@ -75,15 +74,14 @@
         p2 (cs/last-index-of dateStr \:)
         p3 (cs/last-index-of dateStr \-)
         p4 (cs/last-index-of dateStr \/)]
-    (cond (pos? p1)
-          (has-tz-part? (.substring ^String dateStr (+ 1 p1)))
-          (pos? p2)
-          (has-tz-part? (.substring ^String dateStr (+ 1 p2)))
-          (pos? p3)
-          (has-tz-part? (.substring ^String dateStr (+ 1 p3)))
-          (pos? p4)
-          (has-tz-part? (.substring ^String dateStr (+ 1 p4)))
-          :else false)))
+    (cond (c/spos? p1)
+          (has-tz-part? (subs dateStr (+ 1 p1)))
+          (c/spos? p2)
+          (has-tz-part? (subs dateStr (+ 1 p2)))
+          (c/spos? p3)
+          (has-tz-part? (subs dateStr (+ 1 p3)))
+          (c/spos? p4)
+          (has-tz-part? (subs dateStr (+ 1 p4))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-timestamp
@@ -97,8 +95,8 @@
 (defn parse-date
   "String to Date."
   ^Date [tstr fmt]
-  (when (and (s/hgl? tstr)
-             (s/hgl? fmt))
+  (when (and (s/hgl? fmt)
+             (s/hgl? tstr))
     (.parse (SimpleDateFormat. ^String fmt) ^String tstr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -116,13 +114,11 @@
   ([dt] (fmt-date dt *dt-fmt-micro* nil))
   ([dt fmt] (fmt-date dt fmt nil))
   ([dt fmt tz]
-   (if (or (nil? dt)
-           (s/nichts? fmt))
-     ""
-     (let [df (SimpleDateFormat. ^String fmt)]
-       (some->> ^TimeZone tz
-                (.setTimeZone df))
-       (.format df ^Date dt)))))
+   (str (if-not (or (nil? dt)
+                    (s/nichts? fmt))
+          (let [df (SimpleDateFormat. ^String fmt)]
+            (some->> ^TimeZone tz
+                     (.setTimeZone df)) (.format df ^Date dt))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fmt-gmt
@@ -143,13 +139,13 @@
   {:tag Calendar}
   ([] (gcal<> (Date.)))
   ([arg]
-   (cond (c/is? TimeZone arg)
-         (GregorianCalendar. ^TimeZone arg)
-         (c/is? Date arg)
-         (doto (GregorianCalendar.) (.setTime ^Date arg))
-         (c/spos? arg)
-         (doto (GregorianCalendar.) (.setTimeInMillis ^long arg))
-         :else (gcal<>))))
+   (->> (gcal<>)
+        (or (cond (c/is? TimeZone arg)
+             (GregorianCalendar. ^TimeZone arg)
+             (c/is? Date arg)
+             (doto (GregorianCalendar.) (.setTime ^Date arg))
+             (c/spos? arg)
+             (doto (GregorianCalendar.) (.setTimeInMillis ^long arg)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn add-years

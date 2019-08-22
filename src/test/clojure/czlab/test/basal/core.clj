@@ -149,14 +149,6 @@
                (let [acc (atom [])]
                  (c/each #(swap! acc conj %) [:a :b :c]) @acc)))
 
-  (ensure?? "var-doc!"
-            (= "hello" (do (def x# {:a 1})
-                           (c/var-doc! x# "hello") (:doc (meta (var x#))))))
-
-  (ensure?? "var-private!"
-            (true? (let [x# {:a 1}]
-                     (c/var-private! x#) (:private (meta (var x#))))))
-
   (ensure?? "vargs" (= "Long[]"
                        (.getSimpleName (class (c/vargs Long [1 2])))))
 
@@ -188,9 +180,6 @@
                (try (c/decl-throw-exp _eee java.lang.Exception)
                     (_eee "hello %s" "joe")
                     (catch Throwable e (.getMessage e)))))
-
-  (ensure?? "get-type-id"
-            (= 44 (c/get-type-id  (with-meta {:a 1} {:typeid 44}))))
 
   (ensure?? "do-with-atom"
             (= 99 (c/do-with-atom [a (atom 99)] (str "dummy"))))
@@ -372,40 +361,40 @@
             (let [x (c/scoped-keyword "hey")
                   xs (c/strip-ns-path x)] (= (str *ns* "/hey") xs)))
 
-  (ensure?? "svtbl" (let [v (c/vtbl* :m1 identity)
-                          p (c/vtbl* :p1 identity)
-                          v' (c/svtbl v p)]
-                      (and (nil? (:____proto v))
-                           (fn? (:p1 (:____proto v'))))))
+  (ensure?? "vt-set-proto" (let [v (c/vtbl* :m1 identity)
+                                 p (c/vtbl* :p1 identity)
+                                 v' (c/vt-set-proto v p)]
+                             (and (nil? (:____proto v))
+                                  (fn? (:p1 (:____proto v'))))))
 
-  (ensure?? "gvtbl" (let [v (c/vtbl* :m1 identity)
-                          p (c/vtbl* :p1 identity)
-                          v' (c/svtbl v p)]
-                      (fn? (c/gvtbl v' :p1))))
+  (ensure?? "vt-find??" (let [v (c/vtbl* :m1 identity)
+                              p (c/vtbl* :p1 identity)
+                              v' (c/vt-set-proto v p)]
+                          (fn? (c/vt-find?? v' :p1))))
 
-  (ensure?? "cvtbl?" (let [v (c/vtbl* :m1 identity)
-                           p (c/vtbl* :p1 identity)
-                           v' (c/svtbl v p)]
-                       (c/cvtbl? v' :p1)))
+  (ensure?? "vt-has??" (let [v (c/vtbl* :m1 identity)
+                             p (c/vtbl* :p1 identity)
+                             v' (c/vt-set-proto v p)]
+                         (c/vt-has? v' :p1)))
 
-  (ensure?? "gvtbl'" (let [v (c/vtbl* :m1 3)
+  (ensure?? "find??" (let [v (c/vtbl* :m1 3)
                            p (c/vtbl* :m1 identity)
-                           v' (c/svtbl v p)]
-                       (fn? (c/gvtbl' v' :m1))))
+                           v' (c/vt-set-proto v p)]
+                       (fn? (c/vt-find?? v' :m1 true))))
 
-  (ensure?? "rvtbl'" (let [v (c/vtbl* :m1 3)
-                           p (c/vtbl* :m1 (c/identity-n 2))
-                           v' (c/svtbl v p)]
-                       (= 7 (c/rvtbl' v' :m1 7))))
+  (ensure?? "vt-run??" (let [v (c/vtbl* :m1 3)
+                             p (c/vtbl* :m1 (c/identity-n 2))
+                             v' (c/vt-set-proto v p)]
+                         (= 7 (c/vt-run?? v' :m1 [7] true))))
 
-  (ensure?? "rvtbl" (let [v (c/vtbl* :m1 (c/identity-n 2))
-                          p (c/vtbl* :m1 3)
-                          v' (c/svtbl v p)]
-                       (= 7 (c/rvtbl v' :m1 7))))
+  (ensure?? "vt-run??" (let [v (c/vtbl* :m1 (c/identity-n 2))
+                             p (c/vtbl* :m1 3)
+                             v' (c/vt-set-proto v p)]
+                         (= 7 (c/vt-run?? v' :m1 [7]))))
 
   (ensure?? "merge+,map" (= {:a 5 :z 9 :b {:c 2 :d 2}}
-                        (c/merge+ {:a 1 :b {:c 2}}
-                                  {:z 9 :a 5 :b {:d 2}})))
+                            (c/merge+ {:a 1 :b {:c 2}}
+                                      {:z 9 :a 5 :b {:d 2}})))
 
   (ensure?? "merge+,set" (= {:a 5 :z 9 :b #{ :c 2 :d 3 4}}
                             (c/merge+ {:a 1 :b #{ :c 2 4}}

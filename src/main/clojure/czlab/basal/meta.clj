@@ -133,17 +133,19 @@
 (defn forname
   "Load class by name."
   {:tag Class}
-  ([z] (forname z nil))
+  ([z]
+   (forname z nil))
   ([^String z cl]
-   (if cl
-     (java.lang.Class/forName z true cl)
-     (java.lang.Class/forName z))))
+   (if (nil? cl)
+     (java.lang.Class/forName z)
+     (java.lang.Class/forName z true cl))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn load-class
   "Load class by name."
   {:tag Class}
-  ([clazzName] (load-class clazzName nil))
+  ([clazzName]
+   (load-class clazzName nil))
   ([clazzName cl]
    (if (s/hgl? clazzName)
      (.loadClass (u/get-cldr cl) clazzName))))
@@ -160,10 +162,10 @@
         ca (c/marray Class len)]
     (doseq [n (range len)
             :let [[z v] (nth args n)]]
-      (aset #^"[Ljava.lang.Object;" cargs n v)
-      (aset #^"[Ljava.lang.Class;" ca n z))
-    (-> (.getDeclaredConstructor ^Class cz ca)
-        (.newInstance cargs))))
+      (aset #^"[Ljava.lang.Class;" ca n z)
+      (aset #^"[Ljava.lang.Object;" cargs n v))
+    (.newInstance (.getDeclaredConstructor ^Class cz ca) cargs)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-parents
   "List all parent classes."
@@ -183,7 +185,7 @@
 (defn- iter-XXX [level]
   (fn [sum ^Member m]
     (let [x (.getModifiers m)]
-      (if (and (> level 0)
+      (if (and (pos? level)
                (or (Modifier/isStatic x)
                    (Modifier/isPrivate x)))
         sum
@@ -209,16 +211,14 @@
 (defn list-methods
   "List all methods belonging to this class, including inherited ones."
   [javaClass]
-  (vals (if (nil? javaClass)
-          {}
+  (vals (if javaClass
           (c/ps! (list-mtds javaClass 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-fields
   "List all fields belonging to this class, including inherited ones."
   [javaClass]
-  (vals (if (nil? javaClass)
-          {}
+  (vals (if javaClass
           (c/ps! (list-flds javaClass 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

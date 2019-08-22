@@ -102,20 +102,20 @@
                (i/x->str (i/gzb64->bytes
                            (i/bytes->gzb64 (i/x->bytes "helloworld"))))))
 
-  (ensure?? "slurp-bytes"
+  (ensure?? "slurpb"
             (c/wo* [inp (i/res->stream "czlab/basal/etc/mime.properties")]
               (binding [i/*membuf-limit* (* 2 1024)]
                 (let [z (.available inp)
-                      x (i/slurp-bytes inp)
+                      x (i/slurpb inp)
                       n (alength (i/x->bytes x))]
                   (i/fdelete x)
                   (= z n)))))
 
-  (ensure?? "slurp-chars"
+  (ensure?? "slurpc"
             (c/wo* [inp (i/res->stream "czlab/basal/etc/mime.properties")]
               (binding [i/*membuf-limit* (* 2 1024)]
                 (let [z (.available inp)
-                      x (i/slurp-chars inp)
+                      x (i/slurpc inp)
                       n (alength (i/x->bytes x))]
                   (i/fdelete x)
                   (= z n)))))
@@ -159,8 +159,6 @@
                      s (slurp f)] (i/klose inp) (i/fdelete f) s)))
 
   ;(ensure?? "reset-source!" (i/reset-source! ))
-
-  (ensure?? "work-dir-path" (string? (i/work-dir-path)))
 
   ;(ensure?? "unzip->dir" (i/unzip->dir ))
 
@@ -253,11 +251,10 @@
                  (try (i/slurp-utf8 f)
                       (finally (i/fdelete f))))))
 
-  (ensure?? "slurp-bytes"
+  (ensure?? "slurpb"
             (= 5 (let [f (i/temp-file)]
                    (i/spit-utf8 f "hello")
-                   (try (alength (i/x->bytes
-                                   (i/slurp-bytes f)))
+                   (try (alength (i/x->bytes (i/slurpb f)))
                         (finally (i/fdelete f))))))
 
   (ensure?? "spit-utf8"

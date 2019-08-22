@@ -1,0 +1,174 @@
+;; Copyright © 2013-2019, Kenneth Leung. All rights reserved.
+;; The use and distribution terms for this software are covered by the
+;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+;; which can be found in the file epl-v10.html at the root of this distribution.
+;; By using this software in any fashion, you are agreeing to be bound by
+;; the terms of this license.
+;; You must not remove this notice, or any other, from this software.
+
+(ns ^{:doc "General helpers (imports java stuff)."
+      :author "Kenneth Leung"}
+
+  czlab.basal.util
+
+  (:require [czlab.basal.indent :as in]
+            [czlab.basal.core :as c]
+            [czlab.basal.log :as l]
+            [czlab.basal.str :as s]
+            [clojure.string :as cs]
+            [clojure.edn :as edn]
+            [clojure.java.io :as io]
+            [clojure.data.json :as js]
+            [clojure.pprint :as pp])
+
+  ;(:use [clojure.walk])
+
+  (:import [java.util.zip
+            Deflater
+            Inflater
+            DataFormatException]
+           [java.net
+            URLEncoder
+            URLDecoder]
+           [java.security
+            SecureRandom]
+           [java.nio.charset
+            Charset]
+           [java.lang
+            StringBuilder]
+           [clojure.lang
+            PersistentList
+            Keyword
+            APersistentMap
+            APersistentVector]
+           [java.net
+            URL]
+           [java.io
+            Serializable
+            InputStream
+            PrintStream
+            File
+            StringWriter
+            FileInputStream
+            ObjectOutputStream
+            ObjectInputStream
+            ByteArrayInputStream
+            ByteArrayOutputStream]
+           [java.util
+            TimerTask
+            Arrays
+            Map
+            Properties
+            Date
+            Calendar
+            HashMap
+            HashSet
+            ArrayList
+            TimeZone
+            Locale
+            ResourceBundle
+            StringTokenizer
+            GregorianCalendar
+            PropertyResourceBundle]
+           [java.sql
+            Timestamp]
+           [java.rmi.server
+            UID]
+           [java.util.concurrent
+            TimeUnit]
+           [java.util.concurrent.atomic
+            AtomicLong
+            AtomicInteger]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;(set! *warn-on-reflection* true)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro reset-state
+  "Reset atom inside a Stateful."
+  [state arg]
+  `(let [s# ~(with-meta state
+                        {:tag 'czlab.basal.Stateful})
+         d# (.state s#)]
+     (if (volatile? d#)
+       (vreset! d# ~arg) (reset! d# ~arg)) s#))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro alter-state
+  "Swap atom inside a Stateful."
+  [state & args]
+  `(let [s# ~(with-meta state
+                        {:tag 'czlab.basal.Stateful})
+         d# (.state s#)]
+     (if (volatile? d#)
+       (vswap! d# ~@args) (swap! d# ~@args)) s#))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;using defrecord causes issues with print-match#multimethod(IDeref,IRecord clash)
+(defmacro decl-state
+  "A simple stateful type."
+  [name & more]
+  `(deftype ~name [~'_data]
+     ~'czlab.basal.Stateful
+     ~'(state [_] _data)
+     ~'(deref [_] @_data)
+     ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro decl-muble-types
+  "deftype something stateful & mutable."
+  [name dtype & more]
+  `(deftype ~name
+     [~(with-meta '_data {dtype true})]
+  ~'czlab.basal.core.Muable
+  ~'(get?setf! [me k v]
+      (when-not
+        (contains? _data k)
+        (.setf! me k v)) (get _data k))
+  ~'(wipe! [_] (set! _data {}) nil)
+  ~'(copy* [_ x]
+      (let [m (if (and (satisfies? czlab.basal.core/Muable x)
+                       (instance? clojure.lang.IDeref x)) @x x)
+            m (if (map? m) m nil)
+            m (if-not (identical? _data m) m)]
+        (if m (set! _data (merge _data m))) nil))
+  ~'(setf! [_ k v] (set! _data (assoc _data k v)) v)
+  ~'(unsetf! [_ k] (let [v (get _data k)]
+                     (set! _data (dissoc _data k)) v))
+  ~'czlab.basal.Stateful
+  ~'(deref [_] _data)
+  ~'(state [_] _data)
+  ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro decl-volatile
+  "A volatile mutable." [name & more]
+  `(decl-muble-types ~name :volatile-mutable ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro decl-mutable
+  "A basic mutable." [name & more]
+  `(decl-muble-types ~name :unsynchronized-mutable ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;(decl-mutable GenericMutable)
+;(decl-var-private #'->GenericMutable)
+;(ns-unmap *ns* '->GenericMutable)
+;(decl-volatile VolatileMutable)
+;(decl-var-private #'->VolatileMutable)
+;(ns-unmap *ns* '->VolatileMutable)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn prn-muable
+  "Print this mutable."
+  ([m] (prn-muable m true))
+  ([m dbg]
+   (let [s (pr-str @m)]
+     (if dbg
+       (czlab.basal.log./debug "%s" s)
+       (czlab.basal.log/info "%s" s)))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;EOF
+

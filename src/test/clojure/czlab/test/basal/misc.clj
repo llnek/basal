@@ -11,11 +11,10 @@
 
   czlab.test.basal.misc
 
-  (:require [czlab.basal.ccodes :as cc]
-            [czlab.basal.guids :as g]
+  (:require [czlab.basal.guids :as g]
             [clojure.string :as cs]
             [clojure.test :as ct]
-            [czlab.basal.cli :as i]
+            [czlab.basal.cmdl :as i]
             [czlab.basal.cljrt :as rt]
             [czlab.basal.core
              :refer [ensure?? ensure-thrown??] :as c]))
@@ -27,7 +26,7 @@
 
   (ensure?? "cljrt<>"
             (c/wo* [^java.io.Closeable z (rt/cljrt<>)]
-              (satisfies? czlab.basal.cljrt/CljrtAPI z)))
+              (satisfies? czlab.basal.cljrt/Cljrt z)))
 
   (ensure?? "cljrt.call*"
             (c/wo* [^java.io.Closeable z (rt/cljrt<>)]
@@ -36,29 +35,6 @@
                                 ['[x] '(+ x x) '[2]])]
                 (and (list? r)
                      (= 3 (count r))))))
-
-  (ensure?? "find-country" (= (cc/find-country "AU")
-                              (cc/find-country "au")))
-
-  (ensure?? "find-country" (= "Australia" (cc/find-country "AU")))
-
-  (ensure?? "find-country-code" (= "AU" (cc/find-country-code "Australia")))
-
-  (ensure?? "is-usa?" (false? (cc/is-usa? "aa")))
-
-  (ensure?? "is-usa?" (and (cc/is-usa? "US")
-                           (= (cc/is-usa? "US") (cc/is-usa? "us"))))
-
-  (ensure?? "list-codes" (> (count (cc/list-codes)) 0))
-
-  (ensure?? "find-state"
-            (= (cc/find-state "CA") (cc/find-state "ca")))
-
-  (ensure?? "find-state" (= "California" (cc/find-state "ca")))
-
-  (ensure?? "find-state-code" (= "CA" (cc/find-state-code "California")))
-
-  (ensure?? "list-states" (> (count (cc/list-states)) 0))
 
   (ensure?? "wwid<>" (not= (g/wwid<>) (g/wwid<>)))
 

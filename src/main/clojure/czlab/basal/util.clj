@@ -89,14 +89,13 @@
 (def ^:private SGCZ (class ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defprotocol MonoFlop
-  (is-first-call? [_] ))
+(defprotocol MonoFlop "" (is-first-call? [_] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defprotocol Watch
-  (watch-elapsed-millis [_] )
-  (watch-reset! [_] )
-  (watch-elapsed-nanos [_] ))
+(defprotocol Watch  ""
+  (watch-elapsed-millis [_] "")
+  (watch-reset! [_] "")
+  (watch-elapsed-nanos [_] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro try!!
@@ -109,73 +108,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro system-time
   "Curren time in millis." [] `(System/currentTimeMillis))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro reset-state
-  "Reset atom inside a Stateful."
-  [state arg]
-  `(let [s# ~(with-meta state
-                        {:tag 'czlab.basal.Stateful})
-         d# (.state s#)]
-     (if (volatile? d#)
-       (vreset! d# ~arg) (reset! d# ~arg)) s#))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro alter-state
-  "Swap atom inside a Stateful."
-  [state & args]
-  `(let [s# ~(with-meta state
-                        {:tag 'czlab.basal.Stateful})
-         d# (.state s#)]
-     (if (volatile? d#)
-       (vswap! d# ~@args) (swap! d# ~@args)) s#))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;using defrecord causes issues with print-match#multimethod(IDeref,IRecord clash)
-(defmacro decl-state
-  "A simple stateful type."
-  [name & more]
-  `(deftype ~name [~'_data]
-     ~'czlab.basal.Stateful
-     ~'(state [_] _data)
-     ~'(deref [_] @_data)
-     ~@more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro decl-muble-types
-  "deftype something stateful & mutable."
-  [name dtype & more]
-  `(deftype ~name
-     [~(with-meta '_data {dtype true})]
-  ~'czlab.basal.core.Muable
-  ~'(get?setf! [me k v]
-      (when-not
-        (contains? _data k)
-        (.setf! me k v)) (get _data k))
-  ~'(wipe! [_] (set! _data {}) nil)
-  ~'(copy* [_ x]
-      (let [m (if (and (satisfies? czlab.basal.core/Muable x)
-                       (instance? clojure.lang.IDeref x)) @x x)
-            m (if (map? m) m nil)
-            m (if-not (identical? _data m) m)]
-        (if m (set! _data (merge _data m))) nil))
-  ~'(setf! [_ k v] (set! _data (assoc _data k v)) v)
-  ~'(unsetf! [_ k] (let [v (get _data k)]
-                     (set! _data (dissoc _data k)) v))
-  ~'czlab.basal.Stateful
-  ~'(deref [_] _data)
-  ~'(state [_] _data)
-  ~@more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro decl-volatile
-  "A volatile mutable." [name & more]
-  `(decl-muble-types ~name :volatile-mutable ~@more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro decl-mutable
-  "A basic mutable." [name & more]
-  `(decl-muble-types ~name :unsynchronized-mutable ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/decl-throw-exp throw-ISE
@@ -247,8 +179,8 @@
 (defmacro decl-generic-enum
   "e.g. (decl-generic-enum weather hot cold)."
   [name base & more]
-  (assert (and (not-empty more)
-               (integer? base)))
+  (assert (and (number? base)
+               (not-empty more)))
   `(def
      ~name
      (~'czlab.basal.core/object<>
@@ -280,8 +212,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;end-macros
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn trim-last-pathsep
   "Get rid of trailing dir paths."
   ^String [path] (.replaceFirst (str path) "[/\\\\]+$" ""))
@@ -295,8 +225,7 @@
     (reify
       MonoFlop
       (is-first-call? [_]
-        (if @toggled
-          false
+        (if-not @toggled
           (c/do#true (reset! toggled true)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -316,8 +245,10 @@
 ;; local hack
 (defn- get-czldr
   {:tag ClassLoader}
-  ([] (get-czldr nil))
-  ([cl] (or cl (. (Thread/currentThread) getContextClassLoader))))
+  ([]
+   (get-czldr nil))
+  ([cl]
+   (or cl (. (Thread/currentThread) getContextClassLoader))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;happens to be all hex chars
@@ -333,7 +264,8 @@
 (defn rand<>
   "A new random object."
   {:tag SecureRandom}
-  ([] (rand<> false))
+  ([]
+   (rand<> false))
   ([strong?]
    (doto (if strong?
            (SecureRandom/getInstanceStrong)
@@ -343,7 +275,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rand-bytes
   "Generate random bytes."
-  ([num-bytes] (rand-bytes (rand<>) num-bytes))
+  ([num-bytes]
+   (rand-bytes (rand<>) num-bytes))
   ([rand-obj num-bytes]
    (c/do-with
      [b (byte-array num-bytes)] (.nextBytes ^SecureRandom rand-obj b))))
@@ -368,10 +301,12 @@
 (defn charset??
   "A java Charset of the encoding."
   {:tag Charset}
-  ([] (charset?? "utf-8"))
-  ([enc] (if (instance? Charset enc)
-           enc
-           (Charset/forName (or enc "utf-8")))))
+  ([]
+   (charset?? "utf-8"))
+  ([enc]
+   (if (instance? Charset enc)
+     enc
+     (Charset/forName (or enc "utf-8")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fpath
@@ -384,8 +319,8 @@
 (defn serialize
   "Object serialization."
   ^bytes [obj] {:pre [(c/!nil? obj)]}
-  (with-open [out (ByteArrayOutputStream. c/BUF-SZ)
-              oos (ObjectOutputStream. out)]
+  (c/wo* [out (ByteArrayOutputStream. c/BUF-SZ)
+          oos (ObjectOutputStream. out)]
     (.writeObject oos ^Serializable obj) (.toByteArray out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -394,8 +329,8 @@
   ^Serializable
   [^bytes bits]
   {:pre [(c/!nil? bits)]}
-  (with-open [in (ByteArrayInputStream. bits)
-              ois (ObjectInputStream. in)] (.readObject ois)))
+  (c/wo* [in (ByteArrayInputStream. bits)
+          ois (ObjectInputStream. in)] (.readObject ois)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gczn
@@ -433,7 +368,7 @@
   (cond (instance? File arg)
         (load-java-props (io/as-url arg))
         (instance? URL arg)
-        (with-open
+        (c/wo*
           [inp (.openStream ^URL arg)] (load-java-props inp))
         :else
         (c/do-with [p (Properties.)]
@@ -443,7 +378,8 @@
 (defn x->str
   "Coerce to a string."
   {:tag String}
-  ([obj] (x->str obj "utf-8"))
+  ([obj]
+   (x->str obj "utf-8"))
   ([obj enc]
    (let [cz (class obj)]
      (cond (string? obj)
@@ -475,7 +411,8 @@
 (defn x->bytes
   "Get bytes with the right encoding."
   {:tag "[B"}
-  ([obj] (x->bytes obj "utf-8"))
+  ([obj]
+   (x->bytes obj "utf-8"))
   ([obj enc]
    (let [cz (class obj)]
      (cond (= ByteArrayOutputStream cz)
@@ -490,7 +427,6 @@
            (string? obj)
            (.getBytes ^String obj (charset?? enc))))))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn deflate
   "Compress bytes."
@@ -501,7 +437,7 @@
                 (.setLevel Deflater/BEST_COMPRESSION)
                 (.setInput bits)
                 .finish)]
-      (with-open
+      (c/wo*
         [baos (ByteArrayOutputStream. (alength bits))]
         (loop []
           (if (.finished cpz)
@@ -577,7 +513,8 @@
 (defn pmap<>
   "Java Map into Clojure Map."
   {:tag APersistentMap}
-  ([props] (pmap<> props true))
+  ([props]
+   (pmap<> props true))
   ([props key?]
    {:pre [(instance? Map props)]}
    (c/preduce<map>
@@ -593,25 +530,6 @@
   (proxy [TimerTask][]
     (run [] (c/try! (func)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;(decl-mutable GenericMutable)
-;(decl-var-private #'->GenericMutable)
-;(ns-unmap *ns* '->GenericMutable)
-;(decl-volatile VolatileMutable)
-;(decl-var-private #'->VolatileMutable)
-;(ns-unmap *ns* '->VolatileMutable)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(comment
-(defn prn-muable
-  "Print this mutable."
-  ([m] (prn-muable m true))
-  ([m dbg]
-   (let [s (pr-str @m)]
-     (if dbg
-       (czlab.basal.log./debug "%s" s)
-       (czlab.basal.log/info "%s" s))))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn prt-stk
   "Print stack."
@@ -622,7 +540,7 @@
   "Dump stack trace."
   ^String
   [^Throwable e]
-  (with-open
+  (c/wo*
     [out (ByteArrayOutputStream. c/BUF-SZ)
      ps (PrintStream. out true "utf-8")]
     (.printStackTrace e ps)
@@ -729,17 +647,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;Loose equivalent of a Java Enum
-(c/decl-object JEnum
-               JEnumProto
-               (get-enum-str [me e]
-                 (if (contains? me e)
-                   (cs/replace (str e) #"^:" "")))
-               (lookup-enum-str [me s]
-                 (let [kee (keyword s)]
-                   (some #(if (= kee (first %)) (first %)) me)))
-               (lookup-enum-int [me n]
-                 (some #(if (= n (last %)) (first %)) me)))
-
+(defrecord JEnum []
+  JEnumProto
+  (get-enum-str [me e]
+    (if (contains? me e)
+      (cs/replace (str e) #"^:" "")))
+  (lookup-enum-str [me s]
+    (let [kee (keyword s)]
+      (some #(if (= kee (first %)) (first %)) me)))
+  (lookup-enum-int [me n]
+    (some #(if (= n (last %)) (first %)) me)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn url-encode
@@ -753,7 +670,8 @@
 (defn url-decode
   "HTML decode."
   {:tag String}
-  ([s] (url-decode s "utf8"))
+  ([s]
+   (url-decode s "utf8"))
   ([s enc]
    (if (string? s)
      (URLDecoder/decode ^String s (encoding?? enc)))))
@@ -769,7 +687,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn new-memset
   "New in-memory object store. Object must be an atom."
-  ([] (new-memset 10))
+  ([]
+   (new-memset 10))
   ([batch]
    (atom {:batch (c/num?? batch 10) :size 0 :next 0 :slots (object-array 0)})))
 
@@ -833,8 +752,10 @@
 (defn get-cldr
   "Get current classloader."
   {:tag ClassLoader}
-  ([] (get-cldr nil))
-  ([cl] (or cl (.getContextClassLoader (Thread/currentThread)))))
+  ([]
+   (get-cldr nil))
+  ([cl]
+   (or cl (.getContextClassLoader (Thread/currentThread)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn set-cldr
@@ -887,7 +808,6 @@
         (recur (.replaceFirst src
                               "\\{\\}"
                               (str (nth pms pos))) SZ (+ 1 pos))))
-    ;else
     pkey))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -27,12 +27,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;pre-shuffle the chars in string
 (def ^{:private true :tag String} _ss
   (s/shuffle (str "abcdefghijklmnopqrstuvwxyz"
-                      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")))
+                  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")))
 (def ^:private _chars (.toCharArray _ss))
 (def ^:private _uuid-len (count _ss))
 (def ^:private ^String int-mask "00000")
@@ -51,13 +50,13 @@
   (let [plen (count pad)
         mlen (count mask)]
     (if (>= mlen plen)
-      (.substring ^String mask 0 plen)
+      (subs mask 0 plen)
       (str (.replace (s/sbf<> pad)
                      (int (- plen mlen)) (int plen) ^String mask)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- split-time []
-  (let [s (fmt-long (System/currentTimeMillis))
+  (let [s (fmt-long (u/system-time))
         n (count s)]
     [(s/lefts s (/ n 2))
      (s/rights s (max 0 (- n (/ n 2))))]))
