@@ -210,6 +210,21 @@
                      (conj out
                            `(def ~(symbol (str (name name_)
                                                "-" (name m))) ~v))))))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro condp??
+  "Make *simple* condp like cond." [pred expr & clauses]
+  (let [c (count clauses)
+        xs (if-not (even? c)
+             clauses
+             (concat clauses ['nil]))] `(condp ~pred ~expr ~@xs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro case??
+  "Make *simple* condp like cond." [expr & clauses]
+  (let [c (count clauses)
+        xs (if-not (even? c)
+             clauses
+             (concat clauses ['nil]))] `(case ~expr ~@xs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-xxx??

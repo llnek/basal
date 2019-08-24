@@ -132,6 +132,14 @@
   (ensure?? "defenum"
             (= 4 (do (c/defenum xxx a 1 b c) (+ xxx-a xxx-c))))
 
+  (ensure?? "condp??" (let [arg 8]
+                        (and (= 13 (c/condp?? = arg 1 1 3 3 13))
+                             (nil? (c/condp?? = arg 1 1 3 3)))))
+
+  (ensure?? "case??" (let [arg 8]
+                       (and (= 13 (c/case?? arg 1 1 3 3 13))
+                            (nil? (c/case?? arg 1 1 3 3)))))
+
   (ensure?? "if-number" (= 13 (c/if-number [x (+ 3 4)] (+ x 6))))
 
   (ensure?? "if-string" (= "hello!" (c/if-string [x "hello"] (str x "!"))))
