@@ -132,6 +132,15 @@
   (ensure?? "defenum"
             (= 4 (do (c/defenum xxx a 1 b c) (+ xxx-a xxx-c))))
 
+  (ensure?? "n#-even?,n#-odd?"
+            (and (c/n#-even? [])
+                 (c/n#-even? [1 2]) (c/n#-odd? [1])))
+
+  (ensure?? "kvs->map"
+            (let [m (c/kvs->map '(:a 1 :b 2 :c 3))]
+              (and (= '(1 2 3) (vals m))
+                   (= '(:a :b :c) (keys m)))))
+
   (ensure?? "condp??" (let [arg 8]
                         (and (= 13 (c/condp?? = arg 1 1 3 3 13))
                              (nil? (c/condp?? = arg 1 1 3 3)))))

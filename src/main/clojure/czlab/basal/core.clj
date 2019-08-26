@@ -44,6 +44,14 @@
   "If obj is an atom?" [x] `(instance? clojure.lang.Atom ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro n#-odd?
+  "Is count of collection odd?" [coll] `(odd? (count ~coll)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro n#-even?
+  "Is count of collection even?" [coll] `(even? (count ~coll)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro is?
   "Alias instance?" [& more] `(instance? ~@more))
 
@@ -658,6 +666,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; end-monad
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn kvs->map
+  "Turn a list of key values into map." [args]
+  {:pre [(even? (count args))]}
+  (into {} (map #(vec %) (partition 2 args))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn repeat-str
   "Repeat string n times." [n s] (cs/join "" (repeat n s)))
