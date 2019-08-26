@@ -755,6 +755,15 @@
                t-bad)) ": " msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn rip-fn-name
+  "" [func]
+  (let [s (str func)
+        h (cs/index-of s "$")
+        s (if h (subs s (+ 1 h)) s)
+        p (cs/last-index-of s "@")]
+    (if p (subs s 0 p) s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn runtest
   "Run a test group, returning the summary."
   ([test] (runtest test nil))
@@ -772,7 +781,9 @@
          result
          (cs/join "\n"
                   [lsep
-                   (or title "test")
+                   (or title
+                       (str "Name of test: "
+                            (rip-fn-name test)))
                    (Date.)
                    lsep
                    (cs/join "\n" res)
@@ -785,7 +796,19 @@
                             (cs/last-index-of result esep))) result])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn int-var "Like a mutable int."
+(defn clj-test??
+  "Run test as a clojure test case."
+  ([test]
+   (clj-test?? test nil true))
+  ([test title print?]
+   (let [[ok? r]
+         (runtest test title)]
+     (if print?
+       (println r)) ok?)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn int-var
+  "Like a mutable int."
   ;setter
   ([^ints arr v] (aset arr 0 (int v)) (int v))
   ;ctor
@@ -802,7 +825,8 @@
   {:pre [(number? i)]} (doto (int-var) (int-var i)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn long-var "like a mutable long."
+(defn long-var
+  "Like a mutable long."
   ;setter
   ([^longs arr v] (aset arr 0 (long v)) (long v))
   ;ctor
@@ -902,7 +926,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test and assert funcs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn test-isa "Is child of parent?"  [reason par chi]
+(defn test-isa
+  "Is child of parent?"  [reason par chi]
   (do#true (-> (cond
                  (and (class? par)(class? chi)) (isa? chi par)
                  (or (nil? par)(nil? chi)) false

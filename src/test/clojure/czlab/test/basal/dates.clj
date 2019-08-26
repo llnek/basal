@@ -121,9 +121,9 @@
   (ensure?? "test-end" (= 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ct/deftest ^:test-dates basal-test-dates
-  (ct/is (let [[ok? r]
-               (c/runtest test-dates "test-dates")] (println r) ok?)))
+(ct/deftest
+  ^:test-dates basal-test-dates
+  (ct/is (c/clj-test?? test-dates)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

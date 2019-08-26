@@ -339,9 +339,9 @@
   (ensure?? "test-end" (= 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ct/deftest ^:test-io basal-test-io
-  (ct/is (let [[ok? r]
-               (c/runtest test-io "test-io")] (println r) ok?)))
+(ct/deftest
+  ^:test-io basal-test-io
+  (ct/is (c/clj-test?? test-io)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

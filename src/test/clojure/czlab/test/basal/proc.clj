@@ -86,9 +86,9 @@
   (ensure?? "test-end" (= 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ct/deftest ^:test-proc basal-test-proc
-  (ct/is (let [[ok? r]
-               (c/runtest test-proc "test-proc")] (println r) ok?)))
+(ct/deftest
+  ^:test-proc basal-test-proc
+  (ct/is (c/clj-test?? test-proc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

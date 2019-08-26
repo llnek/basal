@@ -257,7 +257,8 @@
   ^String [] (.replaceAll (str (UID.)) "[:\\-]+" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn uid<> "UUID, no dash!"
+(defn uid<>
+  "UUID, no dash!"
   ^String [] (cs/replace (uuid<>) #"-" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -677,7 +678,8 @@
      (URLDecoder/decode ^String s (encoding?? enc)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn sortby "" [kfn cmp coll]
+(defn sortby
+  "" [kfn cmp coll]
   (sort-by kfn
            (reify java.util.Comparator
              (compare [_ t1 t2] (cmp t1 t2))) coll))
@@ -685,68 +687,61 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;in memory store
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn new-memset
+(defprotocol MemSet ""
+  (ms-drop! [_ obj] "Free the object from the store.")
+  (ms-add! [_ obj] "Add new item to the set.")
+  (ms-count [_] "Count items in the set.")
+  (ms-capacity [_] "Capacity of the set.")
+  (ms-nth [_ pos] "The nth item in the set.")
+  (ms-each [_ cb] "Run function on each item in the set."))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn new-memset<>
   "New in-memory object store. Object must be an atom."
-  ([]
-   (new-memset 10))
-  ([batch]
-   (atom {:batch (c/num?? batch 10) :size 0 :next 0 :slots (object-array 0)})))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn count-set "Count items in the set." [store] (:next @store))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn capacity-set "Capacity of the set." [store] (:size @store))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn nth-set
-  "The nth item in the set." [store n]
-  (if (< n (:next @store)) (nth (:slots @store) n)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn each-set
-  "Run function on each item in the set."
-  [store cb]
-  (let [{:keys [next slots]} @store]
-    (dotimes [i next] (cb (nth slots i) i))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn add->set! "Add new item to the set." [store obj]
-  {:pre [(c/atom? obj)]}
-  (c/do-with [obj]
-    (swap! store
-           (fn [{:keys [next size
-                        batch slots] :as root}]
-             (let [next1 (+ 1 next)
-                   arr (if (< next size)
-                         slots
-                         (Arrays/copyOf ^"[Ljava.lang.Object;"
-                                        slots
-                                        (int (+ size batch))))]
-               (swap! obj #(assoc % :____slot next))
-               (aset ^"[Ljava.lang.Object;" arr next obj)
-               (assoc root
-                      :slots arr
-                      :next next1
-                      :size (count arr)))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn drop->set!
-  "Free the object from the store."
-  [store obj]
-  (if (c/atom? obj)
-    (swap! store
-           (fn [{:keys [next slots] :as root}]
-             (let [next1 (- next 1)
-                   tail (aget ^"[Ljava.lang.Object;" slots next1)
-                   slot' (:____slot @tail)
-                   epos' (:____slot @obj)]
-               ;move the tail to old slot
-               (aset ^"[Ljava.lang.Object;" slots next1 nil)
-               (aset ^"[Ljava.lang.Object;" slots epos' tail)
-               (swap! tail #(assoc % :____slot epos'))
-               (swap! obj #(dissoc % :____slot))
-               (merge root {:next next1}))))) store)
+  ([] (new-memset<> 10))
+  ([_batch]
+   (let [batch (c/num?? _batch 10)
+         impl (atom {:size 0
+                     :next 0
+                     :slots (object-array 0)})]
+     (reify MemSet
+       (ms-capacity [_] (:size @impl))
+       (ms-count [_] (:next @impl))
+       (ms-nth [_ n]
+         (let [{:keys [next slots]} @impl]
+           (if (< n next) (nth slots n))))
+       (ms-each [_ cb]
+         (let [{:keys [next slots]} @impl]
+           (dotimes [i next] (cb (nth slots i) i))))
+       (ms-add! [_ obj]
+         {:pre [(c/atom? obj)]}
+         (c/do-with [obj]
+           (swap! impl
+                  (c/fn_1
+                    (let [{:keys [next size slots] :as root} ____1
+                          next1 (+ 1 next)
+                          arr (if (< next size)
+                                slots
+                                (Arrays/copyOf ^"[Ljava.lang.Object;"
+                                               slots (int (+ size batch))))]
+                      (swap! obj #(assoc % :____slot next))
+                      (aset ^"[Ljava.lang.Object;" arr next obj)
+                      (assoc root :slots arr :next next1 :size (count arr)))))))
+       (ms-drop! [_ obj]
+         (if (c/atom? obj)
+           (swap! impl
+                  (c/fn_1
+                    (let [{:keys [next slots] :as root} ____1
+                          next1 (- next 1)
+                          tail (aget ^"[Ljava.lang.Object;" slots next1)
+                          slot' (:____slot @tail)
+                          epos' (:____slot @obj)]
+                      ;move the tail to old slot
+                      (aset ^"[Ljava.lang.Object;" slots next1 nil)
+                      (aset ^"[Ljava.lang.Object;" slots epos' tail)
+                      (swap! tail #(assoc % :____slot epos'))
+                      (swap! obj #(dissoc % :____slot))
+                      (merge root {:next next1}))))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-cldr

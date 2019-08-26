@@ -32,7 +32,8 @@
   (require* [_ namespacelist] "Load list of namespaces."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn cljrt<> "A clojure runtime."
+(defn cljrt<>
+  "A clojure runtime."
   ([cl] (cljrt<> cl "?"))
   ([] (cljrt<> nil))
   ([cl name]

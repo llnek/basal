@@ -236,31 +236,31 @@
                   z (u/url-decode s)]
               (= z "a+c+b")))
 
-  (ensure?? "new-memset" (let [m (u/new-memset 2)
-                               _ (u/add->set! m (atom {:a 1}))
-                               z0 (u/count-set m)]
-                           (u/add->set! m (atom {:a 2}))
-                           (u/add->set! m (atom {:a 3}))
+  (ensure?? "new-memset" (let [m (u/new-memset<> 2)
+                               _ (u/ms-add! m (atom {:a 1}))
+                               z0 (u/ms-count m)]
+                           (u/ms-add! m (atom {:a 2}))
+                           (u/ms-add! m (atom {:a 3}))
                            (and (= 1 z0)
-                                (= 3 (u/count-set m))
-                                (= 4 (u/capacity-set m)))))
+                                (= 3 (u/ms-count m))
+                                (= 4 (u/ms-capacity m)))))
 
   (ensure?? "each-set" (let [acc (atom 0)
-                             m (u/new-memset 2)]
-                         (u/add->set! m (atom {:a 1}))
-                         (u/add->set! m (atom {:a 2}))
-                         (u/each-set m
-                                     (fn [obj _]
-                                       (swap! acc + (:a @obj))))
+                             m (u/new-memset<> 2)]
+                         (u/ms-add! m (atom {:a 1}))
+                         (u/ms-add! m (atom {:a 2}))
+                         (u/ms-each m
+                                    (fn [obj _]
+                                      (swap! acc + (:a @obj))))
                          (= 3 @acc)))
-  (ensure?? "drop->set!" (let [m (u/new-memset 2)
+  (ensure?? "drop->set!" (let [m (u/new-memset<> 2)
                                a (atom {:a 1})
                                b (atom {:a 1})]
-                           (u/add->set! m a)
-                           (u/add->set! m b)
-                           (u/drop->set! m a)
-                           (u/drop->set! m b)
-                           (= 0 (u/count-set m))))
+                           (u/ms-add! m a)
+                           (u/ms-add! m b)
+                           (u/ms-drop! m a)
+                           (u/ms-drop! m b)
+                           (= 0 (u/ms-count m))))
 
   (ensure?? "get-cldr" (not (nil? (u/get-cldr))))
   (ensure?? "set-cldr" (do (u/set-cldr (u/get-cldr)) true))
@@ -285,9 +285,9 @@
   (ensure?? "test-end" (= 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ct/deftest ^:test-util basal-test-util
-  (ct/is (let [[ok? r]
-               (c/runtest test-util "test-util")] (println r) ok?)))
+(ct/deftest
+  ^:test-util basal-test-util
+  (ct/is (c/clj-test?? test-util)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

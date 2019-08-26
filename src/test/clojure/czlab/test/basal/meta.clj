@@ -92,9 +92,9 @@
   (ensure?? "test-end" (= 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ct/deftest ^:test-meta basal-test-meta
-  (ct/is (let [[ok? r]
-               (c/runtest test-meta "test-meta")] (println r) ok?)))
+(ct/deftest
+  ^:test-meta basal-test-meta
+  (ct/is (c/clj-test?? test-meta)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

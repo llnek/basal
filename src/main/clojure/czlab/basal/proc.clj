@@ -121,7 +121,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defrecord JvmInfo [])
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn jvm-info "Get info on the jvm." []
+(defn jvm-info
+  "Get info on the jvm." []
   (let [os (ManagementFactory/getOperatingSystemMXBean)
         rt (ManagementFactory/getRuntimeMXBean)]
     (c/object<> JvmInfo

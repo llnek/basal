@@ -45,9 +45,9 @@
   (ensure?? "test-end" (= 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ct/deftest ^:test-ini basal-test-ini
-  (ct/is (let [[ok? r]
-               (c/runtest test-ini "test-ini")] (println r) ok?)))
+(ct/deftest
+  ^:test-ini basal-test-ini
+  (ct/is (c/clj-test?? test-ini)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

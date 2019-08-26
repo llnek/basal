@@ -223,9 +223,9 @@
   (ensure?? "test-end" (= 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ct/deftest ^:test-psub basal-test-psub
-  (ct/is (let [[ok? r]
-               (c/runtest test-psub "test-psub")] (println r) ok?)))
+(ct/deftest
+  ^:test-psub basal-test-psub
+  (ct/is (c/clj-test?? test-psub)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

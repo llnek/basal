@@ -174,9 +174,9 @@
   (ensure?? "test-end" (= 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ct/deftest ^:test-str basal-test-str
-  (ct/is (let [[ok? r]
-               (c/runtest test-str "test-str")] (println r) ok?)))
+(ct/deftest
+  ^:test-str basal-test-str
+  (ct/is (c/clj-test?? test-str)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
