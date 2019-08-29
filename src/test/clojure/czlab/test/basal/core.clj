@@ -138,8 +138,8 @@
 
   (ensure?? "kvs->map"
             (let [m (c/kvs->map '(:a 1 :b 2 :c 3))]
-              (and (= '(1 2 3) (vals m))
-                   (= '(:a :b :c) (keys m)))))
+              (and (= '(1 2 3) (sort (vals m)))
+                   (= '(:a :b :c)  (sort (keys m))))))
 
   (ensure?? "condp??" (let [arg 8]
                         (and (= 13 (c/condp?? = arg 1 1 3 3 13))

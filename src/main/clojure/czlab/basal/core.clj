@@ -670,7 +670,8 @@
 (defn kvs->map
   "Turn a list of key values into map." [args]
   {:pre [(even? (count args))]}
-  (into {} (map #(vec %) (partition 2 args))))
+  (apply hash-map args))
+  ;(into {} (map #(vec %) (partition 2 args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn repeat-str

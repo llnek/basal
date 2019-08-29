@@ -34,6 +34,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn cljrt<>
   "A clojure runtime."
+  {:tag java.io.Closeable}
   ([cl] (cljrt<> cl "?"))
   ([] (cljrt<> nil))
   ([cl name]
