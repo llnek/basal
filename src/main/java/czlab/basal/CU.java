@@ -16,7 +16,7 @@ package czlab.basal;
 public enum CU {
 ;
   public static boolean canLog() {
-    return "true".equals(System.getProperty("czlabloggerflag"));
+    return ! "false".equals(System.getProperty("czlabloggerflag"));
   }
 }
 

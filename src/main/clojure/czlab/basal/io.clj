@@ -79,6 +79,18 @@
 (defmacro ^:private is* [x] `(clojure.java.io/input-stream ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro istream
+  [x] `(clojure.java.io/input-stream ~x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro ostream
+  [x] `(clojure.java.io/output-stream ~x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro file?
+  "Is file?" [in] `(instance? java.io.File ~in))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro slurp-utf8
   "Read f with utf8 encoding" [f] `(slurp ~f :encoding "utf-8"))
 

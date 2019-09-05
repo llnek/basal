@@ -405,6 +405,11 @@
         (subs src 0 (- n len))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn matches?
+  "String.matches." [src regex]
+  (if (hgl? src) (.matches ^String src ^String regex)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn split
   "String.split."
   ([^String src ^String regex]

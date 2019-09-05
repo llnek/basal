@@ -98,6 +98,12 @@
   (watch-elapsed-nanos [_] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro try!!!
+  "Eat, log the exception and return nil."
+  [& exprs]
+  `(czlab.basal.util/try!! nil ~@exprs))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro try!!
   "Eat, log the exception and return a value."
   [value & exprs]
