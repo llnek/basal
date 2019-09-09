@@ -538,7 +538,7 @@
     (run [] (c/try! (func)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn prt-stk
+(defn prn-stk
   "Print stack."
   [exp] (some-> ^Throwable exp .printStackTrace))
 
@@ -604,9 +604,9 @@
   "A sequence number (long)." [] (.getAndIncrement _num-long))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn cancel-timer-task
+(defn cancel-timer-task!
   "Cancel a timer task."
-  [t] (c/try! (some-> ^TimerTask t .cancel)))
+  [t] (c/try! (some-> ^TimerTask t .cancel) t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro count-cpus

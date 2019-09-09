@@ -20,6 +20,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/deftest test-str
 
+  (ensure?? "sbf<>" (= "abc" (str (s/sbf<> "a" "b" "c"))))
+
   (ensure?? "sbf<>" (= "a" (str (s/sbf<> "a"))))
 
   (ensure?? "sbf-join" (= "a,a"

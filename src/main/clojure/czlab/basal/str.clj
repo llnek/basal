@@ -31,13 +31,20 @@
   "Like format." ^String [f & args] (apply format f args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn sbf+
+  "StringBuilder concat."
+  [buf & args]
+  (doseq [x args]
+    (.append ^StringBuilder buf x)) buf)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbf<>
   "StringBuilder.new"
   {:tag StringBuilder}
   ([]
-   (sbf<> nil))
-  ([s]
-   (StringBuilder. (str s))))
+   (sbf<> ""))
+  ([& args]
+   (let [s (StringBuilder.)] (apply sbf+ s args) s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbf-join
@@ -55,13 +62,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbfz
   "Length of the string-buffer." [b] (.length ^StringBuilder b))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn sbf+
-  "StringBuilder concat."
-  [buf & args]
-  (doseq [x args]
-    (.append ^StringBuilder buf x)) buf)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn nichts?

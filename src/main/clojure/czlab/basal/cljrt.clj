@@ -38,7 +38,8 @@
   ([cl] (cljrt<> cl "?"))
   ([] (cljrt<> nil))
   ([cl name]
-   (let [^IFn _require (RT/var "clojure.core" "require")
+   (let [cl (or cl (u/get-cldr))
+         ^IFn _require (RT/var "clojure.core" "require")
          ^IFn _resolve (RT/var "clojure.core" "resolve")]
      (reify
        po/Idable
