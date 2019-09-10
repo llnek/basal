@@ -13,9 +13,9 @@
 
   (:require [czlab.basal.core :as c]
             [czlab.basal.util :as u]
+            [czlab.basal.xpis :as po]
             [clojure.string :as cs]
             [czlab.basal.io :as i]
-            [czlab.basal.str :as s]
             [clojure.core.async
              :as ca
              :refer [>!
@@ -53,7 +53,7 @@
 (defn- mk-sub
   [impl topic cb]
   (let [{:keys [bufsz async?]} @impl]
-    {:id (keyword (s/x->kw (u/jid<>) "-" (u/seqint2)))
+    {:id (keyword (c/x->kw (u/jid<>) "-" (u/seqint2)))
      :topic topic
      :action (if async?
                (mk-async cb topic bufsz) cb)}))
@@ -175,7 +175,8 @@
              (walk async? B ts topic nil z))
            (pos? @z)))
        (ev-dbg [_] (i/fmt->edn @impl))
-       (ev-finz [_]
+       po/Finzable
+       (finz [_]
          (c/let#nil [{:keys [async? subcs]} @impl]
            (if async? ;maybe close all go channels
              (doseq [[_ z] subcs] (close! (:action z))))

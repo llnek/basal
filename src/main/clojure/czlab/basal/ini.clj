@@ -14,7 +14,6 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as cs]
             [czlab.basal.util :as u]
-            [czlab.basal.str :as s]
             [czlab.basal.core :as c])
 
   (:use [flatland.ordered.map])
@@ -36,17 +35,17 @@
   [s] `(u/throw-BadData "No such heading %s" ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- throw-bad-ini [rdr]
-  (u/throw-BadData "Bad ini line: %s."
-                   (.getLineNumber ^LineNumberReader rdr)))
+(defn- throw-bad-ini
+  [rdr] (u/throw-BadData "Bad ini line: %d."
+                         (.getLineNumber ^LineNumberReader rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- maybe-section
   "Look for a section storing the
   actual name in meta."
   [rdr ncmap line]
-  (c/if-some+ [s (s/strim-any line "[]" true)]
-    (c/do-with [k (keyword (s/lcase s))]
+  (c/if-some+ [s (c/strim-any line "[]" true)]
+    (c/do-with [k (keyword (c/lcase s))]
       (if-not (c/in? @ncmap k)
         (c/assoc!! ncmap
                    k
@@ -60,15 +59,15 @@
   (if-some [_ (get @ncmap section)]
     (let [pos (cs/index-of line \=)
           nm (if (c/spos? pos)
-               (s/strim (subs line 0 pos)) "")
-          k (if (s/hgl? nm)
-              (keyword (s/lcase nm)) (throw-bad-ini rdr))]
+               (c/strim (subs line 0 pos)) "")
+          k (if (c/hgl? nm)
+              (keyword (c/lcase nm)) (throw-bad-ini rdr))]
       (swap! ncmap
-             #(update-in %
-                         [section]
-                         assoc
-                         k
-                         [nm (s/strim (subs line (+ 1 pos)))]))
+             update-in
+             [section]
+             assoc
+             k
+             [nm (c/strim (subs line (+ 1 pos)))])
       section)
     (throw-bad-ini rdr)))
 
@@ -76,19 +75,20 @@
 (defn- eval-one-line
   "Parses a line in the file."
   [rdr ncmap cursec ^String line]
-  (let [ln (s/strim line)]
-    (cond (or (s/nichts? ln)
+  (let [ln (c/strim line)]
+    (cond (or (c/nichts? ln)
               (cs/starts-with? ln "#"))
           cursec ;comment line
-          (.matches ln "^\\[.*\\]$")
+          (c/matches? ln "^\\[.*\\]$")
           (maybe-section rdr ncmap ln)
           :else
           (maybe-line rdr ncmap cursec ln))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- getkv ^String [sects s k err]
-  (let [sn (keyword (s/lcase s))
-        kn (keyword (s/lcase k))
+(defn- getkv
+  ^String [sects s k err]
+  (let [sn (keyword (c/lcase s))
+        kn (keyword (c/lcase k))
         mp (get sects sn)]
     (cond (nil? mp) (if err (throw-bad-map s))
           (nil? k) (if err (throw-bad-key k))
@@ -96,28 +96,30 @@
           :else (str (last (get mp kn))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defprotocol WinINI ""
-    (heading [_ sect] "")
-    (headings [_] "")
-    (dbg-str [_] "")
-    (str-value [_ sect prop]
-               [_ sect prop dft] "")
-    (long-value [_ sect prop]
-                [_ sect prop dft] "")
-    (int-value [_ sect prop]
-               [_ sect prop dft] "")
-    (double-value [_ sect prop]
-                  [_ sect prop dft] "")
-    (bool-value [_ sect prop]
-                [_ sect prop dft] ""))
+(defprotocol WinINI
+  "Access to a windows ini file."
+  (heading [_ sect] "Get the section for this heading.")
+  (headings [_] "Get all headings.")
+  (dbg-str [_] "Internal.")
+  (str-value [_ sect prop]
+             [_ sect prop dft] "Get the section then the field.")
+  (long-value [_ sect prop]
+              [_ sect prop dft] "Get the section then the field.")
+  (int-value [_ sect prop]
+             [_ sect prop dft] "Get the section then the field.")
+  (bool-value [_ sect prop]
+              [_ sect prop dft] "Get the section then the field.")
+  (double-value [_ sect prop]
+                [_ sect prop dft] "Get the section then the field."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- wrap->ini [M]
+(defn- wrap->ini
+  [M]
   (reify WinINI
     (headings [_]
       (c/preduce<set> #(conj! %1 (:name (meta %2))) (vals M)))
     (heading [_ sect]
-      (let [sn (keyword (s/lcase sect))]
+      (let [sn (keyword (c/lcase sect))]
         (reduce #(assoc %1
                         (c/_1 %2) (c/_E %2))
                 (ordered-map)
@@ -147,13 +149,13 @@
     (bool-value [_ sect prop]
       (c/s->bool (getkv M sect prop true)))
     (dbg-str [_]
-      (let [buf (s/sbf<>)]
+      (c/do-with-str
+        [buf (c/sbf<>)]
         (doseq [v (vals M)]
-          (s/sbf+ buf "[" (:name (meta v)) "]\n")
+          (c/sbf+ buf "[" (:name (meta v)) "]\n")
           (doseq [[x y] (vals v)]
-            (s/sbf+ buf x "=" y "\n"))
-          (s/sbf+ buf "\n"))
-        (str buf)))))
+            (c/sbf+ buf x "=" y "\n"))
+          (c/sbf+ buf "\n"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- parse-file
@@ -162,12 +164,10 @@
   ([fUrl enc]
    (c/wo* [inp (-> (io/input-stream fUrl)
                    (io/reader :encoding
-                              (s/stror enc "utf8"))
+                              (c/stror enc "utf8"))
                    LineNumberReader. )]
      (loop [total (atom (sorted-map))
-            rdr inp
-            line (.readLine rdr)
-            curSec nil]
+            rdr inp line (.readLine rdr) curSec nil]
        (if (nil? line)
          (wrap->ini @total)
          (recur total
@@ -178,15 +178,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn win-ini<>
-  "Parse a ini conf file."
-  [f]
-  (cond (c/is? File f)
-        (win-ini<> (io/as-url f))
-        (string? f)
-        (if (s/hgl? f)
-          (win-ini<> (io/file f)))
-        (c/is? URL f)
-        (parse-file f)))
+  "Parse a windows ini file."
+  [in]
+  (cond (c/is? File in)
+        (win-ini<> (io/as-url in))
+        (string? in)
+        (if (c/hgl? in)
+          (win-ini<> (io/file in)))
+        (c/is? URL in)
+        (parse-file in)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

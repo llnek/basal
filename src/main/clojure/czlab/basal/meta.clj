@@ -12,7 +12,6 @@
   czlab.basal.meta
 
   (:require [czlab.basal.util :as u]
-            [czlab.basal.str :as s]
             [czlab.basal.core :as c])
 
   (:import [clojure.lang
@@ -29,7 +28,7 @@
 (defn count-arity
   "Figure out arity of function, returning the set of
   arity counts and whether var-args are used.
-  e.g. [#{0 1 2 3} true]"
+  e.g. [#{0 1 2 3} true]."
   [func]
   {:pre [(fn? func)]}
   (let [s (c/preduce<set>
@@ -55,12 +54,14 @@
         (not (class? chi)) (is-child? par (class chi))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- gcn [z] (some-> ^Class z .getName))
+(defn- gcn
+  [z] (some-> ^Class z .getName))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- is-XXX? [c classes]
+(defn- is-XXX?
+  [c classes]
   (-> (gcn (if-not
-             (class? c) (class c) c)) (s/eq-any? classes)))
+             (class? c) (class c) c)) (c/eq-any? classes)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-boolean?
@@ -147,14 +148,14 @@
   ([clazzName]
    (load-class clazzName nil))
   ([clazzName cl]
-   (if (s/hgl? clazzName)
+   (if (c/hgl? clazzName)
      (.loadClass (u/get-cldr cl) clazzName))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn obj<>
   ^Object [cz & args]
   {:pre [(or (string? cz)
-             (class? cz))(even? (count args))]}
+             (class? cz))(c/n#-even? args)]}
   (let [cz (if (string? cz) (load-class cz) cz)
         args (partition 2 args)
         len (count args)
@@ -182,7 +183,8 @@
     (c/vec-> (drop 1 rc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- iter-XXX [level]
+(defn- iter-XXX
+  [level]
   (fn [sum ^Member m]
     (let [x (.getModifiers m)]
       (if (and (pos? level)
@@ -192,7 +194,8 @@
         (assoc! sum (.getName m) m)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- list-mtds [^Class cz level]
+(defn- list-mtds
+  [^Class cz level]
   (let [par (.getSuperclass cz)]
     (reduce (iter-XXX level)
             (if (nil? par)
@@ -200,7 +203,8 @@
               (list-mtds par (+ 1 level))) (.getDeclaredMethods cz))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- list-flds [^Class cz level]
+(defn- list-flds
+  [^Class cz level]
   (let [par (.getSuperclass cz)]
     (reduce (iter-XXX level)
             (if (nil? par)

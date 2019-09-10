@@ -105,8 +105,7 @@ public class XData implements Serializable {
     }
     else
     if (obj instanceof CharArrayWriter) {
-      _data = new String(
-              ((CharArrayWriter) obj).toCharArray());
+      _data = ((CharArrayWriter) obj).toCharArray();
     }
     else
     if (obj instanceof File[]) {

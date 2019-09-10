@@ -12,9 +12,9 @@
   czlab.basal.guids
 
   (:require [czlab.basal.core :as c]
-            [czlab.basal.str :as s]
-            [clojure.java.io :as io]
-            [czlab.basal.util :as u])
+            [czlab.basal.io :as i]
+            [czlab.basal.util :as u]
+            [clojure.java.io :as io])
 
   (:import [java.util
             UUID]
@@ -29,13 +29,13 @@
 ;;(set! *warn-on-reflection* true)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;pre-shuffle the chars in string
-(def ^{:private true :tag String} _ss
-  (s/shuffle (str "abcdefghijklmnopqrstuvwxyz"
+(c/def- ^String _ss
+  (u/shuffle (str "abcdefghijklmnopqrstuvwxyz"
                   "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")))
-(def ^:private _chars (.toCharArray _ss))
-(def ^:private _uuid-len (count _ss))
-(def ^:private ^String int-mask "00000")
-(def ^:private ^String long-mask "0000000000")
+(c/def- _chars (.toCharArray _ss))
+(c/def- _uuid-len (count _ss))
+(c/def- ^String int-mask "00000")
+(c/def- ^String long-mask "0000000000")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ^:private fmt-int
@@ -46,23 +46,26 @@
   [nm] `(fmt long-mask (Long/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- fmt ^String [pad mask]
+(defn- fmt
+  ^String [pad mask]
   (let [plen (count pad)
         mlen (count mask)]
     (if (>= mlen plen)
       (subs mask 0 plen)
-      (str (.replace (s/sbf<> pad)
+      (str (.replace (c/sbf<> pad)
                      (int (- plen mlen)) (int plen) ^String mask)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- split-time []
+(defn- split-time
+  []
   (let [s (fmt-long (u/system-time))
         n (count s)]
-    [(s/lefts s (/ n 2))
-     (s/rights s (max 0 (- n (/ n 2))))]))
+    [(c/lefts s (/ n 2))
+     (c/rights s (max 0 (- n (/ n 2))))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- maybe-set-iP []
+(defn- maybe-set-iP
+  []
   (let [neta (InetAddress/getLocalHost)
         b (.getAddress neta)]
     (cond (.isLoopbackAddress neta)
@@ -74,7 +77,7 @@
               (long (.readInt dis)) (.readLong dis))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def ^:private ^long _IP (Math/abs ^long (maybe-set-iP)))
+(c/def- ^long _IP (Math/abs ^long (maybe-set-iP)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn uuid<>
@@ -96,7 +99,7 @@
                                (bit-or (bit-and r 0x3) 0x8)
                                (bit-and r 0xf))]
                      (aget ^chars _chars pos)))))
-    (String. rc)))
+    (i/x->str rc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn wwid<>
@@ -109,5 +112,4 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
-
 

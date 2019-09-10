@@ -9,7 +9,7 @@
 (ns ^{:doc ""
       :author "Kenneth Leung"}
 
-  czlab.basal.proto
+  czlab.basal.xpis
 
   (:refer-clojure :exclude [send name reset!]))
 

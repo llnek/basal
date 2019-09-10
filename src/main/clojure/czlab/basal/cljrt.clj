@@ -13,18 +13,15 @@
 
   (:require [czlab.basal.util :as u]
             [clojure.string :as cs]
-            [czlab.basal.str :as s]
             [czlab.basal.core :as c]
-            [czlab.basal.proto :as po])
+            [czlab.basal.xpis :as po])
 
-  (:import [clojure.lang
-            IFn
-            RT
-            Var
-            Symbol]))
+  (:import [clojure.lang IFn RT Var Symbol]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol Cljrt
   "Clojure environment that can load and run a function."
   (call* [_ v arglist] "Invoke a function dynamically.")
@@ -34,18 +31,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn cljrt<>
   "A clojure runtime."
-  {:tag java.io.Closeable}
-  ([cl] (cljrt<> cl "?"))
-  ([] (cljrt<> nil))
+
+  ([cl]
+   (cljrt<> cl "?"))
+  ([]
+   (cljrt<> nil))
   ([cl name]
-   (let [cl (or cl (u/get-cldr))
-         ^IFn _require (RT/var "clojure.core" "require")
+   (let [^IFn _require (RT/var "clojure.core" "require")
+         cl (or cl (u/get-cldr))
          ^IFn _resolve (RT/var "clojure.core" "resolve")]
      (reify
        po/Idable
-       (id [_] (s/stror name "?"))
-       java.io.Closeable
-       (close [_] )
+       (id [_] (c/stror name "?"))
        Cljrt
        (require* [_ nsps]
          (doseq [n nsps]
@@ -54,31 +51,28 @@
          (if (or (string? v)
                  (keyword? v))
            (.call* me (.var* me v) args)
-           (let [n (count args)
-                 ^IFn func v
-                 [a b c d e f] args]
-             (case n
-               0 (.invoke func)
-               1 (.invoke func a)
-               2 (.invoke func a b)
-               3 (.invoke func a b c)
-               4 (.invoke func a b c d)
-               5 (.invoke func a b c d e)
-               6 (.invoke func a b c d e f)
-               (u/throw-BadArg  "too many arguments to invoke")))))
+           (if-some [f (c/cast? IFn v)]
+             (let [[a b c d e g] args]
+               (case (count args)
+                 0 (.invoke f)
+                 1 (.invoke f a)
+                 2 (.invoke f a b)
+                 3 (.invoke f a b c)
+                 4 (.invoke f a b c d)
+                 5 (.invoke f a b c d e)
+                 6 (.invoke f a b c d e g)
+                 (u/throw-BadArg  "too many args to invoke"))))))
        (var* [me fname]
-         (try (let [fname (s/kw->str fname)
-                    v (or (.invoke _resolve
-                                   (Symbol/create fname))
-                          (let [[a b] (cs/split fname #"/")]
-                            (.invoke _require
-                                     (Symbol/create a))
-                            (RT/var a b)))]
-                (if (nil? v)
-                  (c/raise! "Var not found!")) v)
-              (catch Throwable _
-                (c/trap! RuntimeException
-                         (s/fmt "Can't load var: %s." fname) _))))))))
+         (let [fname (c/kw->str fname)
+               v (or (.invoke _resolve
+                              (Symbol/create fname))
+                     (let [[a b]
+                           (cs/split fname #"/")]
+                       (.invoke _require
+                                (Symbol/create a))
+                       (RT/var a b)))]
+           (if (nil? v)
+             (c/raise! "Var %s not found!" fname)) v))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

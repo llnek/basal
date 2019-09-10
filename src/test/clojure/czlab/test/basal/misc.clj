@@ -14,7 +14,7 @@
   (:require [czlab.basal.guids :as g]
             [clojure.string :as cs]
             [clojure.test :as ct]
-            [czlab.basal.cmdl :as i]
+            [czlab.basal.cmenu :as i]
             [czlab.basal.cljrt :as rt]
             [czlab.basal.core
              :refer [ensure?? ensure-thrown??] :as c]))
@@ -25,11 +25,11 @@
 (c/deftest test-misc
 
   (ensure?? "cljrt<>"
-            (c/wo* [^java.io.Closeable z (rt/cljrt<>)]
+            (let [z (rt/cljrt<>)]
               (satisfies? czlab.basal.cljrt/Cljrt z)))
 
   (ensure?? "cljrt.call*"
-            (c/wo* [^java.io.Closeable z (rt/cljrt<>)]
+            (let [z (rt/cljrt<>)]
               (let [r (rt/call* z
                                 :clojure.template/apply-template
                                 ['[x] '(+ x x) '[2]])]

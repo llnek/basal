@@ -67,7 +67,7 @@ public class XStream extends InputStream {
     if (b == null) { return -1; } else {
       pre();
       int r = _inp.read(b, offset, len);
-      pos = (r== -1 ) ? -1 : pos + r;
+      pos = (r == -1) ? -1 : pos + r;
       return r;
     }
   }
@@ -82,7 +82,7 @@ public class XStream extends InputStream {
     if (n < 0L) { return -1L; } else {
       pre();
       long  r= _inp.skip(n);
-      if (r > 0L) { pos +=  r; }
+      if (r > 0L) { pos += r; }
       return r;
     }
   }

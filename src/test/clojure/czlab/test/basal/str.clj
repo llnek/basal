@@ -12,162 +12,162 @@
   czlab.test.basal.str
 
   (:require [clojure.string :as cs]
-            [czlab.basal.str :as s]
             [clojure.test :as ct]
+            [czlab.basal.util :as u]
             [czlab.basal.core
              :refer [ensure?? ensure-thrown??] :as c]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/deftest test-str
 
-  (ensure?? "sbf<>" (= "abc" (str (s/sbf<> "a" "b" "c"))))
+  (ensure?? "sbf<>" (= "abc" (str (c/sbf<> "a" "b" "c"))))
 
-  (ensure?? "sbf<>" (= "a" (str (s/sbf<> "a"))))
+  (ensure?? "sbf<>" (= "a" (str (c/sbf<> "a"))))
 
   (ensure?? "sbf-join" (= "a,a"
-                          (-> (s/sbf-join (s/sbf<>) "," "a")
-                              (s/sbf-join "," "a")
+                          (-> (c/sbf-join (c/sbf<>) "," "a")
+                              (c/sbf-join "," "a")
                               (str))))
 
-  (ensure?? "sbf+" (= "abc" (str (s/sbf+ (s/sbf<>) "a" "b" "c"))))
+  (ensure?? "sbf+" (= "abc" (str (c/sbf+ (c/sbf<>) "a" "b" "c"))))
 
 
-  (ensure?? "nichts?" (and (s/nichts? "")
-                           (s/nichts? nil)
-                           (s/nichts? 4)))
+  (ensure?? "nichts?" (and (c/nichts? "")
+                           (c/nichts? nil)
+                           (c/nichts? 4)))
 
-  (ensure?? "hgl?" (and (s/hgl? "a") (not (s/hgl? ""))))
+  (ensure?? "hgl?" (and (c/hgl? "a") (not (c/hgl? ""))))
 
-  (ensure?? "stror" (= "a" (s/stror nil "a")))
+  (ensure?? "stror" (= "a" (c/stror nil "a")))
 
-  (ensure?? "stror*" (= "a" (s/stror* nil nil nil nil "a")))
+  (ensure?? "stror*" (= "a" (c/stror* nil nil nil nil "a")))
 
-  (ensure?? "lcase" (= "aaa" (s/lcase "AAA")))
+  (ensure?? "lcase" (= "aaa" (c/lcase "AAA")))
 
-  (ensure?? "ucase" (= "AAA" (s/ucase "aaa")))
+  (ensure?? "ucase" (= "AAA" (c/ucase "aaa")))
 
-  (ensure?? "triml" (= "abc" (s/triml "123673abc" "123456789")))
+  (ensure?? "triml" (= "abc" (c/triml "123673abc" "123456789")))
 
-  (ensure?? "trimr" (= "abc" (s/trimr "abc123456789" "123456789")))
+  (ensure?? "trimr" (= "abc" (c/trimr "abc123456789" "123456789")))
 
-  (ensure?? "has?" (s/has? "ab cd" \space))
+  (ensure?? "has?" (c/has? "ab cd" \space))
 
-  (ensure?? "embeds?" (and (s/has? "ab cd" "cd")
-                           (not (s/has? "ab cd" "ecd"))))
+  (ensure?? "embeds?" (and (c/has? "ab cd" "cd")
+                           (not (c/has? "ab cd" "ecd"))))
 
-  (ensure?? "has-no-case?" (s/has-no-case? "ab cd" "AB"))
+  (ensure?? "has-no-case?" (c/has-no-case? "ab cd" "AB"))
 
-  (ensure?? "index-any" (and (= 5 (s/index-any "hello joe" "793 Z"))
-                             (neg? (s/index-any "hello joe" "793"))))
+  (ensure?? "index-any" (and (= 5 (c/index-any "hello joe" "793 Z"))
+                             (neg? (c/index-any "hello joe" "793"))))
 
-  (ensure?? "count-str" (and (= 3 (s/count-str "abagabrabt" "ab"))
-                             (zero? (s/count-str "abagabrabt" "AA"))))
+  (ensure?? "count-str" (and (= 3 (c/count-str "abagabrabt" "ab"))
+                             (zero? (c/count-str "abagabrabt" "AA"))))
 
-  (ensure?? "count-char" (and (= 4 (s/count-char "abagabrabt" \a))
-                              (zero? (s/count-char "abagabrabt" \space))))
+  (ensure?? "count-char" (and (= 4 (c/count-char "abagabrabt" \a))
+                              (zero? (c/count-char "abagabrabt" \space))))
 
-  (ensure?? "sname" (and (= "a" (s/sname :a))
-                         (= "a" (s/sname "a"))
-                         (= "" (s/sname nil))))
+  (ensure?? "sname" (and (= "a" (c/sname :a))
+                         (= "a" (c/sname "a"))
+                         (= "" (c/sname nil))))
 
-  (ensure?? "nsb" (and (= "a" (s/nsb :a))
-                       (= "a" (s/nsb "a"))
-                       (= "" (s/nsb nil))))
+  (ensure?? "nsb" (and (= "a" (c/nsb :a))
+                       (= "a" (c/nsb "a"))
+                       (= "" (c/nsb nil))))
 
-  (ensure?? "kw->str" (= "czlab.test.basal.str/a" (s/kw->str ::a)))
+  (ensure?? "kw->str" (= "czlab.test.basal.str/a" (c/kw->str ::a)))
 
-  (ensure?? "x->kw" (= :tmp/abc (s/x->kw "tmp" "/" "abc")))
+  (ensure?? "x->kw" (= :tmp/abc (c/x->kw "tmp" "/" "abc")))
 
-  (ensure?? "nsn" (and (= "a" (s/nsn "a"))
-                       (= "(null)" (s/nsn nil))))
+  (ensure?? "nsn" (and (= "a" (c/nsn "a"))
+                       (= "(null)" (c/nsn nil))))
 
-  (ensure?? "match-char?" (and (s/match-char? \d #{\a \b \d})
-                               (not (s/match-char? \e #{\a \b \d}))))
+  (ensure?? "match-char?" (and (c/match-char? \d #{\a \b \d})
+                               (not (c/match-char? \e #{\a \b \d}))))
 
-  (ensure?? "strim" (and (= "" (s/strim nil))
-                         (= "a" (s/strim "   a   "))))
+  (ensure?? "strim" (and (= "" (c/strim nil))
+                         (= "a" (c/strim "   a   "))))
 
-  (ensure?? "strim-any" (and (= "  ab123" (s/strim-any "  ab123ab" "ab"))
-                             (= "123" (s/strim-any "  ab123ab   " "ab" true))))
+  (ensure?? "strim-any" (and (= "  ab123" (c/strim-any "  ab123ab" "ab"))
+                             (= "123" (c/strim-any "  ab123ab   " "ab" true))))
 
   (ensure?? "splunk" (= ["1234" "5678" "9"]
-                        (s/splunk "123456789" 4)))
+                        (c/splunk "123456789" 4)))
 
   (ensure?? "hasic-any?"
-            (and (s/hasic-any? "hello good morning" ["he" "OO" "in"])
-                 (not (s/hasic-any? "hello good morning" ["xx" "yy"]))))
+            (and (c/hasic-any? "hello good morning" ["he" "OO" "in"])
+                 (not (c/hasic-any? "hello good morning" ["xx" "yy"]))))
 
   (ensure?? "has-any?"
-            (and (s/has-any? "hello good morning" ["OO" "in"])
-                 (not (s/has-any? "hello good morning" ["xx" "yy"]))))
+            (and (c/has-any? "hello good morning" ["OO" "in"])
+                 (not (c/has-any? "hello good morning" ["xx" "yy"]))))
 
   (ensure?? "ewic-any?"
-            (and (s/ewic-any? "hello good morning" ["he" "OO" "NG"])
-                 (not (s/ewic-any? "hello good morning" ["xx" "yy"]))))
+            (and (c/ewic-any? "hello good morning" ["he" "OO" "NG"])
+                 (not (c/ewic-any? "hello good morning" ["xx" "yy"]))))
 
   (ensure?? "ew-any?"
-            (and (s/ew-any? "hello good morning" ["OO" "ing"])
-                 (not (s/ew-any? "hello good morning" ["xx" "yy"]))))
+            (and (c/ew-any? "hello good morning" ["OO" "ing"])
+                 (not (c/ew-any? "hello good morning" ["xx" "yy"]))))
 
   (ensure?? "swic-any?"
-            (and (s/swic-any? "hello good morning" ["OO" "HE"])
-                 (not (s/swic-any? "hello good morning" ["xx" "yy"]))))
+            (and (c/swic-any? "hello good morning" ["OO" "HE"])
+                 (not (c/swic-any? "hello good morning" ["xx" "yy"]))))
 
   (ensure?? "sw-any?"
-            (and (s/sw-any? "hello good morning" ["OO" "hell"])
-                 (not (s/sw-any? "hello good morning" ["xx" "yy"]))))
+            (and (c/sw-any? "hello good morning" ["OO" "hell"])
+                 (not (c/sw-any? "hello good morning" ["xx" "yy"]))))
 
-  (ensure?? "eqic?" (s/eqic? "AbcDE" "abcde"))
+  (ensure?? "eqic?" (c/eqic? "AbcDE" "abcde"))
 
   (ensure?? "eqic-any?"
-            (and (s/eqic-any? "hello" ["OO" "HellO"])
-                 (not (s/eqic-any? "hello" ["xx" "yy"]))))
+            (and (c/eqic-any? "hello" ["OO" "HellO"])
+                 (not (c/eqic-any? "hello" ["xx" "yy"]))))
 
   (ensure?? "eq-any?"
-            (and (s/eq-any? "hello" ["OO" "hello"])
-                 (not (s/eq-any? "hello" ["xx" "yy"]))))
+            (and (c/eq-any? "hello" ["OO" "hello"])
+                 (not (c/eq-any? "hello" ["xx" "yy"]))))
 
   (ensure?? "wrapped?"
-            (and (s/wrapped? "hello" "h" "o")
-                 (not (s/wrapped? "hello" "x" "y"))))
+            (and (c/wrapped? "hello" "h" "o")
+                 (not (c/wrapped? "hello" "x" "y"))))
 
-  (ensure?? "rights" (and (= "joe" (s/rights "hello joe" 3))
-                          (= "" (s/rights nil 3))
-                          (= "" (s/rights "aaa" 0))
-                          (= "hello joe" (s/rights "hello joe" 30))))
+  (ensure?? "rights" (and (= "joe" (c/rights "hello joe" 3))
+                          (= "" (c/rights nil 3))
+                          (= "" (c/rights "aaa" 0))
+                          (= "hello joe" (c/rights "hello joe" 30))))
 
-  (ensure?? "lefts" (and (= "he" (s/lefts "hello joe" 2))
-                          (= "" (s/lefts  nil 3))
-                          (= "" (s/lefts  "aaa" 0))
-                          (= "hello joe" (s/lefts "hello joe" 30))))
+  (ensure?? "lefts" (and (= "he" (c/lefts "hello joe" 2))
+                          (= "" (c/lefts  nil 3))
+                          (= "" (c/lefts  "aaa" 0))
+                          (= "hello joe" (c/lefts "hello joe" 30))))
 
-  (ensure?? "drop-head" (and (= "lo joe" (s/drop-head "hello joe" 3))
-                             (= "" (s/drop-head nil 3))
-                             (= "aaa" (s/drop-head "aaa" 0))
-                             (= "" (s/drop-head "hello joe" 30))))
+  (ensure?? "drop-head" (and (= "lo joe" (c/drop-head "hello joe" 3))
+                             (= "" (c/drop-head nil 3))
+                             (= "aaa" (c/drop-head "aaa" 0))
+                             (= "" (c/drop-head "hello joe" 30))))
 
-  (ensure?? "drop-tail" (and (= "hello " (s/drop-tail "hello joe" 3))
-                             (= "" (s/drop-tail  nil 3))
-                             (= "aaa" (s/drop-tail  "aaa" 0))
-                             (= "" (s/drop-tail "hello joe" 30))))
+  (ensure?? "drop-tail" (and (= "hello " (c/drop-tail "hello joe" 3))
+                             (= "" (c/drop-tail  nil 3))
+                             (= "aaa" (c/drop-tail  "aaa" 0))
+                             (= "" (c/drop-tail "hello joe" 30))))
 
   (ensure?? "sreduce<>"
             (= "123"
-               (s/sreduce<> #(s/sbf+ %1 %2) [1 2 3])))
+               (c/sreduce<> #(c/sbf+ %1 %2) [1 2 3])))
 
   (ensure?? "split-str"
             (and (= ["a" "b" "c"]
-                    (s/split-str "/a/b/c/" "/"))
+                    (c/split-str "/a/b/c/" "/"))
                  (= ["/" "a" "/" "b" "/" "c" "/"]
-                    (s/split-str "/a/b/c/" "/" true))))
+                    (c/split-str "/a/b/c/" "/" true))))
 
   (ensure?? "shuffle" (let [s "abcdefg"
-                            z (s/shuffle s)]
+                            z (u/shuffle s)]
                         (and (count s)
                              (count z)
                              (not= s z))))
 
-  (ensure?? "esc-xml" (= (s/esc-xml "<abc\"'&>")
+  (ensure?? "esc-xml" (= (c/esc-xml "<abc\"'&>")
                          "&lt;abc&quot;&apos;&amp;&gt;"))
 
 

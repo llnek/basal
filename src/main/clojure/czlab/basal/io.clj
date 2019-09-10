@@ -6,7 +6,7 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "IO, streams and file helpers."
+(ns ^{:doc "Useful additions to clojure io."
       :author "Kenneth Leung"}
 
   czlab.basal.io
@@ -16,9 +16,7 @@
             [clojure.pprint :as pp]
             [clojure.string :as cs]
             [clojure.edn :as edn]
-            [czlab.basal.str :as s]
             [czlab.basal.util :as u]
-            [czlab.basal.meta :as m]
             [czlab.basal.core :as c]
             [czlab.basal.indent :as in])
 
@@ -74,9 +72,12 @@
 (def ^:dynamic *membuf-limit* (* 4 c/MegaBytes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ^:private os* [x] `(clojure.java.io/output-stream ~x))
+(defmacro ^:private is*
+  [x] `(clojure.java.io/input-stream ~x))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ^:private is* [x] `(clojure.java.io/input-stream ~x))
+(defmacro ^:private os*
+  [x] `(clojure.java.io/output-stream ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro istream
@@ -102,7 +103,8 @@
 (defn baos<>
   "Make a byte array output stream"
   {:tag ByteArrayOutputStream}
-  ([] (baos<> nil))
+  ([]
+   (baos<> nil))
   ([size]
    (ByteArrayOutputStream. (int (c/num?? size c/BUF-SZ)))))
 
@@ -124,7 +126,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn copy
   "Copy certain number of bytes to output."
-  ([in out] (copy in out -1))
+  ([in out]
+   (copy in out -1))
   ([in out kount]
    {:pre [(number? kount)]}
    (if (neg? kount)
@@ -152,8 +155,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->bytes
-  "Convert almost anything to byte[]." {:tag "[B"}
-  ([in] (x->bytes in "utf-8"))
+  "Convert almost anything to byte[]."
+  {:tag "[B"}
+  ([in]
+   (x->bytes in "utf-8"))
   ([in enc]
    (cond (c/is? u/CSCZ in)
          (let [^ByteBuffer
@@ -176,8 +181,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->chars
-  "Convert almost anything to char[]." {:tag "[C"}
-  ([in] (x->chars in "utf-8"))
+  "Convert almost anything to char[]."
+  {:tag "[C"}
+  ([in]
+   (x->chars in "utf-8"))
   ([in enc]
    (cond (c/is? CharArrayWriter in)
          (.toCharArray ^CharArrayWriter in)
@@ -201,7 +208,8 @@
 (defn x->str
   "Convert almost anything to String."
   {:tag String}
-  ([in] (x->str in "utf-8"))
+  ([in]
+   (x->str in "utf-8"))
   ([in enc] (cond (or (nil? in)
                       (string? in))
                   in
@@ -317,7 +325,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn input-stream??
   "A tuple [you-close? stream]."
-  ([arg] (input-stream?? arg "utf-8"))
+  ([arg]
+   (input-stream?? arg "utf-8"))
   ([arg enc]
    (cond (or (bytes? arg)
              (c/is? URL arg)
@@ -350,7 +359,8 @@
 (defn readable-bytes
   "Get the available bytes in this stream."
   ^Integer
-  ([in] (readable-bytes in "utf-8"))
+  ([in]
+   (readable-bytes in "utf-8"))
   ([in enc]
    (cond (c/is? InputStream in) (.available ^InputStream in)
          (c/is? File in) (.length (c/cast? File in))
@@ -372,8 +382,8 @@
   "Create a temporary file."
   {:tag File}
   ([pfx sux dir]
-   (File/createTempFile (s/stror pfx "czlab")
-                        (s/stror sux ".tmp") (io/file dir)))
+   (File/createTempFile (c/stror pfx "czlab")
+                        (c/stror sux ".tmp") (io/file dir)))
   ([] (temp-file nil nil))
   ([pfx sux] (temp-file pfx sux *tempfile-repo*)))
 
@@ -388,7 +398,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->file
   "Copy content to a temp file."
-  ([in] (x->file in nil))
+  ([in]
+   (x->file in nil))
   ([in fout]
    (let [fp (or fout (temp-file))]
      (try (io/copy in fp)
@@ -426,7 +437,8 @@
     [fp w]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- slurp-inp [^InputStream inp limit enc]
+(defn- slurp-inp
+  [^InputStream inp limit enc]
   (loop [bits (byte-array c/BUF-SZ)
          os (baos<>) fo nil cnt 0 c (.read inp bits)]
     (if (neg? c)
@@ -443,7 +455,8 @@
             (recur bits o' f (+ c cnt) (.read inp bits)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- slurp-rdr [^Reader rdr limit enc]
+(defn- slurp-rdr
+  [^Reader rdr limit enc]
   (loop [cw (CharArrayWriter. (int c/BUF-SZ))
          carr (char-array c/BUF-SZ)
          fo nil cnt 0 c (.read rdr carr)]
@@ -531,7 +544,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parent-path
   "Path to parent." ^String [path]
-  (if (s/hgl? path) (.getParent (io/file path)) ""))
+  (if (c/hgl? path) (.getParent (io/file path)) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-file
@@ -807,3 +820,4 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
+

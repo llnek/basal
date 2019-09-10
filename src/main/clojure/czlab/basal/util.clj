@@ -6,15 +6,16 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "General helpers (imports java stuff)."
+(ns ^{:doc "Useful additions to clojure core, (imports java stuff)."
       :author "Kenneth Leung"}
 
   czlab.basal.util
 
+  (:refer-clojure :exclude [shuffle])
+
   (:require [czlab.basal.indent :as in]
             [czlab.basal.core :as c]
             [czlab.basal.log :as l]
-            [czlab.basal.str :as s]
             [clojure.string :as cs]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
@@ -471,7 +472,7 @@
 (defn safe-fpath
   "Hex-code all non-alpha chars in a file path."
   ^String [fname]
-  (s/sreduce<>
+  (c/sreduce<>
     (fn [^StringBuilder buf ^Character ch]
       (if (or (java.lang.Character/isLetterOrDigit ch)
               (contains? #{\_ \- \. } ch))
@@ -786,7 +787,7 @@
   ([basename] (get-resource basename (Locale/getDefault) nil))
   ([basename locale] (get-resource basename locale nil))
   ([basename locale cl]
-   (if (and locale (s/hgl? basename))
+   (if (and locale (c/hgl? basename))
      (ResourceBundle/getBundle ^String basename
                                ^Locale locale (get-cldr cl)))))
 
@@ -798,7 +799,7 @@
   ^String
   [bundle pkey & pms]
   (if (and bundle
-           (s/hgl? pkey))
+           (c/hgl? pkey))
     (loop [src (str (.getString ^ResourceBundle
                                 bundle ^String pkey))
            SZ (count pms)
@@ -838,6 +839,22 @@
   (try (locking lock
          (.notifyAll lock))
        (catch Throwable _ (l/exception _))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn shuffle
+  "Shuffle characters in string." [s]
+  (let [lst (java.util.ArrayList.)]
+    (doseq [c (seq s)] (.add lst c))
+    (java.util.Collections/shuffle lst)
+    (loop [i 0
+           SZ (.size lst)
+           out (char-array (.size lst))]
+      (if (>= i SZ)
+        (String. out)
+        (do (aset-char out
+                       i
+                       (.get lst i))
+            (recur (+ 1 i) SZ out))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

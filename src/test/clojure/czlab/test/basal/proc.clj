@@ -17,7 +17,7 @@
             [clojure.java.io :as io]
             [clojure.test :as ct]
             [czlab.basal.proc :as p]
-            [czlab.basal.proto :as po]
+            [czlab.basal.xpis :as po]
             [czlab.basal.core
              :refer [ensure?? ensure-thrown??] :as c]))
 
@@ -46,15 +46,6 @@
                                (u/run<> (swap! x inc)) 500)
                    (u/pause 800)
                    @x)))
-
-  (ensure?? "hold,wakeup"
-            (= 1 (let [x (atom 0)
-                       r (u/run<> (swap! x inc))]
-                      (p/hold @SCD r)
-                      (u/pause 500)
-                      (p/wakeup @SCD r)
-                      (u/pause 500)
-                      @x)))
 
   (ensure?? "async!"
             (do (p/async! #(spit CUR-FP "123"))

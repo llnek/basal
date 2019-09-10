@@ -6,7 +6,8 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "General helpers."
+(ns ^{:doc "Useful additions to clojure core.
+            Useful additions to clojure string."
       :author "Kenneth Leung"}
 
   czlab.basal.core
@@ -15,7 +16,7 @@
             [clojure.string :as cs])
 
   (:import [java.util Date]
-           [java.lang System]))
+           [java.lang System StringBuilder]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -40,93 +41,112 @@
 (def FourK (* 4 OneK))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro def-
+  "Same as def but private."
+  [name & more]
+  (list* `def (with-meta name
+                         (assoc (meta name)
+                                :private true)) more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro funcit??
-  "" [f & args]
-  `(let [f# ~f]
-     (if (fn? f#) (f# ~@args))))
+  "Maybe run a function." [f & args]
+  `(let [f# ~f] (if (fn? f#) (f# ~@args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro atom?
-  "If obj is an atom?" [x] `(instance? clojure.lang.Atom ~x))
+  "If obj is an atom?" [x]
+  `(instance? clojure.lang.Atom ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro n#-odd?
-  "Is count of collection odd?" [coll] `(odd? (count ~coll)))
+  "Count of collection odd?" [c] `(odd? (count ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro n#-even?
-  "Is count of collection even?" [coll] `(even? (count ~coll)))
+  "Count of collection even?" [c] `(even? (count ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro is?
-  "Alias instance?" [& more] `(instance? ~@more))
+  "instance?" [c x] `(instance? ~c ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro map->
-  "Alias into {}." [& more] `(into {} ~@more))
+  "into {}." [& more] `(into {} ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro vec->
-  "Alias into []." [& more] `(into [] ~@more))
+  "into []." [& more] `(into [] ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro set->
-  "Alias into #{}." [& more] `(into #{} ~@more))
+  "into #{}." [& more] `(into #{} ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro cc+1
-  "Alias concat - prepend an item." [a & more] `(concat [~a] ~@more))
+  "Prepend an item." [a & more] `(concat [~a] ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro cc+
-  "Alias concat." [& more] `(concat ~@more))
+  "concat." [& more] `(concat ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro _2 "Alias second." [x] `(second ~x))
+(defmacro _2
+  "second." [x] `(second ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro _1 "Alias first." [x] `(first ~x))
+(defmacro _1
+  "first." [x] `(first ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro _3 "Alias 3rd." [x] `(nth ~x 2))
+(defmacro _3
+  "Get 3rd item." [x] `(nth ~x 2))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro _E "Alias last." [x] `(last ~x))
+(defmacro _E
+  "last." [x] `(last ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro !zero? "If not-zero?" [n] `(not (zero? ~n)))
+(defmacro !zero?
+  "not-zero?" [n] `(not (zero? ~n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro n# "Alias count." [c] `(count ~c))
+(defmacro n#
+  "count." [c] `(count ~c))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro car "Alias first." [x] `(first ~x))
+(defmacro car
+  "first." [x] `(first ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro cdr "Alias rest." [x] `(rest ~x))
+(defmacro cdr
+  "rest." [x] `(rest ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro one? "" [c] `(= 1 (count ~c)))
+(defmacro one?
+  "Size of collection is 1." [c] `(= 1 (count ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro two? "" [c] `(= 2 (count ~c)))
+(defmacro two?
+  "Size of collection is 2." [c] `(= 2 (count ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro one+? "" [c] `(> (count ~c) 1))
+(defmacro one+?
+  "Size of collection > 1." [c] `(> (count ~c) 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro dissoc!!
   "Mutable dissoc (atom)."
   [a & args]
   (let [X (gensym)]
-    `(let [~X ~a] (swap! ~X #(dissoc % ~@args)) ~X)))
+    `(let [~X ~a] (swap! ~X dissoc ~@args) ~X)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro assoc!!
   "Mutable assoc (atom)."
   [a & args]
   (let [X (gensym)]
-    `(let [~X ~a] (swap! ~X #(assoc % ~@args)) ~X)))
+    `(let [~X ~a] (swap! ~X assoc ~@args) ~X)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fn_*
@@ -171,7 +191,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ps!
-  "Alias persistent!." [c] `(persistent! ~c))
+  "persistent!." [c] `(persistent! ~c))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro atomic
@@ -184,7 +204,8 @@
   `(vector ~@(map (fn [f] `(~op ~f ~v)) forms)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro last-index "Length - 1." [c] `(- (count ~c) 1))
+(defmacro last-index
+  "Length - 1." [c] `(- (count ~c) 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro nexth
@@ -192,52 +213,79 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro chop
-  "Alias partition." [& args] `(partition ~@args))
+  "partition." [& args] `(partition ~@args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro o+ "Alias for x+1." [X] `(+ 1 ~X))
-(defmacro o- "Alias for x-1." [X] `(- ~X 1))
+(defmacro o+
+  "One plus, x+1." [X] `(+ 1 ~X))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro do#false "Do returns false." [& forms] `(do ~@forms false))
-(defmacro do#true "Do returns true." [& forms] `(do ~@forms true))
-(defmacro do#nil "Do returns nil." [& forms] `(do ~@forms nil))
+(defmacro o-
+  "One less, x-1." [X] `(- ~X 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro let#false "Let returns false." [& forms] `(let ~@forms false))
-(defmacro let#true "Let returns true." [& forms] `(let ~@forms true))
-(defmacro let#nil "Let returns nil." [& forms] `(let ~@forms nil))
+(defmacro do#false
+  "Do returns false." [& forms] `(do ~@forms false))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro do#true
+  "Do returns true." [& forms] `(do ~@forms true))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro do#nil
+  "Do returns nil." [& forms] `(do ~@forms nil))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro let#false
+  "Let returns false." [& forms] `(let ~@forms false))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro let#true
+  "Let returns true." [& forms] `(let ~@forms true))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro let#nil
+  "Let returns nil." [& forms] `(let ~@forms nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro defenum
-  "Enum definition. e.g. (defenum xyz a 1 b c) will
+  "Enum definition. e.g. (defenum ^:private xyz a 1 b c) will
   generate
   (def xyz-a 1)
   (def xyz-b 2)
   (def xyz-c 3)."
   [name_ & args]
   (let [[e1 n] (take 2 args)
-        more (cc+1 e1 (drop 2 args))]
-    (assert (number? n) "Enum expecting a number.")
+        mm (meta name_)
+        more (concat [e1] (drop 2 args))]
+    (assert (number? n)
+            "Enum expecting a number.")
     `(do ~@(loop [v n [m & ms] more out []]
-            (if (nil? m)
-              out
-              (recur (+ 1 v)
-                     ms
-                     (conj out
-                           `(def ~(symbol (str (name name_)
-                                               "-" (name m))) ~v))))))))
+             (if (nil? m)
+               out
+               (let [z (str (name name_)
+                            "-" (name m))]
+                 (recur (+ 1 v)
+                        ms
+                        (conj out
+                              `(def ~(with-meta (symbol z) mm) ~v)))))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro condp??
-  "Make *simple* condp like cond." [pred expr & clauses]
+  "condp without throwing exception."
+  [pred expr & clauses]
   (let [c (count clauses)
-        xs (if-not (even? c)
+        z (count (filter #(and (keyword? %)
+                               (= :>> %)) clauses))
+        d (- c z)
+        xs (if-not (even? d)
              clauses
              (concat clauses ['nil]))] `(condp ~pred ~expr ~@xs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro case??
-  "Make *simple* condp like cond." [expr & clauses]
+  "case without throwing exception."
+  [expr & clauses]
   (let [c (count clauses)
         xs (if-not (even? c)
              clauses
@@ -245,8 +293,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-xxx??
-  "*internal*"
-  ([F bindings then] `(if-xxx?? ~F ~bindings ~then nil))
+  "*Internal*"
+  ([F bindings then]
+   `(if-xxx?? ~F ~bindings ~then nil))
   ([F bindings then else & oldform]
    (let [_ (assert (= 2 (count bindings))
                    "Too many (> 2) in bindings.")
@@ -270,7 +319,8 @@
   "bindings => binding-form test
   If test is a string, evaluates 'then'
   with binding-form bound to the value of test."
-  ([bindings then] `(if-string ~bindings ~then nil))
+  ([bindings then]
+   `(if-string ~bindings ~then nil))
   ([bindings then else & oldform]
    `(czlab.basal.core/if-xxx?? string? ~bindings ~then ~else)))
 
@@ -302,7 +352,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ensure??
-  "Assert test ok." [msg form] `(czlab.basal.core/ensure-test ~form ~msg))
+  "Assert test ok." [msg form]
+  `(czlab.basal.core/ensure-test ~form ~msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ensure-thrown??
@@ -372,21 +423,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro raise!
   "Throw exception." [fmt & args]
-  `(czlab.basal.core/trap! ~'Exception (format ~fmt ~@args)))
+  `(throw (new java.lang.Exception (str (format ~fmt ~@args)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro decl-throw-exp
   "Generate a function which when called will
   throw the desired exception."
-  ([name E] `(decl-throw-exp ~name ~E ""))
+  ([name E]
+   `(decl-throw-exp ~name ~E ""))
   ([name E doc]
-  `(defn ~name ~doc [~'arg & ~'xs]
-     (cond
-       (string? ~'arg)
-       (czlab.basal.core/trap! ~E (str (apply format ~'arg ~'xs)))
-       (instance? Throwable ~'arg)
-       (czlab.basal.core/trap! ~E
-                               ~(with-meta 'arg {:tag 'Throwable}))))))
+   `(defn ~name ~doc [~'arg & ~'xs]
+      (cond
+        (string? ~'arg)
+        (czlab.basal.core/trap! ~E (str (apply format ~'arg ~'xs)))
+        (instance? Throwable ~'arg)
+        (czlab.basal.core/trap! ~E
+                                ~(with-meta 'arg {:tag 'Throwable}))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do-with
@@ -406,6 +458,15 @@
       `(let [~f ~(last bindings)] ~@forms ~f))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro do-with-str
+  "binding=> symbol init-expr
+  Eval the body in a context in which the symbol is always the
+  returned value to-string'ed.
+  e.g. (do-with-str [a (f)] ... (str a))."
+  [bindings & forms]
+  `(str (czlab.basal.core/do-with ~bindings ~@forms)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do-with-atom
   "binding=> symbol init-expr
   Eval the body in a context in which the symbol is always the
@@ -415,7 +476,8 @@
   `(deref (czlab.basal.core/do-with ~bindings ~@forms)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro bool! "Alias for boolean" [x] `(boolean ~x))
+(defmacro bool!
+  "Alias for boolean" [x] `(boolean ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro trye!
@@ -469,8 +531,7 @@
                         `(~@f ~X) `(~f ~X))) forms) ~X)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro
-  doto->
+(defmacro doto->
   "Combine doto and ->." [x & forms]
   (let [X (gensym)]
     `(let [~X ~x]
@@ -481,25 +542,20 @@
                     `(~z ~X ~@r)) `(~f ~X))) forms) ~X)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro !=? "Alias for not identical?" [& more] `(not (identical? ~@more)))
+(defmacro !=?
+  "not identical?" [& more] `(not (identical? ~@more)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro =? "Alias for identical?" [& more] `(identical? ~@more))
+(defmacro =?
+  "identical?" [& more] `(identical? ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro !in? "Alias for not contains?" [& more] `(not (contains? ~@more)))
+(defmacro !in?
+  "not contains?" [& more] `(not (contains? ~@more)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro in? "Alias for contains?" [& more] `(contains? ~@more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-#_
-(defmacro XXcast?
-  [someType obj]
-  `^{:tag ~someType}
-  ((fn []
-    (let [x# ~obj]
-      (if (instance? ~someType x#) (.cast ~someType x#))))))
+(defmacro in?
+  "contains?" [& more] `(contains? ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;had to use this trick to prevent reflection warning
@@ -512,17 +568,20 @@
          ^{:tag ~someType} (identity (.cast ~someType ~X))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro cexp? "Try casting to Throwable." [e] `(cast? Throwable ~e))
+(defmacro cexp?
+  "Try casting to Throwable." [e] `(cast? Throwable ~e))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro !nil? "is x not nil." [x] `(not (nil? ~x)))
+(defmacro !nil?
+  "not nil." [x] `(not (nil? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro rnil "Get rid of nil(s) in seq." [seq] `(remove nil? ~seq))
+(defmacro rnil
+  "Skip nil(s) in seq." [seq] `(remove nil? ~seq))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro rnilv
-  "Get rid of nil(s), returning a vec." [seq] `(into [] (remove nil? ~seq)))
+  "rnil, returning a vec." [seq] `(into [] (remove nil? ~seq)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro szero?
@@ -549,14 +608,16 @@
     `(let [~E ~e] (or (szero? ~E)(spos? ~E)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro !false? "Explicit not false." [x] `(not (false? ~x)))
+(defmacro !false?
+  "not false." [x] `(not (false? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro !true? "Explicit not true." [x] `(not (true? ~x)))
+(defmacro !true?
+  "not true." [x] `(not (true? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro assert-not
-  "Verify a false condition?" [cnd] `(assert (not ~cnd)))
+  "false condition?" [cnd] `(assert (not ~cnd)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro marray
@@ -586,9 +647,10 @@
 ;;monads
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro run-bind
-  "Run the bind operator. *internal*"
+  "Run the bind operator. *Internal*"
   [binder steps expr]
-  (let [[a1 mv] (take 2 steps) more (drop 2 steps)]
+  (let [more (drop 2 steps)
+        [a1 mv] (take 2 steps)]
     `(~binder ~mv
               (fn [~a1]
                 ~(if (not-empty more)
@@ -599,7 +661,8 @@
   "Define a named monad by defining the monad operations. The definitions
    are written like bindings to the monad operations bind and
    unit (required) and zero and plus (optional)."
-  ([name ops] `(defmonad ~name "" ~ops))
+  ([name ops]
+   `(defmonad ~name "" ~ops))
   ([name docs ops]
    (let [_ (assert (not-empty ops) "no monad ops!")]
      `(def ~name (merge {:bind nil
@@ -613,7 +676,8 @@
   "Monad comprehension. Takes the name of a monad, a vector of steps
    given as binding-form, and a result value
    specified by body."
-  ([monad steps] `(domonad ~monad ~steps nil))
+  ([monad steps]
+   `(domonad ~monad ~steps nil))
   ([monad steps body]
    (let [E (gensym) B (gensym) U (gensym) Z (gensym)]
      `(let [{~B :bind ~U :unit ~Z :zero} ~monad
@@ -689,7 +753,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn num??
   "If n is not a number, return other."
-  [n other] (if (number? n) n other))
+  [n other]
+  {:pre [(number? other)]}
+  (if (number? n) n other))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn flip
@@ -724,7 +790,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- xxx-by
-  "Used by min-by & max-by. *internal*"
+  "Used by min-by & max-by. *Internal*"
   [cb coll]
   (if (not-empty coll)
     (reduce cb (_1 coll) (rest coll))))
@@ -742,8 +808,8 @@
   (xxx-by #(if (< (f %1) (f %2)) %2 %1) coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def ^:private t-bad "FAILED")
-(def ^:private t-ok "PASSED")
+(def- t-bad "FAILED")
+(def- t-ok "PASSED")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ensure-test
@@ -758,25 +824,23 @@
   [expected error msg]
   (str (if (nil? error)
          t-bad
-         (cond (or (= expected :any)
-                   (instance? expected error))
-               t-ok
-               :else
-               t-bad)) ": " msg))
+         (if (or (= expected :any)
+                 (is? expected error)) t-ok t-bad)) ": " msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rip-fn-name
-  "" [func]
+  "Extract (mangled) name of the function."
+  ^String [func]
   (let [s (str func)
         h (cs/index-of s "$")
         s (if h (subs s (+ 1 h)) s)
-        p (cs/last-index-of s "@")]
-    (if p (subs s 0 p) s)))
+        p (cs/last-index-of s "@")] (if p (subs s 0 p) s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn runtest
   "Run a test group, returning the summary."
-  ([test] (runtest test nil))
+  ([test]
+   (runtest test nil))
   ([test title]
    {:pre [(fn? test)]}
    (let [mark (System/currentTimeMillis)
@@ -813,8 +877,7 @@
   ([test title print?]
    (let [[ok? r]
          (runtest test title)]
-     (if print?
-       (println r)) ok?)))
+     (if print? (println r)) ok?)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn int-var
@@ -905,7 +968,8 @@
 (defn s->long
   "String as a long value."
   {:tag Long}
-  ([s] (s->long s 0))
+  ([s]
+   (s->long s 0))
   ([s dv]
    {:pre [(or (nil? s)(string? s))(number? dv)]}
    (trye! (long dv) (Long/parseLong ^String s))))
@@ -914,7 +978,8 @@
 (defn s->int
   "String as an int value."
   {:tag Integer}
-  ([s] (s->int s 0))
+  ([s]
+   (s->int s 0))
   ([s dv]
    {:pre [(or (nil? s)(string? s))(number? dv)]}
    (trye! (int dv) (Integer/parseInt ^String s))))
@@ -923,7 +988,8 @@
 (defn s->double
   "String as a double value."
   {:tag Double}
-  ([s] (s->double s 0.0))
+  ([s]
+   (s->double s 0.0))
   ([s dv]
    {:pre [(or (nil? s)(string? s))(number? dv)]}
    (trye! (double dv) (Double/parseDouble ^String s))))
@@ -937,7 +1003,7 @@
 ;; test and assert funcs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn test-isa
-  "Is child of parent?"  [reason par chi]
+  "Is child of parent?" [reason par chi]
   (do#true (-> (cond
                  (and (class? par)(class? chi)) (isa? chi par)
                  (or (nil? par)(nil? chi)) false
@@ -1010,8 +1076,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sort-join
   "Sort and concatenate strings."
-  ([ss] (sort-join "" ss))
-  ([sep ss] (if (nil? ss) "" (cs/join sep (sort ss)))))
+  ([ss]
+   (sort-join "" ss))
+  ([sep ss]
+   (if (nil? ss) "" (cs/join sep (sort ss)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn strip-ns-path
@@ -1019,7 +1087,8 @@
   ^String [path] (cs/replace (str path) #"^:" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defprotocol VTableAPI "Act like a virtual table."
+(defprotocol VTableAPI
+  "Act like a virtual table."
   (vt-set-proto [_ par] "Hook up parent prototype object.")
   (vt-has? [_ kee] "True if key exists in the hierarchy.")
   (vt-run?? [_ kee arglist]
@@ -1057,36 +1126,44 @@
 (defn identity-n
   "Like identity but returns positional param.
   e.g. (def get-2nd (identity-n 2)) (get-2nd a b c) => b."
-  ([n] (identity-n n false))
+  ([n]
+   (identity-n n false))
   ([n index-zero?]
    {:pre [(number? n)]}
-     (fn_* (let [z (count ____xs)
-                 p (if index-zero? n (- n 1))]
-             (assert (and (< p z)
-                          (>= p 0))
-                     "Index out of bound.") (nth ____xs p)))))
+   (fn_* (let [z (count ____xs)
+               p (if index-zero? n (- n 1))]
+           (assert (and (< p z)
+                        (>= p 0))
+                   "Index out of bound.") (nth ____xs p)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- merge-2 [a b]
-  (cond (nil? a) b
-        (nil? b) a
-        :else
-        (loop [tmp (tmap* a)
-               [z & M] (seq b)]
-          (let [[k vb] z
-                va (get a k)]
-            (if (nil? z)
-              (ps! tmp)
-              (recur (assoc! tmp
-                             k
-                             (cond (not (in? a k)) vb
-                                   (and (map? vb)
-                                        (map? va)) (merge-2 va vb)
-                                   (and (set? vb)
-                                        (set? va)) (ct/union va vb) :else vb)) M))))))
+(defn- merge-2
+  [a b]
+  (if (nil? a)
+    b
+    (if (nil? b)
+      a
+      (loop [[z & M] (seq b) tmp (tmap* a)]
+        (let [[k vb] z
+              va (get a k)]
+          (if (nil? z)
+            (ps! tmp)
+            (recur M
+                   (assoc! tmp
+                           k
+                           (cond (not (in? a k))
+                                 vb
+                                 (and (map? vb)
+                                      (map? va))
+                                 (merge-2 va vb)
+                                 (and (set? vb)
+                                      (set? va))
+                                 (ct/union va vb)
+                                 :else vb)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn merge+ [& more]
+(defn merge+
+  [& more]
   "Merge (deep) of clojure data."
   (cond (empty? more) nil
         (one? more) (_1 more)
@@ -1095,6 +1172,421 @@
                 (if (empty? xs)
                   (merge-2 prev a)
                   (recur (merge-2 prev a) xs)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;string stuff
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro sreduce<>
+  "Reduce with a string-builder, returning a string."
+  [f c] `(str (reduce ~f (StringBuilder.) ~c)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn fmt
+  "Like format." ^String [f & args] (apply format f args))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn sbf+
+  "StringBuilder concat."
+  [buf & args]
+  (doseq [x args]
+    (.append ^StringBuilder buf x)) buf)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn sbf<>
+  "StringBuilder.new"
+  {:tag StringBuilder}
+  ([]
+   (sbf<> ""))
+  ([& args]
+   (let [s (StringBuilder.)] (apply sbf+ s args) s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn sbf-join
+  "Append to a string-builder, optionally
+   inserting a delimiter if the buffer is not empty."
+  [^StringBuilder buf sep item]
+  (when item
+    (if (and (!nil? sep)
+             (pos? (.length buf)))
+      (.append buf sep))
+    (.append buf item))
+  buf)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn sbfz
+  "Length of the string-buffer." [b] (.length ^StringBuilder b))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn nichts?
+  "Is string empty?"
+  [s]
+  (or (nil? s)
+      (not (string? s))
+      (.isEmpty ^String s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn hgl?
+  "If string has length?" [s] (and (string? s)
+                                   (not (.isEmpty ^String s))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn stror
+  "If not s then s2"
+  ^String
+  [s s2] (if (nichts? s) s2 s))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn XXXstror*
+  "If not s then s2...etc"
+  ^String
+  [& args] (loop [[a & more] args]
+             (if (or (hgl? a) (empty? more)) a (recur more))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro stror*
+  "If not s then s2...etc"
+  [& args]
+  (let [[a & xs] args]
+    (if (empty? xs)
+      `(stror nil ~a)
+      `(stror ~a (stror* ~@xs)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn lcase
+  "Lowercase string safely."
+  ^String [s] (str (some-> s clojure.string/lower-case)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn ucase
+  "Uppercase string safely."
+  ^String [s] (str (some-> s clojure.string/upper-case)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;#^"[Ljava.lang.Class;"
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn triml
+  "Get rid of unwanted chars from left."
+  ^String
+  [^String src ^String unwantedChars]
+  (if (and (hgl? src)
+           (hgl? unwantedChars))
+    (loop [len (.length src) pos 0]
+      (if-not (and (< pos len)
+                   (cs/index-of unwantedChars
+                                (.charAt src pos)))
+        (subs src pos)
+        (recur len (+ 1 pos))))
+    src))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn trimr
+  "Get rid of unwanted chars from right."
+  ^String
+  [^String src ^String unwantedChars]
+  (if (and (hgl? src)
+           (hgl? unwantedChars))
+    (loop [pos (.length src)]
+      (if-not (and (pos? pos)
+                   (cs/index-of unwantedChars
+                                (.charAt src (- pos 1))))
+        (subs src 0 pos)
+        (recur (- pos 1))))
+    src))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn has?
+  "If the char is inside the big str?"
+  [^String bigs arg]
+  (let [rc (cond (or (nil? arg)
+                     (nil? bigs)) false
+                 (integer? arg) (int arg)
+                 (string? arg) (number? (cs/index-of bigs arg))
+                 (is? Character arg) (int (.charValue ^Character arg)))]
+    (if (number? rc)
+      (>= (.indexOf bigs (int rc)) 0) rc)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro embeds?
+  "If sub-str is inside the big str?"
+  [bigs s] `(czlab.basal.core/has? ~bigs ~s))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro has-no-case?
+  "If sub-str is inside the big str - ignore case?"
+  [bigs s]
+  `(czlab.basal.core/has?
+     (czlab.basal.core/lcase ~bigs) (czlab.basal.core/lcase ~s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn index-any
+  "If any one char is inside the big str, return the position."
+  [^String bigs ^String chStr]
+  (if (and (hgl? bigs)
+           (hgl? chStr))
+    (let [rc (some #(cs/index-of bigs %)
+                   (.toCharArray chStr))] (if (nil? rc) -1 (int rc))) -1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn count-str
+  "Count the times the sub-str appears in the big str."
+  [^String bigs ^String s]
+  (if (and (hgl? s)
+           (hgl? bigs))
+    (loop [len (.length s)
+           total 0 start 0]
+      (let [pos (cs/index-of bigs s start)]
+        (if (nil? pos)
+          total
+          (recur len
+                 (+ 1 total)
+                 (long (+ pos len)))))) 0))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn count-char
+  "Count the times this char appears in the big str."
+  [bigs ch]
+  (reduce #(if (= ch %2)
+             (+ 1 %1) %1)
+          0
+          (.toCharArray ^String bigs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro sname
+  "Safely get the name of this object" [n] `(str (some-> ~n name)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn nsb
+  "Empty string if obj is null, or obj.toString"
+  ^String [obj] (if (keyword? obj) (name obj) (str obj)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn kw->str
+  "Stringify a keyword - no leading colon."
+  ^String [k] (cs/replace (str k) #"^:" ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn x->kw
+  "Concatenate all args and return it as a keyword"
+  [& args] (if-not (empty? args)
+             (keyword (apply str args))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn nsn
+  "(null) if obj is null, or obj.toString"
+  ^String [obj] (if (nil? obj) "(null)" (str obj)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn match-char?
+  "If this char is inside this set of chars?"
+  [ch setOfChars]
+  (if (set? setOfChars) (contains? setOfChars ch) false))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro strim
+  "Safely trim this string."
+  [s] `(str (some-> ~s clojure.string/trim)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn strim-any
+  "Strip source string of these unwanted chars."
+  {:tag String}
+
+  ([src unwantedChars]
+   (strim-any src unwantedChars false))
+
+  ([^String src ^String unwantedChars whitespace?]
+   (let [s (-> (if whitespace? (strim src) src)
+               (triml unwantedChars)
+               (trimr unwantedChars))]
+     (if whitespace? (strim s) s))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn splunk
+  "Split a large string into chunks,
+  each chunk having a specific length."
+  [^String largeString chunkLength]
+  (if (and (hgl? largeString)
+           (snneg? chunkLength))
+    (mapv #(cs/join "" %1)
+          (partition-all chunkLength largeString)) []))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn hasic-any?
+  "If bigs contains any one of these strs - ignore case?"
+  [^String bigs substrs]
+  {:pre [(sequential? substrs)]}
+  (if-not (or (empty? substrs) (nichts? bigs))
+    (let [lc (lcase bigs)]
+      (true? (some #(number? (cs/index-of lc (lcase %))) substrs)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn has-any?
+  "If bigs contains any one of these strs?"
+  [^String bigs substrs]
+  {:pre [(sequential? substrs)]}
+  (if-not (or (nichts? bigs)
+              (empty? substrs))
+    (true? (some #(number? (cs/index-of bigs %)) substrs))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn ewic-any?
+  "If bigs endsWith any one of the strs, no-case?"
+  [^String bigs substrs]
+  {:pre [(sequential? substrs)]}
+  (if-not (or (nichts? bigs)
+              (empty? substrs))
+    (let [lc (lcase bigs)]
+      (true? (some #(cs/ends-with? lc (lcase %)) substrs)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn ew-any?
+  "If bigs endsWith any one of the strs?"
+  [^String bigs substrs]
+  {:pre [(sequential? substrs)]}
+  (if-not (or (nichts? bigs)
+          (empty? substrs))
+    (true? (some #(cs/ends-with? bigs %) substrs))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn swic-any?
+  "If bigs startWith any one of the strs - no case?"
+  [^String bigs substrs]
+  {:pre [(sequential? substrs)]}
+  (if-not (or (nichts? bigs)
+              (empty? substrs))
+    (let [lc (lcase bigs)]
+      (true? (some #(cs/starts-with? lc (lcase %)) substrs)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn sw-any?
+  "If bigs startWith any one of the strs?"
+  [^String bigs substrs]
+  {:pre [(sequential? substrs)]}
+  (if-not (or (nichts? bigs)
+              (empty? substrs))
+    (true? (some #(cs/starts-with? bigs %) substrs))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro eqic?
+  "String.equalIgnoreCase()?"
+  [src other]
+  (let [^String ss src
+        ^String oo other] `(.equalsIgnoreCase ~ss ~oo)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn eqic-any?
+  "String.equalIgnoreCase() on any one of the strs?"
+  [^String src substrs]
+  {:pre [(sequential? substrs)]}
+  (if-not (or (nichts? src)
+              (empty? substrs))
+    (let [lc (lcase src)]
+      (true? (some #(= lc (lcase %)) substrs)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn eq-any?
+  "If String.equals() on any one of the strs?"
+  [^String src substrs]
+  {:pre [(sequential? substrs)]}
+  (if-not (empty? substrs)
+    (true? (some #(= src %) substrs))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn wrapped?
+  "If src string starts with head and ends with tail?"
+  [^String src ^String head ^String tail]
+  (if (and (hgl? src)
+           (hgl? head) (hgl? tail))
+    (and (cs/starts-with? src head) (cs/ends-with? src tail))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn rights
+  "Get the rightmost len characters of a String."
+  ^String
+  [^String src len]
+  {:pre [(number? len)]}
+  (if (or (<= len 0)
+          (nichts? src))
+    ""
+    (if (< (.length src) len)
+      src
+      (subs src (- (.length src) len)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn lefts
+  "Get the leftmost len characters of a String."
+  ^String
+  [^String src len]
+  {:pre [(number? len)]}
+  (if (or (<= len 0)
+          (nichts? src))
+    ""
+    (if (< (.length src) len)
+      src
+      (subs src 0 len))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn drop-head
+  "Drop leftmost len characters of a String."
+  ^String
+  [^String src len]
+  {:pre [(number? len)]}
+  (cond (nichts? src)
+        ""
+        (<= len 0)
+        src
+        :else
+        (if (< (.length src) len) "" (subs src len))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn drop-tail
+  "Drop rightmost len characters of a String."
+  ^String
+  [^String src len]
+  {:pre [(number? len)]}
+  (cond (nichts? src)
+        ""
+        (<= len 0)
+        src
+        :else
+        (let [n (.length src)]
+          (if (< n len) "" (subs src 0 (- n len))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn matches?
+  "String.matches." [src regex]
+  (if (hgl? src) (.matches ^String src ^String regex)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn split
+  "String.split."
+  ([^String src ^String regex]
+   (.split src regex))
+  ([^String src ^String regex limit]
+   (.split src regex (int limit))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn split-str
+  "String tokenizer."
+  ([s sep]
+   (split-str s sep false))
+  ([s sep incSep?]
+   (let [t (new java.util.StringTokenizer
+                ^String s ^String sep (boolean incSep?))]
+     (loop [rc (tvec*)]
+       (if-not (.hasMoreTokens t)
+         (ps! rc)
+         (recur (conj! rc (.nextToken t))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn esc-xml
+  "Escape XML special chars."
+  [s]
+  (cs/escape s {\& "&amp;"
+                \> "&gt;"
+                \< "&lt;"
+                \" "&quot;"
+                \' "&apos;"}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

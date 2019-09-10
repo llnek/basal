@@ -6,13 +6,12 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Date helpers."
+(ns ^{:doc "Useful date functions."
       :author "Kenneth Leung"}
 
   czlab.basal.dates
 
-  (:require [czlab.basal.str :as s]
-            [clojure.string :as cs]
+  (:require [clojure.string :as cs]
             [czlab.basal.core :as c])
 
   (:import [java.text
@@ -45,11 +44,12 @@
                        "JUL" "AUG" "SEP" "OCT" "NOV" "DEC"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro fmt-timestamp "Timestamp as stringvalue." [ts] `(str ~ts))
+(defmacro fmt-timestamp
+  "Timestamp as stringvalue." [ts] `(str ~ts))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro fmt-time "Format current time."
-  [fmt] `(fmt-date (new java.util.Date) ~fmt))
+(defmacro fmt-time
+  "Format current time." [fmt] `(fmt-date (new java.util.Date) ~fmt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-leap-year?
@@ -61,11 +61,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- has-tz-part?
   "String has time zone?" [s]
-  (let [pos (s/index-any s ",; \t\r\n\f")
+  (let [pos (c/index-any s ",; \t\r\n\f")
         ss (if (pos? pos)
              (subs s (+ 1 pos)) "")]
-    (or (s/has-any? ss ["+" "-"])
-        (.matches ss "\\s*[a-zA-Z]+\\s*"))))
+    (or (c/has-any? ss ["+" "-"])
+        (c/matches? ss "\\s*[a-zA-Z]+\\s*"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- has-tz?
@@ -88,23 +88,22 @@
   "Convert string into a valid Timestamp object
   *tstr* conforming to the format
   \"yyyy-mm-dd hh:mm:ss.[fff...]\""
-  ^Timestamp
-  [s] (c/try! (Timestamp/valueOf ^String s)))
+  ^Timestamp [s] (c/try! (Timestamp/valueOf ^String s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-date
   "String to Date."
   ^Date [tstr fmt]
-  (when (and (s/hgl? fmt)
-             (s/hgl? tstr))
+  (when (and (c/hgl? fmt)
+             (c/hgl? tstr))
     (.parse (SimpleDateFormat. ^String fmt) ^String tstr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-iso8601
   "To ISO8601 format" ^Date [tstr]
-  (when (s/hgl? tstr)
-    (let [fmt (if (s/has? tstr \:)
-                (if (s/has? tstr \.)
+  (when (c/hgl? tstr)
+    (let [fmt (if (c/has? tstr \:)
+                (if (c/has? tstr \.)
                   *dt-fmt-micro* *dt-fmt*) *date-fmt*)]
       (parse-date tstr (if (has-tz? tstr) (str fmt "Z") fmt)))))
 
@@ -115,7 +114,7 @@
   ([dt fmt] (fmt-date dt fmt nil))
   ([dt fmt tz]
    (str (if-not (or (nil? dt)
-                    (s/nichts? fmt))
+                    (c/nichts? fmt))
           (let [df (SimpleDateFormat. ^String fmt)]
             (some->> ^TimeZone tz
                      (.setTimeZone df)) (.format df ^Date dt))))))
@@ -214,5 +213,4 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
-
 

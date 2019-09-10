@@ -12,11 +12,9 @@
   czlab.basal.proc
 
   (:require [czlab.basal.util :as u]
-            [czlab.basal.meta :as m]
-            [czlab.basal.str :as s]
             [czlab.basal.log :as l]
             [czlab.basal.core :as c]
-            [czlab.basal.proto :as po])
+            [czlab.basal.xpis :as po])
 
   (:import [java.util
             Map
@@ -40,7 +38,8 @@
             OperatingSystemMXBean]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn tcore<> ""
+(defn tcore<>
+  ""
   ([id] (tcore<> id (* 2 (.availableProcessors (Runtime/getRuntime)))))
   ([id tds] (tcore<> id tds true))
   ([id tds trace?] (tcore<> id tds 60000 trace?))
@@ -70,7 +69,7 @@
      (reify
        Object
        (toString [_]
-         (s/fmt "TCore#%s - threads = %s." id (.getCorePoolSize core)))
+         (c/fmt "TCore#%s - threads = %s." id (.getCorePoolSize core)))
        po/Startable
        (start [me] (.start me nil))
        (start [me _] (locking me (c/int-var paused? 0)))
@@ -80,8 +79,8 @@
          (if (zero? (c/int-var paused?))
            (.execute core ^Runnable r)
            (l/warn "TCore is not running!")))
-       po/Disposable
-       (dispose [me]
+       po/Finzable
+       (finz [me]
          (.stop me)
          (.shutdown core)
          (if trace?
@@ -142,7 +141,7 @@
 (defn process-pid
   "Get process pid." ^String []
   (let [b (ManagementFactory/getRuntimeMXBean)]
-   (u/try!! "" (c/_1 (-> b .getName str (.split "@"))))))
+   (u/try!! "" (c/_1 (-> b .getName str (c/split "@"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn delay-exec
@@ -163,21 +162,24 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;scheduler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- prerun [hQ w] (some->> w (.remove ^Map hQ)))
+(defn- prerun
+  [hQ w] (some->> w (.remove ^Map hQ)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- add-timer [timer task delayMillis]
+(defn- add-timer
+  [timer task delayMillis]
   (.schedule ^Timer
              timer ^TimerTask task ^long delayMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defprotocol Scheduler ""
+(defprotocol Scheduler
+  "Schedules tasks."
   (alarm [_ delayMillis f args] "")
-  (purge [_] "")
-  (run [_ w] "")
-  (hold [_ w] "")
-  (wakeup [_ w] "")
-  (reschedule [_ w] "")
+  (purge [_] "Remove all tasks.")
+  (run [_ w] "Run this task.")
+  ;(hold [_ w] "")
+  ;(wakeup [_ w] "")
+  ;(reschedule [_ w] "")
   (postpone [_ w delayMillis] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -187,7 +189,7 @@
    (scheduler<> (u/jid<>) nil))
   ([named options]
    (let [{:keys [threads trace?]} options
-         id (s/sname named)
+         id (c/sname named)
          cpu (tcore<> id
                       ^long
                       (c/num?? threads 0)
@@ -211,28 +213,28 @@
         [w' (c/cast? Runnable w)]
         (prerun hq w')
         (po/put cpu w')))
-    (hold [_ w]
-      (if w (.put hq w w)))
-    (wakeup [me w] (.run me w))
+    ;(hold [_ w]
+      ;(if w (.put hq w w)))
+    ;(wakeup [me w] (.run me w))
     (postpone [me w delayMillis]
       {:pre [(number? delayMillis)]}
       (cond (zero? delayMillis)
             (c/do#nil (.run me w))
             (neg? delayMillis)
-            (c/do#nil (.hold me w))
+            nil
             :else
             (c/do-with [tt (u/tmtask<>
-                             #(.wakeup me w))]
+                             #(.run me w))]
               (add-timer timer tt delayMillis))))
-    (reschedule [me w] (.run me w))
+    ;(reschedule [me w] (.run me w))
     po/Activable
     (activate [_] (po/start cpu))
     (deactivate [me]
       (po/stop cpu)
       (.clear hq)
       (doto timer .cancel .purge))
-    po/Disposable
-    (dispose [me]
+    po/Finzable
+    (finz [me]
       (.deactivate me)
       (po/dispose cpu))))))
 
