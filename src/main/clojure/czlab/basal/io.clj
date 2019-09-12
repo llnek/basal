@@ -72,12 +72,8 @@
 (def ^:dynamic *membuf-limit* (* 4 c/MegaBytes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ^:private is*
-  [x] `(clojure.java.io/input-stream ~x))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ^:private os*
-  [x] `(clojure.java.io/output-stream ~x))
+(c/defmacro- os* [x] `(clojure.java.io/output-stream ~x))
+(c/defmacro- is* [x] `(clojure.java.io/input-stream ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro istream
@@ -144,7 +140,7 @@
               (let [len (if (< remain c/BUF-SZ) remain c/BUF-SZ)
                     n (if (pos? len) (.read is buf 0 len) -1)]
                 (if (neg? n)
-                  nil ;to be consistent with io/copy, total
+                  nil ;to be consistent with io/copy
                   (do (if (pos? n)
                         (.write os buf 0 n))
                       (recur (long (- remain n))

@@ -6,8 +6,7 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Useful additions to clojure core.
-            Useful additions to clojure string."
+(ns ^{:doc "Useful additions to clojure core & string."
       :author "Kenneth Leung"}
 
   czlab.basal.core
@@ -39,6 +38,14 @@
 
 (def OneK 1024)
 (def FourK (* 4 OneK))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro defmacro-
+  "Same as defmacro but private."
+  [name & more]
+  (list* `defmacro (with-meta name
+                              (assoc (meta name)
+                                     :private true)) more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro def-
@@ -190,7 +197,7 @@
   ([x] `(transient (or ~x {}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ps!
+(defmacro persist!
   "persistent!." [c] `(persistent! ~c))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -251,9 +258,9 @@
 (defmacro defenum
   "Enum definition. e.g. (defenum ^:private xyz a 1 b c) will
   generate
-  (def xyz-a 1)
-  (def xyz-b 2)
-  (def xyz-c 3)."
+  (def ^:private xyz-a 1)
+  (def ^:private xyz-b 2)
+  (def ^:private xyz-c 3)."
   [name_ & args]
   (let [[e1 n] (take 2 args)
         mm (meta name_)
@@ -360,22 +367,22 @@
   "Assert error was thrown."
   [msg expected form]
   `(try ~form
-        (czlab.basal.core/ensure-thrown ~expected nil ~msg)
+        (czlab.basal.core/ensure-thrown ~msg)
         (catch Throwable e#
           (czlab.basal.core/ensure-thrown ~expected e# ~msg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro prn!!
   "Println with format."
-  [fmt & args] `(println (apply format ~fmt ~@args [])))
+  [fmt & args] `(println (format ~fmt ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro prn!
   "Print with format."
-  [fmt & args] `(print (apply format ~fmt ~@args [])))
+  [fmt & args] `(print (format ~fmt ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ^:private make-fn
+(defmacro- make-fn
   "Hack to wrap a macro as fn
   so you can use *apply* on it."
   [m] `(fn [& xs#] (eval (cons '~m xs#))))
@@ -389,7 +396,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro vargs
-  "Coerce into java vargs." [z c] `(into-array ~z ~c))
+  "Coerce into java vargs." [z arglist] `(into-array ~z ~arglist))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro preduce<map>
@@ -451,8 +458,7 @@
     (assert (or (= sz 1)
                 (= sz 2))
             "(not 1 or 2) in bindings.")
-    (if (= sz 1)
-      (assert (symbol? f)))
+    (assert (symbol? f))
     (if (= sz 1)
       `(let [~f ~f] ~@forms ~f)
       `(let [~f ~(last bindings)] ~@forms ~f))))
@@ -644,6 +650,10 @@
   "Alias with-open." [bindings & forms] `(with-open ~bindings ~@forms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro wm*
+  "Alias with-meta." [obj m] `(with-meta ~obj ~m))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;monads
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro run-bind
@@ -821,11 +831,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ensure-thrown
   "Assert an exception is thrown during test."
-  [expected error msg]
-  (str (if (nil? error)
-         t-bad
-         (if (or (= expected :any)
-                 (is? expected error)) t-ok t-bad)) ": " msg))
+  ([msg]
+   (ensure-thrown nil nil msg))
+  ([expected error msg]
+   (str (if (nil? error)
+          t-bad
+          (if (or (= expected :any)
+                  (is? expected error)) t-ok t-bad)) ": " msg)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rip-fn-name
@@ -1147,7 +1159,7 @@
         (let [[k vb] z
               va (get a k)]
           (if (nil? z)
-            (ps! tmp)
+            (persist! tmp)
             (recur M
                    (assoc! tmp
                            k
@@ -1187,7 +1199,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbf+
   "StringBuilder concat."
-  [buf & args]
+  ^StringBuilder [buf & args]
   (doseq [x args]
     (.append ^StringBuilder buf x)) buf)
 
@@ -1204,6 +1216,7 @@
 (defn sbf-join
   "Append to a string-builder, optionally
    inserting a delimiter if the buffer is not empty."
+  ^StringBuilder
   [^StringBuilder buf sep item]
   (when item
     (if (and (!nil? sep)
@@ -1232,8 +1245,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn stror
   "If not s then s2"
-  ^String
-  [s s2] (if (nichts? s) s2 s))
+  ^String [s s2] (if (nichts? s) s2 s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn XXXstror*
@@ -1575,7 +1587,7 @@
                 ^String s ^String sep (boolean incSep?))]
      (loop [rc (tvec*)]
        (if-not (.hasMoreTokens t)
-         (ps! rc)
+         (persist! rc)
          (recur (conj! rc (.nextToken t))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

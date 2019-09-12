@@ -38,6 +38,9 @@
             OperatingSystemMXBean]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;(set! *warn-on-reflection* true)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn tcore<>
   ""
   ([id] (tcore<> id (* 2 (.availableProcessors (Runtime/getRuntime)))))
@@ -71,24 +74,23 @@
        (toString [_]
          (c/fmt "TCore#%s - threads = %s." id (.getCorePoolSize core)))
        po/Startable
+       (start [me _] (locking me (c/int-var paused? 0) me))
        (start [me] (.start me nil))
-       (start [me _] (locking me (c/int-var paused? 0)))
-       (stop [me] (locking me (c/int-var paused? 1)))
+       (stop [me] (locking me (c/int-var paused? 1) me))
        po/Enqueable
-       (put [_ r]
-         (if (zero? (c/int-var paused?))
+       (put [me r]
+         (if (and (c/is? Runnable r)
+                  (zero? (c/int-var paused?)))
            (.execute core ^Runnable r)
-           (l/warn "TCore is not running!")))
+           (l/warn "TCore is not running!")) me)
        po/Finzable
        (finz [me]
          (.stop me)
          (.shutdown core)
          (if trace?
            (l/debug
-             "TCore#%s - disposed and shut down." id)))))))
+             "TCore#%s - disposed and shut down." id)) me)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;(set! *warn-on-reflection* true)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn thread<>
   "Run code in a separate thread."
@@ -175,11 +177,7 @@
 (defprotocol Scheduler
   "Schedules tasks."
   (alarm [_ delayMillis f args] "")
-  (purge [_] "Remove all tasks.")
   (run [_ w] "Run this task.")
-  ;(hold [_ w] "")
-  ;(wakeup [_ w] "")
-  ;(reschedule [_ w] "")
   (postpone [_ w delayMillis] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -190,53 +188,37 @@
   ([named options]
    (let [{:keys [threads trace?]} options
          id (c/sname named)
+         timer (Timer. id true)
          cpu (tcore<> id
                       ^long
                       (c/num?? threads 0)
-                      (c/!false? trace?))
-         timer (Timer. id true)
-         hq (ConcurrentHashMap.)]
-  (reify
-    Scheduler
-    (alarm [_ delayMillis f args]
-      {:pre [(fn? f)
-             (c/spos? delayMillis)
-             (or (nil? args)
-                 (sequential? args))]}
-      (c/do-with
-        [tt (u/tmtask<> #(apply f args))]
-        (add-timer timer tt delayMillis)))
-    (purge [_]
-      (.purge timer))
-    (run [_ w]
-      (when-some
-        [w' (c/cast? Runnable w)]
-        (prerun hq w')
-        (po/put cpu w')))
-    ;(hold [_ w]
-      ;(if w (.put hq w w)))
-    ;(wakeup [me w] (.run me w))
-    (postpone [me w delayMillis]
-      {:pre [(number? delayMillis)]}
-      (cond (zero? delayMillis)
-            (c/do#nil (.run me w))
-            (neg? delayMillis)
-            nil
-            :else
-            (c/do-with [tt (u/tmtask<>
-                             #(.run me w))]
-              (add-timer timer tt delayMillis))))
-    ;(reschedule [me w] (.run me w))
-    po/Activable
-    (activate [_] (po/start cpu))
-    (deactivate [me]
-      (po/stop cpu)
-      (.clear hq)
-      (doto timer .cancel .purge))
-    po/Finzable
-    (finz [me]
-      (.deactivate me)
-      (po/dispose cpu))))))
+                      (c/!false? trace?))]
+     (reify Scheduler
+       (alarm [_ delayMillis f args]
+         {:pre [(fn? f)
+                (sequential? args)
+                (c/spos? delayMillis)]}
+         (c/do-with
+           [tt (u/tmtask<> #(apply f args))]
+           (add-timer timer tt delayMillis)))
+       (run [me w]
+         (po/put cpu w) me)
+       (postpone [me w delayMillis]
+         {:pre [(number? delayMillis)]}
+         (cond (zero? delayMillis)
+               (.run me w)
+               (pos? delayMillis)
+               (.alarm me delayMillis #(.run me w) [])) me)
+       po/Activable
+       (activate [me]
+         (po/start cpu) me)
+       (deactivate [me]
+         (po/stop cpu)
+         (doto timer .cancel .purge) me)
+       po/Finzable
+       (finz [me]
+         (.deactivate me)
+         (po/finz cpu) me)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

@@ -38,11 +38,11 @@
 (c/def- ^String long-mask "0000000000")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ^:private fmt-int
+(c/defmacro- fmt-int
   [nm] `(fmt int-mask (Integer/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ^:private fmt-long
+(c/defmacro- fmt-long
   [nm] `(fmt long-mask (Long/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

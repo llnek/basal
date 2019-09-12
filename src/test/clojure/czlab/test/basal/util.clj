@@ -55,15 +55,15 @@
   (ensure?? "date<>" (instance? java.util.Date (u/date<>)))
 
   (ensure?? "sys-prop!,sys-prop"
-            (= "a" (do (u/sys-prop! "hello.joe.test" "a")
-                       (u/sys-prop "hello.joe.test"))))
+            (= "a" (do (u/set-sys-prop! "hello.joe.test" "a")
+                       (u/get-sys-prop "hello.joe.test"))))
 
-  (ensure?? "user-name" (let [s (u/user-name)]
+  (ensure?? "user-name" (let [s (u/get-user-name)]
                           (and (string? s) (pos? (count s)))))
 
-  (ensure?? "home-dir" (instance? java.io.File (u/home-dir)))
+  (ensure?? "home-dir" (instance? java.io.File (u/get-user-home)))
 
-  (ensure?? "get-cwd" (instance? java.io.File (u/get-cwd)))
+  (ensure?? "get-cwd" (instance? java.io.File (u/get-user-dir)))
 
   (ensure?? "trim-last-pathsep"
             (= "/tmp/abc" (u/trim-last-pathsep "/tmp/abc/")))
@@ -80,11 +80,11 @@
 
   (ensure?? "watch<>,pause" (let [w (u/watch<>)]
                               (u/pause 100)
-                              (and (pos? (u/watch-elapsed-millis w))
-                                   (pos? (u/watch-elapsed-nanos w))
+                              (and (pos? (u/wa-elapsed-millis w))
+                                   (pos? (u/wa-elapsed-nanos w))
                                    (pos? (do (u/pause 100)
-                                             (u/watch-reset! w)
-                                             (u/watch-elapsed-nanos w))))))
+                                             (u/wa-reset! w)
+                                             (u/wa-elapsed-nanos w))))))
 
   (ensure?? "jid<>" (let [s (u/jid<>)]
                       (and (string? s)
@@ -237,18 +237,18 @@
               (= z "a+c+b")))
 
   (ensure?? "new-memset" (let [m (u/new-memset<> 2)
-                               _ (u/ms-add! m (atom {:a 1}))
+                               _ (u/ms-add m (atom {:a 1}))
                                z0 (u/ms-count m)]
-                           (u/ms-add! m (atom {:a 2}))
-                           (u/ms-add! m (atom {:a 3}))
+                           (u/ms-add m (atom {:a 2}))
+                           (u/ms-add m (atom {:a 3}))
                            (and (= 1 z0)
                                 (= 3 (u/ms-count m))
                                 (= 4 (u/ms-capacity m)))))
 
   (ensure?? "each-set" (let [acc (atom 0)
                              m (u/new-memset<> 2)]
-                         (u/ms-add! m (atom {:a 1}))
-                         (u/ms-add! m (atom {:a 2}))
+                         (u/ms-add m (atom {:a 1}))
+                         (u/ms-add m (atom {:a 2}))
                          (u/ms-each m
                                     (fn [obj _]
                                       (swap! acc + (:a @obj))))
@@ -256,10 +256,10 @@
   (ensure?? "drop->set!" (let [m (u/new-memset<> 2)
                                a (atom {:a 1})
                                b (atom {:a 1})]
-                           (u/ms-add! m a)
-                           (u/ms-add! m b)
-                           (u/ms-drop! m a)
-                           (u/ms-drop! m b)
+                           (u/ms-add m a)
+                           (u/ms-add m b)
+                           (u/ms-drop m a)
+                           (u/ms-drop m b)
                            (= 0 (u/ms-count m))))
 
   (ensure?? "get-cldr" (not (nil? (u/get-cldr))))

@@ -24,7 +24,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ^:private rdr
+(c/defmacro- rdr
   "Read from the reader."
   [r] `(.read ~(with-meta r {:tag 'Reader})))
 
@@ -61,7 +61,7 @@
                 (if b?
                   (if (nil? p2)
                     more (cons p2 more)) more)))
-       (vector (c/ps! options)
+       (vector (c/persist! options)
                (if (= "--" p1)
                  (if p2 (cons p2 more)) args))))))
 

@@ -6,7 +6,7 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc ""
+(ns ^{:doc "Clojure environment that can load and run a function."
       :author "Kenneth Leung"}
 
   czlab.basal.cljrt

@@ -101,7 +101,7 @@
 
   (ensure?? "tvec*" (= [:a] (persistent! (conj! (c/tvec*) :a))))
 
-  (ensure?? "ps!" (= #{:a} (c/ps! (conj! (transient #{}) :a))))
+  (ensure?? "ps!" (= #{:a} (c/persist! (conj! (transient #{}) :a))))
 
   (ensure?? "atomic" (= {:a 1 :b 3} @(c/atomic :a 1 :b 3)))
 

@@ -27,11 +27,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ^:private throw-bad-key
+(c/defmacro- throw-bad-key
   [k] `(u/throw-BadData "No such item %s." ~k))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro ^:private throw-bad-map
+(c/defmacro- throw-bad-map
   [s] `(u/throw-BadData "No such heading %s" ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,46 +43,45 @@
 (defn- maybe-section
   "Look for a section storing the
   actual name in meta."
-  [rdr ncmap line]
+  [rdr line ncmap]
   (c/if-some+ [s (c/strim-any line "[]" true)]
-    (c/do-with [k (keyword (c/lcase s))]
-      (if-not (c/in? @ncmap k)
-        (c/assoc!! ncmap
-                   k
-                   (with-meta (ordered-map) {:name s}))))
+    (let [k (keyword (c/lcase s))]
+      [(if-not (c/in? ncmap k)
+         (assoc ncmap
+                k (c/wm* (ordered-map)
+                         (hash-map :name s))) ncmap) k])
     (throw-bad-ini rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- maybe-line
   "Parse a line (name=value) under a section."
-  [rdr ncmap section line]
-  (if-some [_ (get @ncmap section)]
+  [rdr line ncmap section]
+  (if-some [_ (get ncmap section)]
     (let [pos (cs/index-of line \=)
           nm (if (c/spos? pos)
                (c/strim (subs line 0 pos)) "")
           k (if (c/hgl? nm)
               (keyword (c/lcase nm)) (throw-bad-ini rdr))]
-      (swap! ncmap
-             update-in
-             [section]
-             assoc
-             k
-             [nm (c/strim (subs line (+ 1 pos)))])
-      section)
+      [(update-in ncmap
+                 [section]
+                 assoc
+                 k
+                 [nm (c/strim (subs line (+ 1 pos)))]) section])
     (throw-bad-ini rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- eval-one-line
   "Parses a line in the file."
-  [rdr ncmap cursec ^String line]
+  [rdr line ncmap curSec]
   (let [ln (c/strim line)]
     (cond (or (c/nichts? ln)
               (cs/starts-with? ln "#"))
-          cursec ;comment line
+          ;skip comments
+          [ncmap curSec]
           (c/matches? ln "^\\[.*\\]$")
-          (maybe-section rdr ncmap ln)
+          (maybe-section rdr ln ncmap)
           :else
-          (maybe-line rdr ncmap cursec ln))))
+          (maybe-line rdr ln ncmap curSec))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- getkv
@@ -166,15 +165,13 @@
                    (io/reader :encoding
                               (c/stror enc "utf8"))
                    LineNumberReader. )]
-     (loop [total (atom (sorted-map))
-            rdr inp line (.readLine rdr) curSec nil]
+     (loop [rdr inp line (.readLine rdr)
+            [total curSec] [(sorted-map) nil]]
        (if (nil? line)
-         (wrap->ini @total)
-         (recur total
-                rdr
+         (wrap->ini total)
+         (recur rdr
                 (.readLine rdr)
-                (eval-one-line rdr
-                               total curSec line)))))))
+                (eval-one-line rdr line total curSec)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn win-ini<>

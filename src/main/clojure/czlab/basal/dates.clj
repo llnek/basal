@@ -6,7 +6,7 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Useful date functions."
+(ns ^{:doc "Useful additions for handling dates."
       :author "Kenneth Leung"}
 
   czlab.basal.dates
@@ -29,19 +29,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
-(def ^String ^:private ts-regex "^\\d\\d\\d\\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])\\s\\d\\d:\\d\\d:\\d\\d")
-(def ^String ^:private dt-regex "^\\d\\d\\d\\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$")
+(c/def- ^String ts-regex "^\\d\\d\\d\\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])\\s\\d\\d:\\d\\d:\\d\\d")
+(c/def- ^String dt-regex "^\\d\\d\\d\\d-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$")
 
-(def ^String ^:private ts-fmt-nano "yyyy-MM-dd HH:mm:ss.fffffffff")
-(def ^String ^:private ts-fmt "yyyy-MM-dd HH:mm:ss")
+(c/def- ^String ts-fmt-nano "yyyy-MM-dd HH:mm:ss.fffffffff")
+(c/def- ^String ts-fmt "yyyy-MM-dd HH:mm:ss")
 
 (def ^String ^:dynamic *iso8601-fmt* "yyyy-MM-dd'T'HH:mm:ss.SSSZ")
 (def ^String ^:dynamic *dt-fmt-micro* "yyyy-MM-dd'T'HH:mm:ss.SSS")
 (def ^String ^:dynamic *dt-fmt* "yyyy-MM-dd'T'HH:mm:ss")
 (def ^String ^:dynamic *date-fmt* "yyyy-MM-dd")
 
-(def ^:private months ["JAN" "FEB" "MAR" "APR" "MAY" "JUN"
-                       "JUL" "AUG" "SEP" "OCT" "NOV" "DEC"])
+(c/def- months ["JAN" "FEB" "MAR" "APR" "MAY" "JUN"
+                "JUL" "AUG" "SEP" "OCT" "NOV" "DEC"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fmt-timestamp

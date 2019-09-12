@@ -175,7 +175,7 @@
   (let [rc (loop [sum (c/tvec*)
                   par javaClass]
              (if (nil? par)
-               (c/ps! sum)
+               (c/persist! sum)
                (recur (conj! sum par)
                       (.getSuperclass par))))]
     ;; since we always add the original class,
@@ -216,14 +216,14 @@
   "List all methods belonging to this class, including inherited ones."
   [javaClass]
   (vals (if javaClass
-          (c/ps! (list-mtds javaClass 0)))))
+          (c/persist! (list-mtds javaClass 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-fields
   "List all fields belonging to this class, including inherited ones."
   [javaClass]
   (vals (if javaClass
-          (c/ps! (list-flds javaClass 0)))))
+          (c/persist! (list-flds javaClass 0)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

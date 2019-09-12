@@ -13,14 +13,14 @@
 
   (:refer-clojure :exclude [shuffle])
 
-  (:require [czlab.basal.indent :as in]
+  (:require [clojure.data.json :as js]
             [czlab.basal.core :as c]
             [czlab.basal.log :as l]
             [clojure.string :as cs]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.data.json :as js]
-            [clojure.pprint :as pp])
+            [clojure.pprint :as pp]
+            [czlab.basal.indent :as in])
 
   ;(:use [clojure.walk])
 
@@ -67,6 +67,7 @@
             ArrayList
             TimeZone
             Locale
+            Collections
             ResourceBundle
             StringTokenizer
             GregorianCalendar
@@ -87,16 +88,26 @@
 (def ^String PATHSEP (System/getProperty "file.separator"))
 (def CSCZ (class (.toCharArray "")))
 (def BSCZ (class (.getBytes "")))
-(def ^:private SGCZ (class ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defprotocol MonoFlop "" (is-first-call? [_] ""))
+(defprotocol MonoFlop
+  ""
+  (is-first-call? [_] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defprotocol Watch  ""
-  (watch-elapsed-millis [_] "")
-  (watch-reset! [_] "")
-  (watch-elapsed-nanos [_] ""))
+(defprotocol Watch
+  ""
+  (wa-elapsed-millis [_] "")
+  (wa-reset! [_] "")
+  (wa-elapsed-nanos [_] ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro ostream
+  "clojure-io's output-stream." [out] `(clojure.java.io/output-stream ~out))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro istream
+  "clojure-io's input-stream." [in] `(clojure.java.io/input-stream ~in))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro try!!!
@@ -133,7 +144,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/decl-throw-exp throw-BadData
-                  RuntimeException
+                  czlab.basal.DataError
                   "Throw Bad Data Exception")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -158,63 +169,30 @@
   "RFC4122, v4 format" [] `(str (java.util.UUID/randomUUID)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro date<> "A java Date" [] `(java.util.Date.))
+(defmacro date<>
+  "A java Date" [] `(java.util.Date.))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro sys-prop!
+(defmacro set-sys-prop!
   "Set a system property."
   [prop value] `(System/setProperty ~prop ~value))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro sys-prop
+(defmacro get-sys-prop
   "Get value of a system property."
   [prop] `(System/getProperty (str ~prop) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro user-name
-  "Get the user login name." [] `(sys-prop "user.name"))
+(defmacro get-user-name
+  "Get the user login name." [] `(get-sys-prop "user.name"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro home-dir
-  "Get user's home dir." [] `(clojure.java.io/file (sys-prop "user.home")))
+(defmacro get-user-home
+  "Get user's home dir." [] `(clojure.java.io/file (get-sys-prop "user.home")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro get-cwd
-  "Get current dir." [] `(clojure.java.io/file (sys-prop "user.dir")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro decl-generic-enum
-  "e.g. (decl-generic-enum weather hot cold)."
-  [name base & more]
-  (assert (and (number? base)
-               (not-empty more)))
-  `(def
-     ~name
-     (~'czlab.basal.core/object<>
-       ~'czlab.basal.java.JEnum
-       (-> {}
-           ~@(reduce
-               #(conj %1
-                      `(assoc (keyword (str *ns*) ~(str %2))
-                              ~(+ base (count %1)))) [] more)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;how to make it private
-;;(alter-meta! #'weather assoc :private true)
-(defmacro decl-special-enum
-  "e.g. (decl-special-enum weather hot 3 cold 7)."
-  [name & more]
-  (assert (even? (count more)))
-  (let [ps (partition 2 more)]
-    `(def
-       ~name
-       (~'czlab.basal.core/object<>
-         ~'czlab.basal.java.JEnum
-         (-> {}
-             ~@(mapv #(do
-                        `(assoc (keyword (str *ns*)
-                                         ~(str (first %)))
-                                ~(last %))) ps))))))
+(defmacro get-user-dir
+  "Get current dir." [] `(clojure.java.io/file (get-sys-prop "user.dir")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;end-macros
@@ -225,15 +203,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mono-flop<>
-  "Flip on first call,
-  for one-time logic."
-  []
-  (let [toggled (atom false)]
-    (reify
-      MonoFlop
-      (is-first-call? [_]
-        (if-not @toggled
-          (c/do#true (reset! toggled true)))))))
+  "One time logic, flip on first call."
+  [] (let [toggled (atom false)]
+       (reify MonoFlop
+         (is-first-call? [_]
+           (if-not @toggled (c/do#true (reset! toggled true)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn watch<>
@@ -244,18 +218,9 @@
                      %
                      (- (System/nanoTime) @start) TimeUnit/NANOSECONDS)]
     (reify Watch
-      (watch-reset! [_] (reset! start (System/nanoTime)))
-      (watch-elapsed-millis [_] (f TimeUnit/MILLISECONDS))
-      (watch-elapsed-nanos [_] (f TimeUnit/NANOSECONDS)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; local hack
-(defn- get-czldr
-  {:tag ClassLoader}
-  ([]
-   (get-czldr nil))
-  ([cl]
-   (or cl (. (Thread/currentThread) getContextClassLoader))))
+      (wa-reset! [_] (reset! start (System/nanoTime)))
+      (wa-elapsed-nanos [_] (f TimeUnit/NANOSECONDS))
+      (wa-elapsed-millis [_] (f TimeUnit/MILLISECONDS)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;happens to be all hex chars
@@ -275,9 +240,10 @@
   ([]
    (rand<> false))
   ([strong?]
-   (doto (if strong?
-           (SecureRandom/getInstanceStrong)
-           (SecureRandom.))
+   (doto
+     (if-not strong?
+       (SecureRandom.)
+       (SecureRandom/getInstanceStrong))
      (.setSeed (SecureRandom/getSeed 4)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -312,21 +278,21 @@
   ([]
    (charset?? "utf-8"))
   ([enc]
-   (if (instance? Charset enc)
-     enc
-     (Charset/forName (or enc "utf-8")))))
+   (if-not
+     (instance? Charset enc)
+     (Charset/forName (or enc "utf-8")) enc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fpath
   "Get the file path." ^String [arg]
-  (if (instance? File arg)
-    (fpath (.getCanonicalPath ^File arg))
-    (cs/replace (str arg) #"\\" "/")))
+  (if-not (instance? File arg)
+    (cs/replace (str arg) #"\\" "/")
+    (fpath (.getCanonicalPath ^File arg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn serialize
   "Object serialization."
-  ^bytes [obj] {:pre [(c/!nil? obj)]}
+  ^bytes [obj] {:pre [(some? obj)]}
   (c/wo* [out (ByteArrayOutputStream. c/BUF-SZ)
           oos (ObjectOutputStream. out)]
     (.writeObject oos ^Serializable obj) (.toByteArray out)))
@@ -336,51 +302,50 @@
   "Object deserialization."
   ^Serializable
   [^bytes bits]
-  {:pre [(c/!nil? bits)]}
-  (c/wo* [in (ByteArrayInputStream. bits)
-          ois (ObjectInputStream. in)] (.readObject ois)))
+  {:pre [(some? bits)]}
+  (c/wo* [ois (-> bits
+                  ByteArrayInputStream.
+                  ObjectInputStream.)] (.readObject ois)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gczn
   "Get object's short class name."
   ^String [obj]
   (cond (nil? obj) ""
-        (instance? Class obj) (.getSimpleName ^Class obj)
-        :else (gczn (class obj))))
+        (instance? Class obj)
+        (.getSimpleName ^Class obj) :else (gczn (class obj))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-class-name
   "Get object's class name."
   ^String [obj]
   (cond (nil? obj) ""
-        (instance? Class obj) (.getName ^Class obj)
-        :else (get-class-name (class obj))))
+        (instance? Class obj)
+        (.getName ^Class obj) :else (get-class-name (class obj))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-windows?
   "Is Windows OS?" []
-  (cs/includes? (cs/lower-case (sys-prop "os.name")) "windows"))
+  (cs/includes? (cs/lower-case (get-sys-prop "os.name")) "windows"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-macos?
-  "Is Mac OS?" [] (cs/includes? (sys-prop "os.name") "Mac "))
+  "Is Mac OS?" [] (cs/includes? (get-sys-prop "os.name") "Mac "))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-linux?
-  "Is Linux OS?" [] (and (not (is-windows?)) (not (is-macos?))))
+  "Is Linux OS?" [] (and (not (is-macos?))
+                         (not (is-windows?))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn load-java-props
   "Load properties from source."
   ^Properties [arg]
-  (cond (instance? File arg)
-        (load-java-props (io/as-url arg))
-        (instance? URL arg)
-        (c/wo*
-          [inp (.openStream ^URL arg)] (load-java-props inp))
-        :else
-        (c/do-with [p (Properties.)]
-          (some->> (c/cast? InputStream arg) (.load p )))))
+  (if (or (instance? URL arg)
+          (instance? File arg))
+    (c/wo* [inp (istream arg)] (load-java-props inp))
+    (c/do-with [p (Properties.)]
+      (some->> (c/cast? InputStream arg) (.load p)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->str
@@ -392,14 +357,11 @@
    (let [cz (class obj)]
      (cond (string? obj)
            obj
-
            (= CSCZ cz)
            (String. ^chars obj)
-
            (= BSCZ cz)
            (String. ^bytes obj
                     (charset?? enc))
-
            :else (str obj)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -408,11 +370,9 @@
   ^chars [obj]
   (cond (= CSCZ (class obj))
         obj
-
         (string? obj)
         (.toCharArray ^String obj)
-
-        (c/!nil? obj)
+        (some? obj)
         (x->chars (str obj))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -425,13 +385,10 @@
    (let [cz (class obj)]
      (cond (= ByteArrayOutputStream cz)
            (.toByteArray ^ByteArrayOutputStream obj)
-
            (= BSCZ cz)
            obj
-
            (= CSCZ cz)
            (x->bytes (x->str obj) enc)
-
            (string? obj)
            (.getBytes ^String obj (charset?? enc))))))
 
@@ -439,7 +396,7 @@
 (defn deflate
   "Compress bytes."
   ^bytes [^bytes bits]
-  (if (c/!nil? bits)
+  (if bits
     (let [buf (byte-array c/BUF-SZ)
           cpz (doto (Deflater.)
                 (.setLevel Deflater/BEST_COMPRESSION)
@@ -457,7 +414,7 @@
 (defn inflate
   "Decompress bytes."
   ^bytes [^bytes bits]
-  (if (c/!nil? bits)
+  (if bits
     (let [baos (ByteArrayOutputStream. (alength bits))
           buf (byte-array c/BUF-SZ)
           decr (doto (Inflater.)
@@ -487,8 +444,7 @@
 (defn fmt-file-url
   "File path as URL"
   ^URL [path]
-  (when (and (string? path)
-             (not-empty path))
+  (when (c/hgl? path)
     (io/as-url
       (if (cs/starts-with? path "file:") path (str "file:" path)))))
 
@@ -497,11 +453,10 @@
   "The file path only."
   ^String
   [fpath]
-  (if-some [u (cond
-                (c/is? URL fpath) fpath
-                (string? fpath) (fmt-file-url fpath))]
-    (.getPath ^URL u)
-    ""))
+  (if-some
+    [u (cond
+         (c/is? URL fpath) fpath
+         (string? fpath) (fmt-file-url fpath))] (.getPath ^URL u) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn root-cause
@@ -520,7 +475,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn pmap<>
   "Java Map into Clojure Map."
-  {:tag APersistentMap}
   ([props]
    (pmap<> props true))
   ([props key?]
@@ -535,8 +489,7 @@
   "A timer task."
   ^TimerTask [func]
   {:pre [(fn? func)]}
-  (proxy [TimerTask][]
-    (run [] (c/try! (func)))))
+  (proxy [TimerTask][] (run [] (c/try! (func)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn prn-stk
@@ -587,14 +540,13 @@
         (conv->map obj)
         (set? obj)
         (conv->set obj)
-        (or (vector? obj)
-            (list? obj))
+        (sequential? obj)
         (conv->list obj)
         :else obj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defonce ^:private ^AtomicInteger _num-int (AtomicInteger. 1))
-(defonce ^:private ^AtomicLong _num-long (AtomicLong. 1))
+(c/def- ^AtomicInteger _num-int (AtomicInteger. 1))
+(c/def- ^AtomicLong _num-long (AtomicLong. 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn seqint
@@ -622,7 +574,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro sys-tmp-dir
-  "Java tmp dir." [] `(sys-prop "java.io.tmpdir"))
+  "Java tmp dir." [] `(get-sys-prop "java.io.tmpdir"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- same-obj?
@@ -646,26 +598,6 @@
         false
         :else (.equals ^Object a b)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defprotocol JEnumProto
-  "Mimic Java Enum."
-  (lookup-enum-str [_ s] "Get enum from string")
-  (get-enum-str [_ e] "Get string value of enum")
-  (lookup-enum-int [_ n] "Get enum from int"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;Loose equivalent of a Java Enum
-(defrecord JEnum []
-  JEnumProto
-  (get-enum-str [me e]
-    (if (contains? me e)
-      (cs/replace (str e) #"^:" "")))
-  (lookup-enum-str [me s]
-    (let [kee (keyword s)]
-      (some #(if (= kee (first %)) (first %)) me)))
-  (lookup-enum-int [me n]
-    (some #(if (= n (last %)) (first %)) me)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn url-encode
   "HTML encode."
@@ -686,7 +618,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sortby
-  "" [kfn cmp coll]
+  "sort-by with comparator." [kfn cmp coll]
   (sort-by kfn
            (reify java.util.Comparator
              (compare [_ t1 t2] (cmp t1 t2))) coll))
@@ -694,9 +626,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;in memory store
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defprotocol MemSet ""
-  (ms-drop! [_ obj] "Free the object from the store.")
-  (ms-add! [_ obj] "Add new item to the set.")
+(defprotocol MemSet
+  ""
+  (ms-drop [_ obj] "Free the object from the store.")
+  (ms-add [_ obj] "Add new item to the set.")
   (ms-count [_] "Count items in the set.")
   (ms-capacity [_] "Capacity of the set.")
   (ms-nth [_ pos] "The nth item in the set.")
@@ -717,12 +650,12 @@
        (ms-nth [_ n]
          (let [{:keys [next slots]} @impl]
            (if (< n next) (nth slots n))))
-       (ms-each [_ cb]
+       (ms-each [me cb]
          (let [{:keys [next slots]} @impl]
-           (dotimes [i next] (cb (nth slots i) i))))
-       (ms-add! [_ obj]
-         {:pre [(c/atom? obj)]}
-         (c/do-with [obj]
+           (dotimes [i next] (cb (nth slots i) i)) me))
+       (ms-add [me obj]
+         (assert (c/atom? obj))
+         (c/do-with [me]
            (swap! impl
                   (c/fn_1
                     (let [{:keys [next size slots] :as root} ____1
@@ -734,8 +667,9 @@
                       (swap! obj #(assoc % :____slot next))
                       (aset ^"[Ljava.lang.Object;" arr next obj)
                       (assoc root :slots arr :next next1 :size (count arr)))))))
-       (ms-drop! [_ obj]
-         (if (c/atom? obj)
+       (ms-drop [me obj]
+         {:pre [(c/atom? obj)]}
+         (c/do-with [me]
            (swap! impl
                   (c/fn_1
                     (let [{:keys [next slots] :as root} ____1
@@ -773,7 +707,7 @@
   [arg]
   (if-some [inp (cond (or (c/is? URL arg)
                           (c/is? File arg))
-                      (io/input-stream arg)
+                      (istream arg)
                       (string? arg)
                       (-> (get-cldr)
                           (.getResourceAsStream ^String arg)))]
@@ -802,15 +736,14 @@
            (c/hgl? pkey))
     (loop [src (str (.getString ^ResourceBundle
                                 bundle ^String pkey))
-           SZ (count pms)
-           pos 0]
+           pos 0
+           SZ (count pms)]
       ;;(log/debug "RStr key = %s, value = %s" pkey kv)
       (if (>= pos SZ)
         src
         (recur (.replaceFirst src
                               "\\{\\}"
-                              (str (nth pms pos))) SZ (+ 1 pos))))
-    pkey))
+                              (str (nth pms pos))) (+ 1 pos) SZ))) pkey))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rstr*
@@ -827,9 +760,9 @@
         (catch Throwable _ (l/exception _))))
   ([^Object lock waitMillis]
    (try (locking lock
-          (if (pos? waitMillis)
-            (.wait lock waitMillis)
-            (.wait lock)))
+          (if-not (pos? waitMillis)
+            (.wait lock)
+            (.wait lock waitMillis)))
         (catch Throwable _ (l/exception _)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -845,7 +778,7 @@
   "Shuffle characters in string." [s]
   (let [lst (java.util.ArrayList.)]
     (doseq [c (seq s)] (.add lst c))
-    (java.util.Collections/shuffle lst)
+    (Collections/shuffle lst)
     (loop [i 0
            SZ (.size lst)
            out (char-array (.size lst))]

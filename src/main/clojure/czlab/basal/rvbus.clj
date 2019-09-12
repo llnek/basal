@@ -29,12 +29,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def ^:private re-space #"\s+")
-(def ^:private re-dot #"\.")
-(def ^:private re-slash #"/")
+(c/def- re-space #"\s+")
+(c/def- re-dot #"\.")
+(c/def- re-slash #"/")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- split "Split up topic into parts." [topic sep]
+(defn- split
+  "Split up topic into parts." [topic sep]
   (filterv #(if (> (count %) 0) %)
            (cs/split topic
                      (if (= sep ".") re-dot re-slash))))
@@ -82,7 +83,8 @@
         (action expected topic msg)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- walk [async? branch pathTokens topic msg tst]
+(defn- walk
+  [async? branch pathTokens topic msg tst]
   (c/let#nil
     [{:keys [levels subcs]} branch
      [p & more] pathTokens
@@ -112,11 +114,11 @@
           (run async? (:subcs cur) topic msg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defprotocol EventBus ""
+(defprotocol EventBus
+  ""
   (ev-pub [_ topic msg] "")
   (ev-match? [_ topic] "")
   (ev-dbg [_] "")
-  (ev-finz [_] "")
   (ev-unsub [_ subid] "")
   (ev-sub [_ topic listener] ""))
 
@@ -176,12 +178,12 @@
            (pos? @z)))
        (ev-dbg [_] (i/fmt->edn @impl))
        po/Finzable
-       (finz [_]
-         (c/let#nil [{:keys [async? subcs]} @impl]
+       (finz [me]
+         (let [{:keys [async? subcs]} @impl]
            (if async? ;maybe close all go channels
              (doseq [[_ z] subcs] (close! (:action z))))
            (swap! impl
-                  #(assoc % :levels {} :subcs {}))))))))
+                  #(assoc % :levels {} :subcs {})) me))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
