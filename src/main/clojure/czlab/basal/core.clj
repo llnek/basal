@@ -48,6 +48,14 @@
                                      :private true)) more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro defonce-
+  "Same as defonce but private."
+  [name & more]
+  (list* `defonce (with-meta name
+                         (assoc (meta name)
+                                :private true)) more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro def-
   "Same as def but private."
   [name & more]
