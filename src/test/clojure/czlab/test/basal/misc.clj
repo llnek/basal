@@ -15,7 +15,7 @@
             [clojure.string :as cs]
             [clojure.test :as ct]
             [czlab.basal.cmenu :as i]
-            [czlab.basal.cljrt :as rt]
+            [czlab.basal.util :as u]
             [czlab.basal.core
              :refer [ensure?? ensure-thrown??] :as c]))
 
@@ -25,14 +25,14 @@
 (c/deftest test-misc
 
   (ensure?? "cljrt<>"
-            (let [z (rt/cljrt<>)]
-              (satisfies? czlab.basal.cljrt/Cljrt z)))
+            (let [z (u/cljrt<>)]
+              (satisfies? czlab.basal.util/Cljrt z)))
 
   (ensure?? "cljrt.call*"
-            (let [z (rt/cljrt<>)]
-              (let [r (rt/call* z
-                                :clojure.template/apply-template
-                                ['[x] '(+ x x) '[2]])]
+            (let [z (u/cljrt<>)]
+              (let [r (u/call* z
+                               :clojure.template/apply-template
+                               ['[x] '(+ x x) '[2]])]
                 (and (list? r)
                      (= 3 (count r))))))
 
