@@ -30,11 +30,9 @@
 
   (ensure?? "cljrt.call*"
             (let [z (u/cljrt<>)]
-              (let [r (u/call* z
-                               :clojure.template/apply-template
-                               ['[x] '(+ x x) '[2]])]
-                (and (list? r)
-                     (= 3 (count r))))))
+              (c/hgl? (u/call* z
+                               :czlab.basal.proc/process-pid []))))
+                            ;:clojure.core/+ [1 2 3]))))
 
   (ensure?? "wwid<>" (not= (g/wwid<>) (g/wwid<>)))
 

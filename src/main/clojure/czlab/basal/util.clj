@@ -840,7 +840,7 @@
                        (.invoke _require
                                 (Symbol/create a))
                        (RT/var a b)))]
-           (if (nil? v)
+           (if-not (var? v)
              (c/raise! "Var %s not found!" fname)) v))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
