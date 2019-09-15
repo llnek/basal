@@ -82,6 +82,10 @@
   "Count of collection even?" [c] `(even? (count ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro sas?
+  "satisfies?" [p x] `(satisfies? ~p ~x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro is?
   "instance?" [c x] `(instance? ~c ~x))
 
