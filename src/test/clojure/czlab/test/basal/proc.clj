@@ -33,6 +33,12 @@
             (c/let#true
               [s (p/scheduler<>)] (reset! SCD s) (po/activate s)))
 
+  (ensure?? "run*" (= 1
+                     (let [x (atom 0)]
+                       (p/run* @SCD swap! [x inc])
+                       (u/pause 500)
+                       @x)))
+
   (ensure?? "run" (= 1
                      (let [x (atom 0)]
                        (p/run @SCD

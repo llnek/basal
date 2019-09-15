@@ -177,6 +177,7 @@
 (defprotocol Scheduler
   "Schedules tasks."
   (alarm [_ delayMillis f args] "")
+  (run* [_ f args] "")
   (run [_ w] "Run this task.")
   (postpone [_ w delayMillis] ""))
 
@@ -201,6 +202,9 @@
          (c/do-with
            [tt (u/tmtask<> #(apply f args))]
            (add-timer timer tt delayMillis)))
+       (run* [me f args]
+         {:pre [(fn? f) (sequential? args)]}
+         (po/put cpu (u/run<> (apply f args))) me)
        (run [me w]
          (po/put cpu w) me)
        (postpone [me w delayMillis]
