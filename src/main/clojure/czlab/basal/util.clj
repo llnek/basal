@@ -269,6 +269,11 @@
      [b (byte-array num-bytes)] (.nextBytes ^SecureRandom rand-obj b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn emsg
+  "Get exception message."
+  ^String [^Throwable e] (some-> e .getMessage))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn objid??
   "Java object id, which is actually it's hashcode." [obj]
   (if-some [obj (c/cast? Object obj)]

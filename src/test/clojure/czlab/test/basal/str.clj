@@ -101,6 +101,14 @@
             (and (c/has-any? "hello good morning" ["OO" "in"])
                  (not (c/has-any? "hello good morning" ["xx" "yy"]))))
 
+  (ensure?? "hasic-all?"
+            (and (c/hasic-all? "hello good morning" ["he" "OO" "in"])
+                 (not (c/hasic-all? "hello good morning" ["he" "yy"]))))
+
+  (ensure?? "has-all?"
+            (and (c/has-all? "hello gOOd morning" ["OO" "in"])
+                 (not (c/has-all? "Hello good morning" ["he" "oo"]))))
+
   (ensure?? "ewic-any?"
             (and (c/ewic-any? "hello good morning" ["he" "OO" "NG"])
                  (not (c/ewic-any? "hello good morning" ["xx" "yy"]))))

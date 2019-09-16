@@ -1453,6 +1453,24 @@
     (true? (some #(number? (cs/index-of bigs %)) substrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn hasic-all?
+  "If bigs contains all of these strs - ignore case?"
+  [^String bigs substrs]
+  {:pre [(sequential? substrs)]}
+  (if-not (or (empty? substrs) (nichts? bigs))
+    (let [lc (lcase bigs)]
+      (every? #(number? (cs/index-of lc (lcase %))) substrs))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn has-all?
+  "If bigs contains all of these strs?"
+  [^String bigs substrs]
+  {:pre [(sequential? substrs)]}
+  (if-not (or (nichts? bigs)
+              (empty? substrs))
+    (every? #(number? (cs/index-of bigs %)) substrs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ewic-any?
   "If bigs endsWith any one of the strs, no-case?"
   [^String bigs substrs]
