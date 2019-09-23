@@ -83,6 +83,7 @@
            [java.util.concurrent
             TimeUnit]
            [java.util.concurrent.atomic
+            AtomicBoolean
             AtomicLong
             AtomicInteger]))
 
@@ -164,11 +165,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro run<>
-  "A Runnable wrapper."
+  "A Runnable wrapper - eat errors."
   [& forms]
   `(reify
      ~'java.lang.Runnable
      (~'run [~'_] (~'czlab.basal.core/try! ~@forms))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro run<+>
+  "A Runnable wrapper - log errors."
+  [& forms]
+  `(reify
+     ~'java.lang.Runnable
+     (~'run [~'_] (~'czlab.basal.core/try!!! ~@forms))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-env-var
@@ -217,10 +226,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mono-flop<>
   "One time logic, flip on first call."
-  [] (let [toggled (atom false)]
-       (reify MonoFlop
-         (is-first-call? [_]
-           (if-not @toggled (c/do#true (reset! toggled true)))))))
+  ([] (mono-flop<> nil))
+  ([flipOnCreate?]
+   (let [flag (AtomicBoolean. false)]
+     (c/do-with [m (reify MonoFlop
+                     (is-first-call? [_]
+                       (if-not (.get flag) (c/do#true (.set flag true)))))]
+       (if flipOnCreate? (is-first-call? m))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn watch<>

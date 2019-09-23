@@ -69,6 +69,12 @@
   `(let [f# ~f] (if (fn? f#) (f# ~@args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro precond
+  "Like :pre, assert conditions."
+  [& conds]
+  `(assert (and ~@conds) "precond failed"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro atom?
   "If obj is an atom?" [x]
   `(instance? clojure.lang.Atom ~x))

@@ -77,12 +77,15 @@
        (start [me _] (locking me (c/int-var paused? 0) me))
        (start [me] (.start me nil))
        (stop [me] (locking me (c/int-var paused? 1) me))
+       po/Testable
+       (is-valid? [_] (zero? (c/int-var paused?)))
        po/Enqueable
        (put [me r]
-         (if (and (c/is? Runnable r)
-                  (zero? (c/int-var paused?)))
-           (.execute core ^Runnable r)
-           (l/warn "TCore is not running!")) me)
+         (if (pos? (c/int-var paused?))
+           (l/warn "TCore[%s] is not running!" core)
+           (if (c/is? Runnable r)
+             (.execute core ^Runnable r)
+             (l/warn "Unsupported %s" r))) me)
        po/Finzable
        (finz [me]
          (.stop me)
@@ -196,12 +199,11 @@
                       (c/!false? trace?))]
      (reify Scheduler
        (alarm [_ delayMillis f args]
-         {:pre [(fn? f)
-                (sequential? args)
-                (c/spos? delayMillis)]}
-         (c/do-with
-           [tt (u/tmtask<> #(apply f args))]
-           (add-timer timer tt delayMillis)))
+         (let [t (cond (c/sas? po/Interruptable f) #(po/interrupt f args)
+                       (and (fn? f) (sequential? args)) #(apply f args)
+                       :else (c/raise! "alarm call failed"))
+               tt (u/tmtask<> t)]
+           (add-timer timer tt delayMillis) tt))
        (run* [me f args]
          {:pre [(fn? f) (sequential? args)]}
          (po/put cpu (u/run<> (apply f args))) me)
@@ -213,6 +215,8 @@
                (.run me w)
                (pos? delayMillis)
                (.alarm me delayMillis #(.run me w) [])) me)
+       po/Testable
+       (is-valid? [_] (po/is-valid? cpu))
        po/Activable
        (activate [me]
          (po/start cpu) me)
