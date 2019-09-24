@@ -17,6 +17,7 @@
             [clojure.string :as cs]
             [clojure.edn :as edn]
             [czlab.basal.util :as u]
+            [czlab.basal.log :as l]
             [czlab.basal.core :as c]
             [czlab.basal.indent :as in])
 
@@ -549,15 +550,16 @@
   (let [fp (io/file dir fname)]
     (if (file-read? fp) (XData. fp false))))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn save-file
+(defn spit-file
   "Save a file to a directory"
 
-  ([dir fname stuff]
-   (save-file dir fname stuff false))
+  ([file stuff]
+   (spit-file file stuff false))
 
-  ([dir fname stuff del?]
-   (let [fp (io/file dir fname)
+  ([file stuff del?]
+   (let [fp (io/file file)
          ^XData
          in (if (c/is? XData stuff)
               stuff (XData. stuff false))]
@@ -573,7 +575,19 @@
          (Files/move (.. in fileRef toPath) (.toPath fp) opts)
          ;;since file has moved, update stuff
          (.setDeleteFlag in false)
-         (.reset in nil))))))
+         (.reset in nil)))
+     (l/info "FFFFFFFFF = %s" fp)
+     fp)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn save-file
+  "Save a file to a directory"
+
+  ([dir fname stuff]
+   (save-file dir fname stuff false))
+
+  ([dir fname stuff del?]
+   (spit-file (io/file dir fname) stuff del?)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn change-content
