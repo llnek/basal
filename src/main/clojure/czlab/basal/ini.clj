@@ -6,15 +6,17 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Access to a windows style .ini file."
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc "Access to a windows style .ini file."
+    :author "Kenneth Leung"}
 
   czlab.basal.ini
 
-  (:require [clojure.java.io :as io]
+  (:require [czlab.basal
+             [util :as u]
+             [core :as c]]
             [clojure.string :as cs]
-            [czlab.basal.util :as u]
-            [czlab.basal.core :as c])
+            [clojure.java.io :as io])
 
   (:use [flatland.ordered.map])
 

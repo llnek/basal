@@ -6,19 +6,21 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc ""
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc ""
+    :author "Kenneth Leung"}
 
   czlab.test.basal.ini
 
-  (:require [czlab.basal.util :as u]
-            [czlab.basal.io :as io]
-            [clojure.string :as cs]
-            [clojure.test :as ct]
-            [czlab.basal.ini :as i]
-            [czlab.basal.core
-             :refer [ensure?? ensure-thrown??] :as c]))
-
+  (:require [clojure
+             [test :as ct]
+             [string :as cs]]
+            [czlab.basal
+             [ini :as i]
+             [io :as io]
+             [util :as u]
+             [core
+              :refer [ensure?? ensure-thrown??] :as c]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def

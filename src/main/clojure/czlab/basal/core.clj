@@ -6,13 +6,15 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Useful additions to clojure core & string."
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc "Useful additions to clojure core & string."
+    :author "Kenneth Leung"}
 
   czlab.basal.core
 
-  (:require [clojure.set :as ct]
-            [clojure.string :as cs])
+  (:require [clojure
+             [set :as ct]
+             [string :as cs]])
 
   (:import [java.util Date]
            [java.lang System StringBuilder]))

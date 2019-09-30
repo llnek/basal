@@ -6,15 +6,17 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Useful os process & runtime functions."
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc "Useful os process & runtime functions."
+    :author "Kenneth Leung"}
 
   czlab.basal.proc
 
-  (:require [czlab.basal.util :as u]
-            [czlab.basal.log :as l]
-            [czlab.basal.core :as c]
-            [czlab.basal.xpis :as po])
+  (:require [czlab.basal
+             [util :as u]
+             [log :as l]
+             [core :as c]
+             [xpis :as po]])
 
   (:import [java.util
             Map

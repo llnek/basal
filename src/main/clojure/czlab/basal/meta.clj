@@ -6,13 +6,15 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Class & reflection helpers."
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc "Class & reflection helpers."
+    :author "Kenneth Leung"}
 
   czlab.basal.meta
 
-  (:require [czlab.basal.util :as u]
-            [czlab.basal.core :as c])
+  (:require [czlab.basal
+             [util :as u]
+             [core :as c]])
 
   (:import [clojure.lang
             RestFn]

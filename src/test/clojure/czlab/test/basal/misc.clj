@@ -6,18 +6,21 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc ""
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc ""
+    :author "Kenneth Leung"}
 
   czlab.test.basal.misc
 
-  (:require [czlab.basal.guids :as g]
-            [clojure.string :as cs]
-            [clojure.test :as ct]
-            [czlab.basal.cmenu :as i]
-            [czlab.basal.util :as u]
-            [czlab.basal.core
-             :refer [ensure?? ensure-thrown??] :as c]))
+  (:require [clojure
+             [test :as ct]
+             [string :as cs]]
+            [czlab.basal
+             [cmenu :as i]
+             [util :as u]
+             [guids :as g]
+             [core
+              :refer [ensure?? ensure-thrown??] :as c]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -43,7 +46,7 @@
   (ensure?? "uuid<>" (> (count (g/uuid<>)) 0))
 
   (ensure?? "parse-options"
-            (let [[o v] (i/parse-options ["--a" "b" "/c" "d" "-e" "f" "g"])]
+            (let [[o v] (i/parse-options ["--a" "b" "-c" "d" "-e" "f" "g"])]
               (and (= "b" (:a o))
                    (= "d" (:c o))
                    (= "f" (:e o))

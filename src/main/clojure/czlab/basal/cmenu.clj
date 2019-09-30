@@ -6,7 +6,8 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Text menu interactions for consoles."
+(ns
+  ^{:doc "Text menu interactions for consoles."
       :author "Kenneth Leung"}
 
   czlab.basal.cmenu
@@ -34,7 +35,8 @@
   [option]
   (and (string? option)
        (not= "--" option)
-       (c/sw-any? option ["--" "-" "/"])))
+       (or (cs/starts-with? option "--")
+           (cs/starts-with? option "-"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- maybe-option

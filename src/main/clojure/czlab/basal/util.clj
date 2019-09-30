@@ -6,21 +6,24 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Useful additions to clojure core, (imports java stuff)."
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc "Useful additions to clojure core, (imports java stuff)."
+    :author "Kenneth Leung"}
 
   czlab.basal.util
 
   (:refer-clojure :exclude [shuffle])
 
-  (:require [clojure.data.json :as js]
-            [czlab.basal.core :as c]
-            [czlab.basal.log :as l]
-            [clojure.string :as cs]
-            [clojure.edn :as edn]
+  (:require [czlab.basal
+             [log :as l]
+             [core :as c]
+             [indent :as in]]
+            [clojure
+             [string :as cs]
+             [edn :as edn]
+             [pprint :as pp]]
             [clojure.java.io :as io]
-            [clojure.pprint :as pp]
-            [czlab.basal.indent :as in])
+            [clojure.data.json :as js])
 
   ;(:use [clojure.walk])
 
@@ -698,7 +701,6 @@
                       (aset ^"[Ljava.lang.Object;" arr next obj)
                       (assoc root :slots arr :next next1 :size (count arr)))))))
        (ms-drop [me obj]
-         {:pre [(c/atom? obj)]}
          (c/do-with [me]
            (swap! impl
                   (c/fn_1

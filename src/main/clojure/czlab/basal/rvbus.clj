@@ -6,25 +6,21 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "A publish subscribe library using subject based topics."
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc "A publish subscribe library using subject based topics."
+    :author "Kenneth Leung"}
 
   czlab.basal.rvbus
 
-  (:require [czlab.basal.core :as c]
-            [czlab.basal.util :as u]
-            [czlab.basal.xpis :as po]
+  (:require [czlab.basal
+             [io :as i]
+             [core :as c]
+             [util :as u]
+             [xpis :as po]]
             [clojure.string :as cs]
-            [czlab.basal.io :as i]
             [clojure.core.async
              :as ca
-             :refer [>!
-                     <!
-                     go-loop
-                     go
-                     chan
-                     close!
-                     sliding-buffer]]))
+             :refer [>! <! go-loop go chan close! sliding-buffer]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)

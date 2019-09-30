@@ -6,8 +6,9 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Useful additions for handling dates."
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc "Useful additions for handling dates."
+    :author "Kenneth Leung"}
 
   czlab.basal.dates
 

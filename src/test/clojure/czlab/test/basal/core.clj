@@ -6,13 +6,15 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc ""
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc ""
+    :author "Kenneth Leung"}
 
   czlab.test.basal.core
 
-  (:require [clojure.string :as cs]
-            [clojure.test :as ct]
+  (:require [clojure
+             [test :as ct]
+             [string :as cs]]
             [czlab.basal.core
              :refer [ensure?? ensure-thrown??] :as c]))
 

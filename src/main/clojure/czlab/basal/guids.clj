@@ -6,14 +6,16 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Ways to generate an unique id."
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc "Ways to generate an unique id."
+    :author "Kenneth Leung"}
 
   czlab.basal.guids
 
-  (:require [czlab.basal.core :as c]
-            [czlab.basal.io :as i]
-            [czlab.basal.util :as u]
+  (:require [czlab.basal
+             [io :as i]
+             [core :as c]
+             [util :as u]]
             [clojure.java.io :as io])
 
   (:import [java.util

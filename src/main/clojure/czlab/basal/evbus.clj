@@ -6,24 +6,20 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "A pub-sub event bus."
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc "A pub-sub event bus."
+    :author "Kenneth Leung"}
 
   czlab.basal.evbus
 
-  (:require [czlab.basal.xpis :as po]
-            [czlab.basal.util :as u]
-            [czlab.basal.core :as c]
-            [czlab.basal.io :as i]
+  (:require [czlab.basal
+             [io :as i]
+             [util :as u]
+             [core :as c]
+             [xpis :as po]]
             [clojure.core.async
              :as ca
-             :refer [>!
-                     <!
-                     go-loop
-                     go
-                     chan
-                     close!
-                     sliding-buffer]]))
+             :refer [>! <! go-loop go chan close! sliding-buffer]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)

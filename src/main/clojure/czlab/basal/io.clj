@@ -6,24 +6,31 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns ^{:doc "Useful additions to clojure io."
-      :author "Kenneth Leung"}
+(ns
+  ^{:doc "Useful additions to clojure io."
+    :author "Kenneth Leung"}
 
   czlab.basal.io
 
-  (:require [clojure.data.json :as js]
+  (:require [clojure
+             [edn :as edn]
+             [pprint :as pp]
+             [string :as cs]]
+            [czlab.basal
+             [util :as u]
+             [log :as l]
+             [core :as c]
+             [indent :as in]]
             [clojure.java.io :as io]
-            [clojure.pprint :as pp]
-            [clojure.string :as cs]
-            [clojure.edn :as edn]
-            [czlab.basal.util :as u]
-            [czlab.basal.log :as l]
-            [czlab.basal.core :as c]
-            [czlab.basal.indent :as in])
+            [clojure.data.json :as js])
 
   (:import [java.nio.file
-            Files
             CopyOption
+            Files
+            Path
+            Paths
+            FileVisitResult
+            SimpleFileVisitor
             StandardCopyOption]
            [java.util.zip
             GZIPInputStream
@@ -62,10 +69,12 @@
             OutputStream
             Reader
             Writer
+            IOException
             InputStreamReader
             OutputStreamWriter
             ByteArrayInputStream
-            ByteArrayOutputStream]))
+            ByteArrayOutputStream]
+           [java.nio.file.attribute BasicFileAttributes]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -550,7 +559,6 @@
   (let [fp (io/file dir fname)]
     (if (file-read? fp) (XData. fp false))))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn spit-file
   "Save a file to a directory"
@@ -576,7 +584,6 @@
          ;;since file has moved, update stuff
          (.setDeleteFlag in false)
          (.reset in nil)))
-     (l/info "FFFFFFFFF = %s" fp)
      fp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -827,6 +834,45 @@
        (io/copy inp
                 out
                 :buffer-size c/BUF-SZ) (x->bytes out)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn delete-dir
+
+  "Deleting recursively a directory with native Java.
+  https://docs.oracle.com/javase/tutorial/essential/io/walk.html"
+  [dir]
+
+  (if-some [root (Paths/get (-> dir io/file .toURI))]
+    (Files/walkFileTree root
+                        (proxy [SimpleFileVisitor][]
+                          (visitFile [^Path file
+                                      ^BasicFileAttributes attrs]
+                            (Files/delete file)
+                            FileVisitResult/CONTINUE)
+                          (postVisitDirectory [^Path dir
+                                               ^IOException ex]
+                            (Files/delete dir)
+                            FileVisitResult/CONTINUE)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn clean-dir
+
+  "Clena out recursively a directory with native Java.
+  https://docs.oracle.com/javase/tutorial/essential/io/walk.html"
+  [dir]
+
+  (if-some [root (Paths/get (-> dir io/file .toURI))]
+    (Files/walkFileTree root
+                        (proxy [SimpleFileVisitor][]
+                          (visitFile [^Path file
+                                      ^BasicFileAttributes attrs]
+                            (Files/delete file)
+                            FileVisitResult/CONTINUE)
+                          (postVisitDirectory [^Path dir
+                                               ^IOException ex]
+                            (if (not= dir root)
+                              (Files/delete dir))
+                            FileVisitResult/CONTINUE)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
