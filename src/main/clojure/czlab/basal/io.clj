@@ -387,11 +387,14 @@
 (defn temp-file
   "Create a temporary file."
   {:tag File}
+  ([]
+   (temp-file nil nil))
+  ([pfx sux]
+   (temp-file pfx sux *tempfile-repo*))
   ([pfx sux dir]
-   (File/createTempFile (c/stror pfx "czlab")
-                        (c/stror sux ".tmp") (io/file dir)))
-  ([] (temp-file nil nil))
-  ([pfx sux] (temp-file pfx sux *tempfile-repo*)))
+   (c/do-with
+     [f (File/createTempFile (c/stror pfx "czlab")
+                             (c/stror sux ".tmp") (io/file dir))] (fdelete f))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn open-temp-file
