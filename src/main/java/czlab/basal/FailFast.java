@@ -13,25 +13,25 @@ package czlab.basal;
 /**
  * @author Kenneth Leung
  */
-public class DataError extends Exception {
+public class FailFast extends Exception {
 
   private static final long serialVersionUID = 1L;
 
   /**
    */
-  public DataError(String m, Throwable t) {
+  public FailFast(String m, Throwable t) {
     super(m, t);
   }
 
   /**
    */
-  public DataError(Throwable t) {
+  public FailFast(Throwable t) {
     super(t);
   }
 
   /**
    */
-  public DataError(String msg) {
+  public FailFast(String msg) {
     super(msg);
   }
 

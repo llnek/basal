@@ -39,8 +39,6 @@
             ByteBuffer
             CharBuffer]
            [czlab.basal XData]
-           [java.nio.charset
-            Charset]
            [java.util
             Arrays
             Base64

@@ -143,28 +143,28 @@
   "Curren time in millis." [] `(System/currentTimeMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(c/decl-throw-exp throw-ISE
-                  IllegalStateException
-                  "Throw illegal state exception")
+(c/decl-assert-exp assert-ISE IllegalStateException)
+(c/decl-throw-exp throw-ISE IllegalStateException)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(c/decl-throw-exp throw-UOE
-                  UnsupportedOperationException
-                  "Throw unsupported operation exception")
+(c/decl-assert-exp assert-UOE UnsupportedOperationException)
+(c/decl-throw-exp throw-UOE UnsupportedOperationException)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(c/decl-throw-exp throw-BadArg
-                  IllegalArgumentException
-                  "Throw bad parameter exception")
+(c/decl-assert-exp assert-BadArg IllegalArgumentException)
+(c/decl-throw-exp throw-BadArg IllegalArgumentException)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(c/decl-throw-exp throw-BadData
-                  czlab.basal.DataError
-                  "Throw Bad Data Exception")
+(c/decl-assert-exp assert-BadData czlab.basal.DataError)
+(c/decl-throw-exp throw-BadData czlab.basal.DataError)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(c/decl-throw-exp throw-IOE
-                  java.io.IOException "Throw IO Exception")
+(c/decl-assert-exp assert-IOE java.io.IOException)
+(c/decl-throw-exp throw-IOE java.io.IOException)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(c/decl-assert-exp assert-FFE czlab.basal.FailFast)
+(c/decl-throw-exp throw-FFE czlab.basal.FailFast)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro run<>
@@ -308,12 +308,12 @@
 (defn charset??
   "A java Charset of the encoding."
   {:tag Charset}
-  ([]
-   (charset?? "utf-8"))
-  ([enc]
-   (if-not
-     (instance? Charset enc)
-     (Charset/forName (or enc "utf-8")) enc)))
+  ([enc] (charset?? enc nil))
+  ([] (charset?? "utf-8"))
+  ([enc dv]
+   (if (instance? Charset enc)
+     enc
+     (some-> (or enc dv) Charset/forName))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fpath

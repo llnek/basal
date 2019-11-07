@@ -119,9 +119,9 @@
 
   (ensure?? "chop" (= [[1 2] [3 4]] (c/chop 2 [1 2 3 4])))
 
-  (ensure?? "o+" (= 4 (c/o+ (+ 1 2))))
+  (ensure?? "inc*" (= 4 (c/inc* (+ 1 2))))
 
-  (ensure?? "o-" (= 2 (c/o- (+ 2 1))))
+  (ensure?? "dec*" (= 2 (c/dec* (+ 2 1))))
 
   (ensure?? "do#false" (false? (c/do#false "aaa")))
   (ensure?? "do#nil" (nil? (c/do#nil "aaa")))
@@ -315,17 +315,20 @@
   (ensure?? "split-seq" (= '((1 2 3) (4 5))
                            (c/split-seq [1 2 3 4 5] 3)))
 
-  (ensure?? "int-var" (= 4 (let [x (c/int-var)]
-                             (c/int-var x 4)
-                             (c/int-var x))))
+  (ensure?? "mu-int" (= 4 (let [x (c/mu-int)]
+                             (c/mu-int x 4)
+                             (c/mu-int x))))
 
-  (ensure?? "long-var" (= 4 (let [x (c/long-var)]
-                             (c/long-var x 4)
-                             (c/long-var x))))
+  (ensure?? "mu-long" (= 4 (let [x (c/mu-long)]
+                             (c/mu-long x 4)
+                             (c/mu-long x))))
 
   (ensure?? "nth??" (= 5 (c/nth?? [1 2 5 3 4] 3)))
 
   (ensure?? "vargs*" (= 4 (count (c/vargs* Long 1 2 3 4))))
+
+  (ensure?? "or??" (and (c/or?? [1 =] 2 1)
+                        (c/or?? [2 =] 2 1)))
 
   (ensure?? "scoped-keyword"
             (let [x (c/scoped-keyword "hey")

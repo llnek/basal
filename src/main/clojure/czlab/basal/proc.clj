@@ -56,7 +56,7 @@
                  ^long keepAliveMillis
                  TimeUnit/MILLISECONDS
                  (LinkedBlockingQueue.)])
-         paused? (c/int-var)
+         paused? (c/mu-int)
          rex (reify
                RejectedExecutionHandler
                (rejectedExecution [_ r x]
@@ -76,14 +76,14 @@
        (toString [_]
          (c/fmt "TCore#%s - threads = %s." id (.getCorePoolSize core)))
        po/Startable
-       (start [me _] (locking me (c/int-var paused? 0) me))
+       (start [me _] (locking me (c/mu-int paused? 0) me))
        (start [me] (.start me nil))
-       (stop [me] (locking me (c/int-var paused? 1) me))
+       (stop [me] (locking me (c/mu-int paused? 1) me))
        po/Testable
-       (is-valid? [_] (zero? (c/int-var paused?)))
+       (is-valid? [_] (zero? (c/mu-int paused?)))
        po/Enqueable
        (put [me r]
-         (if (pos? (c/int-var paused?))
+         (if (pos? (c/mu-int paused?))
            (l/warn "TCore[%s] is not running!" core)
            (if (c/is? Runnable r)
              (.execute core ^Runnable r)

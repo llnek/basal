@@ -90,8 +90,16 @@
   "Count of collection even?" [c] `(even? (count ~c)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro !sas?
+  "not satisfies?" [p x] `(not (satisfies? ~p ~x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro sas?
   "satisfies?" [p x] `(satisfies? ~p ~x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro !is?
+  "not instance?" [c x] `(not (instance? ~c ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro is?
@@ -134,6 +142,10 @@
   "last." [x] `(last ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro _NE
+  "last." [x] `(let [x# ~x] (nth x# (- (count x#) 1))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !zero?
   "not-zero?" [n] `(not (zero? ~n)))
 
@@ -160,6 +172,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro one+?
   "Size of collection > 1." [c] `(> (count ~c) 1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro or??
+  "(or+ a b c) => (or (= a b) (= a c))."
+  [bindings & args]
+  (let [x (gensym)
+        [p1 p2] bindings]
+    `(let [~x ~p1]
+       (or ~@(map (fn [n]
+                    `(~p2 ~n ~x)) args)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro dissoc!!
@@ -243,11 +265,11 @@
   "partition." [& args] `(partition ~@args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro o+
+(defmacro inc*
   "One plus, x+1." [X] `(+ 1 ~X))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro o-
+(defmacro dec*
   "One less, x-1." [X] `(- ~X 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -371,6 +393,21 @@
                 `(doseq [~I ~coll] (~func ~I))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro mget
+  [m k]
+  `(.get ~(with-meta m {:tag 'java.util.Map}) ~k))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn mdel!
+  [m k]
+  (.remove ^java.util.Map m k))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro mput!
+  [m k v]
+  `(.put ~(with-meta m {:tag 'java.util.Map}) ~k ~v))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;testing stuff
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro deftest
@@ -453,19 +490,36 @@
   `(throw (new java.lang.Exception (str (format ~fmt ~@args)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro decl-assert-exp
+  "Generate a function which when called will
+  create the desired exception."
+  [name E]
+  `(defn ~name [~'kond ~'arg & ~'xs]
+     (if-not ~'kond
+       (cond
+         (string? ~'arg)
+         (czlab.basal.core/trap! ~E (str (apply format ~'arg ~'xs)))
+         (instance? Throwable ~'arg)
+         (czlab.basal.core/trap! ~E
+                                 ~(with-meta 'arg {:tag 'Throwable}))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro decl-throw-exp
   "Generate a function which when called will
   throw the desired exception."
-  ([name E]
-   `(decl-throw-exp ~name ~E ""))
-  ([name E doc]
-   `(defn ~name ~doc [~'arg & ~'xs]
-      (cond
-        (string? ~'arg)
-        (czlab.basal.core/trap! ~E (str (apply format ~'arg ~'xs)))
-        (instance? Throwable ~'arg)
-        (czlab.basal.core/trap! ~E
-                                ~(with-meta 'arg {:tag 'Throwable}))))))
+  [name E]
+  `(defn ~name [~'arg & ~'xs]
+     (cond
+       (string? ~'arg)
+       (czlab.basal.core/trap! ~E (str (apply format ~'arg ~'xs)))
+       (instance? Throwable ~'arg)
+       (czlab.basal.core/trap! ~E
+                               ~(with-meta 'arg {:tag 'Throwable})))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro trap-on!
+  "Like assert, but throws a specific exception."
+  [cond exp] `(if-not ~cond (throw ~exp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do-with
@@ -916,40 +970,40 @@
      (if print? (println r)) ok?)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn int-var
+(defn mu-int
   "Like a mutable int."
   ;setter
   ([^ints arr v] (aset arr 0 (int v)) (int v))
   ;ctor
   ([] (int-array 1 0))
   ;getter
-  ([^ints arr] (aget arr 0))
+  ([^ints arr] (int (aget arr 0)))
   ;apply (op old-val new-value)
   ([^ints arr op nv]
    (let [v (int (op (aget arr 0) nv))] (aset arr 0 v) v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn int-var*
-  "Create & init int-var." [i]
-  {:pre [(number? i)]} (doto (int-var) (int-var i)))
+(defn mu-int*
+  "Create & init mu-i." [i]
+  {:pre [(number? i)]} (doto (mu-int) (mu-int i)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn long-var
+(defn mu-long
   "Like a mutable long."
   ;setter
   ([^longs arr v] (aset arr 0 (long v)) (long v))
   ;ctor
   ([] (long-array 1 0))
   ;getter
-  ([^longs arr] (aget arr 0))
+  ([^longs arr] (long (aget arr 0)))
   ;apply (op old-val new-val)
   ([^longs arr op nv]
    (let [v (long (op (aget arr 0) nv))] (aset arr 0 v) v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn long-var*
-  "Create & init a long-var." [n]
-  {:pre [(number? n)]} (doto (long-var) (long-var n)))
+(defn mu-long*
+  "Create & init a mu-long." [n]
+  {:pre [(number? n)]} (doto (mu-long) (mu-long n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn nth??
