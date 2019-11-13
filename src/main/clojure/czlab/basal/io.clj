@@ -76,7 +76,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
-(def ^:dynamic *tempfile-repo* (io/file (u/sys-tmp-dir)))
+(def ^:dynamic *file-repo* (io/file (u/sys-tmp-dir)))
 (def ^:dynamic *membuf-limit* (* 4 c/MegaBytes))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -178,6 +178,8 @@
          (or (nil? in)
              (bytes? in))
          in
+         (c/is? XData in)
+         (.getBytes ^XData in)
          (c/is? ByteArrayOutputStream in)
          (.toByteArray ^ByteArrayOutputStream in)
          :else
@@ -199,6 +201,8 @@
          (x->chars (.toString ^Object in))
          (string? in)
          (.toCharArray ^String in)
+         (c/is? XData in)
+         (x->chars (.strit ^XData in))
          (bytes? in)
          (->> (u/encoding?? enc)
               (String. ^bytes in) .toCharArray)
@@ -217,6 +221,8 @@
   ([in enc] (cond (or (nil? in)
                       (string? in))
                   in
+                  (c/is? XData in)
+                  (.strit ^XData in)
                   (c/is? StringBuilder in)
                   (.toString ^Object in)
                   :else (String. (x->chars in enc)))))
@@ -379,7 +385,7 @@
 (defn tmpfile
   "Create f in temp dir."
   ^File
-  [f] (io/file *tempfile-repo* f))
+  [f] (io/file *file-repo* f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn temp-file
@@ -388,7 +394,7 @@
   ([]
    (temp-file nil nil))
   ([pfx sux]
-   (temp-file pfx sux *tempfile-repo*))
+   (temp-file pfx sux *file-repo*))
   ([pfx sux dir]
    (c/do-with
      [f (File/createTempFile (c/stror pfx "czlab")
@@ -400,7 +406,7 @@
   ([pfx sux dir]
    (let [fp (temp-file pfx sux dir)] [fp (os* fp)]))
   ([] (open-temp-file nil nil))
-  ([pfx sux] (open-temp-file pfx sux *tempfile-repo*)))
+  ([pfx sux] (open-temp-file pfx sux *file-repo*)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->file

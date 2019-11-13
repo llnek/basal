@@ -629,7 +629,11 @@
         true
         (or (nil? a) (nil? b))
         false
-        :else (.equals ^Object a b)))
+        (and (bytes? a)
+             (bytes? b))
+        (== 0 (Arrays/compare a b))
+        :else
+        (.equals ^Object a b)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn url-encode
