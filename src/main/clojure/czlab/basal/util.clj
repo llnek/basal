@@ -631,7 +631,7 @@
         false
         (and (bytes? a)
              (bytes? b))
-        (== 0 (Arrays/compare a b))
+        (== 0 (Arrays/compare ^bytes a ^bytes b))
         :else
         (.equals ^Object a b)))
 
