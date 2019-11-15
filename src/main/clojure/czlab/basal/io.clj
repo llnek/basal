@@ -221,6 +221,8 @@
   ([in enc] (cond (or (nil? in)
                       (string? in))
                   in
+                  (c/is? File in)
+                  (slurp in :encoding enc)
                   (c/is? XData in)
                   (.strit ^XData in)
                   (c/is? StringBuilder in)
