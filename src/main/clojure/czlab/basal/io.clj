@@ -50,6 +50,7 @@
            [java.util
             Stack]
            [java.net
+            URI
             URL]
            [org.xml.sax
             InputSource]

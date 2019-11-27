@@ -846,6 +846,17 @@
   (if (number? n) n other))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn !==
+
+  "Same as (not (== num1 num2))."
+  {:tag Boolean}
+
+  ([x] false)
+  ([x y] (not (== x y)))
+  ([x y & more]
+   (not (apply == x y more))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn flip
   "Invert number if not zero."
   [x] {:pre [(number? x)]} (if (zero? x) 0 (/ 1 x)))

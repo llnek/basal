@@ -641,7 +641,7 @@
   {:tag String}
   ([s] (url-encode s "utf-8"))
   ([s enc]
-   (URLEncoder/encode (str s) (encoding?? enc))))
+   (.replace (URLEncoder/encode (str s) (encoding?? enc)) "+" "%20")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn url-decode
