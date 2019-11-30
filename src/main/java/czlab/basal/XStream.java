@@ -22,8 +22,6 @@ import java.io.File;
  * Wrapper on top of a File input stream such that it can
  * delete itself from the file system when garbage collected.
  *
- * @author Kenneth Leung
- *
  */
 @SuppressWarnings("deprecation")
 public class XStream extends InputStream {

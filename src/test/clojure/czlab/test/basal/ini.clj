@@ -6,21 +6,15 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc ""
-    :author "Kenneth Leung"}
+(ns czlab.test.basal.ini
 
-  czlab.test.basal.ini
-
-  (:require [clojure
-             [test :as ct]
-             [string :as cs]]
-            [czlab.basal
-             [ini :as i]
-             [io :as io]
-             [util :as u]
-             [core
-              :refer [ensure?? ensure-thrown??] :as c]]))
+  (:require [clojure.test :as ct]
+            [clojure.string :as cs]
+            [czlab.basal.ini :as i]
+            [czlab.basal.io :as io]
+            [czlab.basal.util :as u]
+            [czlab.basal.core
+              :refer [ensure?? ensure-thrown??] :as c]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def
@@ -30,7 +24,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/deftest test-ini
 
-  (ensure?? "headings" (= (count (i/headings INIFILE)) 2))
+  (ensure?? "headings" (== 2 (count (i/headings INIFILE))))
 
   (ensure?? "heading" (map? (i/heading INIFILE "operating systems")))
 
@@ -43,8 +37,7 @@
   (ensure?? "long-value" (= (i/long-value INIFILE
                                           "boot loader" "timeout") 30))
 
-
-  (ensure?? "test-end" (= 1 1)))
+  (ensure?? "test-end" (== 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ct/deftest

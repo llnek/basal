@@ -6,17 +6,14 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc "Useful os process & runtime functions."
-    :author "Kenneth Leung"}
+(ns czlab.basal.proc
 
-  czlab.basal.proc
+  "Useful os process & runtime functions."
 
-  (:require [czlab.basal
-             [util :as u]
-             [log :as l]
-             [core :as c]
-             [xpis :as po]])
+  (:require [czlab.basal.util :as u]
+            [czlab.basal.log :as l]
+            [czlab.basal.core :as c]
+            [czlab.basal.xpis :as po])
 
   (:import [java.util
             Map
@@ -44,10 +41,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn tcore<>
-  ""
+
   ([id] (tcore<> id (* 2 (.availableProcessors (Runtime/getRuntime)))))
+
   ([id tds] (tcore<> id tds true))
+
   ([id tds trace?] (tcore<> id tds 60000 trace?))
+
   ([id tds keepAliveMillis trace?]
    (let [^ThreadPoolExecutor
          core (proxy [ThreadPoolExecutor]
@@ -98,14 +98,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn thread<>
+
   "Run code in a separate thread."
   {:tag Thread}
 
   ([func start?]
    (thread<> func start? nil))
 
-  ([func start? {:keys [cldr daemon] :as options}]
+  ([func start? {:as options
+                 :keys [cldr daemon]}]
    {:pre [(fn? func)]}
+
    (c/do-with [t (Thread. (u/run<> (func)))]
      (let [c (or cldr (u/get-cldr))]
        (some->> (c/cast? ClassLoader c)
@@ -118,9 +121,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn async!
+
   "Run function async."
+
   ([func]
    (async! func nil))
+
   ([func options]
    (thread<> func true options)))
 
@@ -128,7 +134,9 @@
 (defrecord JvmInfo [])
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn jvm-info
+
   "Get info on the jvm." []
+
   (let [os (ManagementFactory/getOperatingSystemMXBean)
         rt (ManagementFactory/getRuntimeMXBean)]
     (c/object<> JvmInfo
@@ -146,23 +154,30 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn process-pid
-  "Get process pid." ^String []
+
+  "Get process pid."
+  ^String []
+
   (let [b (ManagementFactory/getRuntimeMXBean)]
    (u/try!! "" (c/_1 (-> b .getName str (c/split "@"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn delay-exec
+
   "Run function after some delay."
   [func delayMillis]
   {:pre [(fn? func)
          (c/spos? delayMillis)]}
+
   (.schedule (Timer. true) (u/tmtask<> func) ^long delayMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn exit-hook
+
   "Add a shutdown hook."
   [func]
   {:pre [(fn? func)]}
+
   (->> (thread<> func false {:daemon true})
        (.addShutdownHook (Runtime/getRuntime))))
 
@@ -170,10 +185,12 @@
 ;scheduler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- prerun
+
   [hQ w] (some->> w (.remove ^Map hQ)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- add-timer
+
   [timer task delayMillis]
   (.schedule ^Timer
              timer ^TimerTask task ^long delayMillis))
@@ -188,9 +205,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn scheduler<>
+
   "Make a Scheduler."
+
   ([]
    (scheduler<> (u/jid<>) nil))
+
   ([named options]
    (let [{:keys [threads trace?]} options
          id (c/sname named)
@@ -232,5 +252,4 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
-
 

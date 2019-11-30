@@ -6,29 +6,23 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc ""
-    :author "Kenneth Leung"}
+(ns czlab.test.basal.meta
 
-  czlab.test.basal.meta
-
-  (:require [clojure
-             [test :as ct]
-             [string :as cs]]
-            [czlab.basal
-             [meta :as m]
-             [core
-              :refer [ensure?? ensure-thrown??] :as c]]))
+  (:require [clojure.test :as ct]
+            [clojure.string :as cs]
+            [czlab.basal.meta :as m]
+            [czlab.basal.core
+              :refer [ensure?? ensure-thrown??] :as c]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- f1 ""
+(defn- f1
   ([])
   ([x])
   ([x y])
   ([x y {:keys [ff]}]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- f2 ""
+(defn- f2
   ([])
   ([x])
   ([x y])
@@ -83,7 +77,7 @@
   (ensure?? "obj<>" (c/is? java.lang.StringBuilder
                            (m/obj<> "java.lang.StringBuilder" String "a")))
 
-  (ensure?? "list-parents" (= 1 (count (m/list-parents
+  (ensure?? "list-parents" (== 1 (count (m/list-parents
                                          (Class/forName "java.lang.String")))))
 
   (ensure?? "list-methods" (>= (count (m/list-methods
@@ -92,7 +86,7 @@
   (ensure?? "list-fields" (>= (count (m/list-fields
                                        (Class/forName "java.lang.String"))) 5))
 
-  (ensure?? "test-end" (= 1 1)))
+  (ensure?? "test-end" (== 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ct/deftest

@@ -6,21 +6,17 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc "Useful additions to clojure io."
-    :author "Kenneth Leung"}
+(ns czlab.basal.io
 
-  czlab.basal.io
+  "Useful additions to clojure io."
 
-  (:require [clojure
-             [edn :as edn]
-             [pprint :as pp]
-             [string :as cs]]
-            [czlab.basal
-             [util :as u]
-             [log :as l]
-             [core :as c]
-             [indent :as in]]
+  (:require [clojure.edn :as edn]
+            [clojure.pprint :as pp]
+            [clojure.string :as cs]
+            [czlab.basal.util :as u]
+            [czlab.basal.log :as l]
+            [czlab.basal.core :as c]
+            [czlab.basal.indent :as in]
             [clojure.java.io :as io]
             [clojure.data.json :as js])
 
@@ -86,53 +82,70 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro istream
+
   [x] `(clojure.java.io/input-stream ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ostream
+
   [x] `(clojure.java.io/output-stream ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro file?
-  "Is file?" [in] `(instance? java.io.File ~in))
+
+  "Is file?"
+  [in] `(instance? java.io.File ~in))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro slurp-utf8
-  "Read f with utf8 encoding" [f] `(slurp ~f :encoding "utf-8"))
+
+  "Read f with utf8 encoding."
+  [f] `(slurp ~f :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro spit-utf8
-  "Write f with utf8 encoding" [f c] `(spit ~f (str ~c) :encoding "utf-8"))
+
+  "Write f with utf8 encoding."
+  [f c] `(spit ~f (str ~c) :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn baos<>
+
   "Make a byte array output stream"
   {:tag ByteArrayOutputStream}
+
   ([]
    (baos<> nil))
+
   ([size]
    (ByteArrayOutputStream. (int (c/num?? size c/BUF-SZ)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fsize
+
   "Get length of file." [in]
   (if-some [f (io/file in)] (.length f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fname
+
   "Get name of file." ^String [in]
   (if-some [f (io/file in)] (.getName f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn klose
+
   "Close object (quietly)."
   [obj] (c/try! (some-> (c/cast? Closeable obj) .close)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn copy
+
   "Copy certain number of bytes to output."
+
   ([in out]
    (copy in out -1))
+
   ([in out kount]
    {:pre [(number? kount)]}
    (if (neg? kount)
@@ -160,10 +173,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->bytes
+
   "Convert almost anything to byte[]."
   {:tag "[B"}
+
   ([in]
    (x->bytes in "utf-8"))
+
   ([in enc]
    (cond (c/is? u/CSCZ in)
          (let [^ByteBuffer
@@ -188,10 +204,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->chars
+
   "Convert almost anything to char[]."
   {:tag "[C"}
+
   ([in]
    (x->chars in "utf-8"))
+
   ([in enc]
    (cond (c/is? CharArrayWriter in)
          (.toCharArray ^CharArrayWriter in)
@@ -203,7 +222,7 @@
          (string? in)
          (.toCharArray ^String in)
          (c/is? XData in)
-         (x->chars (.strit ^XData in))
+         (x->chars (.getBytes ^XData in))
          (bytes? in)
          (->> (u/encoding?? enc)
               (String. ^bytes in) .toCharArray)
@@ -215,10 +234,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->str
+
   "Convert almost anything to String."
   {:tag String}
+
   ([in]
    (x->str in "utf-8"))
+
   ([in enc] (cond (or (nil? in)
                       (string? in))
                   in
@@ -232,9 +254,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn read-number
+
   "Deserialize a number."
   ^Number [in numType]
   {:pre [(class? numType)]}
+
   (c/wo* [dis (DataInputStream. (is* in))]
     (cond (or (= numType Double)
               (= numType Double/TYPE))
@@ -253,8 +277,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn write-number
-  "Serialize a number" ^bytes [nnum]
+
+  "Serialize a number."
+  ^bytes [nnum]
   {:pre [(number? nnum)]}
+
   (c/wo* [baos (baos<>)
           dos (DataOutputStream. baos)]
     (let [numType (class nnum)]
@@ -277,14 +304,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fdelete
+
   "Delete file (quietly)."
   [f] (c/try! (if (c/is? File f)
                 (io/delete-file f true))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn bytes->hex
+
   "Bytes into hex-chars."
   ^chars [in]
+
   (let [b' (x->bytes in)
         len (if (nil? b')
               0 (* 2 (alength b')))]
@@ -307,13 +337,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn hexify
+
   "Turn bytes into hex string."
   ^String [in] (some-> in bytes->hex x->str))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gzip
+
   "Gzip input."
   ^bytes [in]
+
   (if-some [b (x->bytes in)]
     (with-open [baos (baos<>)
                 g (GZIPOutputStream. baos)]
@@ -323,23 +356,30 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gunzip
+
   "Gunzip input."
   ^bytes [in]
+
   (if-some [b (x->bytes in)]
     (with-open [inp (GZIPInputStream.
                       (io/input-stream b))] (x->bytes inp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn reset-stream!
+
   "Reset stream (safely)."
   [in]
+
   (if-some [inp (c/cast? InputStream in)] (c/try! (.reset inp))) in)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn input-stream??
+
   "A tuple [you-close? stream]."
+
   ([arg]
    (input-stream?? arg "utf-8"))
+
   ([arg enc]
    (cond (or (bytes? arg)
              (c/is? URL arg)
@@ -359,21 +399,30 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gzb64->bytes
+
   "Unzip content which is base64 encoded + gziped."
-  ^bytes [in] (some->> in x->str (.decode (Base64/getDecoder)) gunzip))
+  ^bytes [in]
+
+  (some->> in x->str (.decode (Base64/getDecoder)) gunzip))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn bytes->gzb64
+
   "Zip content and then base64 encode it."
-  ^String [in] (some->> (some-> in x->bytes gzip)
-                        (.encodeToString (Base64/getEncoder))))
+  ^String [in]
+
+  (some->> (some-> in x->bytes gzip)
+           (.encodeToString (Base64/getEncoder))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn readable-bytes
+
   "Get the available bytes in this stream."
   ^Integer
+
   ([in]
    (readable-bytes in "utf-8"))
+
   ([in enc]
    (cond (c/is? InputStream in) (.available ^InputStream in)
          (c/is? File in) (.length (c/cast? File in))
@@ -386,18 +435,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn tmpfile
+
   "Create f in temp dir."
   ^File
   [f] (io/file *file-repo* f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn temp-file
+
   "Create a temporary file."
   {:tag File}
+
   ([]
    (temp-file nil nil))
+
   ([pfx sux]
    (temp-file pfx sux *file-repo*))
+
   ([pfx sux dir]
    (c/do-with
      [f (File/createTempFile (c/stror pfx "czlab")
@@ -405,17 +459,24 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn open-temp-file
+
   "A Tuple(2) [File, OutputStream?]."
-  ([pfx sux dir]
-   (let [fp (temp-file pfx sux dir)] [fp (os* fp)]))
+
   ([] (open-temp-file nil nil))
-  ([pfx sux] (open-temp-file pfx sux *file-repo*)))
+
+  ([pfx sux] (open-temp-file pfx sux *file-repo*))
+
+  ([pfx sux dir]
+   (let [fp (temp-file pfx sux dir)] [fp (os* fp)])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->file
+
   "Copy content to a temp file."
+
   ([in]
    (x->file in nil))
+
   ([in fout]
    (let [fp (or fout (temp-file))]
      (try (io/copy in fp)
@@ -425,8 +486,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn reset-source!
+
   "Reset an input source."
   [in]
+
   (if-some [src (c/cast? InputSource in)]
     (let [ism (.getByteStream src)
           rdr (.getCharacterStream src)]
@@ -435,8 +498,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- swap-bytes
+
   "Swap bytes in buffer to file."
   [baos enc]
+
   (let [[f ^OutputStream os :as rc] (open-temp-file)]
     (doto os (.write (x->bytes baos enc)) .flush)
     (klose baos)
@@ -444,8 +509,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- swap-chars
+
   "Swap chars in writer to file."
   [wtr enc]
+
   (let [[fp ^OutputStream out] (open-temp-file)
         w (OutputStreamWriter. out (u/encoding?? enc))]
     (doto w (.write (x->chars wtr enc)) .flush)
@@ -454,7 +521,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- slurp-inp
+
   [^InputStream inp limit enc]
+
   (loop [bits (byte-array c/BUF-SZ)
          os (baos<>) fo nil cnt 0 c (.read inp bits)]
     (if (neg? c)
@@ -465,14 +534,17 @@
       (do (if (pos? c)
             (.write ^OutputStream os bits 0 c))
           (let [[f o']
-                (if (and (nil? fo)
-                         (> (+ c cnt) limit))
-                  (swap-bytes os enc) [fo os])]
+                (if-not (and (nil? fo)
+                             (> (+ c cnt) limit))
+                  [fo os]
+                  (swap-bytes os enc))]
             (recur bits o' f (+ c cnt) (.read inp bits)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- slurp-rdr
+
   [^Reader rdr limit enc]
+
   (loop [cw (CharArrayWriter. (int c/BUF-SZ))
          carr (char-array c/BUF-SZ)
          fo nil cnt 0 c (.read rdr carr)]
@@ -484,16 +556,21 @@
       (do (if (pos? c)
             (.write ^Writer cw carr 0 c))
           (let [[f w]
-                (if (and (nil? fo)
-                         (> (+ c cnt) limit))
-                  (swap-chars cw enc) [fo cw])]
+                (if-not (and (nil? fo)
+                             (> (+ c cnt) limit))
+                  [fo cw]
+                  (swap-chars cw enc))]
             (recur w carr f (+ c cnt) (.read rdr carr)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn slurpb
+
   "Like slurp but reads in bytes."
+
   ([in enc] (slurpb in enc false))
+
   ([in] (slurpb in "utf-8"))
+
   ([in enc usefile?]
    (let [[c? i] (input-stream?? in)]
      (try (slurp-inp i (if usefile?
@@ -502,9 +579,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn slurpc
+
   "Like slurp but reads in chars."
+
   ([in enc] (slurpc in enc false))
+
   ([in] (slurpc in "utf-8"))
+
   ([in enc usefile?]
    (let [[c? i] (input-stream?? in)
          _ (assert (c/is? InputStream i)
@@ -516,56 +597,76 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn file-read-write?
-  "Is file readable & writable?" [in]
+
+  "Is file readable & writable?"
+  [in]
+
   (if-some [^File fp (some-> in (io/file))]
     (and (.exists fp)
          (.isFile fp) (.canRead fp) (.canWrite fp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn file-ok?
-  "If file exists?" [in]
+
+  "If file exists?"
+  [in]
+
   (if-some [^File fp (some-> in (io/file))] (.exists fp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn file-read?
-  "Is file readable?" [in]
+
+  "Is file readable?"
+  [in]
+
   (if-some [^File fp (some-> in (io/file))]
     (and (.exists fp) (.isFile fp) (.canRead fp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn dir-read-write?
-  "Is dir readable and writable?" [in]
+
+  "Is dir readable and writable?"
+  [in]
+
   (if-some [^File dir (some-> in (io/file))]
     (and (.exists dir)
          (.isDirectory dir) (.canRead dir) (.canWrite dir))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn dir-read?
+
   "Is dir readable?" [in]
+
   (if-some [^File dir (some-> in (io/file))]
     (and (.exists dir) (.isDirectory dir) (.canRead dir))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn can-exec?
+
   "Is file executable?" [in]
+
   (if-some
     [^File fp (some-> in (io/file))]
     (and (.exists fp) (.canExecute fp))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parent-file
+
   "Parent file." ^File [in]
   (if-some [^File f (some-> in (io/file))] (.getParentFile f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parent-path
+
   "Path to parent." ^String [path]
   (if (c/hgl? path) (.getParent (io/file path)) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-file
+
   "Get a file from a directory."
   [dir fname]
+
   (let [fp (io/file dir fname)]
     (if (file-read? fp) (XData. fp false))))
 
@@ -598,7 +699,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn save-file
-  "Save a file to a directory"
+
+  "Save a file to a directory."
 
   ([dir fname stuff]
    (save-file dir fname stuff false))
@@ -608,11 +710,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn change-content
+
   "Pass file content - as string to
   the work function, returning new content."
   {:tag String}
+
   ([file work]
    (change-content file work "utf-8"))
+
   ([file work enc]
    {:pre [(fn? work)]}
    (if (file-read? file)
@@ -620,16 +725,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn replace-file!
+
   "Update file with new content."
+
   ([file work]
    (replace-file! file work "utf-8"))
+
   ([file work enc]
    {:pre [(fn? work)]}
    (spit file (change-content file work enc) :encoding (u/encoding?? enc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn unzip->dir
+
   "Unzip zip file to a target folder."
+
   [^File srcZip ^File desDir]
   (let [z (ZipFile. srcZip)
         es (.entries z)]
@@ -645,15 +755,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mkdirs
+
   "Make directories."
   ^File [arg]
+
   (cond (string? arg) (mkdirs (io/file arg))
         (c/is? File arg) (doto ^File arg .mkdirs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-files
+
   "List files with certain extension."
   [dir ext]
+
   (c/vec-> (.listFiles (io/file dir)
                        (reify FileFilter
                          (accept [_ f]
@@ -661,16 +775,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-dirs
+
   "List sub-directories."
   [dir]
+
   (c/vec-> (.listFiles (io/file dir)
                        (reify FileFilter
                          (accept [_ f] (.isDirectory f))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-any-files
+
   "List files with certain extension recursively."
   [dir ext]
+
   (c/do-with-atom [res (atom [])]
     (let [dir (io/file dir)
           dig (fn [^File root ext bin func]
@@ -685,9 +803,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn grep-folder-paths
+
   "Recurse a dir, pick out dirs
    that have files of this extension."
   [rootDir ext]
+
   (c/do-with-atom [bin (atom #{})]
     (let [rootDir (io/file rootDir)
           rlen (+ 1 (c/n# (u/fpath rootDir)))
@@ -723,6 +843,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn grep-file-paths
+
   "Recurse a folder, picking out files with the given extension."
   [rootDir ext]
   ;; the stack is used to store the folder hierarchy
@@ -730,15 +851,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn basename
+
   "Get the name of file without extension."
   [file]
+
   (let [n (.getName (io/file file))
         p (cs/last-index-of n ".")] (if p (subs n 0 p) n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn touch!
+
   "Touch a file."
   [file]
+
   (if-some [f (io/file file)]
     (if-not (.exists f)
       (do (.. f getParentFile mkdirs) (c/wo* [o (os* f)]))
@@ -748,9 +873,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn chunk-read-stream
+
   "Reads through this data, and for each chunk
   calls the function."
   [data cb]
+
   (let [b (byte-array c/FourK)
         [z? ^InputStream inp] (input-stream?? data)]
     (try (loop [c (if inp (.read inp b) 0) t 0]
@@ -763,8 +890,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fmt->edn
+
   "Format to EDN."
   ^String [obj]
+
   (let [w (StringWriter.)]
     (if obj
       (pp/with-pprint-dispatch
@@ -772,22 +901,30 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn read-edn
+
   "Parse EDN formatted text."
+
   ([arg]
    (read-edn arg "utf-8"))
+
   ([arg enc]
    (if-some [s (x->str arg enc)] (edn/read-string s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fmt->json
+
   "Format to JSON."
   ^String [data] (some-> data js/write-str))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn read-json
+
   "Parses JSON."
+
   ([data enc] (read-json data enc nil))
+
   ([data] (read-json data "utf-8"))
+
   ([data enc keyfn]
    (if-some [s (x->str data enc)]
      (if keyfn
@@ -795,10 +932,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn res->stream
+
   "Load the resource as stream."
   {:tag InputStream}
+
   ([path]
    (res->stream path nil))
+
   ([path ldr]
    {:pre [(string? path)]}
    (when-not (empty? path)
@@ -807,10 +947,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn res->url
+
   "Load the resource as URL."
   {:tag URL}
+
   ([path]
    (res->url path nil))
+
   ([path ldr]
    {:pre [(string? path)]}
    (when-not (empty? path)
@@ -819,10 +962,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn res->str
+
   "Load the resource as string."
   {:tag String}
+
   ([path enc] (res->str path enc nil))
+
   ([path] (res->str path "utf-8" nil))
+
   ([path enc ldr]
    (if-some [r (res->stream path ldr)]
      (c/wo* [inp r
@@ -833,10 +980,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn res->bytes
+
   "Load the resource as bytes."
   {:tag "[B"}
+
   ([path]
    (res->bytes path nil))
+
   ([path ldr]
    (if-some [r (res->stream path ldr)]
      (c/wo* [inp r

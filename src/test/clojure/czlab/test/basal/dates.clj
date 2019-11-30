@@ -6,18 +6,12 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc ""
-    :author "Kenneth Leung"}
+(ns czlab.test.basal.dates
 
-  czlab.test.basal.dates
-
-  (:require [clojure
-             [test :as ct]
-             [string :as cs]]
-            [czlab.basal
-             [dates :as d]
-             [core :refer [ensure?? ensure-thrown??] :as c]])
+  (:require [clojure.test :as ct]
+            [clojure.string :as cs]
+            [czlab.basal.dates :as d]
+            [czlab.basal.core :refer [ensure?? ensure-thrown??] :as c])
 
   (:import [java.sql
             Timestamp]
@@ -120,7 +114,7 @@
 
   (ensure?? "dtime" (> (d/dtime) 0))
 
-  (ensure?? "test-end" (= 1 1)))
+  (ensure?? "test-end" (== 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ct/deftest

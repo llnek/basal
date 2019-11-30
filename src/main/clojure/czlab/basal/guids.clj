@@ -6,16 +6,13 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc "Ways to generate an unique id."
-    :author "Kenneth Leung"}
+(ns czlab.basal.guids
 
-  czlab.basal.guids
+  "Ways to generate an unique id."
 
-  (:require [czlab.basal
-             [io :as i]
-             [core :as c]
-             [util :as u]]
+  (:require [czlab.basal.io :as i]
+            [czlab.basal.core :as c]
+            [czlab.basal.util :as u]
             [clojure.java.io :as io])
 
   (:import [java.util
@@ -41,15 +38,19 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/defmacro- fmt-int
+
   [nm] `(fmt int-mask (Integer/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/defmacro- fmt-long
+
   [nm] `(fmt long-mask (Long/toHexString ~nm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- fmt
+
   ^String [pad mask]
+
   (let [plen (count pad)
         mlen (count mask)]
     (if (>= mlen plen)
@@ -75,7 +76,7 @@
           :else
           (c/wo* [dis (DataInputStream.
                         (io/input-stream b))]
-            (if (= 4 (alength b))
+            (if (== 4 (alength b))
               (long (.readInt dis)) (.readLong dis))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -83,12 +84,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn uuid<>
+
   "rfc4122, v4 format"
   ^String []
   ;;at i==19 set the high bits of clock
   ;;sequence as per rfc4122, sec. 4.1.5
-  (let [rc (char-array _uuid-len)
-        rnd (u/rand<>)]
+
+  (let [rnd (u/rand<>)
+        rc (char-array _uuid-len)]
     (dotimes [n (alength rc)]
       (aset-char rc
                  n
@@ -97,7 +100,7 @@
                    (14) \4
                    (let [d (Double. (* (.nextDouble rnd) 16))
                          r (bit-or 0 (.intValue d))
-                         pos (if (= n 19)
+                         pos (if (== n 19)
                                (bit-or (bit-and r 0x3) 0x8)
                                (bit-and r 0xf))]
                      (aget ^chars _chars pos)))))
@@ -105,8 +108,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn wwid<>
+
   "uid based on time/ip"
   ^String []
+
   (let [seed (.nextInt (u/rand<>)
                        (Integer/MAX_VALUE))
         [hi lo] (split-time)]

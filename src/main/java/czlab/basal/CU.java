@@ -10,9 +10,6 @@
 
 package czlab.basal;
 
-/**
- * @author Kenneth Leung
- */
 public enum CU {
 ;
   public static boolean canLog() {

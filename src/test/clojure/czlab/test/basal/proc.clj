@@ -6,23 +6,17 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc ""
-    :author "Kenneth Leung"}
-
-  czlab.test.basal.proc
+(ns czlab.test.basal.proc
 
   (:require [clojure.java.io :as io]
-            [clojure
-             [test :as ct]
-             [string :as cs]]
-            [czlab.basal
-             [proc :as p]
-             [io :as i]
-             [util :as u]
-             [xpis :as po]
-             [core
-              :refer [ensure?? ensure-thrown??] :as c]]))
+            [clojure.test :as ct]
+            [clojure.string :as cs]
+            [czlab.basal.proc :as p]
+            [czlab.basal.io :as i]
+            [czlab.basal.util :as u]
+            [czlab.basal.xpis :as po]
+            [czlab.basal.core
+              :refer [ensure?? ensure-thrown??] :as c]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def ^{:private true
@@ -36,13 +30,13 @@
             (c/let#true
               [s (p/scheduler<>)] (reset! SCD s) (po/activate s)))
 
-  (ensure?? "run*" (= 1
+  (ensure?? "run*" (== 1
                      (let [x (atom 0)]
                        (p/run* @SCD swap! [x inc])
                        (u/pause 500)
                        @x)))
 
-  (ensure?? "run" (= 1
+  (ensure?? "run" (== 1
                      (let [x (atom 0)]
                        (p/run @SCD
                               (u/run<> (swap! x inc)))
@@ -50,7 +44,7 @@
                        @x)))
 
   (ensure?? "postpone"
-            (= 1 (let [x (atom 0)]
+            (== 1 (let [x (atom 0)]
                    (p/postpone @SCD
                                (u/run<> (swap! x inc)) 500)
                    (u/pause 800)
@@ -83,7 +77,7 @@
 
   (ensure?? "finz" (c/do#true (po/deactivate @SCD)))
 
-  (ensure?? "test-end" (= 1 1)))
+  (ensure?? "test-end" (== 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ct/deftest

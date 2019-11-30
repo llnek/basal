@@ -6,19 +6,13 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc ""
-    :author "Kenneth Leung"}
+(ns czlab.test.basal.util
 
-  czlab.test.basal.util
-
-  (:require [clojure
-             [test :as ct]
-             [string :as cs]]
-            [czlab.basal
-             [util :as u]
-             [core
-              :refer [ensure?? ensure-thrown??] :as c]])
+  (:require [clojure.test :as ct]
+            [clojure.string :as cs]
+            [czlab.basal.util :as u]
+            [czlab.basal.core
+              :refer [ensure?? ensure-thrown??] :as c])
 
   (:import [java.net
             URL]
@@ -44,14 +38,14 @@
   (ensure?? "run<>" (let [a (atom 0)
                           r (u/run<> (reset! a (+ 1 (+ 2 3))))]
                         (.run r)
-                        (= 6 @a)))
+                        (== 6 @a)))
 
   (ensure?? "get-env-var" (let [s (u/get-env-var "PATH")]
                             (and (string? s)
                                  (pos? (count s)))))
 
   (ensure?? "uuid<>" (let [s (u/uuid<>)]
-                       (and (= 36 (count s))
+                       (and (== 36 (count s))
                             (cs/includes? s "-"))))
 
   (ensure?? "date<>" (instance? java.util.Date (u/date<>)))
@@ -78,15 +72,15 @@
                                m (u/mono-flop<>)]
                            (dotimes [_ 10]
                              (if (u/is-first-call? m)
-                               (swap! out inc))) (= 1 @out)))
+                               (swap! out inc))) (== 1 @out)))
 
   (ensure?? "watch<>,pause" (let [w (u/watch<>)]
                               (u/pause 100)
-                              (and (pos? (u/wa-elapsed-millis w))
-                                   (pos? (u/wa-elapsed-nanos w))
+                              (and (pos? (u/elapsed-millis w))
+                                   (pos? (u/elapsed-nanos w))
                                    (pos? (do (u/pause 100)
-                                             (u/wa-reset! w)
-                                             (u/wa-elapsed-nanos w))))))
+                                             (u/reset-watch! w)
+                                             (u/elapsed-nanos w))))))
 
   (ensure?? "jid<>" (let [s (u/jid<>)]
                       (and (string? s)
@@ -100,7 +94,7 @@
                            (not (cs/includes? s "-")))))
 
   (ensure?? "rand-bytes" (let [b (u/rand-bytes 10)]
-                           (= 10 (count b))))
+                           (== 10 (count b))))
 
   (ensure?? "encoding??,charset??"
             (= "utf-8"
@@ -111,7 +105,7 @@
 
   (ensure?? "serialize,deserialize"
             (let [b (u/serialize {:a 1})
-                  m (u/deserialize b)] (= 1 (:a m))))
+                  m (u/deserialize b)] (== 1 (:a m))))
 
   (ensure?? "serialize,deserialize"
             (let [b (u/serialize (Exception. "hi"))
@@ -184,7 +178,7 @@
                   t (u/tmtask<> #(reset! a 3))]
               (and (c/is? TimerTask t)
                    (do (.run t)
-                       (= 3 @a)))))
+                       (== 3 @a)))))
 
   ;(ensure?? "prt-stk" (u/prt-stk (Exception. "e")))
 
@@ -206,11 +200,11 @@
                   z (c/cast? Map (.get c 2))
                   _ (if (nil? z) (c/raise! "expect Map3"))
                   z3 (.get z "z")]
-              (and (= 1 a)
-                   (= 3 (.size b))
-                   (and (= 7 (.get c 0))
-                        (= 8 (.get c 1)))
-                   (= 3 z3))))
+              (and (== 1 a)
+                   (== 3 (.size b))
+                   (and (== 7 (.get c 0))
+                        (== 8 (.get c 1)))
+                   (== 3 z3))))
 
   (ensure?? "seqint"
             (let [old (u/seqint)
@@ -243,9 +237,9 @@
                                z0 (u/ms-count m)]
                            (u/ms-add m (atom {:a 2}))
                            (u/ms-add m (atom {:a 3}))
-                           (and (= 1 z0)
-                                (= 3 (u/ms-count m))
-                                (= 4 (u/ms-capacity m)))))
+                           (and (== 1 z0)
+                                (== 3 (u/ms-count m))
+                                (== 4 (u/ms-capacity m)))))
 
   (ensure?? "each-set" (let [acc (atom 0)
                              m (u/new-memset<> 2)]
@@ -254,7 +248,7 @@
                          (u/ms-each m
                                     (fn [obj _]
                                       (swap! acc + (:a @obj))))
-                         (= 3 @acc)))
+                         (== 3 @acc)))
   (ensure?? "drop->set!" (let [m (u/new-memset<> 2)
                                a (atom {:a 1})
                                b (atom {:a 1})]
@@ -262,7 +256,7 @@
                            (u/ms-add m b)
                            (u/ms-drop m a)
                            (u/ms-drop m b)
-                           (= 0 (u/ms-count m))))
+                           (zero? (u/ms-count m))))
 
   (ensure?? "get-cldr" (not (nil? (u/get-cldr))))
   (ensure?? "set-cldr" (do (u/set-cldr (u/get-cldr)) true))
@@ -284,7 +278,7 @@
   (ensure?? "get-resource" (c/is? ResourceBundle
                                   (u/get-resource "czlab/basal/etc/Resources")))
 
-  (ensure?? "test-end" (= 1 1)))
+  (ensure?? "test-end" (== 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ct/deftest

@@ -6,21 +6,15 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc ""
-    :author "Kenneth Leung"}
-
-  czlab.test.basal.io
+(ns czlab.test.basal.io
 
   (:require [clojure.java.io :as io]
-            [clojure
-             [test :as ct]
-             [string :as cs]]
-            [czlab.basal
-             [io :as i]
-             [util :as u]
-             [core
-              :refer [ensure?? ensure-thrown??] :as c]])
+            [clojure.test :as ct]
+            [clojure.string :as cs]
+            [czlab.basal.io :as i]
+            [czlab.basal.util :as u]
+            [czlab.basal.core
+              :refer [ensure?? ensure-thrown??] :as c])
 
   (:import [java.net
             URL]
@@ -67,22 +61,22 @@
                     (String. (i/x->chars (.getBytes "hello" "utf-8"))))))
 
   (ensure?? "readable-bytes"
-            (= 5 (c/wo* [inp (io/input-stream (i/x->bytes "hello"))]
+            (== 5 (c/wo* [inp (io/input-stream (i/x->bytes "hello"))]
                    (i/readable-bytes inp))))
 
   (ensure?? "klose" (do (i/klose nil)
                         (i/klose (i/baos<>)) true))
 
   (ensure?? "write-number"
-            (and (= 4 (alength (i/write-number Integer/MAX_VALUE)))
-                 (= 8 (alength (i/write-number Long/MAX_VALUE)))
-                 (= Long/MAX_VALUE
+            (and (== 4 (alength (i/write-number Integer/MAX_VALUE)))
+                 (== 8 (alength (i/write-number Long/MAX_VALUE)))
+                 (== Long/MAX_VALUE
                     (i/read-number (i/write-number Long/MAX_VALUE) Long))
-                 (= Integer/MAX_VALUE
+                 (== Integer/MAX_VALUE
                     (i/read-number (i/write-number Integer/MAX_VALUE) Integer))
-                 (= Integer/MAX_VALUE
+                 (== Integer/MAX_VALUE
                     (i/read-number (i/write-number Integer/MAX_VALUE) Integer))
-                 (= Long/MAX_VALUE
+                 (== Long/MAX_VALUE
                     (i/read-number (i/write-number Long/MAX_VALUE) Long))))
 
   (ensure?? "input-stream??"
@@ -145,7 +139,7 @@
               (let [c (.read s)
                     _ (i/reset-stream! s)
                     c2 (.read s)]
-                (= c c2))))
+                (== c c2))))
 
   (ensure?? "temp-file" (let [f (i/temp-file)
                               _ (spit f "a")
@@ -255,7 +249,7 @@
                       (finally (i/fdelete f))))))
 
   (ensure?? "slurpb"
-            (= 5 (let [f (i/temp-file)]
+            (== 5 (let [f (i/temp-file)]
                    (i/spit-utf8 f "hello")
                    (try (alength (i/x->bytes (i/slurpb f)))
                         (finally (i/fdelete f))))))
@@ -300,7 +294,7 @@
               (i/fdelete (io/file d1))
               (i/fdelete (io/file d2))
               (i/fdelete root)
-              (and (= 2 dz) (= 2 fz) (= 4 tz))))
+              (and (== 2 dz) (== 2 fz) (== 4 tz))))
 
   (ensure?? "grep-folder-paths,grep-file-paths"
             (let [n0 (u/jid<>) n1 (u/jid<>) n2 (u/jid<>)
@@ -328,8 +322,8 @@
               (i/fdelete d2)
               (i/fdelete d3)
               (i/fdelete root)
-              (and (= 3 (count ds))
-                   (= 4 (count fs)))))
+              (and (== 3 (count ds))
+                   (== 4 (count fs)))))
 
   (ensure?? "basename"
             (let [n (u/jid<>)
@@ -339,7 +333,7 @@
               (i/fdelete f)
               (= n b)))
 
-  (ensure?? "test-end" (= 1 1)))
+  (ensure?? "test-end" (== 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ct/deftest

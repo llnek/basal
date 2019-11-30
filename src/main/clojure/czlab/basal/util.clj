@@ -6,22 +6,18 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc "Useful additions to clojure core, (imports java stuff)."
-    :author "Kenneth Leung"}
+(ns czlab.basal.util
 
-  czlab.basal.util
+  "Useful additions to clojure core, (imports java stuff)."
 
   (:refer-clojure :exclude [shuffle])
 
-  (:require [czlab.basal
-             [log :as l]
-             [core :as c]
-             [indent :as in]]
-            [clojure
-             [string :as cs]
-             [edn :as edn]
-             [pprint :as pp]]
+  (:require [czlab.basal.log :as l]
+            [czlab.basal.core :as c]
+            [czlab.basal.indent :as in]
+            [clojure.string :as cs]
+            [clojure.edn :as edn]
+            [clojure.pprint :as pp]
             [clojure.java.io :as io]
             [clojure.data.json :as js])
 
@@ -112,34 +108,39 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol Watch
   ""
-  (wa-elapsed-millis [_] "")
-  (wa-reset! [_] "")
-  (wa-elapsed-nanos [_] ""))
+  (elapsed-millis [_] "")
+  (reset-watch! [_] "")
+  (elapsed-nanos [_] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ostream
+
   "clojure-io's output-stream." [out] `(clojure.java.io/output-stream ~out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro istream
+
   "clojure-io's input-stream." [in] `(clojure.java.io/input-stream ~in))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro try!!!
+
   "Eat, log the exception and return nil."
-  [& exprs]
-  `(czlab.basal.util/try!! nil ~@exprs))
+  [& exprs] `(czlab.basal.util/try!! nil ~@exprs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro try!!
+
   "Eat, log the exception and return a value."
   [value & exprs]
+
   `(try ~@exprs
         (catch Throwable e#
           (czlab.basal.log/warn e# "") ~value)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro system-time
+
   "Curren time in millis." [] `(System/currentTimeMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -168,54 +169,74 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro run<>
+
   "A Runnable wrapper - eat errors."
   [& forms]
+
   `(reify
      ~'java.lang.Runnable
      (~'run [~'_] (~'czlab.basal.core/try! ~@forms))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro run<+>
+
   "A Runnable wrapper - log errors."
   [& forms]
+
   `(reify
      ~'java.lang.Runnable
      (~'run [~'_] (~'czlab.basal.core/try!!! ~@forms))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-env-var
+
   "Get value for this env var."
-  [vname] `(czlab.basal.core/if-some+ [e# ~vname] (System/getenv e#)))
+  [vname]
+
+  `(czlab.basal.core/if-some+ [e# ~vname] (System/getenv e#)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro uuid<>
+
   "RFC4122, v4 format" [] `(str (java.util.UUID/randomUUID)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro date<>
+
   "A java Date" [] `(java.util.Date.))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro set-sys-prop!
+
   "Set a system property."
   [prop value] `(System/setProperty ~prop ~value))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-sys-prop
+
   "Get value of a system property."
   [prop] `(System/getProperty (str ~prop) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-user-name
+
   "Get the user login name." [] `(get-sys-prop "user.name"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-user-home
-  "Get user's home dir." [] `(clojure.java.io/file (get-sys-prop "user.home")))
+
+  "Get user's home dir."
+  []
+
+  `(clojure.java.io/file (get-sys-prop "user.home")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-user-dir
-  "Get current dir." [] `(clojure.java.io/file (get-sys-prop "user.dir")))
+
+  "Get current dir."
+  []
+
+  `(clojure.java.io/file (get-sys-prop "user.dir")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;end-macros
@@ -223,50 +244,62 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn trim-last-pathsep
+
   "Get rid of trailing dir paths."
   ^String [path] (.replaceFirst (str path) "[/\\\\]+$" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mono-flop<>
+
   "One time logic, flip on first call."
+
   ([] (mono-flop<> nil))
+
   ([flipOnCreate?]
    (let [flag (AtomicBoolean. false)]
      (c/do-with [m (reify MonoFlop
                      (is-first-call? [_]
-                       (if-not (.get flag) (c/do#true (.set flag true)))))]
+                       (if-not (.get flag)
+                         (c/do#true (.set flag true)))))]
        (if flipOnCreate? (is-first-call? m))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn watch<>
+
   "Use to mark elapsed time"
   []
+
   (let [start (atom (System/nanoTime))
         f #(.convert ^TimeUnit
                      %
                      (- (System/nanoTime) @start) TimeUnit/NANOSECONDS)]
     (reify Watch
-      (wa-reset! [_] (reset! start (System/nanoTime)))
-      (wa-elapsed-nanos [_] (f TimeUnit/NANOSECONDS))
-      (wa-elapsed-millis [_] (f TimeUnit/MILLISECONDS)))))
+      (elapsed-millis [_] (f TimeUnit/MILLISECONDS))
+      (elapsed-nanos [_] (f TimeUnit/NANOSECONDS))
+      (reset-watch! [_] (reset! start (System/nanoTime))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;happens to be all hex chars
 (defn jid<>
+
   "Generate a unique id using std java."
   ^String [] (.replaceAll (str (UID.)) "[:\\-]+" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn uid<>
+
   "UUID, no dash!"
   ^String [] (cs/replace (uuid<>) #"-" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rand<>
+
   "A new random object."
   {:tag SecureRandom}
+
   ([]
    (rand<> false))
+
   ([strong?]
    (doto
      (if-not strong?
@@ -276,40 +309,53 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rand-bytes
+
   "Generate random bytes."
+
   ([num-bytes]
    (rand-bytes (rand<>) num-bytes))
+
   ([rand-obj num-bytes]
    (c/do-with
      [b (byte-array num-bytes)] (.nextBytes ^SecureRandom rand-obj b))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn emsg
+
   "Get exception message."
   ^String [^Throwable e] (some-> e .getMessage))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn objid??
-  "Java object id, which is actually it's hashcode." [obj]
+
+  "Java object id, actually it's hashcode."
+  [obj]
+
   (if-some [obj (c/cast? Object obj)]
     (str (-> (class obj) .getSimpleName)
          "@" (Integer/toHexString (.hashCode obj))) "null@null"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn encoding??
+
   "Charset as string."
   ^String
   [enc]
+
   (if (instance? Charset enc)
     (.name ^Charset enc)
     (if (empty? enc) "utf-8" enc)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn charset??
+
   "A java Charset of the encoding."
   {:tag Charset}
+
   ([enc] (charset?? enc nil))
+
   ([] (charset?? "utf-8"))
+
   ([enc dv]
    (if (instance? Charset enc)
      enc
@@ -317,75 +363,100 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fpath
-  "Get the file path." ^String [arg]
+
+  "Get the file path."
+  ^String [arg]
+
   (if-not (instance? File arg)
     (cs/replace (str arg) #"\\" "/")
     (fpath (.getCanonicalPath ^File arg))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn serialize
+
   "Object serialization."
-  ^bytes [obj] {:pre [(some? obj)]}
+  ^bytes [obj]
+  {:pre [(some? obj)]}
+
   (c/wo* [out (ByteArrayOutputStream. c/BUF-SZ)
           oos (ObjectOutputStream. out)]
     (.writeObject oos ^Serializable obj) (.toByteArray out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn deserialize
+
   "Object deserialization."
   ^Serializable
   [^bytes bits]
   {:pre [(some? bits)]}
+
   (c/wo* [ois (-> bits
                   ByteArrayInputStream.
                   ObjectInputStream.)] (.readObject ois)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gczn
+
   "Get object's short class name."
   ^String [obj]
+
   (cond (nil? obj) ""
         (instance? Class obj)
         (.getSimpleName ^Class obj) :else (gczn (class obj))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-class-name
+
   "Get object's class name."
   ^String [obj]
+
   (cond (nil? obj) ""
         (instance? Class obj)
         (.getName ^Class obj) :else (get-class-name (class obj))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-windows?
+
   "Is Windows OS?" []
+
   (cs/includes? (cs/lower-case (get-sys-prop "os.name")) "windows"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-macos?
-  "Is Mac OS?" [] (cs/includes? (get-sys-prop "os.name") "Mac "))
+
+  "Is Mac OS?" []
+
+  (cs/includes? (get-sys-prop "os.name") "Mac "))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-linux?
-  "Is Linux OS?" [] (and (not (is-macos?))
-                         (not (is-windows?))))
+
+  "Is Linux OS?" []
+
+  (and (not (is-macos?)) (not (is-windows?))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn load-java-props
+
   "Load properties from source."
   ^Properties [arg]
+
   (if (or (instance? URL arg)
           (instance? File arg))
-    (c/wo* [inp (istream arg)] (load-java-props inp))
+    (c/wo* [inp (istream arg)]
+           (load-java-props inp))
     (c/do-with [p (Properties.)]
       (some->> (c/cast? InputStream arg) (.load p)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->str
+
   "Coerce to a string."
   {:tag String}
+
   ([obj]
    (x->str obj "utf-8"))
+
   ([obj enc]
    (let [cz (class obj)]
      (cond (string? obj)
@@ -399,8 +470,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->chars
+
   "Get chars from string."
   ^chars [obj]
+
   (cond (= CSCZ (class obj))
         obj
         (string? obj)
@@ -410,10 +483,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->bytes
+
   "Get bytes with the right encoding."
   {:tag "[B"}
+
   ([obj]
    (x->bytes obj "utf-8"))
+
   ([obj enc]
    (let [cz (class obj)]
      (cond (= ByteArrayOutputStream cz)
@@ -427,8 +503,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn deflate
+
   "Compress bytes."
   ^bytes [^bytes bits]
+
   (if bits
     (let [buf (byte-array c/BUF-SZ)
           cpz (doto (Deflater.)
@@ -445,8 +523,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn inflate
+
   "Decompress bytes."
   ^bytes [^bytes bits]
+
   (if bits
     (let [baos (ByteArrayOutputStream. (alength bits))
           buf (byte-array c/BUF-SZ)
@@ -460,8 +540,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn safe-fpath
+
   "Hex-code all non-alpha chars in a file path."
   ^String [fname]
+
   (c/sreduce<>
     (fn [^StringBuilder buf ^Character ch]
       (if (or (java.lang.Character/isLetterOrDigit ch)
@@ -475,17 +557,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 (defn fmt-file-url
+
   "File path as URL"
   ^URL [path]
+
   (when (c/hgl? path)
     (io/as-url
       (if (cs/starts-with? path "file:") path (str "file:" path)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-fpath
+
   "The file path only."
   ^String
   [fpath]
+
   (if-some
     [u (cond
          (c/is? URL fpath) fpath
@@ -493,23 +579,29 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn root-cause
+
   "Find root error."
   ^Throwable
   [root]
+
   (loop [r root
          t (some-> ^Throwable root .getCause)]
     (if (nil? t) r (recur t (.getCause t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn root-cause-msg
+
   "Find root error msg."
   [root] (str (some-> (root-cause root) .getMessage)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn pmap<>
+
   "Java Map into Clojure Map."
+
   ([props]
    (pmap<> props true))
+
   ([props key?]
    {:pre [(instance? Map props)]}
    (c/preduce<map>
@@ -519,21 +611,26 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn tmtask<>
+
   "A timer task."
   ^TimerTask [func]
   {:pre [(fn? func)]}
+
   (proxy [TimerTask][] (run [] (c/try! (func)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn prn-stk
+
   "Print stack."
   [exp] (some-> ^Throwable exp .printStackTrace))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn dump-stk
+
   "Dump stack trace."
   ^String
   [^Throwable e]
+
   (c/wo*
     [out (ByteArrayOutputStream. c/BUF-SZ)
      ps (PrintStream. out true "utf-8")]
@@ -544,31 +641,39 @@
 (declare x->java)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- conv->list
+
   "To Java List."
   ^ArrayList [obj]
+
   (c/do-with [rc (ArrayList.)]
     (doseq [v obj] (.add rc (x->java v)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- conv->set
+
   "To Java Set."
   ^HashSet [obj]
+
   (c/do-with [rc (HashSet.)]
     (doseq [v obj] (.add rc (x->java v)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- conv->map
+
   "To Java Map."
   ^HashMap [obj]
+
   (c/do-with [rc (HashMap.)]
     (doseq [[k v] obj]
       (.put rc (c/strip-ns-path k) (x->java v)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->java
+
   "Convert a clojure data structure
   to its Java equivalent."
   ^Object [obj]
+
   (cond (map? obj)
         (conv->map obj)
         (set? obj)
@@ -583,48 +688,60 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn seqint
+
   "A sequence number (int)." [] (.getAndIncrement _num-int))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn seqint2
+
   "A sequence number (long)." [] (.getAndIncrement _num-long))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn cancel-timer-task!
+
   "Cancel a timer task."
   [t] (c/try! (some-> ^TimerTask t .cancel) t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro count-cpus
+
   "How many cpus?"
   [] `(.availableProcessors (Runtime/getRuntime)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn pause
+
   "Block current thread for some millisecs."
   [millis]
+
   (c/try! (if (c/spos? millis) (Thread/sleep millis))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro sys-tmp-dir
-  "Java tmp dir." [] `(get-sys-prop "java.io.tmpdir"))
+
+  "Java tmp dir." []
+  `(get-sys-prop "java.io.tmpdir"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- same-obj?
+
   "Are these 2 objects identical?"
   [^Object this ^Object obj]
+
   (or (and (nil? this)(nil? obj))
       (and this obj
            (or (identical? this obj)
                (and (= (.getClass this)
                        (.getClass obj))
-                    (= (.hashCode obj)
-                       (.hashCode this)))))))
+                    (== (.hashCode obj)
+                        (.hashCode this)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn obj-eq?
+
   "If these 2 objs are equal?"
   [a b]
+
   (cond (and (nil? a) (nil? b))
         true
         (or (nil? a) (nil? b))
@@ -637,25 +754,34 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn url-encode
+
   "HTML encode."
   {:tag String}
+
   ([s] (url-encode s "utf-8"))
+
   ([s enc]
    (.replace (URLEncoder/encode (str s) (encoding?? enc)) "+" "%20")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn url-decode
+
   "HTML decode."
   {:tag String}
+
   ([s]
    (url-decode s "utf8"))
+
   ([s enc]
    (if (string? s)
      (URLDecoder/decode ^String s (encoding?? enc)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sortby
-  "sort-by with comparator." [kfn cmp coll]
+
+  "sort-by with comparator."
+  [kfn cmp coll]
+
   (sort-by kfn
            (reify java.util.Comparator
              (compare [_ t1 t2] (cmp t1 t2))) coll))
@@ -674,8 +800,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn new-memset<>
+
   "New in-memory object store. Object must be an atom."
+
   ([] (new-memset<> 10))
+
   ([_batch]
    (let [batch (c/num?? _batch 10)
          impl (atom {:size 0
@@ -722,25 +851,32 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-cldr
+
   "Get current classloader."
   {:tag ClassLoader}
+
   ([]
    (get-cldr nil))
+
   ([cl]
    (or cl (.getContextClassLoader (Thread/currentThread)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn set-cldr
+
   "Set classloader."
   [c]
+
   (if-some [cl (c/cast? ClassLoader c)]
     (.setContextClassLoader (Thread/currentThread) cl)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn load-resource
+
   "Load file with localized strings."
   ^ResourceBundle
   [arg]
+
   (if-some [inp (cond (or (c/is? URL arg)
                           (c/is? File arg))
                       (istream arg)
@@ -752,10 +888,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-resource
+
   "A resource bundle."
   {:tag ResourceBundle}
+
   ([basename] (get-resource basename (Locale/getDefault) nil))
+
   ([basename locale] (get-resource basename locale nil))
+
   ([basename locale cl]
    (if (and locale (c/hgl? basename))
      (ResourceBundle/getBundle ^String basename
@@ -763,11 +903,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rstr
+
   "The string value for this key,
   pms may contain values
   for positional substitutions."
   ^String
   [bundle pkey & pms]
+
   (if (and bundle
            (c/hgl? pkey))
     (loop [src (str (.getString ^ResourceBundle
@@ -783,17 +925,22 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rstr*
+
   "Handle a bunch of resource keys
   (rstr bundle [\"k1\" p1 p2] [\"k2\" p3 p4] )."
   [bundle & pms]
+
   (mapv #(apply rstr bundle (first %) (drop 1 %)) pms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn block!
+
   "Block forever, or wait on this lock."
+
   ([]
    (try (.join (Thread/currentThread))
         (catch Throwable _ (l/exception _))))
+
   ([^Object lock waitMillis]
    (try (locking lock
           (if-not (pos? waitMillis)
@@ -803,15 +950,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn unblock!
+
   "Notify all threads waiting on this lock."
   [^Object lock]
+
   (try (locking lock
          (.notifyAll lock))
        (catch Throwable _ (l/exception _))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn shuffle
-  "Shuffle characters in string." [s]
+
+  "Shuffle characters in string."
+  [s]
+
   (let [lst (java.util.ArrayList.)]
     (doseq [c (seq s)] (.add lst c))
     (Collections/shuffle lst)
@@ -827,9 +979,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn cljrt<>
+
   "A clojure runtime."
+
   ([]
    (cljrt<> nil))
+
   ([cl]
    (let [^IFn _require (RT/var "clojure.core" "require")
          cl (or cl (get-cldr))

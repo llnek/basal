@@ -6,15 +6,12 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc "Access to a windows style .ini file."
-    :author "Kenneth Leung"}
+(ns czlab.basal.ini
 
-  czlab.basal.ini
+  "Access to a windows style .ini file."
 
-  (:require [czlab.basal
-             [util :as u]
-             [core :as c]]
+  (:require [czlab.basal.util :as u]
+            [czlab.basal.core :as c]
             [clojure.string :as cs]
             [clojure.java.io :as io])
 
@@ -30,51 +27,62 @@
 ;;(set! *warn-on-reflection* true)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/defmacro- throw-bad-key
+
   [k] `(u/throw-BadData "No such item %s." ~k))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/defmacro- throw-bad-map
+
   [s] `(u/throw-BadData "No such heading %s" ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- throw-bad-ini
+
   [rdr] (u/throw-BadData "Bad ini line: %d."
                          (.getLineNumber ^LineNumberReader rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- maybe-section
+
   "Look for a section storing the
   actual name in meta."
   [rdr line ncmap]
+
   (c/if-some+ [s (c/strim-any line "[]" true)]
     (let [k (keyword (c/lcase s))]
-      [(if-not (c/in? ncmap k)
+      [(if (c/in? ncmap k)
+         ncmap
          (assoc ncmap
                 k (c/wm* (ordered-map)
-                         (hash-map :name s))) ncmap) k])
+                         (hash-map :name s)))) k])
     (throw-bad-ini rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- maybe-line
+
   "Parse a line (name=value) under a section."
   [rdr line ncmap section]
+
   (if-some [_ (get ncmap section)]
     (let [pos (cs/index-of line \=)
-          nm (if (c/spos? pos)
-               (c/strim (subs line 0 pos)) "")
+          nm (if-not (c/spos? pos)
+               ""
+               (c/strim (subs line 0 pos)))
           k (if (c/hgl? nm)
               (keyword (c/lcase nm)) (throw-bad-ini rdr))]
       [(update-in ncmap
-                 [section]
-                 assoc
-                 k
-                 [nm (c/strim (subs line (+ 1 pos)))]) section])
+                  [section]
+                  assoc
+                  k
+                  [nm (c/strim (subs line (+ 1 pos)))]) section])
     (throw-bad-ini rdr)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- eval-one-line
+
   "Parses a line in the file."
   [rdr line ncmap curSec]
+
   (let [ln (c/strim line)]
     (cond (or (c/nichts? ln)
               (cs/starts-with? ln "#"))
@@ -87,7 +95,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- getkv
+
   ^String [sects s k err]
+
   (let [sn (keyword (c/lcase s))
         kn (keyword (c/lcase k))
         mp (get sects sn)]
@@ -115,7 +125,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- wrap->ini
+
   [M]
+
   (reify WinINI
     (headings [_]
       (c/preduce<set> #(conj! %1 (:name (meta %2))) (vals M)))
@@ -160,8 +172,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- parse-file
+
   ([fUrl]
    (parse-file fUrl "utf-8"))
+
   ([fUrl enc]
    (c/wo* [inp (-> (io/input-stream fUrl)
                    (io/reader :encoding
@@ -177,8 +191,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn win-ini<>
+
   "Parse a windows ini file."
   [in]
+
   (cond (c/is? File in)
         (win-ini<> (io/as-url in))
         (string? in)

@@ -6,21 +6,16 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc "A publish subscribe library using subject based topics."
-    :author "Kenneth Leung"}
+(ns czlab.basal.rvbus
 
-  czlab.basal.rvbus
+  "A publish subscribe library using subject based topics."
 
-  (:require [czlab.basal
-             [io :as i]
-             [core :as c]
-             [util :as u]
-             [xpis :as po]]
+  (:require [czlab.basal.io :as i]
+            [czlab.basal.core :as c]
+            [czlab.basal.util :as u]
+            [czlab.basal.xpis :as po]
             [clojure.string :as cs]
-            [clojure.core.async
-             :as ca
-             :refer [>! <! go-loop go chan close! sliding-buffer]]))
+            [clojure.core.async :as a :refer [>! <!]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
@@ -31,24 +26,31 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- split
-  "Split up topic into parts." [topic sep]
+
+  "Split up topic into parts."
+  [topic sep]
+
   (filterv #(if (> (count %) 0) %)
            (cs/split topic
-                     (if (= sep ".") re-dot re-slash))))
+                     (if (.equals "." sep) re-dot re-slash))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- mk-async
+
   ([cb t] (mk-async cb t nil))
+
   ([cb t bufsz]
-   (c/do-with [in (chan (sliding-buffer
-                          (c/num?? bufsz 16)))]
-     (go-loop [r (<! in)]
+   (c/do-with [in (a/chan (a/sliding-buffer
+                            (c/num?? bufsz 16)))]
+     (a/go-loop [r (<! in)]
        (when r
          (cb (:expected r) (:topic r) (:msg r)) (recur (<! in)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- mk-sub
+
   [impl topic cb]
+
   (let [{:keys [bufsz async?]} @impl]
     {:id (keyword (c/x->kw (u/jid<>) "-" (u/seqint2)))
      :topic topic
@@ -57,22 +59,26 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- fmt-path
+
   "So that tokens are lined up in nested levels.
   e.g. tokens = [a b c]
        result = [:levels a :levels b :levels c]."
   [tokens]
+
   (c/vec-> (interleave (repeat :levels) tokens)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- run
+
   "Dispatch message to subscribers."
   [async? subcs topic msg]
+
   (let [data {:topic topic :msg msg}]
     (if async?
-      (go (doseq [[_ z] subcs
-                  :let [{expected :topic
-                         :keys [action]} z]]
-            (>! action (assoc data :expected expected))))
+      (a/go (doseq [[_ z] subcs
+                    :let [{expected :topic
+                           :keys [action]} z]]
+              (>! action (assoc data :expected expected))))
       (doseq [[_ z] subcs
               :let [{expected :topic
                      :keys [action]} z]]
@@ -80,7 +86,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- walk
+
   [async? branch pathTokens topic msg tst]
+
   (c/let#nil
     [{:keys [levels subcs]} branch
      [p & more] pathTokens
@@ -111,26 +119,29 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol EventBus
-  ""
-  (ev-pub [_ topic msg] "")
-  (ev-match? [_ topic] "")
-  (ev-dbg [_] "")
-  (ev-unsub [_ subid] "")
-  (ev-sub [_ topic listener] ""))
+  "Topic based pub-sub event bus."
+  (match? [_ topic] "True if topic is registered.")
+  (dbg [_] "Internal.")
+  (unsub [_ subid] "Drop subscription.")
+  (sub [_ topic listener] "Subscribe to this topic.")
+  (pub [_ topic msg] "Publish a message on this topic."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn event-bus<>
+
   "A Publish Subscribe event manager whereby
   a more advanced matching scheme is used -
   such as wild-card matches."
+
   ([] (event-bus<> nil))
+
   ([options]
    (let [impl (atom (merge {:delimiter "."
                             :async? false
                             :bufsz 16
                             :levels {} :subcs {}} options))]
      (reify EventBus
-       (ev-sub [_ topic listener]
+       (sub [_ topic listener]
          (let [{:keys [async? delimiter]} @impl
                {:keys [id] :as sub}
                (mk-sub impl topic listener)
@@ -143,20 +154,20 @@
                                                [:subcs]
                                                assoc id sub))
                         (update-in [:subcs] assoc id sub)))) id))
-       (ev-pub [bus topic msg]
+       (pub [bus topic msg]
          (let [{:keys [async?
                        delimiter] :as B} @impl]
            (c/if-some+
              [ts (split topic delimiter)]
              (walk async? B ts topic msg nil)) bus))
-       (ev-unsub [bus subid]
+       (unsub [bus subid]
          (if-some [sub ((:subcs @impl) subid)]
            (let [{:keys [async? delimiter]} @impl
                  {:keys [action topic]} sub
                  path (fmt-path (split topic delimiter))]
              (swap! impl
                     (c/fn_1
-                      (if async? (close! action))
+                      (if async? (a/close! action))
                       (-> (update-in ____1
                                      path
                                      #(update-in %
@@ -164,7 +175,7 @@
                                                  dissoc subid))
                           (update-in [:subcs]
                                      dissoc subid)))))) bus)
-       (ev-match? [_ topic]
+       (match? [_ topic]
          (let [z (atom 0)
                {:keys [async?
                        delimiter] :as B} @impl]
@@ -172,12 +183,12 @@
              [ts (split topic delimiter)]
              (walk async? B ts topic nil z))
            (pos? @z)))
-       (ev-dbg [_] (i/fmt->edn @impl))
+       (dbg [_] (i/fmt->edn @impl))
        po/Finzable
        (finz [me]
          (let [{:keys [async? subcs]} @impl]
            (if async? ;maybe close all go channels
-             (doseq [[_ z] subcs] (close! (:action z))))
+             (doseq [[_ z] subcs] (a/close! (:action z))))
            (swap! impl
                   #(assoc % :levels {} :subcs {})) me))))))
 

@@ -10,10 +10,6 @@
 
 package czlab.basal;
 
-/**
- *
- * @author Kenneth Leung
- */
 public interface Callable<T> {
   T call(Object[] args);
 }

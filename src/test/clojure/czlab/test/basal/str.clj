@@ -6,19 +6,13 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc ""
-    :author "Kenneth Leung"}
+(ns czlab.test.basal.str
 
-  czlab.test.basal.str
-
-  (:require [clojure
-             [test :as ct]
-             [string :as cs]]
-            [czlab.basal
-             [util :as u]
-             [core
-              :refer [ensure?? ensure-thrown??] :as c]]))
+  (:require [clojure.test :as ct]
+            [clojure.string :as cs]
+            [czlab.basal.util :as u]
+            [czlab.basal.core
+              :refer [ensure?? ensure-thrown??] :as c]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/deftest test-str
@@ -60,13 +54,13 @@
 
   (ensure?? "has-no-case?" (c/has-no-case? "ab cd" "AB"))
 
-  (ensure?? "index-any" (and (= 5 (c/index-any "hello joe" "793 Z"))
+  (ensure?? "index-any" (and (== 5 (c/index-any "hello joe" "793 Z"))
                              (neg? (c/index-any "hello joe" "793"))))
 
-  (ensure?? "count-str" (and (= 3 (c/count-str "abagabrabt" "ab"))
+  (ensure?? "count-str" (and (== 3 (c/count-str "abagabrabt" "ab"))
                              (zero? (c/count-str "abagabrabt" "AA"))))
 
-  (ensure?? "count-char" (and (= 4 (c/count-char "abagabrabt" \a))
+  (ensure?? "count-char" (and (== 4 (c/count-char "abagabrabt" \a))
                               (zero? (c/count-char "abagabrabt" \space))))
 
   (ensure?? "sname" (and (= "a" (c/sname :a))
@@ -181,10 +175,7 @@
   (ensure?? "esc-xml" (= (c/esc-xml "<abc\"'&>")
                          "&lt;abc&quot;&apos;&amp;&gt;"))
 
-
-
-
-  (ensure?? "test-end" (= 1 1)))
+  (ensure?? "test-end" (== 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ct/deftest

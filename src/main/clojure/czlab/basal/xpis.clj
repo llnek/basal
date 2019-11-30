@@ -6,11 +6,9 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc "Useful external protocols."
-    :author "Kenneth Leung"}
+(ns czlab.basal.xpis
 
-  czlab.basal.xpis
+  "Useful external protocols."
 
   (:refer-clojure :exclude [send name reset!]))
 

@@ -10,9 +10,6 @@
 
 package czlab.basal;
 
-/**
- * @author Kenneth Leung
- */
 public class FailFast extends Exception {
 
   private static final long serialVersionUID = 1L;

@@ -31,7 +31,6 @@ import java.util.Arrays;
  * or a memory byte[], String or some object. By default the data
  * is transient and will be purged unless delete is set to false.
  *
- * @author Kenneth Leung
  */
 @SuppressWarnings("deprecation")
 public class XData implements Serializable {
@@ -145,15 +144,19 @@ public class XData implements Serializable {
   /**
    */
   public byte[] getBytes() throws IOException {
-    int limit= 1024 * 1024 * 10;//10meg!
+    return getBytes(1024 * 1024 * 10); //10meg!
+  }
+
+  /**
+   */
+  public byte[] getBytes(int maxSize) throws IOException {
     byte[] bits=null;
 
     if (_data instanceof File) {
       File f= (File) _data;
       long n= f.length();
       try (InputStream inp = new FileInputStream(f)) {
-        //if (n > Integer.MAX_VALUE) {
-        if (n > limit) {
+        if (n > maxSize) {
           throw new IOException("file too large, " +
                                 "size= " +
                                 Long.toString(n));
@@ -194,7 +197,6 @@ public class XData implements Serializable {
   }
 
   /**
-   * @throws IOException
    */
   public long size() throws IOException {
     long len=0L;

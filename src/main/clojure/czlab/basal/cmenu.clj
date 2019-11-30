@@ -6,11 +6,9 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc "Text menu interactions for consoles."
-      :author "Kenneth Leung"}
+(ns czlab.basal.cmenu
 
-  czlab.basal.cmenu
+  "Text menu interactions for consoles."
 
   (:require [clojure.string :as cs]
             [czlab.basal.core :as c])
@@ -24,24 +22,32 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/defmacro- rdr
+
   "Read from the reader."
-  [r] `(.read ~(with-meta r {:tag 'Reader})))
+  [r]
+
+  `(.read ~(with-meta r {:tag 'Reader})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- is-option?
+
   "If this is an option?"
   [option]
+
   (and (string? option)
-       (not= "--" option)
+       (not (.equals "--" option))
        (or (cs/starts-with? option "--")
            (cs/starts-with? option "-"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- maybe-option
-  "Maybe get the actual option."
+
+  "Maybe get the actual option?"
   [option key?]
+
   (if (is-option? option)
     (c/if-some+
       [s (cs/replace option
@@ -49,9 +55,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-options
-  "Parse command line, returning options and args."
+
+  "Parse command line, returning options and args.
+  e.g.  --a b -c d -e f g
+        =>
+        [{:a \"b\" :c \"d\" :e \"f\"} '(\"g\")]"
+
   ([cargs]
    (parse-options cargs true))
+
   ([cargs key?]
    (loop [options (c/tmap*)
           [p1 p2 & more :as args] cargs]
@@ -64,13 +76,15 @@
                   (if (nil? p2)
                     more (cons p2 more)) more)))
        (vector (c/persist! options)
-               (if (= "--" p1)
+               (if (.equals "--" p1)
                  (if p2 (cons p2 more)) args))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- read-data
+
   "Read user input: windows has \\r\\n linux has \\n."
   ^String [in]
+
   (let [[ms bf]
         (loop [c (rdr in)
                bf (c/sbf<>)]
@@ -93,9 +107,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- on-answer
+
   "Process the answer, returning the next question."
   [^Writer cout answer props {:keys [result id
                                      must? default next]}]
+
   (if (nil? answer)
     (c/do#nil (.write cout "\n"))
     (let [rc (c/stror answer default)]
@@ -116,10 +132,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- popQ
+
   "Pop the question."
   [^Writer cout ^Reader cin props {:as Q
                                    :keys [must? choices
                                           default question]}]
+
   (if (nil? Q)
     ::caio!!
     (do (.write cout (str question (if must? "*") "? "))
@@ -131,8 +149,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- cycleQ
+
   "Cycle through the questions."
   [cout cin cmdQs start props]
+
   (loop [rc (popQ cout cin props (cmdQs start))]
     (cond (nil? rc) {}
           (= ::caio!! rc) @props
@@ -140,9 +160,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn cmenu
+
   "A console menu, prompting a sequence of questions via console."
   [cmdQs q1]
   {:pre [(map? cmdQs)]}
+
   (let [cout (-> System/out
                  BufferedOutputStream. OutputStreamWriter.)
         func (->> System/in InputStreamReader. (partial cycleQ cout))]

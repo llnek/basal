@@ -10,17 +10,17 @@
 
   :dependencies [[org.apache.logging.log4j/log4j-slf4j-impl "2.12.1"]
                  [org.apache.logging.log4j/log4j-core "2.12.1"]
-                 [org.slf4j/slf4j-api "1.7.28" ]
-                 [org.clojure/core.async "0.4.500"]
+                 [org.slf4j/slf4j-api "1.7.29" ]
+                 [org.clojure/core.async "0.5.527"]
                  [org.flatland/ordered "1.5.7"]
-                 [org.clojure/data.json "0.2.6"]
+                 [org.clojure/data.json "0.2.7"]
                  [org.clojure/tools.logging "0.5.0"]]
 
   :exclusions [org.clojure/clojure]
 
-  :plugins [[cider/cider-nrepl "0.22.2"]
+  :plugins [[cider/cider-nrepl "0.22.4"]
             [lein-codox "0.10.7"]
-            [lein-cprint "1.3.1"]]
+            [lein-cprint "1.3.2"]]
 
   :profiles {:provided {:dependencies [[org.clojure/clojure
                                         "1.10.1" :scope "provided"]]}

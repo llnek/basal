@@ -6,28 +6,27 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-(ns
-  ^{:doc ""
-    :author "Kenneth Leung"}
+(ns czlab.test.basal.core
 
-  czlab.test.basal.core
-
-  (:require [clojure
-             [test :as ct]
-             [string :as cs]]
+  (:require [clojure.test :as ct]
+            [clojure.string :as cs]
             [czlab.basal.core
              :refer [ensure?? ensure-thrown??] :as c]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;for testing state monad
-(defn- mult3 "" [x] (* 3 x))
+(defn- mult3
+  [x] (* 3 x))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- add2 "" [x] (+ 2 x))
+(defn- add2
+  [x] (+ 2 x))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- exlog
+
   "wrapper so that the actual computation is inside
-  a state-monadic value, together with the log msg"
+  a state-monadic value, together with the log msg."
   [expr log]
+
   (fn [s]
     (let [{v :value slog :log} s
           v' (expr v)
@@ -58,19 +57,19 @@
   (ensure?? "cc+"
             (= '(2 3 4 5) (c/cc+ [2 3] [4 5])))
 
-  (ensure?? "_2" (= 3 (c/_2 [1 3])))
+  (ensure?? "_2" (== 3 (c/_2 [1 3])))
 
-  (ensure?? "_1" (= 1 (c/_1 [1 3])))
+  (ensure?? "_1" (== 1 (c/_1 [1 3])))
 
-  (ensure?? "_3" (= 4 (c/_3 [1 3 4])))
+  (ensure?? "_3" (== 4 (c/_3 [1 3 4])))
 
-  (ensure?? "_E" (= 4 (c/_E [1 3 4])))
+  (ensure?? "_E" (== 4 (c/_E [1 3 4])))
 
   (ensure?? "!zero?" (c/!zero? 7))
 
-  (ensure?? "n#" (= 3 (c/n# [1 2 4])))
+  (ensure?? "n#" (== 3 (c/n# [1 2 4])))
 
-  (ensure?? "car" (= 2
+  (ensure?? "car" (== 2
                      (c/car '(2 3 4))))
 
   (ensure?? "cdr" (= '(3 4)
@@ -86,12 +85,12 @@
             (= '(1 2 3) ((c/fn_* ____xs) 1 2 3)))
 
   (ensure?? "fn_3"
-            (= 6 ((c/fn_3 (+ ____1 ____2 ____3)) 1 2 3)))
+            (== 6 ((c/fn_3 (+ ____1 ____2 ____3)) 1 2 3)))
 
   (ensure?? "fn_2"
-            (= 3 ((c/fn_2 (+ ____1 ____2)) 1 2)))
+            (== 3 ((c/fn_2 (+ ____1 ____2)) 1 2)))
 
-  (ensure?? "fn_1" (= 2 ((c/fn_1 ____1) 2)))
+  (ensure?? "fn_1" (== 2 ((c/fn_1 ____1) 2)))
 
   (ensure?? "fn_0" (= "yo" ((c/fn_0 "yo"))))
 
@@ -109,9 +108,9 @@
 
   (ensure?? "mapfv" (= [5 6 7] (c/mapfv + 4 1 2 3)))
 
-  (ensure?? "last-index" (= 3 (c/last-index '(1 2 3 4))))
+  (ensure?? "last-index" (== 3 (c/last-index '(1 2 3 4))))
 
-  (ensure?? "nexth" (= 4 (c/nexth '(1 2 3 4) 2)))
+  (ensure?? "nexth" (== 4 (c/nexth '(1 2 3 4) 2)))
 
   (ensure-thrown?? "nexth-out-of-bound"
                    java.lang.IndexOutOfBoundsException
@@ -119,9 +118,9 @@
 
   (ensure?? "chop" (= [[1 2] [3 4]] (c/chop 2 [1 2 3 4])))
 
-  (ensure?? "inc*" (= 4 (c/inc* (+ 1 2))))
+  (ensure?? "inc*" (== 4 (c/inc* (+ 1 2))))
 
-  (ensure?? "dec*" (= 2 (c/dec* (+ 2 1))))
+  (ensure?? "dec*" (== 2 (c/dec* (+ 2 1))))
 
   (ensure?? "do#false" (false? (c/do#false "aaa")))
   (ensure?? "do#nil" (nil? (c/do#nil "aaa")))
@@ -132,7 +131,7 @@
   (ensure?? "let#true" (true? (c/let#true [a 3] a)))
 
   (ensure?? "defenum"
-            (= 4 (do (c/defenum xxx a 1 b c) (+ xxx-a xxx-c))))
+            (== 4 (do (c/defenum xxx a 1 b c) (+ xxx-a xxx-c))))
 
   (ensure?? "n#-even?,n#-odd?"
             (and (c/n#-even? [])
@@ -144,18 +143,18 @@
                    (= '(:a :b :c)  (sort (keys m))))))
 
   (ensure?? "condp??" (let [arg 8]
-                        (and (= 13 (c/condp?? = arg 1 1 3 3 13))
+                        (and (== 13 (c/condp?? = arg 1 1 3 3 13))
                              (nil? (c/condp?? = arg 1 1 3 3)))))
 
   (ensure?? "case??" (let [arg 8]
-                       (and (= 13 (c/case?? arg 1 1 3 3 13))
+                       (and (== 13 (c/case?? arg 1 1 3 3 13))
                             (nil? (c/case?? arg 1 1 3 3)))))
 
-  (ensure?? "if-number" (= 13 (c/if-number [x (+ 3 4)] (+ x 6))))
+  (ensure?? "if-number" (== 13 (c/if-number [x (+ 3 4)] (+ x 6))))
 
   (ensure?? "if-string" (= "hello!" (c/if-string [x "hello"] (str x "!"))))
 
-  (ensure?? "nloop" (= 3 (let [acc (atom 0)]
+  (ensure?? "nloop" (== 3 (let [acc (atom 0)]
                            (c/nloop 3 (swap! acc inc)) @acc)))
 
   (ensure?? "each*"
@@ -184,7 +183,7 @@
                (c/preduce<vec> #(conj! %1 (last %2)) {:a 1 :b 2})))
 
   (ensure?? "rset!"
-            (= 7 (let [a (atom 3)] (c/rset! a 7) @a)))
+            (== 7 (let [a (atom 3)] (c/rset! a 7) @a)))
 
   (ensure-thrown?? "exp!"
                    java.lang.Exception
@@ -201,13 +200,13 @@
                     (catch Throwable e (.getMessage e)))))
 
   (ensure?? "do-with-atom"
-            (= 99 (c/do-with-atom [a (atom 99)] (str "dummy"))))
+            (== 99 (c/do-with-atom [a (atom 99)] (str "dummy"))))
 
   (ensure?? "do-with"
-            (= 100 @(c/do-with [a (atom 99)] (swap! a inc))))
+            (== 100 @(c/do-with [a (atom 99)] (swap! a inc))))
 
   (ensure?? "do-with"
-            (= 100 @((fn [b]
+            (== 100 @((fn [b]
                        (c/do-with [b] (swap! b inc))) (atom 99))))
 
   ;(ensure?? "bool!" (boolean? (c/bool! 3)))
@@ -228,19 +227,19 @@
   (ensure?? "when-some+" (nil?
                             (c/when-some+ [x []] (conj x 3))))
 
-  (ensure?? "if-fn?" (= 4 (c/if-fn? [x #(+ 1 %)] (x 3))))
+  (ensure?? "if-fn?" (== 4 (c/if-fn? [x #(+ 1 %)] (x 3))))
 
   (ensure?? "if-fn?" (nil? (c/if-fn? [x 1] 3)))
 
-  (ensure?? "when-fn?" (= 4 (c/when-fn? [x #(+ 1 %)] (x 3))))
+  (ensure?? "when-fn?" (== 4 (c/when-fn? [x #(+ 1 %)] (x 3))))
 
-  (ensure?? "doto->>" (= 21
+  (ensure?? "doto->>" (== 21
                          @(let [f (fn [a b c]
                                     (reset! c (+ a b @c)))]
                             (c/doto->> (atom 0)
                                        (f 1 2) (f 3 4) (f 5 6)))))
 
-  (ensure?? "doto->" (= 21
+  (ensure?? "doto->" (== 21
                         @(let [f (fn [c a b]
                                    (reset! c (+ a b @c)))]
                            (c/doto-> (atom 0)
@@ -268,7 +267,7 @@
 
   (ensure?? "!nil?" (false? (c/!nil? nil)))
 
-  (ensure?? "rnil" (= 2 (count (c/rnil [1 nil 2]))))
+  (ensure?? "rnil" (== 2 (count (c/rnil [1 nil 2]))))
 
   (ensure?? "rnilv" (= [1 2] (c/rnilv '(1 nil 2))))
 
@@ -290,42 +289,42 @@
   (ensure?? "!true?" (not (c/!true? true)))
   (ensure?? "!true?" (c/!true? 3))
 
-  (ensure?? "assert-not" (do (c/assert-not (= 3 2)) true))
+  (ensure?? "assert-not" (do (c/assert-not (== 3 2)) true))
 
   (ensure?? "marray" (= "Long[]" (.getSimpleName (class (c/marray Long 2)))))
 
-  (ensure?? "zarray" (= 0 (count (c/zarray Long))))
+  (ensure?? "zarray" (zero? (count (c/zarray Long))))
 
-  (ensure?? "vtbl**" (= 1
+  (ensure?? "vtbl**" (== 1
                         (let [v (c/vtbl** {:a 1}
                                           :op1 identity :op2 identity)]
                           (:a (:____proto v)))))
 
-  (ensure?? "vtbl*" (= 1 (let [v (c/vtbl* :op1 identity :op2 identity)]
+  (ensure?? "vtbl*" (== 1 (let [v (c/vtbl* :op1 identity :op2 identity)]
                            ((:op1 v) 1))))
 
   (ensure?? "wo*" (do (c/wo* [x (java.io.ByteArrayOutputStream.)]) true))
 
   (ensure?? "repeat-str"  (= "aaa" (c/repeat-str 3 "a")))
 
-  (ensure?? "num??" (= 44 (c/num?? nil 44)))
+  (ensure?? "num??" (== 44 (c/num?? nil 44)))
 
-  (ensure?? "num??" (= 4 (c/num?? 4 9)))
+  (ensure?? "num??" (== 4 (c/num?? 4 9)))
 
   (ensure?? "split-seq" (= '((1 2 3) (4 5))
                            (c/split-seq [1 2 3 4 5] 3)))
 
-  (ensure?? "mu-int" (= 4 (let [x (c/mu-int)]
+  (ensure?? "mu-int" (== 4 (let [x (c/mu-int)]
                              (c/mu-int x 4)
                              (c/mu-int x))))
 
-  (ensure?? "mu-long" (= 4 (let [x (c/mu-long)]
+  (ensure?? "mu-long" (== 4 (let [x (c/mu-long)]
                              (c/mu-long x 4)
                              (c/mu-long x))))
 
-  (ensure?? "nth??" (= 5 (c/nth?? [1 2 5 3 4] 3)))
+  (ensure?? "nth??" (== 5 (c/nth?? [1 2 5 3 4] 3)))
 
-  (ensure?? "vargs*" (= 4 (count (c/vargs* Long 1 2 3 4))))
+  (ensure?? "vargs*" (== 4 (count (c/vargs* Long 1 2 3 4))))
 
   (ensure?? "or??" (and (c/or?? [1 =] 2 1)
                         (c/or?? [2 =] 2 1)))
@@ -339,7 +338,7 @@
   (ensure?? "is-scoped-keyword?" (c/is-scoped-keyword? ::abc))
 
   (ensure?? "rand-sign" (let [x (c/rand-sign)]
-                          (or (= x 1) (= x -1))))
+                          (or (== x 1) (== x -1))))
 
   (ensure?? "rand-bool" (let [x (c/rand-bool)]
                           (or (false? x) (true? x))))
@@ -348,17 +347,17 @@
                             (pos? (c/num-sign 444))
                             (zero? (c/num-sign 0))))
 
-  (ensure?? "s->long" (= 100 (c/s->long "sss" 100)))
+  (ensure?? "s->long" (== 100 (c/s->long "sss" 100)))
 
-  (ensure?? "s->long" (= 100 (c/s->long "100")))
+  (ensure?? "s->long" (== 100 (c/s->long "100")))
 
-  (ensure?? "s->int" (= 100 (c/s->int "sss" 100)))
+  (ensure?? "s->int" (== 100 (c/s->int "sss" 100)))
 
-  (ensure?? "s->int" (= 100 (c/s->int "100")))
+  (ensure?? "s->int" (== 100 (c/s->int "100")))
 
-  (ensure?? "s->double" (= 100.0 (c/s->double "sss" 100.0)))
+  (ensure?? "s->double" (== 100.0 (c/s->double "sss" 100.0)))
 
-  (ensure?? "s->double" (= 100.0 (c/s->double "100")))
+  (ensure?? "s->double" (== 100.0 (c/s->double "100")))
 
   (ensure?? "s->bool" (c/s->bool "true"))
 
@@ -366,7 +365,7 @@
 
   (ensure?? "test-some" (c/test-some "" "aaa"))
 
-  (ensure?? "test-cond" (c/test-cond "" (= 1 1)))
+  (ensure?? "test-cond" (c/test-cond "" (== 1 1)))
 
   (ensure?? "test-hgl" (c/test-hgl "" "aaa"))
 
@@ -407,12 +406,12 @@
   (ensure?? "vt-run??" (let [v (c/vtbl* :m1 3)
                              p (c/vtbl* :m1 (c/identity-n 2))
                              v' (c/vt-set-proto v p)]
-                         (= 7 (c/vt-run?? v' :m1 [7] true))))
+                         (== 7 (c/vt-run?? v' :m1 [7] true))))
 
   (ensure?? "vt-run??" (let [v (c/vtbl* :m1 (c/identity-n 2))
                              p (c/vtbl* :m1 3)
                              v' (c/vt-set-proto v p)]
-                         (= 7 (c/vt-run?? v' :m1 [7]))))
+                         (== 7 (c/vt-run?? v' :m1 [7]))))
 
   (ensure?? "merge+,map" (= {:a 5 :z 9 :b {:c 2 :d 2}}
                             (c/merge+ {:a 1 :b {:c 2}}
@@ -426,7 +425,7 @@
                         (c/merge+ {:a 1 :b [4]}
                                   {:z 9 :a 5 :b [1 3]})))
 
-  (ensure?? "identity monad" (= 3 (c/domonad c/m-identity
+  (ensure?? "identity monad" (== 3 (c/domonad c/m-identity
                                              [a 1 b (inc a)] (+ a b))))
 
   (ensure-thrown?? "identity monad->boom"
@@ -436,7 +435,7 @@
                                b a
                                c (.toString ^Object b)] (+ a b c)))
 
-  (ensure?? "maybe monad" (= 3 (c/domonad c/m-maybe
+  (ensure?? "maybe monad" (== 3 (c/domonad c/m-maybe
                                           [a 1 b (inc a)] (+ a b))))
 
   (ensure?? "maybe monad->nil" (nil? (c/domonad c/m-maybe
@@ -489,7 +488,7 @@
               (and (= (c/_1 lf)(c/_1 rt))
                    (= (last lf)(last rt)))))
 
-  (ensure?? "test-end" (= 1 1)))
+  (ensure?? "test-end" (== 1 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ct/deftest
