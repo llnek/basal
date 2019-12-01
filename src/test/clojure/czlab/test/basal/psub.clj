@@ -59,8 +59,8 @@
   (ensure?? "rv/unsub"
             (let [bus (r/event-bus<>)
                   msg (atom {})
-                  y (r/sub bus "**" sub-func)
-                  x (r/sub bus "a.b.c" sub-func)]
+                  [y _] (r/sub bus "**" sub-func)
+                  [x _] (r/sub bus "a.b.c" sub-func)]
               (r/unsub bus y)
               (r/pub bus "x.b.c" msg)
               (zero? (count @msg))))
@@ -76,7 +76,7 @@
   (ensure?? "r/finz"
             (let [bus (r/event-bus<>)
                   msg (atom {})
-                  x (r/sub bus "a.b.c" sub-func)]
+                  _ (r/sub bus "a.b.c" sub-func)]
               (po/finz bus)
               (r/pub bus "a.b.c" msg)
               (zero? (count @msg))))
@@ -93,7 +93,7 @@
   (ensure?? "ev/unsub"
             (let [bus (e/event-bus<>)
                   msg (atom {})
-                  y (e/sub bus "a" sub-func)
+                  [y _] (e/sub bus "a" sub-func)
                   x (e/sub bus "a.b.c" sub-func)]
               (e/unsub bus y)
               (e/pub bus "a" msg)
@@ -151,7 +151,7 @@
   (ensure?? "go/rv/sub"
             (let [bus (r/event-bus<> {:async? true})
                   msg (atom {})
-                  y (r/sub bus "**" sub-func)
+                  [y _] (r/sub bus "**" sub-func)
                   x (r/sub bus "a.b.c" sub-func)]
               (r/unsub bus y)
               (r/pub bus "x.b.c" msg)
@@ -193,7 +193,7 @@
   (ensure?? "go/ev/unsub"
             (let [bus (e/event-bus<> {:async? true})
                   msg (atom {})
-                  y (e/sub bus "a" sub-func)
+                  [y _] (e/sub bus "a" sub-func)
                   x (e/sub bus "a.b.c" sub-func)]
               (e/unsub bus y)
               (e/pub bus "a" msg)

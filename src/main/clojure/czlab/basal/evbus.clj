@@ -89,7 +89,7 @@
            (swap! impl
                   (c/fn_1 (-> (update-in ____1
                                          [:topics topic] assoc id sub)
-                              (update-in [:subcs] assoc id sub)))) id))
+                              (update-in [:subcs] assoc id sub)))) [id bus]))
        (pub [bus topic msg]
          (let [{:keys [async? topics]} @impl
                cbs (get topics topic)]

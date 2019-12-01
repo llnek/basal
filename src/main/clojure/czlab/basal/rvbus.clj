@@ -141,7 +141,7 @@
                             :bufsz 16
                             :levels {} :subcs {}} options))]
      (reify EventBus
-       (sub [_ topic listener]
+       (sub [bus topic listener]
          (let [{:keys [async? delimiter]} @impl
                {:keys [id] :as sub}
                (mk-sub impl topic listener)
@@ -153,7 +153,7 @@
                                    #(update-in %
                                                [:subcs]
                                                assoc id sub))
-                        (update-in [:subcs] assoc id sub)))) id))
+                        (update-in [:subcs] assoc id sub)))) [id bus]))
        (pub [bus topic msg]
          (let [{:keys [async?
                        delimiter] :as B} @impl]
