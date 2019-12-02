@@ -996,6 +996,21 @@
                 :buffer-size c/BUF-SZ) (x->bytes out)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn res->file
+
+  "Load the resource and write it to a temp file."
+  {:tag File}
+
+  ([path]
+   (res->file path nil))
+
+  ([path ldr]
+   (if-some [r (res->stream path ldr)]
+     (c/do-with [out (temp-file)]
+       (c/wo* [inp r]
+         (io/copy inp out :buffer-size c/BUF-SZ))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn delete-dir
 
   "Deleting recursively a directory with native Java.
