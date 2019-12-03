@@ -44,6 +44,10 @@
   (ensure?? "is?"
             (c/is? String "a"))
 
+  (ensure?? "!eq?"
+            (and (c/!eq? "a" "b")
+                 (not (c/!eq? "a" "a"))))
+
   (ensure?? "map->"
             (= {:b 2 :z 1}
                (c/map-> [[:z 1] [:b 2]])))
