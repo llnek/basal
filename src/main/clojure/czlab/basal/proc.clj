@@ -12,8 +12,7 @@
 
   (:require [czlab.basal.util :as u]
             [czlab.basal.log :as l]
-            [czlab.basal.core :as c]
-            [czlab.basal.xpis :as po])
+            [czlab.basal.core :as c])
 
   (:import [java.util
             Map
@@ -75,20 +74,20 @@
        Object
        (toString [_]
          (c/fmt "TCore#%s - threads = %s." id (.getCorePoolSize core)))
-       po/Startable
+       c/Startable
        (start [me _] (locking me (c/mu-int paused? 0) me))
        (start [me] (.start me nil))
        (stop [me] (locking me (c/mu-int paused? 1) me))
-       po/Testable
+       c/Testable
        (is-valid? [_] (zero? (c/mu-int paused?)))
-       po/Enqueable
+       c/Enqueable
        (put [me r]
          (if (pos? (c/mu-int paused?))
            (l/warn "TCore[%s] is not running!" core)
            (if (c/is? Runnable r)
              (.execute core ^Runnable r)
              (l/warn "Unsupported %s" r))) me)
-       po/Finzable
+       c/Finzable
        (finz [me]
          (.stop me)
          (.shutdown core)
@@ -221,34 +220,34 @@
                       (c/!false? trace?))]
      (reify Scheduler
        (alarm [_ delayMillis f args]
-         (let [t (cond (c/sas? po/Interruptable f) #(po/interrupt f args)
+         (let [t (cond (c/sas? c/Interruptable f) #(c/interrupt f args)
                        (and (fn? f) (sequential? args)) #(apply f args)
                        :else (c/raise! "alarm call failed"))
                tt (u/tmtask<> t)]
            (add-timer timer tt delayMillis) tt))
        (run* [me f args]
          {:pre [(fn? f) (sequential? args)]}
-         (po/put cpu (u/run<> (apply f args))) me)
+         (c/put cpu (u/run<> (apply f args))) me)
        (run [me w]
-         (po/put cpu w) me)
+         (c/put cpu w) me)
        (postpone [me w delayMillis]
          {:pre [(number? delayMillis)]}
          (cond (zero? delayMillis)
                (.run me w)
                (pos? delayMillis)
                (.alarm me delayMillis #(.run me w) [])) me)
-       po/Testable
-       (is-valid? [_] (po/is-valid? cpu))
-       po/Activable
+       c/Testable
+       (is-valid? [_] (c/is-valid? cpu))
+       c/Activable
        (activate [me]
-         (po/start cpu) me)
+         (c/start cpu) me)
        (deactivate [me]
-         (po/stop cpu)
+         (c/stop cpu)
          (doto timer .cancel .purge) me)
-       po/Finzable
+       c/Finzable
        (finz [me]
          (.deactivate me)
-         (po/finz cpu) me)))))
+         (c/finz cpu) me)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

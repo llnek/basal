@@ -20,9 +20,8 @@
   :exclusions [org.clojure/clojure]
 
   :plugins [[cider/cider-nrepl "0.22.4"]
-            [lein-cljsbuild "1.1.7"]
             [lein-codox "0.10.7"]
-            [lein-cprint "1.3.2"]]
+            [lein-cljsbuild "1.1.7"]]
 
   :cljsbuild {
     :builds [{

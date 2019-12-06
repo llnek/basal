@@ -118,9 +118,9 @@
   ^Date [tstr]
 
   (when (c/hgl? tstr)
-    (let [fmt (if-not (c/has? tstr \:)
+    (let [fmt (if-not (c/includes? tstr \:)
                 date-fmt
-                (if (c/has? tstr \.)
+                (if (c/includes? tstr \.)
                   dt-fmt-micro dt-fmt))]
       (parse-date tstr (if-not
                          (has-tz? tstr) fmt (str fmt "Z"))))))

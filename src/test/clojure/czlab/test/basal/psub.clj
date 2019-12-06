@@ -11,9 +11,7 @@
   (:require [clojure.test :as ct]
             [clojure.string :as cs]
             [czlab.basal.evbus :as e]
-            [czlab.basal.rvbus :as r]
             [czlab.basal.util :as u]
-            [czlab.basal.xpis :as po]
             [czlab.basal.core
               :refer [ensure?? ensure-thrown??] :as c]))
 
@@ -30,12 +28,12 @@
 (c/deftest test-psub
 
   (ensure?? "rv/sub"
-            (let [bus (r/event-bus<>)
+            (let [bus (e/event-bus<+>)
                   msg (atom {})]
-              (r/sub bus "a.b.c" sub-func)
-              (r/sub bus "a.**" sub-func)
-              (r/sub bus "a.*.c" sub-func)
-              (r/pub bus "a.b.c" msg)
+              (e/sub bus "a.b.c" sub-func)
+              (e/sub bus "a.**" sub-func)
+              (e/sub bus "a.*.c" sub-func)
+              (e/pub bus "a.b.c" msg)
               (and (== 1 (get @msg "a.b.c"))
                    (== 1 (get @msg "a.**"))
                    (== 1 (get @msg "a.*.c")))))
@@ -48,37 +46,37 @@
               (and (== 1 (get @msg 333)))))
 
   (ensure?? "rv/sub"
-            (let [bus (r/event-bus<>)
+            (let [bus (e/event-bus<+>)
                   msg (atom {})]
-              (r/sub bus "a.b.c" sub-func)
-              (r/sub bus "**" sub-func)
-              (r/pub bus "x.b.c" msg)
+              (e/sub bus "a.b.c" sub-func)
+              (e/sub bus "**" sub-func)
+              (e/pub bus "x.b.c" msg)
               (and (== 1 (get @msg "**"))
                    (== 1 (count @msg)))))
 
   (ensure?? "rv/unsub"
-            (let [bus (r/event-bus<>)
+            (let [bus (e/event-bus<+>)
                   msg (atom {})
-                  [y _] (r/sub bus "**" sub-func)
-                  [x _] (r/sub bus "a.b.c" sub-func)]
-              (r/unsub bus y)
-              (r/pub bus "x.b.c" msg)
+                  [y _] (e/sub bus "**" sub-func)
+                  [x _] (e/sub bus "a.b.c" sub-func)]
+              (e/unsub bus y)
+              (e/pub bus "x.b.c" msg)
               (zero? (count @msg))))
 
   (ensure?? "rv/sub"
-            (let [bus (r/event-bus<>)
+            (let [bus (e/event-bus<+>)
                   msg (atom {})]
-              (r/sub bus "a.*.c" sub-func)
-              (r/pub bus "a.b.c" msg)
-              (r/pub bus "a.b.c" msg)
+              (e/sub bus "a.*.c" sub-func)
+              (e/pub bus "a.b.c" msg)
+              (e/pub bus "a.b.c" msg)
               (== 2 (get @msg "a.*.c"))))
 
-  (ensure?? "r/finz"
-            (let [bus (r/event-bus<>)
+  (ensure?? "rv/finz"
+            (let [bus (e/event-bus<+>)
                   msg (atom {})
-                  _ (r/sub bus "a.b.c" sub-func)]
-              (po/finz bus)
-              (r/pub bus "a.b.c" msg)
+                  _ (e/sub bus "a.b.c" sub-func)]
+              (c/finz bus)
+              (e/pub bus "a.b.c" msg)
               (zero? (count @msg))))
 
   (ensure?? "ev/sub"
@@ -111,19 +109,19 @@
             (let [bus (e/event-bus<>)
                   msg (atom {})
                   x (e/sub bus "a.b.c" sub-func)]
-              (po/finz bus)
+              (c/finz bus)
               (e/pub bus "a.b.c" msg)
               (zero? (count @msg))))
 
   (ensure?? "go/rv/sub"
-            (let [bus (r/event-bus<> {:async? true})
+            (let [bus (e/event-bus<+> {:async? true})
                   msg (atom {})]
-              (r/sub bus "a.b.c" sub-func)
-              (r/sub bus "a.**" sub-func)
-              (r/sub bus "a.*.c" sub-func)
-              (r/pub bus "a.b.c" msg)
+              (e/sub bus "a.b.c" sub-func)
+              (e/sub bus "a.**" sub-func)
+              (e/sub bus "a.*.c" sub-func)
+              (e/pub bus "a.b.c" msg)
               (u/pause 500)
-              (po/finz bus)
+              (c/finz bus)
               (and (== 1 (get @msg "a.b.c"))
                    (== 1 (get @msg "a.**"))
                    (== 1 (get @msg "a.*.c")))))
@@ -134,49 +132,49 @@
               (e/sub bus "a.b.c" sub-func)
               (e/pub bus "a.b.c" msg)
               (u/pause 500)
-              (po/finz bus)
+              (c/finz bus)
               (== 1 (get @msg "a.b.c"))))
 
   (ensure?? "go/rv/sub"
-            (let [bus (r/event-bus<> {:async? true})
+            (let [bus (e/event-bus<+> {:async? true})
                   msg (atom {})]
-              (r/sub bus "a.b.c" sub-func)
-              (r/sub bus "**" sub-func)
-              (r/pub bus "x.b.c" msg)
+              (e/sub bus "a.b.c" sub-func)
+              (e/sub bus "**" sub-func)
+              (e/pub bus "x.b.c" msg)
               (u/pause 500)
-              (po/finz bus)
+              (c/finz bus)
               (and (== 1 (get @msg "**"))
                    (== 1 (count @msg)))))
 
   (ensure?? "go/rv/sub"
-            (let [bus (r/event-bus<> {:async? true})
+            (let [bus (e/event-bus<+> {:async? true})
                   msg (atom {})
-                  [y _] (r/sub bus "**" sub-func)
-                  x (r/sub bus "a.b.c" sub-func)]
-              (r/unsub bus y)
-              (r/pub bus "x.b.c" msg)
+                  [y _] (e/sub bus "**" sub-func)
+                  x (e/sub bus "a.b.c" sub-func)]
+              (e/unsub bus y)
+              (e/pub bus "x.b.c" msg)
               (u/pause 500)
-              (po/finz bus)
+              (c/finz bus)
               (zero? (count @msg))))
 
   (ensure?? "go/rv/sub"
-            (let [bus (r/event-bus<> {:async? true})
+            (let [bus (e/event-bus<+> {:async? true})
                   msg (atom {})]
-              (r/sub bus "a.*.c" sub-func)
-              (r/pub bus "a.b.c" msg)
-              (r/pub bus "a.b.c" msg)
+              (e/sub bus "a.*.c" sub-func)
+              (e/pub bus "a.b.c" msg)
+              (e/pub bus "a.b.c" msg)
               (u/pause 500)
-              (po/finz bus)
+              (c/finz bus)
               (== 2 (get @msg "a.*.c"))))
 
   (ensure?? "go/rv/sub"
-            (let [bus (r/event-bus<> {:async? true})
+            (let [bus (e/event-bus<+> {:async? true})
                   msg (atom {})]
-              (r/sub bus "a.b.c" sub-func)
-              (po/finz bus)
-              (r/pub bus "a.b.c" msg)
+              (e/sub bus "a.b.c" sub-func)
+              (c/finz bus)
+              (e/pub bus "a.b.c" msg)
               (u/pause 500)
-              (po/finz bus)
+              (c/finz bus)
               (zero? (count @msg))))
 
   (ensure?? "go/ev/sub"
@@ -186,7 +184,7 @@
               (e/sub bus "a" sub-func)
               (e/pub bus "a" msg)
               (u/pause 500)
-              (po/finz bus)
+              (c/finz bus)
               (and (== 1 (get @msg "a"))
                    (== 1 (count @msg)))))
 
@@ -198,7 +196,7 @@
               (e/unsub bus y)
               (e/pub bus "a" msg)
               (u/pause 500)
-              (po/finz bus)
+              (c/finz bus)
               (zero? (count @msg))))
 
   (ensure?? "go/ev/sub"
@@ -208,17 +206,17 @@
               (e/pub bus "abc" msg)
               (e/pub bus "abc" msg)
               (u/pause 500)
-              (po/finz bus)
+              (c/finz bus)
               (== 2 (get @msg "abc"))))
 
   (ensure?? "go/ev/sub"
             (let [bus (e/event-bus<> {:async? true})
                   msg (atom {})]
               (e/sub bus "abc" sub-func)
-              (po/finz bus)
+              (c/finz bus)
               (e/pub bus "abc" msg)
               (u/pause 500)
-              (po/finz bus)
+              (c/finz bus)
               (zero? (count @msg))))
 
   (ensure?? "test-end" (== 1 1)))

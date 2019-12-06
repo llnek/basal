@@ -14,7 +14,6 @@
             [czlab.basal.proc :as p]
             [czlab.basal.io :as i]
             [czlab.basal.util :as u]
-            [czlab.basal.xpis :as po]
             [czlab.basal.core
               :refer [ensure?? ensure-thrown??] :as c]))
 
@@ -28,7 +27,7 @@
 
   (ensure?? "init"
             (c/let#true
-              [s (p/scheduler<>)] (reset! SCD s) (po/activate s)))
+              [s (p/scheduler<>)] (reset! SCD s) (c/activate s)))
 
   (ensure?? "run*" (== 1
                      (let [x (atom 0)]
@@ -75,7 +74,7 @@
 
   (ensure?? "process-pid" (> (.length (p/process-pid)) 0))
 
-  (ensure?? "finz" (c/do#true (po/deactivate @SCD)))
+  (ensure?? "finz" (c/do#true (c/deactivate @SCD)))
 
   (ensure?? "test-end" (== 1 1)))
 

@@ -47,10 +47,10 @@
 
   (ensure?? "trimr" (= "abc" (c/trimr "abc123456789" "123456789")))
 
-  (ensure?? "has?" (c/has? "ab cd" \space))
+  (ensure?? "includes?" (c/includes? "ab cd" \space))
 
-  (ensure?? "embeds?" (and (c/has? "ab cd" "cd")
-                           (not (c/has? "ab cd" "ecd"))))
+  (ensure?? "embeds?" (and (c/includes? "ab cd" "cd")
+                           (not (c/includes? "ab cd" "ecd"))))
 
   (ensure?? "has-no-case?" (c/has-no-case? "ab cd" "AB"))
 
