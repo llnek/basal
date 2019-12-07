@@ -13,15 +13,89 @@
   (:refer-clojure :exclude [send])
 
   (:require [clojure.set :as ct]
-            [clojure.string :as cs])
+            [clojure.string :as cs]
+            [clojure.tools.logging :as l])
 
   (:import [java.util Date]
            [java.lang System StringBuilder]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 ;; #^"[Ljava.lang.Object;"
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(def LOG-FLAG (not (.equals "false" (System/getProperty "czlabloggerflag"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro defmacro-
+
+  "Same as defmacro but private."
+  [name & more]
+  (list* `defmacro (with-meta name
+                              (assoc (meta name)
+                                     :private true)) more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro defonce-
+
+  "Same as defonce but private."
+  [name & more]
+  (list* `defonce (with-meta name
+                             (assoc (meta name)
+                                    :private true)) more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro def-
+
+  "Same as def but private."
+  [name & more]
+  (list* `def (with-meta name
+                         (assoc (meta name)
+                                :private true)) more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro trace
+  [& xs]
+  (and czlab.basal.core/LOG-FLAG
+       `(clojure.tools.logging/logf :trace ~@xs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro debug
+  [& xs]
+  (and czlab.basal.core/LOG-FLAG
+       `(clojure.tools.logging/logf :debug ~@xs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro info
+  [& xs]
+  (and czlab.basal.core/LOG-FLAG
+       `(clojure.tools.logging/logf :info ~@xs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro warn
+  [& xs]
+  (and czlab.basal.core/LOG-FLAG
+       `(clojure.tools.logging/logf :warn ~@xs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro error
+  [& xs]
+  (and czlab.basal.core/LOG-FLAG
+       `(clojure.tools.logging/logf :error ~@xs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro fatal
+  [& xs]
+  (and czlab.basal.core/LOG-FLAG
+       `(clojure.tools.logging/logf :fatal ~@xs)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro exception
+  [e]
+  (and czlab.basal.core/LOG-FLAG
+       `(clojure.tools.logging/logf :error ~e "")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def BOOLS #{"true" "yes" "on" "ok" "active" "1"})
 (def ^String HEX-CHAR-STR "0123456789ABCDEF")
 (def ^String hex-char-str "0123456789abcdef")
@@ -39,36 +113,6 @@
 
 (def OneK 1024)
 (def FourK (* 4 OneK))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro defmacro-
-
-  "Same as defmacro but private."
-  [name & more]
-
-  (list* `defmacro (with-meta name
-                              (assoc (meta name)
-                                     :private true)) more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro defonce-
-
-  "Same as defonce but private."
-  [name & more]
-
-  (list* `defonce (with-meta name
-                             (assoc (meta name)
-                                    :private true)) more))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro def-
-
-  "Same as def but private."
-  [name & more]
-
-  (list* `def (with-meta name
-                         (assoc (meta name)
-                                :private true)) more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro funcit??

@@ -12,9 +12,8 @@
 
   (:refer-clojure :exclude [shuffle])
 
-  (:require [czlab.basal.log :as l]
+  (:require [czlab.basal.indent :as in]
             [czlab.basal.core :as c]
-            [czlab.basal.indent :as in]
             [clojure.string :as cs]
             [clojure.edn :as edn]
             [clojure.pprint :as pp]
@@ -79,6 +78,12 @@
             Timestamp]
            [java.rmi.server
             UID]
+           [java.util UUID]
+           [java.lang Math]
+           [java.net
+            InetAddress]
+           [java.io
+            DataInputStream]
            [java.util.concurrent
             TimeUnit]
            [java.util.concurrent.atomic
@@ -136,7 +141,7 @@
 
   `(try ~@exprs
         (catch Throwable e#
-          (czlab.basal.log/warn e# "") ~value)))
+          (czlab.basal.core/warn e# "") ~value)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro system-time
@@ -939,14 +944,14 @@
 
   ([]
    (try (.join (Thread/currentThread))
-        (catch Throwable _ (l/exception _))))
+        (catch Throwable _ (c/exception _))))
 
   ([^Object lock waitMillis]
    (try (locking lock
           (if-not (pos? waitMillis)
             (.wait lock)
             (.wait lock waitMillis)))
-        (catch Throwable _ (l/exception _)))))
+        (catch Throwable _ (c/exception _)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn unblock!
@@ -956,7 +961,7 @@
 
   (try (locking lock
          (.notifyAll lock))
-       (catch Throwable _ (l/exception _))))
+       (catch Throwable _ (c/exception _))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn shuffle
@@ -1020,6 +1025,82 @@
                        (RT/var a b)))]
            (if-not (var? v)
              (c/raise! "Var %s not found!" fname)) v))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;pre-shuffle the chars in string
+(c/def- ^String _ss
+  (shuffle (str "abcdefghijklmnopqrstuvwxyz"
+                "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")))
+(c/def- _chars (.toCharArray _ss))
+(c/def- _uuid-len (count _ss))
+(c/def- ^String int-mask "00000")
+(c/def- ^String long-mask "0000000000")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(c/def- maybe-set-iP
+  (memoize
+    #(let [neta (InetAddress/getLocalHost)
+           b (.getAddress neta)
+           ^long n (cond (.isLoopbackAddress neta)
+                         (.nextLong (rand<>))
+                         :else
+                         (c/wo* [dis (DataInputStream.
+                                       (io/input-stream b))]
+                           (if (== 4 (alength b))
+                             (long (.readInt dis)) (.readLong dis))))]
+       (Math/abs n))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;at i==19 set the high bits of clock
+;;sequence as per rfc4122, sec. 4.1.5
+(defn uuid-v4<>
+
+  "RFC4122, v4 format"
+  ^String []
+  (let [rnd (rand<>)
+        rc (char-array _uuid-len)]
+    (dotimes [n (alength rc)]
+      (aset-char rc
+                 n
+                 (case n
+                   (8 13 18 23) \-
+                   (14) \4
+                   (let [d (* (.nextDouble rnd) 16)
+                         r (bit-or 0 (.intValue (Double. d)))
+                         pos (if-not (== n 19)
+                               (bit-and r 0xf)
+                               (bit-or (bit-and r 0x3) 0x8))]
+                     (aget ^chars _chars pos))))) (String. rc)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn wwid<>
+
+  "UID based on time/ip"
+  ^String []
+
+  (letfn
+    [(fmt [pad mask]
+       (let [plen (count pad)
+             mlen (count mask)]
+         (if (>= mlen plen)
+           (subs mask 0 plen)
+           (str (.replace (c/sbf<> pad)
+                          (int (- plen mlen))
+                          (int plen) ^String mask)))))
+     (fmt-int [nm]
+       (fmt int-mask (Integer/toHexString nm)))
+     (fmt-long [nm]
+       (fmt long-mask (Long/toHexString nm)))
+     (split-time []
+       (let [s (fmt-long (system-time))
+             n (count s)]
+         [(c/lefts s (/ n 2))
+          (c/rights s (max 0 (- n (/ n 2))))]))]
+    (let [seed (.nextInt (rand<>)
+                         (Integer/MAX_VALUE))
+          [hi lo] (split-time)]
+      (str hi
+           (fmt-long (maybe-set-iP)) (fmt-int seed) (fmt-int (seqint)) lo))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

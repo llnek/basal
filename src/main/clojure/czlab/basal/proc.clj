@@ -11,7 +11,6 @@
   "Useful os process & runtime functions."
 
   (:require [czlab.basal.util :as u]
-            [czlab.basal.log :as l]
             [czlab.basal.core :as c])
 
   (:import [java.util
@@ -59,7 +58,7 @@
          rex (reify
                RejectedExecutionHandler
                (rejectedExecution [_ r x]
-                 (if trace? (l/error "TCore rejecting work!"))))]
+                 (if trace? (c/error "TCore rejecting work!"))))]
      (.setRejectedExecutionHandler core rex)
      (.setThreadFactory core
                         (reify ThreadFactory
@@ -68,7 +67,7 @@
                               (.setName t (str id "#" (u/seqint2)))
                               (.setContextClassLoader t (u/get-cldr))))))
      (if trace?
-       (l/debug
+       (c/debug
          "TCore#%s - ctor: threads = %s" id (.getCorePoolSize core)))
      (reify
        Object
@@ -83,16 +82,16 @@
        c/Enqueable
        (put [me r]
          (if (pos? (c/mu-int paused?))
-           (l/warn "TCore[%s] is not running!" core)
+           (c/warn "TCore[%s] is not running!" core)
            (if (c/is? Runnable r)
              (.execute core ^Runnable r)
-             (l/warn "Unsupported %s" r))) me)
+             (c/warn "Unsupported %s" r))) me)
        c/Finzable
        (finz [me]
          (.stop me)
          (.shutdown core)
          (if trace?
-           (l/debug
+           (c/debug
              "TCore#%s - disposed and shut down." id)) me)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -114,7 +113,7 @@
                 (.setContextClassLoader t))
        (.setDaemon t (true? daemon))
        (if start? (.start t))
-       (l/debug "thread#%s%s%s"
+       (c/debug "thread#%s%s%s"
                 (.getName t)
                 ", daemon = " (.isDaemon t))))))
 

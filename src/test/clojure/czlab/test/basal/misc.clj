@@ -12,7 +12,6 @@
             [clojure.string :as cs]
             [czlab.basal.cmenu :as i]
             [czlab.basal.util :as u]
-            [czlab.basal.guids :as g]
             [czlab.basal.core
               :refer [ensure?? ensure-thrown??] :as c]))
 
@@ -31,13 +30,13 @@
                                :czlab.basal.proc/process-pid []))))
                             ;:clojure.core/+ [1 2 3]))))
 
-  (ensure?? "wwid<>" (not= (g/wwid<>) (g/wwid<>)))
+  (ensure?? "wwid<>" (not= (u/wwid<>) (u/wwid<>)))
 
-  (ensure?? "uuid<>" (not= (g/uuid<>) (g/uuid<>)))
+  (ensure?? "uuid-v4<>" (not= (u/uuid-v4<>) (u/uuid-v4<>)))
 
-  (ensure?? "wwid<>" (> (count (g/wwid<>)) 0))
+  (ensure?? "wwid<>" (> (count (u/wwid<>)) 0))
 
-  (ensure?? "uuid<>" (> (count (g/uuid<>)) 0))
+  (ensure?? "uuid-v4<>;len" (> (count (u/uuid-v4<>)) 0))
 
   (ensure?? "parse-options"
             (let [[o v] (i/parse-options ["--a" "b" "-c" "d" "-e" "f" "g"])]

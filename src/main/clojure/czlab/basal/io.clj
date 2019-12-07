@@ -14,11 +14,10 @@
             [clojure.pprint :as pp]
             [clojure.string :as cs]
             [czlab.basal.util :as u]
-            [czlab.basal.log :as l]
             [czlab.basal.core :as c]
-            [czlab.basal.indent :as in]
             [clojure.java.io :as io]
-            [clojure.data.json :as js])
+            [clojure.data.json :as js]
+            [czlab.basal.indent :as in])
 
   (:import [java.nio.file
             CopyOption
