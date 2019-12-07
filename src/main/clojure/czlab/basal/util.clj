@@ -1026,6 +1026,43 @@
            (if-not (var? v)
              (c/raise! "Var %s not found!" fname)) v))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn parse-options
+
+  "Parse command line, returning options and args.
+  e.g.  --a b -c d -e f g
+        =>
+        [{:a \"b\" :c \"d\" :e \"f\"} '(\"g\")]"
+
+  ([cargs]
+   (parse-options cargs true))
+
+  ([cargs key?]
+   (letfn
+     [(is-option? [option]
+        (and (string? option)
+             (not (.equals "--" option))
+             (or (cs/starts-with? option "--")
+                 (cs/starts-with? option "-"))))
+      (maybe-option [option key?]
+        (if (is-option? option)
+          (c/if-some+
+            [s (cs/replace option
+                           #"^(-|/)+" "")] (if key? (keyword s) s))))]
+     (loop [options (c/tmap*)
+            [p1 p2 & more :as args] cargs]
+       (if-some [o1 (maybe-option p1 key?)]
+         (let [b? (or (nil? p2)
+                      (is-option? p2))]
+           (recur (assoc! options
+                          o1 (if b? true p2))
+                  (if b?
+                    (if (nil? p2)
+                      more (cons p2 more)) more)))
+         (vector (persistent! options)
+                 (if (.equals "--" p1)
+                   (if p2 (cons p2 more)) args)))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;pre-shuffle the chars in string
 (c/def- ^String _ss

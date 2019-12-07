@@ -10,7 +10,6 @@
 
   (:require [clojure.test :as ct]
             [clojure.string :as cs]
-            [czlab.basal.cmenu :as i]
             [czlab.basal.util :as u]
             [czlab.basal.core
               :refer [ensure?? ensure-thrown??] :as c]))
@@ -39,21 +38,21 @@
   (ensure?? "uuid-v4<>;len" (> (count (u/uuid-v4<>)) 0))
 
   (ensure?? "parse-options"
-            (let [[o v] (i/parse-options ["--a" "b" "-c" "d" "-e" "f" "g"])]
-              (and (= "b" (:a o))
-                   (= "d" (:c o))
-                   (= "f" (:e o))
-                   (= "g" (cs/join "" v)))))
+            (let [[o v] (u/parse-options ["--a" "b" "-c" "d" "-e" "f" "g"])]
+              (and (.equals "b" (:a o))
+                   (.equals "d" (:c o))
+                   (.equals "f" (:e o))
+                   (.equals "g" (cs/join "" v)))))
 
   (ensure?? "parse-options"
-            (let [[o v] (i/parse-options ["--" "a" "b" "c"])]
+            (let [[o v] (u/parse-options ["--" "a" "b" "c"])]
               (and (empty? o)
-                   (= "abc" (cs/join "" v)))))
+                   (.equals "abc" (cs/join "" v)))))
 
   (ensure?? "parse-options"
-            (let [[o v] (i/parse-options ["a" "b" "c"])]
+            (let [[o v] (u/parse-options ["a" "b" "c"])]
               (and (empty? o)
-                   (= "abc" (cs/join "" v)))))
+                   (.equals "abc" (cs/join "" v)))))
 
   (ensure?? "test-end" (== 1 1)))
 
