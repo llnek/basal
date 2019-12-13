@@ -878,7 +878,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn load-resource
 
-  "Load file with localized strings."
+  "Load file with localized strings.
+  e.g. a/b/c/foo.txt"
   ^ResourceBundle
   [arg]
 

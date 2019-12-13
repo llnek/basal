@@ -231,11 +231,11 @@
   (ensure?? "when-some+" (nil?
                             (c/when-some+ [x []] (conj x 3))))
 
-  (ensure?? "if-fn?" (== 4 (c/if-fn? [x #(+ 1 %)] (x 3))))
+  (ensure?? "if-fn" (== 4 (c/if-fn [x #(+ 1 %)] (x 3))))
 
-  (ensure?? "if-fn?" (nil? (c/if-fn? [x 1] 3)))
+  (ensure?? "if-fn" (nil? (c/if-fn [x 1] 3)))
 
-  (ensure?? "when-fn?" (== 4 (c/when-fn? [x #(+ 1 %)] (x 3))))
+  (ensure?? "when-fn" (== 4 (c/when-fn [x #(+ 1 %)] (x 3))))
 
   (ensure?? "doto->>" (== 21
                          @(let [f (fn [a b c]

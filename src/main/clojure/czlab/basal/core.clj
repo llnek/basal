@@ -465,6 +465,38 @@
      `(let [~X ~(last bindings) ~f1 ~X] (if (~F ~X) ~then ~else)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro if-nil
+
+  "If expr evals to nil, execute `then`, otherwise `else`."
+
+  ([expr then]
+   `(if-nil ~expr ~then nil))
+
+  ([expr then else & oldform]
+   `(if (nil? ~expr) ~then ~else)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro when-nil
+
+  "If expr evals to nil, execute `body`."
+
+  [expr & body]
+  `(if (nil? ~expr) (do ~@body)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro if-var
+
+  "bindings => binding-form test
+  If test is a var, evaluates 'then'
+  with binding-form bound to the value of test."
+
+  ([bindings then]
+   `(if-var ~bindings ~then nil))
+
+  ([bindings then else & oldform]
+   `(czlab.basal.core/if-xxx?? var? ~bindings ~then ~else)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-number
 
   "bindings => binding-form test
@@ -756,25 +788,25 @@
   `(czlab.basal.core/if-some+ ~bindings (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro if-fn?
+(defmacro if-fn
 
   "bindings => binding-form test. When test is a fn?, evaluates body
   with binding-form bound to the value of test."
 
   ([bindings then]
-   `(if-fn? ~bindings ~then nil))
+   `(if-fn ~bindings ~then nil))
 
   ([bindings then else & oldform]
    `(czlab.basal.core/if-xxx?? fn? ~bindings ~then ~else)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro when-fn?
+(defmacro when-fn
 
   "bindings => binding-form test. When test is a fn?, evaluates body
   with binding-form bound to the value of test."
   [bindings & body]
 
-  `(czlab.basal.core/if-fn? ~bindings (do ~@body)))
+  `(czlab.basal.core/if-fn ~bindings (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro doto->>
@@ -800,6 +832,11 @@
                   (let [z (first f)
                         r (rest f)]
                     `(~z ~X ~@r)) `(~f ~X))) forms) ~X)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro eq?
+
+  "strings equal?" [a b] `(.equals ~a ~b))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !eq?
