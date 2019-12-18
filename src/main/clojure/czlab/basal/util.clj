@@ -103,6 +103,7 @@
   "Clojure environment that can load and run a function."
   (call* [_ v arglist] "Invoke a function dynamically.")
   (var* [_ name] "Load the named var.")
+  (var?? [_ name] "Load the named var.")
   (require* [_ namespacelist] "Load list of namespaces."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -365,6 +366,16 @@
    (if (instance? Charset enc)
      enc
      (some-> (or enc dv) Charset/forName))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn pthreads
+
+  "Default thread count = 2 x available processors."
+
+  ([] (pthreads nil))
+
+  ([n]
+   (* (c/num?? n 2) (.availableProcessors (Runtime/getRuntime)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fpath
@@ -1015,8 +1026,8 @@
                  5 (.invoke f a b c d e)
                  6 (.invoke f a b c d e g)
                  (throw-BadArg  "too many args to invoke"))))))
-       (var* [me fname]
-         (let [fname (c/kw->str fname)
+       (var?? [me name]
+         (let [fname (c/kw->str name)
                v (or (.invoke _resolve
                               (Symbol/create fname))
                      (let [[a b]
@@ -1025,7 +1036,13 @@
                                 (Symbol/create a))
                        (RT/var a b)))]
            (if-not (var? v)
-             (c/raise! "Var %s not found!" fname)) v))))))
+             (c/raise! "Var %s not found!" fname)) v))
+       (var* [_ name]
+         (let [v (.var?? _ name)
+               v' (var-get v)
+               x (str (type v'))]
+           (if (cs/includes? x "$Unbound")
+             (c/raise! "Var %s not bound!" name)) v))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-options

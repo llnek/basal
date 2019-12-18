@@ -244,12 +244,19 @@
   ([in enc] (cond (or (nil? in)
                       (string? in))
                   in
+                  (bytes? in)
+                  (String. ^bytes in ^String enc)
+                  (c/is? InputStream in)
+                  (x->str (let [os (baos<>)]
+                            (io/copy in os) os))
                   (c/is? File in)
                   (slurp in :encoding enc)
                   (c/is? XData in)
                   (.strit ^XData in)
                   (c/is? StringBuilder in)
                   (.toString ^Object in)
+                  (c/is? ByteArrayOutputStream in)
+                  (String. (.toByteArray ^ByteArrayOutputStream in) ^String enc)
                   :else (String. (x->chars in enc)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

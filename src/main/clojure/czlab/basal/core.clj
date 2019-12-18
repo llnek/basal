@@ -465,6 +465,25 @@
      `(let [~X ~(last bindings) ~f1 ~X] (if (~F ~X) ~then ~else)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro if-proto
+
+  "If expr satisfies the protocol, execute `then`, otherwise `else`."
+
+  ([proto expr then]
+   `(if-proto ~proto ~expr ~then nil))
+
+  ([proto expr then else & oldform]
+   `(if (satisfies? ~proto ~expr) ~then ~else)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro when-proto
+
+  "If expr satisfies the protocol, execute `body`."
+
+  [proto expr & body]
+  `(if (satisfies? ~proto ~expr) (do ~@body)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-nil
 
   "If expr evals to nil, execute `then`, otherwise `else`."
@@ -2277,6 +2296,12 @@
 (defprotocol Startable
   (stop [_] "")
   (start [_] [_ arg] ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defprotocol Connectable
+  (disconnect [_] "")
+  (connect [_]
+           [_ arg] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol Suspendable

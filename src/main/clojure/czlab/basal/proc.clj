@@ -40,17 +40,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn tcore<>
 
-  ([id] (tcore<> id (* 2 (.availableProcessors (Runtime/getRuntime)))))
+  ([id] (tcore<> id 0))
 
   ([id tds] (tcore<> id tds true))
 
   ([id tds trace?] (tcore<> id tds 60000 trace?))
 
   ([id tds keepAliveMillis trace?]
-   (let [^ThreadPoolExecutor
+   (let [tds (if (pos? (c/num?? tds 0)) tds (u/pthreads))
+         ^ThreadPoolExecutor
          core (proxy [ThreadPoolExecutor]
-                [(int (max 1 tds))
-                 (int (max 1 tds))
+                [tds
+                 tds
                  ^long keepAliveMillis
                  TimeUnit/MILLISECONDS
                  (LinkedBlockingQueue.)])
