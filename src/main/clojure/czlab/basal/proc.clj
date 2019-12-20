@@ -226,12 +226,17 @@
                tt (u/tmtask<> t)]
            (add-timer timer tt delayMillis) tt))
        (run* [me f args]
-         {:pre [(fn? f) (sequential? args)]}
-         (c/put cpu (u/run<> (apply f args))) me)
+         (assert (and (fn? f)
+                      (sequential? args)))
+         (c/put cpu
+                #(try (apply f args)
+                      (catch Throwable _ (c/exception _)))) me)
        (run [me w]
-         (c/put cpu w) me)
+         (assert (c/is? Runnable w))
+         (.run* me (if-not (fn? w)
+                     #(.run ^Runnable w) w) []))
        (postpone [me w delayMillis]
-         {:pre [(number? delayMillis)]}
+         (assert (number? delayMillis))
          (cond (zero? delayMillis)
                (.run me w)
                (pos? delayMillis)
