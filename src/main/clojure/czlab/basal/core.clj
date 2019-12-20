@@ -90,10 +90,11 @@
        `(clojure.tools.logging/logf :fatal ~@xs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro exception
+(defn exception
   [e]
-  (and czlab.basal.core/LOG-FLAG
-       `(clojure.tools.logging/logf :error ~e "")))
+  (when czlab.basal.core/LOG-FLAG
+    (clojure.tools.logging/logf :error e "")
+    (clojure.tools.logging/logf :error "%s" "exception thrown.")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def BOOLS #{"true" "yes" "on" "ok" "active" "1"})
