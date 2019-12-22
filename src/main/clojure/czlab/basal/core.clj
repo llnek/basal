@@ -466,6 +466,25 @@
      `(let [~X ~(last bindings) ~f1 ~X] (if (~F ~X) ~then ~else)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro if-inst
+
+  "If expr is instance of class, execute `then`, otherwise `else`."
+
+  ([clazz expr then]
+   `(if-inst ~clazz ~expr ~then nil))
+
+  ([clazz expr then else & oldform]
+   `(if (instance? ~clazz ~expr) ~then ~else)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro when-inst
+
+  "If expr is instance of class, execute `body`."
+
+  [clazz expr & body]
+  `(if (instance? ~clazz ~expr) (do ~@body)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-proto
 
   "If expr satisfies the protocol, execute `then`, otherwise `else`."
@@ -504,6 +523,32 @@
   `(if (nil? ~expr) (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn is-throwable? [x] (instance? Throwable x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro if-throw
+
+  "bindings => binding-form test
+  If test is a Throwable, evaluates 'then'
+  with binding-form bound to the value of test."
+
+  ([bindings then]
+   `(if-throw ~bindings ~then nil))
+
+  ([bindings then else & oldform]
+   `(czlab.basal.core/if-xxx??
+      czlab.basal.core/is-throwable? ~bindings ~then ~else)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro when-throw
+
+  "bindings => binding-form test
+  If test is a Throwable, evaluates the body."
+  [bindings & body]
+
+  `(if-throw ~bindings (do ~@body)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-var
 
   "bindings => binding-form test
@@ -515,6 +560,15 @@
 
   ([bindings then else & oldform]
    `(czlab.basal.core/if-xxx?? var? ~bindings ~then ~else)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro when-var
+
+  "bindings => binding-form test
+  If test is a var, evaluates the body."
+  [bindings & body]
+
+  `(if-var ~bindings (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-number
@@ -530,6 +584,15 @@
    `(czlab.basal.core/if-xxx?? number? ~bindings ~then ~else)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro when-number
+
+  "bindings => binding-form test
+  If test is a number, evaluates the body."
+  [bindings & body]
+
+  `(if-number ~bindings (do ~@body)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-string
 
   "bindings => binding-form test
@@ -541,6 +604,15 @@
 
   ([bindings then else & oldform]
    `(czlab.basal.core/if-xxx?? string? ~bindings ~then ~else)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro when-string
+
+  "bindings => binding-form test
+  If test is a string, evaluates the body."
+  [bindings & body]
+
+  `(if-string ~bindings (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro nloop
