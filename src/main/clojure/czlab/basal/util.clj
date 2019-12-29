@@ -909,7 +909,7 @@
   "A resource bundle."
   {:tag ResourceBundle}
 
-  ([basename] (get-resource basename (Locale/getDefault) nil))
+  ([basename] (get-resource basename (Locale. "en" "US") nil))
 
   ([basename locale] (get-resource basename locale nil))
 

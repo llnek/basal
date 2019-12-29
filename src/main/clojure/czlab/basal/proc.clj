@@ -90,7 +90,7 @@
        c/Finzable
        (finz [me]
          (.stop me)
-         (.shutdown core)
+         (c/try! (.shutdown core))
          (if trace?
            (c/debug
              "TCore#%s - disposed and shut down." id)) me)))))
