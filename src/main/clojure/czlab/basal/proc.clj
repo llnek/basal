@@ -105,14 +105,14 @@
    (thread<> func start? nil))
 
   ([func start? {:as options
-                 :keys [cldr daemon]}]
+                 :keys [cldr daemon?]}]
    {:pre [(fn? func)]}
 
    (c/do-with [t (Thread. (u/run<> (func)))]
      (let [c (or cldr (u/get-cldr))]
        (some->> (c/cast? ClassLoader c)
                 (.setContextClassLoader t))
-       (.setDaemon t (true? daemon))
+       (.setDaemon t (true? daemon?))
        (if start? (.start t))
        (c/debug "thread#%s%s%s"
                 (.getName t)
@@ -177,7 +177,7 @@
   [func]
   {:pre [(fn? func)]}
 
-  (->> (thread<> func false {:daemon true})
+  (->> (thread<> func false {:daemon? true})
        (.addShutdownHook (Runtime/getRuntime))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
