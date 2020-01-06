@@ -24,7 +24,7 @@
 ;; #^"[Ljava.lang.Object;"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def {:doc "Log flag used internally."}
+(def ^{:doc "Log flag used internally."}
   LOG-FLAG (not (.equals "false" (System/getProperty "czlabloggerflag"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
