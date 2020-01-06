@@ -1,5 +1,6 @@
 ;;source from https://github.com/cldwalker/table
-(ns czlab.table.core
+(ns ^:no-doc
+  czlab.table.core
   (:require czlab.table.width)
   (:use [clojure.string :only [join]] ))
 

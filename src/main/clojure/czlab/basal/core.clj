@@ -1,4 +1,4 @@
-;; Copyright © 2013-2019, Kenneth Leung. All rights reserved.
+;; Copyright © 2013-2020, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -24,7 +24,8 @@
 ;; #^"[Ljava.lang.Object;"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def LOG-FLAG (not (.equals "false" (System/getProperty "czlabloggerflag"))))
+(def {:doc "Log flag used internally."}
+  LOG-FLAG (not (.equals "false" (System/getProperty "czlabloggerflag"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro defmacro-
@@ -140,10 +141,6 @@
   `(instance? clojure.lang.Atom ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro n#-odd?
-  "Count of collection odd?" [c] `(odd? (count ~c)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro n#-even?
   "Count of collection even?" [c] `(even? (count ~c)))
 
@@ -237,11 +234,13 @@
   "(or?? [= a] b c) => (or (= b a) (= c a))."
   [bindings & args]
 
-  (let [x (gensym)
+  (let [op (gensym)
+        arg (gensym)
         [p1 p2] bindings]
-    `(let [~x ~p1]
+    `(let [~op ~p1
+           ~arg ~p2]
        (or ~@(map (fn [n]
-                    `(~p2 ~n ~x)) args)))))
+                    `(~op ~n ~arg)) args)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro dissoc!!
@@ -797,7 +796,7 @@
 (defmacro assert-on!
 
   "Like assert, but throws a specific exception."
-  [cond E & args] `(if-not ~cond (trap ~E ~@args)))
+  [cond E & args] `(if-not ~cond (trap! ~E ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do-with
@@ -1746,6 +1745,16 @@
   "Like format." ^String [f & args] (apply format f args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn char-array??
+
+  "Splits a string into string-char,
+  e.g. \"abc\" = [\"a\" \"b\" \"c\"]."
+  [s]
+  {:pre [(or (nil? s)(string? s))]}
+
+  (remove empty? (cs/split s #"")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbf+
 
   "StringBuilder concat."
@@ -2225,10 +2234,10 @@
   "String.split."
 
   ([^String src ^String regex]
-   (.split src regex))
+   (remove empty? (.split src regex)))
 
   ([^String src ^String regex limit]
-   (.split src regex (int limit))))
+   (remove empty? (.split src regex (int limit)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn split-str

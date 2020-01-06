@@ -8,10 +8,10 @@
   :description "General clojure helper functions"
   :url "https://github.com/llnek/basal"
 
-  :dependencies [[org.apache.logging.log4j/log4j-slf4j-impl "2.12.1"]
-                 [org.apache.logging.log4j/log4j-core "2.12.1"]
-                 [org.slf4j/slf4j-api "1.7.29" ]
-                 [org.clojure/core.async "0.5.527"]
+  :dependencies [[org.apache.logging.log4j/log4j-slf4j-impl "2.13.0"]
+                 [org.apache.logging.log4j/log4j-core "2.13.0"]
+                 [org.slf4j/slf4j-api "1.7.30" ]
+                 [org.clojure/core.async "0.6.532"]
                  [org.flatland/ordered "1.5.7"]
                  [org.clojure/data.json "0.2.7"]
                  [org.clojure/tools.logging "0.5.0"]
@@ -62,8 +62,8 @@
                    :dates :test-dates
                    :util :test-util}
 
-  :jvm-opts ["-Dlog4j.configurationFile=file:attic/log4j2.xml"
-             "-Dczlabloggerflag=true"]
+  :jvm-opts ["-Dczlabloggerflag=true"
+             "-Dlog4j.configurationFile=file:attic/log4j2.xml"]
 
   :javac-options [;"-source" "8"
                   "-Xlint:unchecked" "-Xlint:-options" "-Xlint:deprecation"])

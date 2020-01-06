@@ -23,7 +23,6 @@
 (defprotocol EventBus
   "Topic based pub-sub event bus."
   (match? [_ topic] "True if topic is registered.")
-  (dbg [_] "Internal.")
   (unsub [_ subid] "Drop subscription.")
   (sub [_ topic listener] "Subscribe to this topic.")
   (pub [_ topic msg] "Publish a message on this topic."))
@@ -84,7 +83,9 @@
                                   (update-in [:subcs] dissoc subid))))) bus))
          (match? [bus topic]
            (contains? (get @impl :topics) topic))
-         (dbg [bus] (i/fmt->edn @impl))
+         c/Debuggable
+         (dbg-show [_ _] (c/raise! "not supported"))
+         (dbg-str [_] (i/fmt->edn @impl))
          c/Finzable
          (finz [bus]
            (let [{:keys [async? subcs]} @impl]
@@ -211,7 +212,9 @@
                [ts (split topic delimiter)]
                (walk async? B ts topic nil z))
              (pos? @z)))
-         (dbg [_] (i/fmt->edn @impl))
+         c/Debuggable
+         (dbg-show [_ _] (c/raise! "not supported"))
+         (dbg-str [_] (i/fmt->edn @impl))
          c/Finzable
          (finz [me]
            (let [{:keys [async? subcs]} @impl]

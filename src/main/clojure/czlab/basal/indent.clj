@@ -1,5 +1,5 @@
 ;;source from https://github.com/tomfaulhaber [pprint-indent]
-(ns
+(ns ^:no-doc
   czlab.basal.indent
   (:import [clojure.lang MultiFn])
   (:use [clojure.pprint :only [formatter-out simple-dispatch]]))

@@ -1,4 +1,4 @@
-;; Copyright ©  2013-2019, Kenneth Leung. All rights reserved.
+;; Copyright ©  2013-2020, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -16,6 +16,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/deftest test-str
+
+  (ensure?? "char-array??"
+            (let [z (c/char-array?? "")
+                  a (c/char-array?? "abcde")]
+              (and (empty? z)
+                   (= "e" (last a))
+                   (= "a" (first a)))))
+
+  (ensure?? "fmt" (= "a09z" (c/fmt "%s%02d%s" "a" 9 "z")))
 
   (ensure?? "sbf<>" (= "abc" (str (c/sbf<> "a" "b" "c"))))
 
@@ -156,9 +165,15 @@
                              (= "aaa" (c/drop-tail  "aaa" 0))
                              (= "" (c/drop-tail "hello joe" 30))))
 
+  (ensure?? "matches?" (c/matches? "abc55jjK8K" "[a-z0-9]+K[0-9]+K"))
+
   (ensure?? "sreduce<>"
             (= "123"
                (c/sreduce<> #(c/sbf+ %1 %2) [1 2 3])))
+
+  (ensure?? "split"
+            (= '("abc" "K" "K")
+               (c/split "abc55jjK8K" "(\\d|jj)")))
 
   (ensure?? "split-str"
             (and (= ["a" "b" "c"]

@@ -1,5 +1,6 @@
 ;;source from https://github.com/cldwalker/table
-(ns czlab.table.width
+(ns ^:no-doc
+  czlab.table.width
   (:require clojure.java.shell clojure.java.io clojure.string))
 
 (declare get-initial-widths max-width-per-field actual-width auto-resize-widths

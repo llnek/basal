@@ -35,18 +35,34 @@
       [v' {:value v' :log log'}])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(def ZZZ 3)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defprotocol QQQ (foo [_]))
+(defprotocol AAA (goo [_]))
+(defrecord KKK [])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/deftest test-core
+
+  (ensure?? "funcit??"
+            (== 12
+                (c/funcit?? (fn [a b c] (+ a b c)) 3 4 5)))
+
+  (ensure-thrown?? "precond"
+                   :any
+                   (c/precond (nil? nil) (= 3 3) (= 4 5)))
 
   (ensure?? "atom?"
             (and (c/atom? (atom 0))
                  (not (c/atom? 0))))
 
-  (ensure?? "is?"
-            (c/is? String "a"))
+  (ensure?? "sas?;!sas?"
+            (and (c/sas? QQQ (reify QQQ (foo [_])))
+                 (c/!sas? AAA (reify QQQ (foo [_])))))
 
-  (ensure?? "!eq?"
-            (and (c/!eq? "a" "b")
-                 (not (c/!eq? "a" "a"))))
+  (ensure?? "is?;!is?"
+            (and (c/is? String "a") (c/!is? String 3)))
 
   (ensure?? "map->"
             (= {:b 2 :z 1}
@@ -54,6 +70,9 @@
 
   (ensure?? "vec->"
             (= [3 2 1] (c/vec-> '(3 2 1))))
+
+  (ensure?? "set->"
+            (= #{3 2 1} (c/set-> '(3 2 1))))
 
   (ensure?? "cc+1"
             (= '(3 4 5) (c/cc+1 3 [4 5])))
@@ -67,44 +86,40 @@
 
   (ensure?? "_3" (== 4 (c/_3 [1 3 4])))
 
-  (ensure?? "_E" (== 4 (c/_E [1 3 4])))
+  (ensure?? "_E;_NE" (and (== 4 (c/_E [1 3 4]))
+                          (== 4 (c/_NE [1 3 4]))))
 
   (ensure?? "!zero?" (c/!zero? 7))
 
   (ensure?? "n#" (== 3 (c/n# [1 2 4])))
 
-  (ensure?? "car" (== 2
-                     (c/car '(2 3 4))))
+  (ensure?? "car;cdr"
+            (and (== 2 (c/car '(2 3 4)))
+                 (= '(3 4) (c/cdr '(2 3 4)))))
 
-  (ensure?? "cdr" (= '(3 4)
-                     (c/cdr '(2 3 4))))
+  (ensure?? "one?;two?;one+?"
+            (and (c/one? [1])
+                 (c/two? [1 2])
+                 (c/one+? [1 2 3])))
 
-  (ensure?? "dissoc!!"
-            (= {:b 3} @(c/dissoc!! (atom {:a 2 :b 3 :c 7}) :a :c)))
+  (ensure?? "assoc!!;dissoc!!"
+            (and (= {:b 3} @(c/dissoc!! (atom {:a 2 :b 3 :c 7}) :a :c))
+                 (= {:a 2 :b 3 :c 7} @(c/assoc!! (atom {:b 3}) :a 2 :c 7))))
 
-  (ensure?? "assoc!!"
-            (= {:a 2 :b 3 :c 7} @(c/assoc!! (atom {:b 3}) :a 2 :c 7)))
+  (ensure?? "fn_*;fn_3;fn_2;fn_1;fn_0"
+            (and (= '(1 2 3) ((c/fn_* ____xs) 1 2 3))
+                 (= "yo" ((c/fn_0 "yo")))
+                 (== 2 ((c/fn_1 ____1) 2))
+                 (== 3 ((c/fn_2 (+ ____1 ____2)) 1 2))
+                 (== 6 ((c/fn_3 (+ ____1 ____2 ____3)) 1 2 3))))
 
-  (ensure?? "fn_*"
-            (= '(1 2 3) ((c/fn_* ____xs) 1 2 3)))
-
-  (ensure?? "fn_3"
-            (== 6 ((c/fn_3 (+ ____1 ____2 ____3)) 1 2 3)))
-
-  (ensure?? "fn_2"
-            (== 3 ((c/fn_2 (+ ____1 ____2)) 1 2)))
-
-  (ensure?? "fn_1" (== 2 ((c/fn_1 ____1) 2)))
-
-  (ensure?? "fn_0" (= "yo" ((c/fn_0 "yo"))))
-
-  (ensure?? "tmap*" (= {:a 1} (persistent! (c/tmap* {:a 1}))))
-
-  (ensure?? "tmap*" (= {:a 1} (persistent! (assoc! (c/tmap*) :a 1))))
-
-  (ensure?? "tvec*" (= [:a 1] (persistent! (c/tvec* [:a 1]))))
-
-  (ensure?? "tvec*" (= [:a] (persistent! (conj! (c/tvec*) :a))))
+  (ensure?? "tmap*;tvec*;tset*"
+            (and (= {:a 1} (persistent! (c/tmap* {:a 1})))
+                 (= {:a 1} (persistent! (assoc! (c/tmap*) :a 1)))
+                 (= [:a 1] (persistent! (c/tvec* [:a 1])))
+                 (= [:a] (persistent! (conj! (c/tvec*) :a)))
+                 (= #{:a} (persistent! (c/tset* #{:a})))
+                 (= #{:a} (persistent! (conj! (c/tset*) :a)))))
 
   (ensure?? "ps!" (= #{:a} (c/persist! (conj! (transient #{}) :a))))
 
@@ -112,9 +127,9 @@
 
   (ensure?? "mapfv" (= [5 6 7] (c/mapfv + 4 1 2 3)))
 
-  (ensure?? "last-index" (== 3 (c/last-index '(1 2 3 4))))
-
-  (ensure?? "nexth" (== 4 (c/nexth '(1 2 3 4) 2)))
+  (ensure?? "last-index;nexth"
+            (and (== 3 (c/last-index '(1 2 3 4)))
+                 (== 4 (c/nexth '(1 2 3 4) 2))))
 
   (ensure-thrown?? "nexth-out-of-bound"
                    java.lang.IndexOutOfBoundsException
@@ -137,14 +152,9 @@
   (ensure?? "defenum"
             (== 4 (do (c/defenum xxx a 1 b c) (+ xxx-a xxx-c))))
 
-  (ensure?? "n#-even?,n#-odd?"
+  (ensure?? "n#-even?"
             (and (c/n#-even? [])
-                 (c/n#-even? [1 2]) (c/n#-odd? [1])))
-
-  (ensure?? "kvs->map"
-            (let [m (c/kvs->map '(:a 1 :b 2 :c 3))]
-              (and (= '(1 2 3) (sort (vals m)))
-                   (= '(:a :b :c)  (sort (keys m))))))
+                 (c/n#-even? [1 2]) (not (c/n#-even? [1]))))
 
   (ensure?? "condp??" (let [arg 8]
                         (and (== 13 (c/condp?? = arg 1 1 3 3 13))
@@ -154,12 +164,34 @@
                        (and (== 13 (c/case?? arg 1 1 3 3 13))
                             (nil? (c/case?? arg 1 1 3 3)))))
 
-  (ensure?? "if-number" (== 13 (c/if-number [x (+ 3 4)] (+ x 6))))
+  (ensure?? "if-inst;when-inst"
+            (and (== 1 (c/if-inst String "aaa" 1 2))
+                 (== 2 (c/when-inst String "aaa" 2))))
 
-  (ensure?? "if-string" (= "hello!" (c/if-string [x "hello"] (str x "!"))))
+  (ensure?? "if-proto;when-proto"
+            (and (== 1 (c/if-proto QQQ (reify QQQ (foo [_])) 1 2))
+                 (== 2 (c/when-proto QQQ (reify QQQ (foo [_])) 2))))
+
+  (ensure?? "if-nil;when-nil"
+            (and (== 1 (c/if-nil nil 1 2))
+                 (== 2 (c/when-nil nil 2))))
+
+  (ensure?? "if-var;when-var"
+            (and (== 1 (c/if-var [v #'ZZZ] 1 2))
+                 (== 3 (c/when-var [v #'ZZZ] 3))))
+
+  (ensure?? "if-number;if-string"
+            (and (== 13 (c/if-number [x (+ 3 4)] (+ x 6) 333))
+                 (= "hello!" (c/if-string [x "hello"] (str x "!") "eee"))
+                 (== 13 (c/when-number [x (+ 3 4)] (+ x 6)))
+                 (= "hello!" (c/when-string [x "hello"] (str x "!")))))
+
+  (ensure?? "if-throw;when-throw"
+            (and (some? (c/if-throw [x (Exception. "")] x nil))
+                 (some? (c/when-throw [x (Exception. "")] x))))
 
   (ensure?? "nloop" (== 3 (let [acc (atom 0)]
-                           (c/nloop 3 (swap! acc inc)) @acc)))
+                            (c/nloop 3 (swap! acc inc)) @acc)))
 
   (ensure?? "each*"
             (= [[:a 0] [:b 1] [:c 2]]
@@ -171,20 +203,28 @@
                (let [acc (atom [])]
                  (c/each #(swap! acc conj %) [:a :b :c]) @acc)))
 
+  (ensure?? "mput!;mdel!;mget"
+            (let [m (doto (java.util.HashMap.)
+                      (.put "a" 1) (.put "b" 2))]
+              (c/mput! m "c" 3)
+              (and (== 1 (c/mget m "a"))
+                   (== 2 (c/mdel! m "b"))
+                   (== 3 (c/mget m "c")))))
+
+  (ensure?? "object<>"
+            (and (== 1 (:a (c/object<> KKK :a 1)))
+                 (== 1 (:a (c/object<> KKK {:a 1})))))
+
   (ensure?? "vargs" (= "Long[]"
                        (.getSimpleName (class (c/vargs Long [1 2])))))
 
-  (ensure?? "preduce<map>"
-            (= {:a "a" :b "b" :c "c"}
-               (c/preduce<map> #(assoc! %1 %2 (name %2)) [:a :b :c])))
-
-  (ensure?? "preduce<set>"
-            (= #{:a :c}
-               (c/preduce<set> #(conj! %1 %2) [:a :a :c :a])))
-
-  (ensure?? "preduce<vec>"
-            (= [1 2]
-               (c/preduce<vec> #(conj! %1 (last %2)) {:a 1 :b 2})))
+  (ensure?? "preduce<map,set,vec>"
+            (and (= {:a "a" :b "b" :c "c"}
+                    (c/preduce<map> #(assoc! %1 %2 (name %2)) [:a :b :c]))
+                 (= #{:a :c}
+                    (c/preduce<set> #(conj! %1 %2) [:a :a :c :a]))
+                 (= [1 2]
+                    (c/preduce<vec> #(conj! %1 (last %2)) {:a 1 :b 2}))))
 
   (ensure?? "rset!"
             (== 7 (let [a (atom 3)] (c/rset! a 7) @a)))
@@ -197,126 +237,151 @@
                    java.lang.Exception
                    (c/trap! java.lang.Exception "hello"))
 
-  (ensure?? "decl-throw-exp"
-            (= "hello joe"
-               (try (c/decl-throw-exp _eee java.lang.Exception)
-                    (_eee "hello %s" "joe")
-                    (catch Throwable e (.getMessage e)))))
+  (ensure-thrown?? "raise!"
+                   java.lang.Exception
+                   (c/raise! "Hello %s" "world!"))
 
-  (ensure?? "do-with-atom"
-            (== 99 (c/do-with-atom [a (atom 99)] (str "dummy"))))
+  (ensure-thrown?? "assert-on!"
+                   java.lang.Exception
+                   (c/assert-on! (== 1 2) java.lang.Exception "hello"))
 
-  (ensure?? "do-with"
-            (== 100 @(c/do-with [a (atom 99)] (swap! a inc))))
+  (ensure?? "decl-(throw;assert)-exp"
+            (and
+              (= "hello joe"
+                 (try (c/decl-throw-exp _eee java.lang.Exception)
+                      (_eee "hello %s" "joe")
+                      (catch Throwable e (.getMessage e))))
+              (= "hello joe"
+                 (try (c/decl-assert-exp _aaa java.lang.Exception)
+                      (_aaa (== 1 2) "hello %s" "joe")
+                      (catch Throwable e (.getMessage e))))))
 
-  (ensure?? "do-with"
-            (== 100 @((fn [b]
-                       (c/do-with [b] (swap! b inc))) (atom 99))))
+  (ensure?? "do-with(*)"
+            (and (== 99 (c/do-with [a 99] 3 4 5))
+                 (= "99" (c/do-with-str [b 99] 3 4 5))
+                 (== 99 (c/do-with-atom [a (atom 99)] (str "dummy")))))
 
-  ;(ensure?? "bool!" (boolean? (c/bool! 3)))
+  (ensure?? "bool!" (boolean? (c/bool! [])))
 
-  (ensure?? "trye!" (= "hello" (c/trye! "hello" (/ 1 (- 1 1)))))
+  (ensure?? "try!;trye!"
+            (and (nil? (c/try! (/ 1 (- 1 1))))
+                 (= "hello" (c/trye! "hello" (/ 1 (- 1 1))))))
 
-  (ensure?? "try!" (nil? (c/try! (/ 1 (- 1 1)))))
+  (ensure?? "if-some+;when-some+"
+            (and (= [1 2 3]
+                    (c/if-some+ [x (conj [] 1 2 3)] x))
+                 (= "hello" (c/if-some+ [_ []] 3 "hello"))
+                 (= [1 2 3]
+                    (c/when-some+ [x [1 2]] (conj x 3)))
+                 (nil? (c/when-some+ [x []] (conj x 3)))))
 
-  (ensure?? "if-some+" (= [1 2 3]
-                          (c/if-some+ [x (conj [] 1 2 3)] x)))
+  (ensure?? "if-fn;when-fn"
+            (and (== 4 (c/if-fn [x #(+ 1 %)] (x 3)))
+                 (nil? (c/if-fn [x 1] 3))
+                 (== 4 (c/when-fn [x #(+ 1 %)] (x 3)))))
 
-  (ensure?? "if-some+" (= "hello"
-                          (c/if-some+ [_ []] 3 "hello")))
+  (ensure?? "doto->;doto->>"
+            (and (== 21
+                     @(let [f (fn [a b c]
+                                (reset! c (+ a b @c)))]
+                        (c/doto->> (atom 0)
+                                   (f 1 2) (f 3 4) (f 5 6))))
+                 (== 21
+                     @(let [f (fn [c a b]
+                                (reset! c (+ a b @c)))]
+                        (c/doto-> (atom 0)
+                                  (f 1 2) (f 3 4) (f 5 6))))))
 
-  (ensure?? "when-some+" (= [1 2 3]
-                            (c/when-some+ [x [1 2]] (conj x 3))))
+  (ensure?? "=?;!=?" (and (c/!=? "a" "b")
+                       (c/=? "a" "a")))
 
-  (ensure?? "when-some+" (nil?
-                            (c/when-some+ [x []] (conj x 3))))
+  (ensure?? "in?;!in?" (and (c/!in? #{1 2 3} 6)
+                            (c/in? #{1 2 3} 2)))
 
-  (ensure?? "if-fn" (== 4 (c/if-fn [x #(+ 1 %)] (x 3))))
+  (ensure?? "eq?;!eq?"
+            (and (c/eq? "a" "a")
+                 (c/!eq? "a" "b")))
 
-  (ensure?? "if-fn" (nil? (c/if-fn [x 1] 3)))
+  (ensure?? "cast?"
+            (and (= "[1]"
+                    (let [x (.toString [1])] (c/cast? String x)))
+                 (nil? (let [x [1 2]] (c/cast? String x)))))
 
-  (ensure?? "when-fn" (== 4 (c/when-fn [x #(+ 1 %)] (x 3))))
+  (ensure?? "cexp?"
+            (and (nil? (c/cexp? "a"))
+                 (= "a" (.getMessage
+                          (let [x (Exception. "a")] (c/cexp? x))))))
 
-  (ensure?? "doto->>" (== 21
-                         @(let [f (fn [a b c]
-                                    (reset! c (+ a b @c)))]
-                            (c/doto->> (atom 0)
-                                       (f 1 2) (f 3 4) (f 5 6)))))
+  (ensure?? "!nil?" (and (c/!nil? 3)
+                         (false? (c/!nil? nil))))
 
-  (ensure?? "doto->" (== 21
-                        @(let [f (fn [c a b]
-                                   (reset! c (+ a b @c)))]
-                           (c/doto-> (atom 0)
-                                     (f 1 2) (f 3 4) (f 5 6)))))
+  (ensure?? "rnil" (and (= [1 2] (c/rnilv '(1 nil 2)))
+                         (== 2 (count (c/rnil [1 nil 2])))))
 
-  (ensure?? "!=?" (c/!=? "a" "b"))
+  (ensure?? "szero?" (and (c/szero? 0)
+                          (false? (c/szero? nil))))
 
-  (ensure?? "=?" (c/=? "a" "a"))
+  (ensure?? "sneg?" (and (c/sneg? -2)
+                         (false? (c/sneg? nil))))
 
-  (ensure?? "!in?" (c/!in? #{1 2 3} 6))
+  (ensure?? "spos?" (and (c/spos? 2)
+                         (false? (c/spos? nil))))
 
-  (ensure?? "in?" (c/in? #{1 2 3} 2))
+  (ensure?? "snneg?" (and (c/snneg? 2)
+                          (false? (c/snneg? nil))))
 
-  (ensure?? "cast?" (= "[1]"
-                       (let [x (.toString [1])] (c/cast? String x))))
+  (ensure?? "!false?" (and (c/!false? nil)
+                           (not (c/!false? false))))
 
-  (ensure?? "cast?" (nil? (let [x [1 2]] (c/cast? String x))))
-
-  (ensure?? "cexp?" (= "a" (.getMessage
-                             (let [x (Exception. "a")] (c/cexp? x)))))
-
-  (ensure?? "cexp?" (nil? (c/cexp? "a")))
-
-  (ensure?? "!nil?" (c/!nil? 3))
-
-  (ensure?? "!nil?" (false? (c/!nil? nil)))
-
-  (ensure?? "rnil" (== 2 (count (c/rnil [1 nil 2]))))
-
-  (ensure?? "rnilv" (= [1 2] (c/rnilv '(1 nil 2))))
-
-  (ensure?? "szero?" (false? (c/szero? nil)))
-  (ensure?? "szero?" (c/szero? 0))
-
-  (ensure?? "sneg?" (false? (c/sneg? nil)))
-  (ensure?? "sneg?" (c/sneg? -2))
-
-  (ensure?? "spos?" (false? (c/spos? nil)))
-  (ensure?? "spos?" (c/spos? 2))
-
-  (ensure?? "snneg?" (false? (c/snneg? nil)))
-  (ensure?? "snneg?" (c/snneg? 2))
-
-  (ensure?? "!false?" (not (c/!false? false)))
-  (ensure?? "!false?" (c/!false? nil))
-
-  (ensure?? "!true?" (not (c/!true? true)))
-  (ensure?? "!true?" (c/!true? 3))
+  (ensure?? "!true?" (and (c/!true? 3)
+                          (not (c/!true? true))))
 
   (ensure?? "assert-not" (do (c/assert-not (== 3 2)) true))
 
-  (ensure?? "marray" (= "Long[]" (.getSimpleName (class (c/marray Long 2)))))
+  (ensure?? "marray;zarray"
+            (and (zero? (count (c/zarray Long)))
+                 (= "Long[]" (.getSimpleName (class (c/marray Long 2))))))
 
-  (ensure?? "zarray" (zero? (count (c/zarray Long))))
+  (ensure?? "vtbl"
+            (and (== 1 (let [v (c/vtbl** {:a 1}
+                                         :op1 identity :op2 identity)]
+                         (:a (:____proto v))))
+                 (== 1 (let [v (c/vtbl* :op1 identity :op2 identity)]
+                         ((:op1 v) 1)))))
 
-  (ensure?? "vtbl**" (== 1
-                        (let [v (c/vtbl** {:a 1}
-                                          :op1 identity :op2 identity)]
-                          (:a (:____proto v)))))
+  (ensure?? "wo*;wm*"
+            (and (== 2 (:b (meta (c/wm* {:a 1} {:b 2}))))
+                 (do (c/wo* [x (java.io.ByteArrayOutputStream.)]) true)))
 
-  (ensure?? "vtbl*" (== 1 (let [v (c/vtbl* :op1 identity :op2 identity)]
-                           ((:op1 v) 1))))
+  (ensure?? "->str" (= "aaa" (c/->str "aaa")))
 
-  (ensure?? "wo*" (do (c/wo* [x (java.io.ByteArrayOutputStream.)]) true))
+  (ensure?? "kvs->map"
+            (let [m (c/kvs->map '(:a 1 :b 2 :c 3))]
+              (and (= '(1 2 3) (sort (vals m)))
+                   (= '(:a :b :c)  (sort (keys m))))))
 
   (ensure?? "repeat-str"  (= "aaa" (c/repeat-str 3 "a")))
 
-  (ensure?? "num??" (== 44 (c/num?? nil 44)))
+  (ensure?? "num??" (and (== 4 (c/num?? 4 9))
+                         (== 44 (c/num?? nil 44))))
 
-  (ensure?? "num??" (== 4 (c/num?? 4 9)))
+  (ensure?? "!==" (and (c/!== 2 3 4) (not (c/!== 2 2 2 2))))
+
+  (ensure?? "flip" (let [x (c/flip 2)]
+                     (and (> x 0.49)(< x 0.51))))
+
+  (ensure?? "percent" (let [x (c/percent 2 3)]
+                        (and (> x 66.0)(< x 67.0))))
 
   (ensure?? "split-seq" (= '((1 2 3) (4 5))
                            (c/split-seq [1 2 3 4 5] 3)))
+
+  (ensure?? "min-by;max-by"
+            (and (== 1 (c/min-by identity [2 4 8 5 3 1 7]))
+                 (== 8 (c/max-by identity [2 4 8 5 3 1 7]))))
+
+  (ensure?? "rip-fn-name"
+            (= "exlog" (c/rip-fn-name exlog)))
 
   (ensure?? "mu-int" (== 4 (let [x (c/mu-int)]
                              (c/mu-int x 4)
@@ -330,8 +395,9 @@
 
   (ensure?? "vargs*" (== 4 (count (c/vargs* Long 1 2 3 4))))
 
-  (ensure?? "or??" (and (c/or?? [1 =] 2 1)
-                        (c/or?? [2 =] 2 1)))
+  (ensure?? "or??" (and (c/or?? [= 1] 2 1)
+                        (c/or?? [= 2] 2 1)
+                        (not (c/or?? [= 2] 3 4))))
 
   (ensure?? "scoped-keyword"
             (let [x (c/scoped-keyword "hey")
@@ -351,21 +417,19 @@
                             (pos? (c/num-sign 444))
                             (zero? (c/num-sign 0))))
 
-  (ensure?? "s->long" (== 100 (c/s->long "sss" 100)))
-
-  (ensure?? "s->long" (== 100 (c/s->long "100")))
-
-  (ensure?? "s->int" (== 100 (c/s->int "sss" 100)))
-
-  (ensure?? "s->int" (== 100 (c/s->int "100")))
-
-  (ensure?? "s->double" (== 100.0 (c/s->double "sss" 100.0)))
-
-  (ensure?? "s->double" (== 100.0 (c/s->double "100")))
-
   (ensure?? "s->bool" (c/s->bool "true"))
 
-  (ensure?? "test-isa" (c/test-isa "" Throwable (Exception. "a")))
+  (ensure?? "s->long" (and (== 100 (c/s->long "100"))
+                           (== 100 (c/s->long "sss" 100))))
+
+  (ensure?? "s->int" (and (== 100 (c/s->int "100"))
+                          (== 100 (c/s->int "sss" 100))))
+
+  (ensure?? "s->double" (and (== 100.0 (c/s->double "100"))
+                             (== 100.0 (c/s->double "sss" 100.0))))
+
+  (ensure?? "test-isa"
+            (c/test-isa "" Throwable (Exception. "a")))
 
   (ensure?? "test-some" (c/test-some "" "aaa"))
 
@@ -402,32 +466,51 @@
                              v' (c/vt-set-proto v p)]
                          (c/vt-has? v' :p1)))
 
-  (ensure?? "find??" (let [v (c/vtbl* :m1 3)
-                           p (c/vtbl* :m1 identity)
-                           v' (c/vt-set-proto v p)]
-                       (fn? (c/vt-find?? v' :m1 true))))
+  (ensure?? "vt-find??" (let [v (c/vtbl* :m1 3)
+                              p (c/vtbl* :m1 identity)
+                              v' (c/vt-set-proto v p)]
+                          (fn? (c/vt-find?? v' :m1 true))))
 
-  (ensure?? "vt-run??" (let [v (c/vtbl* :m1 3)
-                             p (c/vtbl* :m1 (c/identity-n 2))
-                             v' (c/vt-set-proto v p)]
-                         (== 7 (c/vt-run?? v' :m1 [7] true))))
+  (ensure?? "vt-run??"
+            (and (let [v (c/vtbl* :m1 3)
+                       p (c/vtbl* :m1 (c/identity-n 2))
+                       v' (c/vt-set-proto v p)]
+                   (== 7 (c/vt-run?? v' :m1 [7] true)))
+                 (let [v (c/vtbl* :m1 (c/identity-n 2))
+                       p (c/vtbl* :m1 3)
+                       v' (c/vt-set-proto v p)]
+                   (== 7 (c/vt-run?? v' :m1 [7])))))
 
-  (ensure?? "vt-run??" (let [v (c/vtbl* :m1 (c/identity-n 2))
-                             p (c/vtbl* :m1 3)
-                             v' (c/vt-set-proto v p)]
-                         (== 7 (c/vt-run?? v' :m1 [7]))))
+  (ensure?? "identity-n"
+            (== 3 ((c/identity-n 3) 1 2 3 4)))
 
-  (ensure?? "merge+,map" (= {:a 5 :z 9 :b {:c 2 :d 2}}
-                            (c/merge+ {:a 1 :b {:c 2}}
-                                      {:z 9 :a 5 :b {:d 2}})))
+  (ensure?? "merge+,map"
+            (and (= {:a 5 :z 9 :b {:c 2 :d 2}}
+                    (c/merge+ {:a 1 :b {:c 2}}
+                              {:z 9 :a 5 :b {:d 2}}))
+                 (= {:a 5 :z 9 :b #{ :c 2 :d 3 4}}
+                    (c/merge+ {:a 1 :b #{ :c 2 4}}
+                              {:z 9 :a 5 :b #{ :d 2 3}}))
+                 (= {:a 5 :z 9 :b [1 3]}
+                    (c/merge+ {:a 1 :b [4]}
+                              {:z 9 :a 5 :b [1 3]}))))
 
-  (ensure?? "merge+,set" (= {:a 5 :z 9 :b #{ :c 2 :d 3 4}}
-                            (c/merge+ {:a 1 :b #{ :c 2 4}}
-                                      {:z 9 :a 5 :b #{ :d 2 3}})))
+  (ensure?? "sbf<>"
+            (let [b (c/sbf<>)
+                  b (c/sbf+ b "a" "b" "c")
+                  b (c/sbf-join b "-" "333")
+                  n (c/sbfz b)]
+              (and (= "abc-333" (str b)) (== 7 n))))
 
-  (ensure?? "merge+" (= {:a 5 :z 9 :b [1 3]}
-                        (c/merge+ {:a 1 :b [4]}
-                                  {:z 9 :a 5 :b [1 3]})))
+  (ensure?? "sreduce"
+            (= "abc" (c/sreduce<> #(c/sbf+ %1 %2) ["a" "b" "c"])))
+
+  (ensure?? "nichts?;hgl?"
+            (and (c/hgl? "a")(c/nichts? nil)(not (c/hgl? ""))))
+
+  (ensure?? "stror"
+            (and (= "a" (c/stror nil "a"))
+                 (= "a" (c/stror* nil nil nil "" "" "a"))))
 
   (ensure?? "identity monad" (== 3 (c/domonad c/m-identity
                                              [a 1 b (inc a)] (+ a b))))
