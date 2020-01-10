@@ -11,6 +11,7 @@
   :dependencies [[org.apache.logging.log4j/log4j-slf4j-impl "2.13.0"]
                  [org.apache.logging.log4j/log4j-core "2.13.0"]
                  [org.slf4j/slf4j-api "1.7.30" ]
+                 [io.aviso/pretty "0.1.37"]
                  [org.clojure/core.async "0.6.532"]
                  [org.flatland/ordered "1.5.7"]
                  [org.clojure/data.json "0.2.7"]

@@ -1,4 +1,4 @@
-;; Copyright © 2013-2019, Kenneth Leung. All rights reserved.
+;; Copyright © 2013-2020, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -29,8 +29,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn event-bus<>
-  "A Publish Subscribe event manager."
+
+  ^{:arglists '([][options])
+    :doc "A Publish Subscribe event manager."}
+
   ([] (event-bus<> nil))
+
   ([options]
    (letfn
      [(mk-async [action t bufsz]
@@ -64,9 +68,10 @@
            (let [{:keys [id] :as sub}
                  (mk-sub impl topic listener)]
              (swap! impl
-                    (c/fn_1 (-> (update-in ____1
-                                           [:topics topic] assoc id sub)
-                                (update-in [:subcs] assoc id sub)))) [id bus]))
+                    #(-> (update-in %1
+                                    [:topics topic] assoc id sub)
+                         (update-in [:subcs] assoc id sub)))
+             [id bus]))
          (pub [bus topic msg]
            (let [{:keys [async? topics]} @impl
                  cbs (get topics topic)]
@@ -75,24 +80,24 @@
          (unsub [bus subid]
            (let [sub ((:subcs @impl) subid)
                  {:keys [action topic]} sub]
-             (if sub
+             (when sub
+               (if (:async? @impl) (a/close! action))
                (swap! impl
-                      (c/fn_1 (if (:async? ____1) (a/close! action))
-                              (-> (update-in ____1
-                                             [:topics topic] dissoc subid)
-                                  (update-in [:subcs] dissoc subid))))) bus))
+                      #(-> (update-in %1
+                                      [:topics topic] dissoc subid)
+                           (update-in [:subcs] dissoc subid)))) bus))
          (match? [bus topic]
            (contains? (get @impl :topics) topic))
          c/Debuggable
-         (dbg-show [_ _] (c/raise! "not supported"))
+         (dbg-show [_ _] (u/throw-UOE ""))
          (dbg-str [_] (i/fmt->edn @impl))
          c/Finzable
          (finz [bus]
            (let [{:keys [async? subcs]} @impl]
              (if async? ;maybe close all go channels
                (doseq [[_ z] subcs] (a/close! (:action z))))
-             (swap! impl
-                    assoc :topics {} :subcs {}) bus)))))))
+             (c/assoc!! impl
+                        :topics {} :subcs {}) bus)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/def- re-space #"\s+")
@@ -101,14 +106,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn event-bus<+>
-  "A Publish Subscribe event manager whereby
-  a more advanced matching scheme is used -
-  such as wild-card matches."
+
+  ^{:arglists '([][options])
+    :doc "A Publish Subscribe event manager whereby
+         a more advanced matching scheme is used -
+         such as wild-card matches."}
+
   ([] (event-bus<+> nil))
+
   ([options]
    (letfn
      [(split [topic sep]
-        (filterv #(if (> (count %) 0) %)
+        (filterv #(if (pos? (count %)) %)
                  (cs/split topic
                            (if (.equals "." sep) re-dot re-slash))))
       (mk-async [cb t bufsz]
@@ -166,9 +175,9 @@
                 (swap! tst inc)
                 (run async? (:subcs cur) topic msg))))))]
      (let [impl (atom (merge {:delimiter "."
-                            :async? false
-                            :bufsz 16
-                            :levels {} :subcs {}} options))]
+                              :async? false
+                              :bufsz 16
+                              :levels {} :subcs {}} options))]
        (reify EventBus
          (sub [bus topic listener]
            (let [{:keys [async? delimiter]} @impl
@@ -182,7 +191,8 @@
                                      #(update-in %
                                                  [:subcs]
                                                  assoc id sub))
-                          (update-in [:subcs] assoc id sub)))) [id bus]))
+                          (update-in [:subcs] assoc id sub))))
+             [id bus]))
          (pub [bus topic msg]
            (let [{:keys [async?
                          delimiter] :as B} @impl]
@@ -194,9 +204,9 @@
              (let [{:keys [async? delimiter]} @impl
                    {:keys [action topic]} sub
                    path (fmt-path (split topic delimiter))]
+               (if async? (a/close! action))
                (swap! impl
                       (c/fn_1
-                        (if async? (a/close! action))
                         (-> (update-in ____1
                                        path
                                        #(update-in %
@@ -213,15 +223,15 @@
                (walk async? B ts topic nil z))
              (pos? @z)))
          c/Debuggable
-         (dbg-show [_ _] (c/raise! "not supported"))
+         (dbg-show [_ _] (u/throw-UOE ""))
          (dbg-str [_] (i/fmt->edn @impl))
          c/Finzable
          (finz [me]
            (let [{:keys [async? subcs]} @impl]
              (if async? ;maybe close all go channels
                (doseq [[_ z] subcs] (a/close! (:action z))))
-             (swap! impl
-                    #(assoc % :levels {} :subcs {})) me)))))))
+             (c/assoc!! impl
+                        :levels {} :subcs {}) me)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

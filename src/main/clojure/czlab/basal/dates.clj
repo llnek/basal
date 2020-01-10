@@ -1,4 +1,4 @@
-;; Copyright © 2013-2019, Kenneth Leung. All rights reserved.
+;; Copyright © 2013-2020, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -45,17 +45,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fmt-timestamp
 
-  "Timestamp as stringvalue." [ts] `(str ~ts))
+  ^{:arglists '([ts])
+    :doc "Java's Timestamp as string."} [ts] `(str ~ts))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fmt-time
 
-  "Format current time." [fmt] `(fmt-date (new java.util.Date) ~fmt))
+  ^{:arglists '([fmt])
+    :doc "Format current time."}
+
+  [fmt] `(fmt-date (new java.util.Date) ~fmt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-leap-year?
 
-  "If it's leap year?"
+  ^{:arglists '([year])
+    :doc "If it's leap year?"}
+
   [year]
 
   (cond (zero? (mod year 400)) true
@@ -63,49 +69,50 @@
         :else (zero? (mod year 4))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn- has-tz-part?
-
-  "String has time zone?"
-  [s]
-
-  (let [pos (c/index-any s ",; \t\r\n\f")
-        ss (if-not (pos? pos)
-             "" (subs s (+ 1 pos)))]
-    (or (c/has-any? ss ["+" "-"])
-        (c/matches? ss "\\s*[a-zA-Z]+\\s*"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- has-tz?
 
   "String has timezone?"
   [dateStr]
 
-  (let [p1 (cs/last-index-of dateStr \.)
-        p2 (cs/last-index-of dateStr \:)
-        p3 (cs/last-index-of dateStr \-)
-        p4 (cs/last-index-of dateStr \/)]
-    (cond (c/spos? p1)
-          (has-tz-part? (subs dateStr (+ 1 p1)))
-          (c/spos? p2)
-          (has-tz-part? (subs dateStr (+ 1 p2)))
-          (c/spos? p3)
-          (has-tz-part? (subs dateStr (+ 1 p3)))
-          (c/spos? p4)
-          (has-tz-part? (subs dateStr (+ 1 p4))))))
+  (letfn
+    [(tz-part? [s]
+       (let [pos (c/index-any s ",; \t\r\n\f")
+             ss (if-not (pos? pos)
+                  "" (subs s (+ 1 pos)))]
+         (or (c/has-any? ss ["+" "-"])
+             (c/matches? ss "\\s*[a-zA-Z]+\\s*"))))]
+    (let [p1 (cs/last-index-of dateStr \.)
+          p2 (cs/last-index-of dateStr \:)
+          p3 (cs/last-index-of dateStr \-)
+          p4 (cs/last-index-of dateStr \/)]
+      (cond (c/spos? p1)
+            (tz-part? (subs dateStr (+ 1 p1)))
+            (c/spos? p2)
+            (tz-part? (subs dateStr (+ 1 p2)))
+            (c/spos? p3)
+            (tz-part? (subs dateStr (+ 1 p3)))
+            (c/spos? p4)
+            (tz-part? (subs dateStr (+ 1 p4)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-timestamp
 
-  "Convert string into a valid Timestamp object
-  *tstr* conforming to the format
-  \"yyyy-mm-dd hh:mm:ss.[fff...]\""
-  ^Timestamp [s] (c/try! (Timestamp/valueOf ^String s)))
+  ^{:arglists '([s])
+    :tag Timestamp
+    :doc "Convert string into a valid Timestamp object
+         *tstr* conforming to the format
+         \"yyyy-mm-dd hh:mm:ss.[fff...]\""}
+
+  [s] (c/try! (Timestamp/valueOf ^String s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-date
 
-  "String to Date."
-  ^Date [tstr fmt]
+  ^{:arglists '([tstr fmt])
+    :tag Date
+    :doc "String to Java's Date."}
+
+  [tstr fmt]
 
   (when (and (c/hgl? fmt)
              (c/hgl? tstr))
@@ -114,21 +121,29 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-iso8601
 
-  "To ISO8601 format"
-  ^Date [tstr]
+  ^{:arglists '([tstr])
+    :tag Date
+    :doc "To ISO8601 format."}
+
+  [tstr]
 
   (when (c/hgl? tstr)
     (let [fmt (if-not (c/includes? tstr \:)
                 date-fmt
-                (if (c/includes? tstr \.)
-                  dt-fmt-micro dt-fmt))]
+                (if-not (c/includes? tstr \.)
+                  dt-fmt
+                  dt-fmt-micro))]
       (parse-date tstr (if-not
                          (has-tz? tstr) fmt (str fmt "Z"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fmt-date
 
-  "Date to string."
+  ^{:arglists '([dt]
+                [dt fmt]
+                [dt fmt tz])
+    :doc "Date to string."}
+
   {:tag String}
 
   ([dt] (fmt-date dt dt-fmt-micro nil))
@@ -145,8 +160,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fmt-gmt
 
-  "Date to string - GMT."
-  ^String [dt]
+  ^{:arglists '([dt])
+    :tag String
+    :doc "Date to string - GMT."}
+
+  [dt]
 
   (fmt-date dt dt-fmt-micro (TimeZone/getTimeZone "GMT")))
 
@@ -161,7 +179,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gcal<>
 
-  "Make a Calendar."
+  ^{:arglists '([][arg])
+    :doc "Make a Calendar."}
+
   {:tag Calendar}
 
   ([] (gcal<> (Date.)))
@@ -171,14 +191,21 @@
         (or (cond (c/is? TimeZone arg)
              (GregorianCalendar. ^TimeZone arg)
              (c/is? Date arg)
-             (doto (GregorianCalendar.) (.setTime ^Date arg))
+             (doto
+               (GregorianCalendar.)
+               (.setTime ^Date arg))
              (c/spos? arg)
-             (doto (GregorianCalendar.) (.setTimeInMillis ^long arg)))))))
+             (doto
+               (GregorianCalendar.)
+               (.setTimeInMillis ^long arg)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn add-years
 
-  "Add years to the calendar."
+  ^{:arglists '([years]
+                [cal years])
+    :doc "Add years to the calendar."}
+
   {:tag Calendar}
 
   ([cal years] (add cal Calendar/YEAR years))
@@ -188,7 +215,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn add-months
 
-  "Add more months to the calendar."
+  ^{:arglists '([months]
+                [cal months])
+    :doc "Add more months to the calendar."}
+
   {:tag Calendar}
 
   ([months] (add-months (gcal<> (Date.)) months))
@@ -198,7 +228,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn add-days
 
-  "Add more days to the calendar."
+  ^{:arglists '([days][cal days])
+    :doc "Add more days to the calendar."}
+
   {:tag Calendar}
 
   ([days] (add-days (gcal<> (Date.)) days))
@@ -208,7 +240,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gmt<>
 
-  "Make a Calendar (GMT)."
+  ^{:arglists '([][arg])
+    :doc "Make a Calendar (GMT)."}
+
   {:tag GregorianCalendar}
 
   ([] (GregorianCalendar.
@@ -224,7 +258,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn dtime
 
-  "Get the time in millis."
+  ^{:arglists '([][d])
+    :doc "Get the time in millis."}
 
   ([d] (.getTime ^Date d))
 
@@ -249,8 +284,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn debug-cal
 
-  "Debug show a calendar's internal data."
-  ^String
+  ^{:arglists '([cal])
+    :tag String
+    :doc "Debug show a calendar's internal data."}
+
   [^Calendar cal]
 
   (cs/join ""

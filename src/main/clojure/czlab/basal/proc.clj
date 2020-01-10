@@ -1,4 +1,4 @@
-;; Copyright © 2013-2019, Kenneth Leung. All rights reserved.
+;; Copyright © 2013-2020, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -40,6 +40,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn tcore<>
 
+  ^{:arglists '([id]
+                [id tds]
+                [id tds trace?]
+                [id tds keepAliveMillis trace?])
+    :doc "A BlockingQueue Thread Pool Executor."}
+
   ([id] (tcore<> id 0))
 
   ([id tds] (tcore<> id tds true))
@@ -55,7 +61,7 @@
                  ^long keepAliveMillis
                  TimeUnit/MILLISECONDS
                  (LinkedBlockingQueue.)])
-         paused? (c/mu-int)
+         paused? (c/mu-int* 1)
          rex (reify
                RejectedExecutionHandler
                (rejectedExecution [_ r x]
@@ -73,11 +79,11 @@
      (reify
        Object
        (toString [_]
-         (c/fmt "TCore#%s - threads = %s." id (.getCorePoolSize core)))
+         (c/fmt "TCore#%s - threads = %d." id (.getCorePoolSize core)))
        c/Startable
-       (start [me _] (locking me (c/mu-int paused? 0) me))
+       (start [me _] (locking me (c/mu-int paused? 0)) me)
        (start [me] (.start me nil))
-       (stop [me] (locking me (c/mu-int paused? 1) me))
+       (stop [me] (locking me (c/mu-int paused? 1)) me)
        c/Testable
        (is-valid? [_] (zero? (c/mu-int paused?)))
        c/Enqueable
@@ -98,7 +104,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn thread<>
 
-  "Run code in a separate thread."
+  ^{:arglists '([func start?]
+                [func start? options])
+    :doc "Run a function in a separate thread."}
+
   {:tag Thread}
 
   ([func start?]
@@ -121,7 +130,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn async!
 
-  "Run function async."
+  ^{:arglists '([func]
+                [func options])
+    :doc "Run function async."}
 
   ([func]
    (async! func nil))
@@ -134,7 +145,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn jvm-info
 
-  "Get info on the jvm." []
+  ^{:arglists '([])
+    :doc "Get info on the JVM."}
+
+  []
 
   (let [os (ManagementFactory/getOperatingSystemMXBean)
         rt (ManagementFactory/getRuntimeMXBean)]
@@ -154,8 +168,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn process-pid
 
-  "Get process pid."
-  ^String []
+  ^{:arglists '([])
+    :tag String
+    :doc "Get the process pid."}
+
+  []
 
   (let [b (ManagementFactory/getRuntimeMXBean)]
    (u/try!! "" (c/_1 (-> b .getName str (c/split "@"))))))
@@ -163,7 +180,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn delay-exec
 
-  "Run function after some delay."
+  ^{:arglists '([func delayMillis])
+    :doc "Run function after some delay."}
+
   [func delayMillis]
   {:pre [(fn? func)
          (c/spos? delayMillis)]}
@@ -173,7 +192,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn exit-hook
 
-  "Add a shutdown hook."
+  ^{:arglists '([func])
+    :doc "Add a shutdown hook."}
+
   [func]
   {:pre [(fn? func)]}
 
@@ -184,12 +205,10 @@
 ;scheduler
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- prerun
-
   [hQ w] (some->> w (.remove ^Map hQ)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- add-timer
-
   [timer task delayMillis]
   (.schedule ^Timer
              timer ^TimerTask task ^long delayMillis))
@@ -197,15 +216,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol Scheduler
   "Schedules tasks."
-  (alarm [_ delayMillis f args] "")
-  (run* [_ f args] "")
+  (alarm [_ delayMillis f arglist] "Runs the function after some delay.")
+  (run* [_ f arglist] "Run this function.")
   (run [_ w] "Run this task.")
-  (postpone [_ w delayMillis] ""))
+  (postpone [_ w delayMillis] "Delay this task."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn scheduler<>
 
-  "Make a Scheduler."
+  ^{:arglists '([]
+                [named options])
+    :doc "Create a task scheduler."}
 
   ([]
    (scheduler<> (u/jid<>) nil))
@@ -220,23 +241,25 @@
                       (c/!false? trace?))]
      (reify Scheduler
        (alarm [_ delayMillis f args]
-         (let [t (cond (c/sas? c/Interruptable f) #(c/interrupt f args)
-                       (and (fn? f) (sequential? args)) #(apply f args)
-                       :else (c/raise! "alarm call failed"))
-               tt (u/tmtask<> t)]
-           (add-timer timer tt delayMillis) tt))
+         (c/do-with
+           [tt (u/tmtask<> (cond (c/sas? c/Interruptable f)
+                                 #(c/interrupt f args)
+                                 (and (fn? f)
+                                      (sequential? args))
+                                 #(apply f args)
+                                 :else (c/raise! "alarm call failed")))]
+           (add-timer timer tt delayMillis)))
        (run* [me f args]
-         (assert (and (fn? f)
-                      (sequential? args)))
+         (c/pre (fn? f) (sequential? args))
          (c/put cpu
                 #(try (apply f args)
                       (catch Throwable _ (c/exception _)))) me)
        (run [me w]
-         (assert (c/is? Runnable w))
+         (c/pre (c/is? Runnable w))
          (.run* me (if-not (fn? w)
                      #(.run ^Runnable w) w) []))
        (postpone [me w delayMillis]
-         (assert (number? delayMillis))
+         (c/pre (number? delayMillis))
          (cond (zero? delayMillis)
                (.run me w)
                (pos? delayMillis)

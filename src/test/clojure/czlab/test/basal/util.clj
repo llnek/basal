@@ -1,4 +1,4 @@
-;; Copyright ©  2013-2019, Kenneth Leung. All rights reserved.
+;; Copyright ©  2013-2020, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -31,14 +31,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/deftest test-util
 
-  ;(ensure?? "try!!" (= 4 (u/try!! 4 (/ 1 0))))
+  ;(ensure?? "try!!!" (nil? (u/try!!! (/ 1 0))))
+  ;(ensure?? "try!!" (== 4 (u/try!! 4 (/ 1 0))))
 
   (ensure?? "system-time" (pos? (u/system-time)))
 
-  (ensure?? "run<>" (let [a (atom 0)
-                          r (u/run<> (reset! a (+ 1 (+ 2 3))))]
-                        (.run r)
-                        (== 6 @a)))
+  (ensure?? "run<>;run<+>"
+            (let [a (atom 0)
+                  _ (.run (u/run<> (reset! a 44)))
+                  ok? (== 44 @a)
+                  _ (.run (u/run<+> (reset! a 77)))]
+              (and ok? (== 77 @a))))
 
   (ensure?? "get-env-var" (let [s (u/get-env-var "PATH")]
                             (and (string? s)
@@ -50,23 +53,22 @@
 
   (ensure?? "date<>" (instance? java.util.Date (u/date<>)))
 
-  (ensure?? "sys-prop!,sys-prop"
+  (ensure?? "set-sys-prop!;get-sys-prop"
             (= "a" (do (u/set-sys-prop! "hello.joe.test" "a")
                        (u/get-sys-prop "hello.joe.test"))))
 
-  (ensure?? "user-name" (let [s (u/get-user-name)]
-                          (and (string? s) (pos? (count s)))))
+  (ensure?? "get-user-name" (let [s (u/get-user-name)]
+                              (and (string? s) (pos? (count s)))))
 
-  (ensure?? "home-dir" (instance? java.io.File (u/get-user-home)))
+  (ensure?? "get-home-dir" (instance? java.io.File (u/get-user-home)))
 
-  (ensure?? "get-cwd" (instance? java.io.File (u/get-user-dir)))
+  (ensure?? "get-user-dir" (instance? java.io.File (u/get-user-dir)))
 
   (ensure?? "trim-last-pathsep"
             (= "/tmp/abc" (u/trim-last-pathsep "/tmp/abc/")))
 
   (ensure?? "trim-last-pathsep"
-            (= "\\tmp\\abc" (u/trim-last-pathsep "\\tmp\\abc\\")))
-
+            (= "\\tmp\\abc" (u/trim-last-pathsep "\\tmp\\abc\\///")))
 
   (ensure?? "mono-flop<>" (let [out (atom 0)
                                m (u/mono-flop<>)]
@@ -74,7 +76,7 @@
                              (if (u/is-first-call? m)
                                (swap! out inc))) (== 1 @out)))
 
-  (ensure?? "watch<>,pause" (let [w (u/watch<>)]
+  (ensure?? "watch<>;pause" (let [w (u/watch<>)]
                               (u/pause 100)
                               (and (pos? (u/elapsed-millis w))
                                    (pos? (u/elapsed-nanos w))
@@ -93,21 +95,31 @@
                            (pos? (count s))
                            (not (cs/includes? s "-")))))
 
+  (ensure?? "rand<>" (some? (u/rand<>)))
+
   (ensure?? "rand-bytes" (let [b (u/rand-bytes 10)]
                            (== 10 (count b))))
 
-  (ensure?? "encoding??,charset??"
+  (ensure?? "emsg" (= "what!"
+                      (.getMessage (Exception. "what!"))))
+
+  (ensure?? "objid??"
+            (cs/includes? (u/objid?? (Exception. "aaa")) "@"))
+
+  (ensure?? "encoding??;charset??"
             (= "utf-8"
                (cs/lower-case (u/encoding?? (u/charset?? "utf-8")))))
+
+  (ensure?? "pthreads" (pos? (u/pthreads)))
 
   (ensure?? "fpath" (= "c:/windows/win32/"
                        (u/fpath "c:\\windows\\win32\\")))
 
-  (ensure?? "serialize,deserialize"
+  (ensure?? "serialize;deserialize"
             (let [b (u/serialize {:a 1})
                   m (u/deserialize b)] (== 1 (:a m))))
 
-  (ensure?? "serialize,deserialize"
+  (ensure?? "serialize;deserialize"
             (let [b (u/serialize (Exception. "hi"))
                   e (u/deserialize b)]
               (= "hi" (.getMessage ^Exception e))))
@@ -117,7 +129,15 @@
   (ensure?? "get-class-name"
             (= "java.lang.String" (u/get-class-name "a")))
 
-  (ensure?? "x->str,x->chars,x->bytes"
+  (ensure?? "is-windows?;is-macos?;is-linux?"
+            (let [m (u/is-macos?)
+                  x (u/is-linux?)
+                  w (u/is-windows?)]
+              (cond m (and (not x)(not w))
+                    w (and (not m)(not x))
+                    x (and (not w)(not m)))))
+
+  (ensure?? "x->str;x->chars;x->bytes"
             (let [c0 (u/x->chars "hello")
                   b0 (u/x->bytes c0)
                   s0 (u/x->str c0)
@@ -137,7 +157,7 @@
                    (string? p2)
                    (= p1 p2))))
 
-  (ensure?? "deflate,inflate"
+  (ensure?? "deflate;inflate"
             (let [b (u/deflate (u/x->bytes "hello joe"))
                   s (u/x->str (u/inflate b))]
               (= s "hello joe")))
@@ -171,14 +191,15 @@
                       (-> (u/get-cldr)
                           (.getResource "czlab/basal/etc/Resources_en.properties")))
                   m (u/pmap<> p)]
-              (and (= (:test2 m) (:test m)) (string? (:test m)))))
+              (and (string? (:test m))
+                   (= (:test2 m) (:test m)))))
 
-  (ensure?? "tmtask<>"
+  (ensure?? "tmtask<>;cancel-timer-task!"
             (let [a (atom 0)
                   t (u/tmtask<> #(reset! a 3))]
               (and (c/is? TimerTask t)
                    (do (.run t)
-                       (== 3 @a)))))
+                       (u/cancel-timer-task! t) (== 3 @a)))))
 
   ;(ensure?? "prt-stk" (u/prt-stk (Exception. "e")))
 
@@ -227,10 +248,18 @@
                             b (String. "a")]
                         (u/obj-eq? a b)))
 
-  (ensure?? "url-encode,url-decode"
+  (ensure?? "url-encode;url-decode"
             (let [s (u/url-encode "a+c+b")
                   z (u/url-decode s)]
               (= z "a+c+b")))
+
+  (ensure?? "sortby"
+            (let [c [{:age 5} {:age 3}
+                     {:age 1} {:age 2}]
+                  a (u/sortby :age (c/compare-asc*) c)
+                  d (u/sortby :age (c/compare-des*) c)]
+              (and (= [1 2 3 5] (mapv #(:age %) a))
+                   (= [5 3 2 1] (mapv #(:age %) d)))))
 
   (ensure?? "new-memset" (let [m (u/new-memset<> 2)
                                _ (u/ms-add m (atom {:a 1}))
@@ -277,6 +306,19 @@
 
   (ensure?? "get-resource" (c/is? ResourceBundle
                                   (u/get-resource "czlab/basal/etc/Resources")))
+
+  (ensure?? "shuffle" (and (not= "abcde"
+                                 (u/shuffle "abcde"))
+                           (== 3 (count (u/shuffle "abc")))))
+
+  (ensure?? "cljrt<>"
+            (let [rt (u/cljrt<>)
+                  m (u/call* rt
+                             :czlab.basal.util/emsg
+                             [(Exception. "hello world")])
+                  v (u/var* rt :czlab.basal.util/cljrt<>)]
+              (and (= "hello world" m)
+                   (var? v))))
 
   (ensure?? "test-end" (== 1 1)))
 

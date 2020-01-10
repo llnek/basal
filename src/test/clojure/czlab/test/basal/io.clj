@@ -1,4 +1,4 @@
-;; Copyright ©  2013-2019, Kenneth Leung. All rights reserved.
+;; Copyright ©  2013-2020, Kenneth Leung. All rights reserved.
 ;; The use and distribution terms for this software are covered by the
 ;; Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
 ;; which can be found in the file epl-v10.html at the root of this distribution.
@@ -25,7 +25,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
-(def ^:private ^File TMP_DIR i/*file-repo*)
+(def ^:private ^File TMP_DIR (i/file-repo))
 (def ^:private ^File TMP_FP
   (io/file TMP_DIR (str (u/jid<>) ".txt")))
 (eval '(do (spit TMP_FP "heeloo" :encoding "utf-8"))))
@@ -263,7 +263,7 @@
 
   (ensure?? "mkdirs"
             (let [n (u/jid<>)
-                  d (io/file i/*file-repo* n)
+                  d (io/file (i/file-repo) n)
                   _ (i/mkdirs d)
                   e? (i/file-ok? d)]
               (i/fdelete d) e?))
@@ -274,7 +274,7 @@
                   n2 (u/jid<>)
                   f1 (str n1 ".txt")
                   f2 (str n2 ".txt")
-                  root (io/file i/*file-repo* n0)
+                  root (io/file (i/file-repo) n0)
                   d1 (io/file root n1)
                   d2 (io/file root n2)
                   _ (i/mkdirs root)
@@ -299,7 +299,7 @@
   (ensure?? "grep-folder-paths,grep-file-paths"
             (let [n0 (u/jid<>) n1 (u/jid<>) n2 (u/jid<>)
                   n3 (u/jid<>) n4 (u/jid<>) n5 (u/jid<>)
-                  root (io/file i/*file-repo* n0)
+                  root (io/file (i/file-repo) n0)
                   _ (i/mkdirs root)
                   d1 (doto (io/file root n1) (i/mkdirs))
                   d2 (doto (io/file root n2) (i/mkdirs))
@@ -327,7 +327,7 @@
 
   (ensure?? "basename"
             (let [n (u/jid<>)
-                  f (io/file i/*file-repo* (str n ".txt"))
+                  f (io/file (i/file-repo) (str n ".txt"))
                   _ (i/spit-utf8 f "hello")
                   b (i/basename f)]
               (i/fdelete f)
