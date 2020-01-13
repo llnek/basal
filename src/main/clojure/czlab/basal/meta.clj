@@ -26,11 +26,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn count-arity
 
-  ^{:arglists '([func])
-    :doc "Figure out arity of function, returning the set of
-         arity counts and whether var-args are used.
-         e.g. [#{0 1 2 3} true]."}
-
+  "Figure out arity of function, returning the set of
+  arity counts and whether var-args are used.
+  e.g. [#{0 1 2 3} true]."
+  {:arglists '([func])}
   [func]
   {:pre [(fn? func)]}
 
@@ -51,9 +50,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-child?
 
-  ^{:arglists '([parent child])
-    :doc "If clazz is subclass of this base class?"}
-
+  "If clazz is subclass of this base class?"
+  {:arglists '([parent child])}
   [parent child]
 
   (cond (and (class? child)
@@ -76,9 +74,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-boolean?
 
-  ^{:arglists '([obj])
-    :doc "Is class Boolean?"}
-
+  "Is class Boolean?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["boolean" "Boolean" "java.lang.Boolean"]))
@@ -86,9 +83,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-void?
 
-  ^{:arglists '([obj])
-    :doc "Is class Void?"}
-
+  "Is class Void?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["void" "Void" "java.lang.Void"]))
@@ -96,9 +92,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-char?
 
-  ^{:arglists '([obj])
-    :doc "Is class Char?"}
-
+  "Is class Char?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["char" "Char" "java.lang.Character"]))
@@ -106,9 +101,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-int?
 
-  ^{:arglists '([obj])
-    :doc "Is class Int?"}
-
+  "Is class Int?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["int" "Int" "java.lang.Integer"]))
@@ -116,9 +110,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-long?
 
-  ^{:arglists '([obj])
-    :doc "Is class Long?"}
-
+  "Is class Long?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["long" "Long" "java.lang.Long"]))
@@ -126,9 +119,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-float?
 
-  ^{:arglists '([obj])
-    :doc "Is class Float?"}
-
+  "Is class Float?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["float" "Float" "java.lang.Float"]))
@@ -136,9 +128,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-double?
 
-  ^{:arglists '([obj])
-    :doc "Is class Double?"}
-
+  "Is class Double?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["double" "Double" "java.lang.Double"]))
@@ -146,9 +137,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-byte?
 
-  ^{:arglists '([obj])
-    :doc "Is class Byte?"}
-
+  "Is class Byte?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["byte" "Byte" "java.lang.Byte"]))
@@ -156,9 +146,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-short?
 
-  ^{:arglists '([obj])
-    :doc "Is class Short?"}
-
+  "Is class Short?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["short" "Short" "java.lang.Short"]))
@@ -166,9 +155,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-string?
 
-  ^{:arglists '([obj])
-    :doc "Is class String?"}
-
+  "Is class String?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["String" "java.lang.String"]))
@@ -176,9 +164,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-object?
 
-  ^{:arglists '([obj])
-    :doc "Is class Object?"}
-
+  "Is class Object?"
+  {:arglists '([obj])}
   [obj]
 
   (is-XXX? obj ["Object" "java.lang.Object"]))
@@ -186,9 +173,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-chars?
 
-  ^{:arglists '([obj])
-    :doc "Is class char[]?"}
-
+  "Is class char[]?"
+  {:arglists '([obj])}
   [obj]
 
   (= u/CSCZ (if-not (class? obj) (class obj) obj)))
@@ -196,9 +182,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-bytes?
 
-  ^{:arglists '([obj])
-    :doc "Is class byte[]?"}
-
+  "Is class byte[]?"
+  {:arglists '([obj])}
   [obj]
 
   (= u/BSCZ (if-not (class? obj) (class obj) obj)))
@@ -206,10 +191,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn forname
 
-  ^{:arglists '([z][z cl])
-    :doc "Load class by name."}
-
-  {:tag Class}
+  "Load class by name."
+  {:tag Class
+   :arglists '([z][z cl])}
 
   ([z]
    (forname z nil))
@@ -222,11 +206,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn load-class
 
-  ^{:arglists '([clazzName]
-                [clazzName cl])
-    :doc "Load class by name."}
-
-  {:tag Class}
+  "Load class by name."
+  {:tag Class
+   :arglists '([clazzName]
+               [clazzName cl])}
 
   ([clazzName]
    (load-class clazzName nil))
@@ -238,11 +221,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn obj<>
 
-  ^{:arglists '([cz & args])
-    :tag Object
-    :doc "Instantiate the class by
-         invoking the constructor with args."}
-
+  "Instantiate the class by
+  invoking the constructor with args."
+  {:tag Object
+   :arglists '([cz & args])}
   [cz & args]
   {:pre [(or (string? cz)
              (class? cz))(c/n#-even? args)]}
@@ -261,9 +243,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-parents
 
-  ^{:arglists '([javaClass])
-    :doc "List all parent classes."}
-
+  "List all parent classes."
+  {:arglists '([javaClass])}
   [javaClass]
   {:pre [(class? javaClass)]}
 
@@ -319,10 +300,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-methods
 
-  ^{:arglists '([javaClass])
-    :doc "List methods belonging to this class,
-         including inherited ones."}
-
+  "List methods belonging to this class,
+  including inherited ones."
+  {:arglists '([javaClass])}
   [javaClass]
 
   (vals (if javaClass
@@ -331,10 +311,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-fields
 
-  ^{:arglists '([javaClass])
-    :doc "List fields belonging to this class,
-         including inherited ones."}
-
+  "List fields belonging to this class,
+  including inherited ones."
+  {:arglists '([javaClass])}
   [javaClass]
 
   (vals (if javaClass

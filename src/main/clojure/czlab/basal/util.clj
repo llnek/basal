@@ -121,60 +121,62 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro alen*
 
-  ^{:arglists '([arr])
-    :doc "Same as alength on object-array."}
-
+  "Same as alength on object-array."
+  {:arglists '([arr])}
   [arr]
+
   `(alength ~(with-meta arr {:tag "[Ljava.lang.Object;"})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro aget*
 
-  ^{:arglists '([arr pos])
-    :doc "Same as aget on object-array."}
-
+  "Same as aget on object-array."
+  {:arglists '([arr pos])}
   [arr pos]
+
   `(aget ~(with-meta arr {:tag "[Ljava.lang.Object;"}) ~pos))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro aset*
 
-  ^{:arglists '([arr pos value])
-    :doc "Same as aset on object-array."}
-
+  "Same as aset on object-array."
+  {:arglists '([arr pos value])}
   [arr pos value]
+
   `(aset ~(with-meta arr {:tag "[Ljava.lang.Object;"}) ~pos ~value))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ostream
 
-  ^{:arglists '([out])
-    :doc "clojure-io's output-stream."}
+  "clojure-io's output-stream."
+  {:arglists '([out])}
+  [out]
 
-  [out] `(clojure.java.io/output-stream ~out))
+  `(clojure.java.io/output-stream ~out))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro istream
 
-  ^{:arglists '([in])
-    :doc "clojure-io's input-stream."}
+  "clojure-io's input-stream."
+  {:arglists '([in])}
+  [in]
 
-  [in] `(clojure.java.io/input-stream ~in))
+  `(clojure.java.io/input-stream ~in))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro try!!!
 
-  ^{:arglists '([& exprs])
-    :doc "Eat, log the exception and return nil."}
+  "Eat, log the exception and return nil."
+  {:arglists '([& exprs])}
+  [& exprs]
 
-  [& exprs] `(czlab.basal.util/try!! nil ~@exprs))
+  `(czlab.basal.util/try!! nil ~@exprs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro try!!
 
-  ^{:arglists '([value & exprs])
-    :doc "Eat, log the exception and return a value."}
-
+  "Eat, log the exception and return a value."
+  {:arglists '([value & exprs])}
   [value & exprs]
 
   `(try ~@exprs
@@ -184,10 +186,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro system-time
 
-  ^{:arglists '([])
-    :doc "Current time in millis."}
+  "Current time in millis."
+  {:arglists '([])}
+  []
 
-  [] `(System/currentTimeMillis))
+  `(System/currentTimeMillis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/decl-assert-exp assert-ISE IllegalStateException)
@@ -216,9 +219,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro run<>
 
-  ^{:arglists '([& forms])
-    :doc "A Runnable wrapper - eat errors."}
-
+  "A Runnable wrapper - eat errors."
+  {:arglists '([& forms])}
   [& forms]
 
   `(reify
@@ -228,9 +230,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro run<+>
 
-  ^{:arglists '([& forms])
-    :doc "A Runnable wrapper - log errors."}
-
+  "A Runnable wrapper - log errors."
+  {:arglists '([& forms])}
   [& forms]
 
   `(reify
@@ -240,9 +241,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-env-var
 
-  ^{:arglists '([vname])
-    :doc "Get value for this env var."}
-
+  "Get value for this env var."
+  {:arglists '([vname])}
   [vname]
 
   `(czlab.basal.core/if-some+ [e# ~vname] (System/getenv e#)))
@@ -250,47 +250,53 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro uuid<>
 
-  ^{:arglists '([])
-    :doc "RFC4122, v4 format."}
+  "RFC4122, v4 format."
+  {:arglists '([])}
+  []
 
-  [] `(str (java.util.UUID/randomUUID)))
+  `(str (java.util.UUID/randomUUID)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro date<>
 
-  ^{:arglists '([])
-    :doc "A Java Date."} [] `(java.util.Date.))
+  "A Java Date."
+  {:arglists '([])}
+  []
+
+  `(java.util.Date.))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro set-sys-prop!
 
-  ^{:arglists '([prop value])
-    :doc "Set a system property."}
+  "Set a system property."
+  {:arglists '([prop value])}
+  [prop value]
 
-  [prop value] `(System/setProperty ~prop ~value))
+  `(System/setProperty ~prop ~value))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-sys-prop
 
-  ^{:arglists '([prop])
-    :doc "Get value of a system property."}
+  "Get value of a system property."
+  {:arglists '([prop])}
+  [prop]
 
-  [prop] `(System/getProperty (str ~prop) ""))
+  `(System/getProperty (str ~prop) ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-user-name
 
-  ^{:arglists '([])
-    :doc "Get the user login name."}
+  "Get the user login name."
+  {:arglists '([])}
+  []
 
-  [] `(czlab.basal.util/get-sys-prop "user.name"))
+  `(czlab.basal.util/get-sys-prop "user.name"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-user-home
 
-  ^{:arglists '([])
-    :doc "Get user's home dir."}
-
+  "Get user's home dir."
+  {:arglists '([])}
   []
 
   `(clojure.java.io/file (czlab.basal.util/get-sys-prop "user.home")))
@@ -298,9 +304,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro get-user-dir
 
-  ^{:arglists '([])
-    :doc "Get current dir."}
-
+  "Get current dir."
+  {:arglists '([])}
   []
 
   `(clojure.java.io/file (czlab.basal.util/get-sys-prop "user.dir")))
@@ -312,19 +317,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn trim-last-pathsep
 
-  ^{:arglists '([path])
-    :tag String
-    :doc "Get rid of trailing dir paths."}
+  "Get rid of trailing dir paths."
+  {:tag String
+   :arglists '([path])}
+  [path]
 
-  [path] (.replaceFirst (str path) "[/\\\\]+$" ""))
+  (.replaceFirst (str path) "[/\\\\]+$" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mono-flop<>
 
-  ^{:arglists '([][flipOnCreate?])
-    :doc "One time logic, flip on first call."}
+  "One time logic, flip on first call."
+  {:arglists '([][flipOnCreate?])}
 
-  ([] (mono-flop<> nil))
+  ([]
+   (mono-flop<> nil))
 
   ([flipOnCreate?]
    (let [flag (AtomicBoolean. false)]
@@ -337,9 +344,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn watch<>
 
-  ^{:arglists '([])
-    :doc "Use to mark elapsed time."}
-
+  "Use to mark elapsed time."
+  {:arglists '([])}
   []
 
   (let [start (atom (System/nanoTime))
@@ -355,28 +361,29 @@
 ;;happens to be all hex chars
 (defn jid<>
 
-  ^{:arglists '([])
-    :tag String
-    :doc "Generate a unique id using std java."}
+  "Generate a unique id using std java."
+  {:tag String
+   :arglists '([])}
+  []
 
-  [] (.replaceAll (str (UID.)) "[:\\-]+" ""))
+  (.replaceAll (str (UID.)) "[:\\-]+" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn uid<>
 
-  ^{:arglists '([])
-    :tag String
-    :doc "UUID, no dash!"}
+  "UUID, no dash!"
+  {:tag String
+   :arglists '([])}
+  []
 
-  [] (cs/replace (uuid<>) #"-" ""))
+  (cs/replace (uuid<>) #"-" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rand<>
 
-  ^{:arglists '([][strong?])
-    :doc "A new random object."}
-
-  {:tag SecureRandom}
+  "A new random object."
+  {:tag SecureRandom
+   :arglists '([][strong?])}
 
   ([]
    (rand<> false))
@@ -391,9 +398,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rand-bytes
 
-  ^{:arglists '([num-bytes]
-                [rand-obj num-bytes])
-    :doc "Generate random bytes."}
+  "Generate random bytes."
+  {:arglists '([num-bytes]
+               [rand-obj num-bytes])}
 
   ([num-bytes]
    (rand-bytes (rand<>) num-bytes))
@@ -405,18 +412,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn emsg
 
-  ^{:arglists '([e])
-    :tag String
-    :doc "Get exception message."}
+  "Get exception message."
+  {:tag String
+   :arglists '([e])}
+  [^Throwable e]
 
-  [^Throwable e] (some-> e .getMessage))
+  (some-> e .getMessage))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn objid??
 
-  ^{:arglists '([obj])
-    :doc "Java object id, actually it's hashcode."}
-
+  "Java object id, actually it's hashcode."
+  {:arglists '([obj])}
   [obj]
 
   (if-some [obj (c/cast? Object obj)]
@@ -426,10 +433,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn encoding??
 
-  ^{:arglists '([enc])
-    :tag String
-    :doc "Charset as string."}
-
+  "Charset as string."
+  {:tag String
+   :arglists '([enc])}
   [enc]
 
   (if (instance? Charset enc)
@@ -439,14 +445,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn charset??
 
-  ^{:arglists '([][enc][enc dv])
-    :doc "A java Charset of the encoding."}
+  "A java Charset of the encoding."
+  {:tag Charset
+   :arglists '([][enc][enc dv])}
 
-  {:tag Charset}
+  ([enc]
+   (charset?? enc nil))
 
-  ([enc] (charset?? enc nil))
-
-  ([] (charset?? "utf-8"))
+  ([]
+   (charset?? "utf-8"))
 
   ([enc dv]
    (if (instance? Charset enc)
@@ -456,10 +463,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn pthreads
 
-  ^{:arglists '([][n])
-    :doc "Default thread count = 2 x available processors."}
+  "Default thread count = 2 x available processors."
+  {:arglists '([][n])}
 
-  ([] (pthreads nil))
+  ([]
+   (pthreads nil))
 
   ([n]
    (* (c/num?? n 2) (.availableProcessors (Runtime/getRuntime)))))
@@ -467,10 +475,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fpath
 
-  ^{:arglists '([arg])
-    :tag String
-    :doc "Get the file path."}
-
+  "Get the file path."
+  {:tag String
+   :arglists '([arg])}
   [arg]
 
   (if-not (instance? File arg)
@@ -480,10 +487,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn serialize
 
-  ^{:arglists '([obj])
-    :tag bytes
-    :doc "Object serialization."}
-
+  "Object serialization."
+  {:tag "[B"
+   :arglists '([obj])}
   [obj]
   {:pre [(some? obj)]}
 
@@ -494,10 +500,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn deserialize
 
-  ^{:arglists '([bits])
-    :tag Serializable
-    :doc "Object deserialization."}
-
+  "Object deserialization."
+  {:tag Serializable
+   :arglists '([bits])}
   [^bytes bits]
   {:pre [(some? bits)]}
 
@@ -508,10 +513,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gczn
 
-  ^{:arglists '([obj])
-    :tag String
-    :doc "Get object's short class name."}
-
+  "Get object's short class name."
+  {:tag String
+   :arglists '([obj])}
   [obj]
 
   (cond (nil? obj) ""
@@ -521,10 +525,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-class-name
 
-  ^{:arglists '([obj])
-    :tag String
-    :doc "Get object's class name."}
-
+  "Get object's class name."
+  {:tag String
+   :arglists '([obj])}
   [obj]
 
   (cond (nil? obj) ""
@@ -534,37 +537,36 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-windows?
 
-  ^{:arglists '([])
-    :doc "Is Windows OS?"}
-
+  "Is Windows OS?"
+  {:arglists '([])}
   []
+
   (cs/includes? (cs/lower-case (get-sys-prop "os.name")) "windows"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-macos?
 
-  ^{:arglists '([])
-    :doc "Is Mac OS?"}
-
+  "Is Mac OS?"
+  {:arglists '([])}
   []
+
   (cs/includes? (get-sys-prop "os.name") "Mac "))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-linux?
 
-  ^{:arglists '([])
-    :doc "Is Linux OS?"}
-
+  "Is Linux OS?"
+  {:arglists '([])}
   []
+
   (and (not (is-macos?)) (not (is-windows?))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn load-java-props
 
-  ^{:arglists '([arg])
-    :tag Properties
-    :doc "Load properties from source."}
-
+  "Load properties from source."
+  {:tag Properties
+   :arglists '([arg])}
   [arg]
 
   (if (or (instance? URL arg)
@@ -577,11 +579,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->str
 
-  ^{:arglists '([obj]
-                [obj enc])
-    :doc "Coerce to a string."}
-
-  {:tag String}
+  "Coerce to a string."
+  {:tag String
+   :arglists '([obj]
+               [obj enc])}
 
   ([obj]
    (x->str obj "utf-8"))
@@ -600,10 +601,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->chars
 
-  ^{:arglists '([obj])
-    :tag chars
-    :doc "Get chars from string."}
-
+  "Get chars from string."
+  {:tag "[C"
+   :arglists '([obj])}
   [obj]
 
   (cond (= CSCZ (class obj))
@@ -616,11 +616,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->bytes
 
-  ^{:arglists '([obj][obj enc])
-    :doc "Get bytes with the right encoding."}
-
-  {:tag bytes}
-  ;{:tag "[B"}
+  "Get bytes with the right encoding."
+  {:tag "[B"
+   :arglists '([obj][obj enc])}
 
   ([obj]
    (x->bytes obj "utf-8"))
@@ -639,10 +637,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn deflate
 
-  ^{:arglists '([bits])
-    :tag bytes
-    :doc "Compress bytes."}
-
+  "Compress bytes."
+  {:tag "[B"
+   :arglists '([bits])}
   [^bytes bits]
 
   (if bits
@@ -662,10 +659,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn inflate
 
-  ^{:arglists '([bits])
-    :tag bytes
-    :doc "Decompress bytes."}
-
+  "Decompress bytes."
+  {:tag "[B"
+   :arglists '([bits])}
   [^bytes bits]
 
   (if bits
@@ -682,10 +678,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn safe-fpath
 
-  ^{:arglists '([fname])
-    :tag String
-    :doc "Hex-code all non-alpha chars in a file path."}
-
+  "Hex-code all non-alpha chars in a file path."
+  {:tag String
+   :arglists '([fname])}
   [fname]
 
   (c/sreduce<>
@@ -702,10 +697,9 @@
 ;;scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 (defn fmt-file-url
 
-  ^{:arglists '([path])
-    :tag URL
-    :doc "File path as URL."}
-
+  "File path as URL."
+  {:tag URL
+   :arglists '([path])}
   [path]
 
   (when (c/hgl? path)
@@ -715,10 +709,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-fpath
 
-  ^{:arglists '([fpath])
-    :tag String
-    :doc "The file path only."}
-
+  "The file path only."
+  {:tag String
+   :arglists '([fpath])}
   [fpath]
 
   (if-some
@@ -729,10 +722,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn root-cause
 
-  ^{:arglists '([root])
-    :tag Throwable
-    :doc "Find root error."}
-
+  "Find root error."
+  {:tag Throwable
+   :arglists '([root])}
   [root]
 
   (loop [r root
@@ -742,16 +734,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn root-cause-msg
 
-  ^{:arglists '([root])
-    :doc "Find root error msg."}
+  "Find root error msg."
+  {:arglists '([root])}
+  [root]
 
-  [root] (str (some-> (root-cause root) .getMessage)))
+  (str (some-> (root-cause root) .getMessage)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn pmap<>
 
-  ^{:arglists '([props][props key?])
-    :doc "Java Map into Clojure Map."}
+  "Java Map into Clojure Map."
+  {:arglists '([props]
+               [props key?])}
 
   ([props]
    (pmap<> props true))
@@ -766,10 +760,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn tmtask<>
 
-  ^{:arglists '([func])
-    :tag TimerTask
-    :doc "A timer task."}
-
+  "A timer task."
+  {:tag TimerTask
+   :arglists '([func])}
   [func]
   {:pre [(fn? func)]}
 
@@ -778,18 +771,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn prn-stk
 
-  ^{:arglists '([exp])
-    :doc "Print stack."}
+  "Print stack."
+  {:arglists '([exp])}
+  [exp]
 
-  [exp] (some-> ^Throwable exp .printStackTrace))
+  (some-> ^Throwable exp .printStackTrace))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn dump-stk
 
-  ^{:arglists '([e])
-    :tag String
-    :doc "Dump stack trace."}
-
+  "Dump stack trace."
+  {:tag String
+   :arglists '([e])}
   [^Throwable e]
 
   (c/wo*
@@ -822,11 +815,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->java
 
-  ^{:arglists '([obj])
-    :tag Object
-    :doc "Convert a clojure data structure
-         to its Java equivalent."}
-
+  "Convert a clojure data structure
+  to its Java equivalent."
+  {:tag Object
+   :arglists '([obj])}
   [obj]
 
   (cond (map? obj)
@@ -844,37 +836,44 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn seqint
 
-  ^{:arglists '([])
-    :doc "A sequence number (int)."} [] (.getAndIncrement _num-int))
+  "A sequence number (int)."
+  {:arglists '([])}
+  []
+
+  (.getAndIncrement _num-int))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn seqint2
 
-  ^{:arglists '([])
-    :doc "A sequence number (long)."} [] (.getAndIncrement _num-long))
+  "A sequence number (long)."
+  {:arglists '([])}
+  []
+
+  (.getAndIncrement _num-long))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn cancel-timer-task!
 
-  ^{:arglists '([t])
-    :doc "Cancel a timer task."}
+  "Cancel a timer task."
+  {:arglists '([t])}
+  [t]
 
-  [t] (c/try! (some-> ^TimerTask t .cancel)) t)
+  (c/try! (some-> ^TimerTask t .cancel)) t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro count-cpus
 
-  ^{:arglists '([])
-    :doc "How many cpu(s)?"}
+  "How many cpu(s)?"
+  {:arglists '([])}
+  []
 
-  [] `(.availableProcessors (Runtime/getRuntime)))
+  `(.availableProcessors (Runtime/getRuntime)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn pause
 
-  ^{:arglists '([millis])
-    :doc "Block current thread for some millisecs."}
-
+  "Block current thread for some millisecs."
+  {:arglists '([millis])}
   [millis]
 
   (c/try! (if (c/spos? millis) (Thread/sleep millis))))
@@ -882,10 +881,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro sys-tmp-dir
 
-  ^{:arglists '([])
-    :doc "Java's tmp dir."}
-
+  "Java's tmp dir."
+  {:arglists '([])}
   []
+
   `(czlab.basal.util/get-sys-prop "java.io.tmpdir"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -903,9 +902,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn obj-eq?
 
-  ^{:arglists '([a b])
-    :doc "If these 2 objs are equal?"}
-
+  "If these 2 objs are equal?"
+  {:arglists '([a b])}
   [a b]
 
   (cond (and (nil? a) (nil? b))
@@ -921,12 +919,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn url-encode
 
-  ^{:arglists '([s][s enc])
-    :doc "URL encode the string."}
+  "URL encode the string."
+  {:tag String
+   :arglists '([s][s enc])}
 
-  {:tag String}
-
-  ([s] (url-encode s "utf-8"))
+  ([s]
+   (url-encode s "utf-8"))
 
   ([s enc]
    (.replace (URLEncoder/encode (str s) (encoding?? enc)) "+" "%20")))
@@ -934,10 +932,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn url-decode
 
-  ^{:arglists '([s][s enc])
-    :doc "URL decode the string."}
-
-  {:tag String}
+  "URL decode the string."
+  {:tag String
+   :arglists '([s][s enc])}
 
   ([s]
    (url-decode s "utf8"))
@@ -949,9 +946,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sortby
 
-  ^{:arglists '([kfn cmp coll])
-    :doc "sort-by with comparator."}
-
+  "sort-by with comparator."
+  {:arglists '([kfn cmp coll])}
   [kfn cmp coll]
 
   (sort-by kfn
@@ -973,10 +969,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn new-memset<>
 
-  ^{:arglists '([][batch])
-    :doc "New in-memory object store. Object must be an atom."}
+  "New in-memory object store. Object must be an atom."
+  {:arglists '([][batch])}
 
-  ([] (new-memset<> nil))
+  ([]
+   (new-memset<> nil))
 
   ([batch]
    (let [batch (c/num?? batch 16)
@@ -1032,10 +1029,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-cldr
 
-  ^{:arglists '([][cl])
-    :doc "Get current classloader."}
-
-  {:tag ClassLoader}
+  "Get current classloader."
+  {:tag ClassLoader
+   :arglists '([][cl])}
 
   ([]
    (get-cldr nil))
@@ -1046,9 +1042,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn set-cldr
 
-  ^{:arglists '([c])
-    :doc "Set classloader."}
-
+  "Set classloader."
+  {:arglists '([c])}
   [c]
 
   (if-some [cl (c/cast? ClassLoader c)]
@@ -1057,10 +1052,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn load-resource
 
-  ^{:arglists '([arg])
-    :tag ResourceBundle
-    :doc "Load file with localized strings. e.g. a/b/c/foo.txt"}
-
+  "Load file with localized strings. e.g. a/b/c/foo.txt"
+  {:tag ResourceBundle
+   :arglists '([arg])}
   [arg]
 
   (if-some [inp (cond (or (c/is? URL arg)
@@ -1075,16 +1069,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-resource
 
-  ^{:arglists '([basename]
-                [basename locale]
-                [basename locale cl])
-    :doc "Get the named resource bundle, defaults to en-US."}
+  "Get the named resource bundle, defaults to en-US."
+  {:tag ResourceBundle
+   :arglists '([basename]
+               [basename locale]
+               [basename locale cl])}
 
-  {:tag ResourceBundle}
+  ([basename]
+   (get-resource basename (Locale. "en" "US") nil))
 
-  ([basename] (get-resource basename (Locale. "en" "US") nil))
-
-  ([basename locale] (get-resource basename locale nil))
+  ([basename locale]
+   (get-resource basename locale nil))
 
   ([basename locale cl]
    (if (and locale (c/hgl? basename))
@@ -1094,12 +1089,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rstr
 
-  ^{:arglists '([bundle pkey & pms])
-    :tag String
-    :doc "The string value for this key,
-         pms may contain values
-         for positional substitutions."}
-
+  "The string value for this key,
+  pms may contain values
+  for positional substitutions."
+  {:tag String
+   :arglists '([bundle pkey & pms])}
   [bundle pkey & pms]
 
   (if (and bundle
@@ -1118,10 +1112,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rstr*
 
-  ^{:arglists '([bundle & pms])
-    :doc "Handle a bunch of resource keys
-         (rstr bundle [\"k1\" p1 p2] [\"k2\" p3 p4] )."}
-
+  "Handle a bunch of resource keys
+  (rstr bundle [\"k1\" p1 p2] [\"k2\" p3 p4] )."
+  {:arglists '([bundle & pms])}
   [bundle & pms]
 
   (mapv #(apply rstr bundle (first %) (drop 1 %)) pms))
@@ -1129,8 +1122,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn block!
 
-  ^{:arglists '([][lock waitMillis])
-    :doc "Block forever, or wait on this lock."}
+  "Block forever, or wait on this lock."
+  {:arglists '([]
+               [lock waitMillis])}
 
   ([]
    (try (.join (Thread/currentThread))
@@ -1146,9 +1140,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn unblock!
 
-  ^{:arglists '([lock])
-    :doc "Notify all threads waiting on this lock."}
-
+  "Notify all threads waiting on this lock."
+  {:arglists '([lock])}
   [^Object lock]
 
   (try (locking lock
@@ -1158,9 +1151,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn shuffle
 
-  ^{:arglists '([s])
-    :doc "Shuffle characters in string."}
-
+  "Shuffle characters in string."
+  {:arglists '([s])}
   [s]
 
   (let [lst (java.util.ArrayList.)]
@@ -1179,8 +1171,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn cljrt<>
 
-  ^{:arglists '([][cl])
-    :doc "A clojure runtime."}
+  "A clojure runtime."
+  {:arglists '([][cl])}
 
   ([]
    (cljrt<> nil))
@@ -1230,11 +1222,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-options
 
-  ^{:arglists '([cargs][cargs key?])
-    :doc "Parse command line, returning options and args.
-         e.g.  --a b -c d -e f g
-         =>
-         [{:a \"b\" :c \"d\" :e \"f\"} '(\"g\")]"}
+  "Parse command line, returning options and args.
+  e.g.  --a b -c d -e f g
+  =>
+  [{:a \"b\" :c \"d\" :e \"f\"} '(\"g\")]"
+  {:arglists '([cargs]
+               [cargs key?])}
 
   ([cargs]
    (parse-options cargs true))
@@ -1294,10 +1287,9 @@
 ;;sequence as per rfc4122, sec. 4.1.5
 (defn uuid-v4<>
 
-  ^{:arglists '([])
-    :tag String
-    :doc "RFC4122, v4 format."}
-
+  "RFC4122, v4 format."
+  {:tag String
+   :arglists '([])}
   []
 
   (let [rnd (rand<>)
@@ -1318,10 +1310,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn wwid<>
 
-  ^{:arglists '([])
-    :tag String
-    :doc "UID based on time/ip"}
-
+  "UID based on time/ip"
+  {:tag String
+   :arglists '([])}
   []
 
   (letfn

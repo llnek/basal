@@ -30,10 +30,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn event-bus<>
 
-  ^{:arglists '([][options])
-    :doc "A Publish Subscribe event manager."}
+  "A Publish Subscribe event manager."
+  {:arglists '([][options])}
 
-  ([] (event-bus<> nil))
+  ([]
+   (event-bus<> nil))
 
   ([options]
    (letfn
@@ -107,12 +108,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn event-bus<+>
 
-  ^{:arglists '([][options])
-    :doc "A Publish Subscribe event manager whereby
-         a more advanced matching scheme is used -
-         such as wild-card matches."}
+  "A Publish Subscribe event manager whereby
+  a more advanced matching scheme is used -
+  such as wild-card matches."
 
-  ([] (event-bus<+> nil))
+  {:arglists '([][options])}
+
+  ([]
+   (event-bus<+> nil))
 
   ([options]
    (letfn

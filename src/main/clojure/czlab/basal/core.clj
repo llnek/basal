@@ -25,7 +25,7 @@
 ;; #^"[Ljava.lang.Object;"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def ^{:doc "Log flag used internally."}
+(def ^{:doc "Log flag(toggle) used internally."}
   LOG-FLAG (not (.equals "false" (System/getProperty "czlabloggerflag"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,10 +35,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro defmacro-
 
-  ^{:arglists '([name & more])
-    :doc "Same as defmacro but private."}
-
+  "Same as defmacro but private."
+  {:arglists '([name & more])}
   [name & more]
+
   (list* `defmacro (with-meta name
                               (assoc (meta name)
                                      :private true)) more))
@@ -46,10 +46,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro defonce-
 
-  ^{:arglists '([name & more])
-    :doc "Same as defonce but private."}
-
+  "Same as defonce but private."
+  {:arglists '([name & more])}
   [name & more]
+
   (list* `defonce (with-meta name
                              (assoc (meta name)
                                     :private true)) more))
@@ -57,8 +57,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro def-
 
-  ^{:arglists '([name & more])
-    :doc "Same as def but private."}
+  "Same as def but private."
+  {:arglists '([name & more])}
   [name & more]
 
   (list* `def (with-meta name
@@ -68,69 +68,68 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro trace
 
-  ^{:arglists '([& xs])
-    :doc "Logging at TRACE level."}
-
+  "Logging at TRACE level."
+  {:arglists '([& xs])}
   [& xs]
+
   (and czlab.basal.core/LOG-FLAG
        `(clojure.tools.logging/logf :trace ~@xs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro debug
 
-  ^{:arglists '([& xs])
-    :doc "Logging at DEBUG level."}
-
+  "Logging at DEBUG level."
+  {:arglists '([& xs])}
   [& xs]
+
   (and czlab.basal.core/LOG-FLAG
        `(clojure.tools.logging/logf :debug ~@xs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro info
 
-  ^{:arglists '([& xs])
-    :doc "Logging at INFO level."}
-
+  "Logging at INFO level."
+  {:arglists '([& xs])}
   [& xs]
+
   (and czlab.basal.core/LOG-FLAG
        `(clojure.tools.logging/logf :info ~@xs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro warn
 
-  ^{:arglists '([& xs])
-    :doc "Logging at WARN level."}
-
+  "Logging at WARN level."
+  {:arglists '([& xs])}
   [& xs]
+
   (and czlab.basal.core/LOG-FLAG
        `(clojure.tools.logging/logf :warn ~@xs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro error
 
-  ^{:arglists '([& xs])
-    :doc "Logging at ERROR level."}
-
+  "Logging at ERROR level."
+  {:arglists '([& xs])}
   [& xs]
+
   (and czlab.basal.core/LOG-FLAG
        `(clojure.tools.logging/logf :error ~@xs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fatal
 
-  ^{:arglists '([& xs])
-    :doc "Logging at FATAL level."}
-
+  "Logging at FATAL level."
+  {:arglists '([& xs])}
   [& xs]
+
   (and czlab.basal.core/LOG-FLAG
        `(clojure.tools.logging/logf :fatal ~@xs)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn exception
 
-  ^{:arglists '([e])
-    :doc "Log an exception at ERROR level."}
-
+  "Log an exception at ERROR level."
+  {:arglists '([e])}
   [e]
 
   (when czlab.basal.core/LOG-FLAG
@@ -141,230 +140,249 @@
 (def BOOLS #{"true" "yes" "on" "ok" "active" "1"})
 (def ^String HEX-CHAR-STR "0123456789ABCDEF")
 (def ^String hex-char-str "0123456789abcdef")
-(def HEX-CHARS (.toCharArray HEX-CHAR-STR))
-(def hex-chars (.toCharArray hex-char-str))
+(def ^{:tag "[C"} HEX-CHARS (.toCharArray HEX-CHAR-STR))
+(def ^{:tag "[C"} hex-chars (.toCharArray hex-char-str))
 (def ^String USASCII "ISO-8859-1")
 (def ^String UTF16 "UTF-16")
 (def ^String UTF8 "UTF-8")
-(def ^String SLASH "/")
 
-(def KiloBytes 1024)
+(def OneK 1024)
+(def FourK (* 4 OneK))
+(def KiloBytes OneK)
 (def BUF-SZ (* 4 KiloBytes))
 (def MegaBytes (* KiloBytes KiloBytes))
 (def GigaBytes (* KiloBytes KiloBytes KiloBytes))
 
-(def OneK 1024)
-(def FourK (* 4 OneK))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro funcit??
 
-  ^{:arglists '([f & args])
-    :doc "Maybe run a function."}
-
+  "Maybe run a function with args."
+  {:arglists '([f & args])}
   [f & args]
+
   `(let [f# ~f] (if (fn? f#) (f# ~@args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro pre
 
-  ^{:arglists '([conds])
-    :doc "Like :pre, assert conditions."}
-
+  "Like :pre, assert conditions."
+  {:arglists '([conds])}
   [& conds]
+
   `(assert (and ~@conds) "precond failed."))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro atom?
 
-  ^{:arglists '([x])
-    :doc "If obj is an atom?"}
-
+  "If obj is an atom?"
+  {:arglists '([x])}
   [x]
+
   `(instance? clojure.lang.Atom ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro n#-even?
 
-  ^{:arglists '([coll])
-    :doc "Count of collection even?"}
+  "Count of collection even?"
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(even? (count ~coll)))
+  `(even? (count ~coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !sas?
 
-  ^{:arglists '([proto obj])
-    :doc "Same as not-satisfies?"}
+  "Same as not-satisfies?"
+  {:arglists '([proto obj])}
+  [proto obj]
 
-  [proto obj] `(not (satisfies? ~proto ~obj)))
+  `(not (satisfies? ~proto ~obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro sas?
 
-  ^{:arglists '([proto obj])
-    :doc "Same as satisfies?"}
+  "Same as satisfies?"
+  {:arglists '([proto obj])}
+  [proto obj]
 
-  [proto obj] `(satisfies? ~proto ~obj))
+  `(satisfies? ~proto ~obj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !is?
 
-  ^{:arglists '([clazz obj])
-    :doc "Same as not-instance?"}
+  "Same as not-instance?"
+  {:arglists '([clazz obj])}
+  [clazz obj]
 
-  [clazz obj] `(not (instance? ~clazz ~obj)))
+  `(not (instance? ~clazz ~obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro is?
 
-  ^{:arglists '([clazz obj])
-    :doc "Same as instance?"}
+  "Same as instance?"
+  {:arglists '([clazz obj])}
+  [clazz obj]
 
-  [clazz obj] `(instance? ~clazz ~obj))
+  `(instance? ~clazz ~obj))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro map->
 
-  ^{:arglists '([& more])
-    :doc "Same as into {}."}
+  "Same as into {}."
+  {:arglists '([& more])}
+  [& more]
 
-  [& more] `(into {} ~@more))
+  `(into {} ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro vec->
 
-  ^{:arglists '([& more])
-    :doc "Same as into []."}
+  "Same as into []."
+  {:arglists '([& more])}
+  [& more]
 
-  [& more] `(into [] ~@more))
+  `(into [] ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro set->
 
-  ^{:arglists '([& more])
-    :doc "Same as into #{}."}
+  "Same as into #{}."
+  {:arglists '([& more])}
+  [& more]
 
-  [& more] `(into #{} ~@more))
+  `(into #{} ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro cc+1
 
-  ^{:arglists '([a & more])
-    :doc "Prepend an item to collection(s)."}
+  "Prepend an item to collection(s)."
+  {:arglists '([a & more])}
+  [a & more]
 
-  [a & more] `(concat [~a] ~@more))
+  `(concat [~a] ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro cc+
 
-  ^{:arglists '([& more])
-    :doc "Same as concat."}
+  "Same as concat."
+  {:arglists '([& more])}
+  [& more]
 
-  [& more] `(concat ~@more))
+  `(concat ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro _2
 
-  ^{:arglists '([coll])
-    :doc "Same as second."}
+  "Same as second."
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(second ~coll))
+  `(second ~coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro _1
 
-  ^{:arglists '([coll])
-    :doc "Same as first."}
+  "Same as first."
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(first ~coll))
+  `(first ~coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro _3
 
-  ^{:arglists '([coll])
-    :doc "Get the 3rd item."}
+  "Get the 3rd item."
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(nth ~coll 2))
+  `(nth ~coll 2))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro _E
 
-  ^{:arglists '([coll])
-    :doc "Same as last."}
+  "Same as last."
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(last ~coll))
+  `(last ~coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro _NE
 
-  ^{:arglists '([coll])
-    :doc "Get the last item via nth."}
+  "Get the last item via nth."
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(let [x# ~coll] (nth x# (- (count x#) 1))))
+  `(let [x# ~coll] (nth x# (- (count x#) 1))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !zero?
 
-  ^{:arglists '([n])
-    :doc "Same as not-zero?"}
+  "Same as not-zero?"
+  {:arglists '([n])}
+  [n]
 
-  [n] `(not (zero? ~n)))
+  `(not (zero? ~n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro n#
 
-  ^{:arglists '([coll])
-    :doc "Same as count."}
+  "Same as count."
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(count ~coll))
+  `(count ~coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro car
 
-  ^{:arglists '([coll])
-    :doc "Same as first."}
+  "Same as first."
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(first ~coll))
+  `(first ~coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro cdr
 
-  ^{:arglists '([coll])
-    :doc "Same as rest."}
+  "Same as rest."
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(rest ~coll))
+  `(rest ~coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro one?
 
-  ^{:arglists '([coll])
-    :doc "If count() is 1?"}
+  "If count() is 1?"
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(== 1 (count ~coll)))
+  `(== 1 (count ~coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro two?
 
-  ^{:arglists '([coll])
-    :doc "If count() is 2?"}
+  "If count() is 2?"
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(== 2 (count ~coll)))
+  `(== 2 (count ~coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro one+?
 
-  ^{:arglists '([coll])
-    :doc "If count() is more than 1?"}
+  "If count() is more than 1?"
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(> (count ~coll) 1))
+  `(> (count ~coll) 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro or??
 
-  ^{:arglists '([bindings & args])
-    :doc "(or?? [= a] b c) => (or (= b a) (= c a))."}
-
+  "(or?? [= a] b c) => (or (= b a) (= c a))."
+  {:arglists '([bindings & args])}
   [bindings & args]
 
   (let [op (gensym)
@@ -378,9 +396,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro dissoc!!
 
-  ^{:arglists '([a & args])
-    :doc "Mutable dissoc (atom)."}
-
+  "Mutable dissoc (atom)."
+  {:arglists '([a & args])}
   [a & args]
 
   (let [X (gensym)]
@@ -389,9 +406,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro assoc!!
 
-  ^{:arglists '([a & args])
-    :doc "Mutable assoc (atom)."}
-
+  "Mutable assoc (atom)."
+  {:arglists '([a & args])}
   [a & args]
 
   (let [X (gensym)]
@@ -400,9 +416,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fn_*
 
-  ^{:arglists '([& forms])
-    :doc "Wrap code into a fn(...)."}
-
+  "Wrap code into a fn(...)."
+  {:arglists '([& forms])}
   [& forms]
 
   `(fn [& ~'____xs] ~@forms))
@@ -410,8 +425,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fn_3
 
-  ^{:arglists '([& forms])
-    :doc "Wrap code into a fn(a1,a2,a3)."}
+  "Wrap code into a fn(a1,a2,a3)."
+  {:arglists '([& forms])}
   [& forms]
 
   `(fn [~'____1 ~'____2 ~'____3] ~@forms))
@@ -419,9 +434,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fn_2
 
-  ^{:arglists '([& forms])
-    :doc "Wrap code into a fn(a1,a2)."}
-
+  "Wrap code into a fn(a1,a2)."
+  {:arglists '([& forms])}
   [& forms]
 
   `(fn [~'____1 ~'____2] ~@forms))
@@ -429,69 +443,84 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fn_1
 
-  ^{:arglists '([& forms])
-    :doc "Wrap code into a fn(a1)."}
+  "Wrap code into a fn(a1)."
+  {:arglists '([& forms])}
+  [& forms]
 
-  [& forms] `(fn [~'____1] ~@forms))
+  `(fn [~'____1] ~@forms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fn_0
 
-  ^{:arglists '([& forms])
-    :doc "Wrap code into a fn()."}
+  "Wrap code into a fn()."
+  {:arglists '([& forms])}
+  [& forms]
 
-  [& forms] `(fn [] ~@forms))
+  `(fn [] ~@forms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro tset*
 
-  ^{:arglists '([][x])
-    :doc "A transient set."}
+  "A transient set."
+  {:arglists '([]
+               [x])}
 
-  ([] `(tset* nil))
-  ([x] `(transient (or ~x #{}))))
+  ([]
+   `(tset* nil))
+
+  ([x]
+   `(transient (or ~x #{}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro tvec*
 
-  ^{:arglists '([][x])
-    :doc "A transient vector."}
+  "A transient vector."
+  {:arglists '([]
+               [x])}
 
-  ([] `(tvec* nil))
-  ([x] `(transient (or ~x []))))
+  ([]
+   `(tvec* nil))
+
+  ([x]
+   `(transient (or ~x []))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro tmap*
 
-  ^{:arglists '([][x])
-    :doc "A transient map."}
+  "A transient map."
+  {:arglists '([]
+               [x])}
 
-  ([] `(tmap* nil))
-  ([x] `(transient (or ~x {}))))
+  ([]
+   `(tmap* nil))
+
+  ([x]
+   `(transient (or ~x {}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro persist!
 
-  ^{:arglists '([coll])
-    :doc "Same as persistent!."}
+  "Same as persistent!."
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(persistent! ~coll))
+  `(persistent! ~coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro atomic
 
-  ^{:arglists '([& args])
-    :doc "Atomize fields as map."}
+  "Atomize fields as map."
+  {:arglists '([& args])}
+  [& args]
 
-  [& args] `(atom (array-map ~@args)))
+  `(atom (array-map ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro mapfv
 
-  ^{:arglists '([op value & forms])
-    :doc "Apply a binary-op to the value over the forms.
-         e.g. (+ 3 1 (+ 2 2)) => [4 7]."}
-
+  "Apply a binary-op to the value over the forms.
+  e.g. (+ 3 1 (+ 2 2)) => [4 7]."
+  {:arglists '([op value & forms])}
   [op value & forms]
 
   `(vector ~@(map (fn [f] `(~op ~f ~value)) forms)))
@@ -499,124 +528,133 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro last-index
 
-  ^{:arglists '([coll])
-    :doc "count less 1."}
+  "count less 1."
+  {:arglists '([coll])}
+  [coll]
 
-  [coll] `(- (count ~coll) 1))
+  `(- (count ~coll) 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro nexth
 
-  ^{:arglists '([coll i])
-    :doc "The nth item after i."}
+  "The nth item after i."
+  {:arglists '([coll i])}
+  [coll i]
 
-  [coll i] `(nth ~coll (+ 1 ~i)))
+  `(nth ~coll (+ 1 ~i)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro chop
 
-  ^{:arglists '([& args])
-    :doc "Same as partition."}
+  "Same as partition."
+  {:arglists '([& args])}
+  [& args]
 
-  [& args] `(partition ~@args))
+  `(partition ~@args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro inc*
 
-  ^{:arglists '([x])
-    :doc "One plus, x+1."}
+  "One plus, x+1."
+  {:arglists '([x])}
+  [x]
 
-  [x] `(+ 1 ~x))
+  `(+ 1 ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro dec*
 
-  ^{:arglists '([x])
-    :doc "One less, x-1."}
+  "One less, x-1."
+  {:arglists '([x])}
+  [x]
 
-  [x] `(- ~x 1))
+  `(- ~x 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do#false
 
-  ^{:arglists '([& forms])
-    :doc "Do returns false."}
+  "Do returns false."
+  {:arglists '([& forms])}
+  [& forms]
 
-  [& forms] `(do ~@forms false))
+  `(do ~@forms false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do#true
 
-  ^{:arglists '([& forms])
-    :doc "Do returns true."}
+  "Do returns true."
+  {:arglists '([& forms])}
+  [& forms]
 
-  [& forms] `(do ~@forms true))
+  `(do ~@forms true))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do#nil
 
-  ^{:arglists '([& forms])
-    :doc "Do returns nil."}
+  "Do returns nil."
+  {:arglists '([& forms])}
+  [& forms]
 
-  [& forms] `(do ~@forms nil))
+  `(do ~@forms nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro let#false
 
-  ^{:arglists '([& forms])
-    :doc "Let returns false."}
+  "Let returns false."
+  {:arglists '([& forms])}
+  [& forms]
 
-  [& forms] `(let ~@forms false))
+  `(let ~@forms false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro let#true
 
-  ^{:arglists '([& forms])
-    :doc "Let returns true."}
+  "Let returns true."
+  {:arglists '([& forms])}
+  [& forms]
 
-  [& forms] `(let ~@forms true))
+  `(let ~@forms true))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro let#nil
 
-  ^{:arglists '([& forms])
-    :doc "Let returns nil."}
+  "Let returns nil."
+  {:arglists '([& forms])}
+  [& forms]
 
-  [& forms] `(let ~@forms nil))
+  `(let ~@forms nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro defenum
 
-  ^{:arglists '([ename & args])
-    :doc "Enum definition.
-         e.g. (defenum ^:private xyz a 1 b c) will generate
-         (def ^:private xyz-a 1)
-         (def ^:private xyz-b 2)
-         (def ^:private xyz-c 3)."}
+  "Enum definition.
+  e.g. (defenum ^:private xyz 1 a b c) will generate
+  (def ^:private xyz-a 1)
+  (def ^:private xyz-b 2)
+  (def ^:private xyz-c 3)."
+  {:arglists '([ename start & args])}
+  [ename start & args]
 
-  [ename & args]
-
-  (let [[e1 n] (take 2 args)
-        mm (meta ename)
-        more (concat [e1] (drop 2 args))]
-    (assert (number? n)
+  (let [mm (meta ename)]
+    (assert (number? start)
             "Enum expecting a number.")
-    `(do ~@(loop [v n [m & ms] more out []]
+    `(do ~@(loop [v start [m & ms] args out []]
              (if (nil? m)
                out
-               (let [z (str (name ename)
+               (let [m' (meta m)
+                     z (str (name ename)
                             "-" (name m))]
                  (recur (+ 1 v)
                         ms
                         (conj out
-                              `(def ~(with-meta (symbol z) mm) ~v)))))))))
+                              `(def ~(with-meta (symbol z)
+                                                (merge m' mm)) ~v)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro condp??
 
-  ^{:arglists '([pred expr & clauses])
-    :doc "condp without throwing exception."}
-
+  "condp without throwing exception."
+  {:arglists '([pred expr & clauses])}
   [pred expr & clauses]
 
   (let [c (count clauses)
@@ -630,9 +668,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro case??
 
-  ^{:arglists '([expr & clauses])
-    :doc "case without throwing exception."}
-
+  "case without throwing exception."
+  {:arglists '([expr & clauses])}
   [expr & clauses]
 
   (let [c (count clauses)
@@ -643,8 +680,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-xxx??
 
-  ^{:arglists '([F bindings then]
-                [F bindings then else]) :no-doc true}
+  {:arglists '([F bindings then]
+               [F bindings then else])}
 
   ([F bindings then]
    `(if-xxx?? ~F ~bindings ~then nil))
@@ -660,9 +697,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-inst
 
-  ^{:arglists '([clazz expr then]
-                [clazz expr then else])
-    :doc "If expr is instance of class, execute `then`, otherwise `else`."}
+  "If expr is instance of class, execute `then`, otherwise `else`."
+  {:arglists '([clazz expr then]
+               [clazz expr then else])}
 
   ([clazz expr then]
    `(if-inst ~clazz ~expr ~then nil))
@@ -673,18 +710,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro when-inst
 
-  ^{:arglists '([clazz expr & body])
-    :doc "If expr is instance of class, execute `body`."}
-
+  "If expr is instance of class, execute `body`."
+  {:arglists '([clazz expr & body])}
   [clazz expr & body]
+
   `(if (instance? ~clazz ~expr) (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-proto
 
-  ^{:arglists '([proto expr then]
-                [proto expr then else])
-    :doc "If expr satisfies the protocol, execute `then`, otherwise `else`."}
+  "If expr satisfies the protocol, execute `then`, otherwise `else`."
+  {:arglists '([proto expr then]
+               [proto expr then else])}
 
   ([proto expr then]
    `(if-proto ~proto ~expr ~then nil))
@@ -695,18 +732,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro when-proto
 
-  ^{:arglists '([proto expr & body])
-    :doc "If expr satisfies the protocol, execute `body`."}
-
+  "If expr satisfies the protocol, execute `body`."
+  {:arglists '([proto expr & body])}
   [proto expr & body]
+
   `(if (satisfies? ~proto ~expr) (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-nil
 
-  ^{:arglists '([expr then]
-                [expr then else])
-    :doc "If expr evals to nil, execute `then`, otherwise `else`."}
+  "If expr evals to nil, execute `then`, otherwise `else`."
+  {:arglists '([expr then]
+               [expr then else])}
 
   ([expr then]
    `(if-nil ~expr ~then nil))
@@ -717,28 +754,29 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro when-nil
 
-  ^{:arglists '([expr & body])
-    :doc "If expr evals to nil, execute `body`."}
-
+  "If expr evals to nil, execute `body`."
+  {:arglists '([expr & body])}
   [expr & body]
+
   `(if (nil? ~expr) (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-throwable?
 
-  ^{:arglists '([x])
-    :doc "If object is a Throwable?"}
+  "If object is a Throwable?"
+  {:arglists '([x])}
+  [x]
 
-  [x] (instance? Throwable x))
+  (instance? Throwable x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-throw
 
-  ^{:arglists '([bindings then]
-                [bindings then else])
-    :doc "bindings => binding-form test
-         If test is a Throwable, evaluates 'then'
-         with binding-form bound to the value of test."}
+  "bindings => binding-form test
+  If test is a Throwable, evaluates 'then'
+  with binding-form bound to the value of test."
+  {:arglists '([bindings then]
+               [bindings then else])}
 
   ([bindings then]
    `(if-throw ~bindings ~then nil))
@@ -750,10 +788,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro when-throw
 
-  ^{:arglists '([bindings & body])
-    :doc "bindings => binding-form test
-         If test is a Throwable, evaluates the body."}
-
+  "bindings => binding-form test
+  If test is a Throwable, evaluates the body."
+  {:arglists '([bindings & body])}
   [bindings & body]
 
   `(if-throw ~bindings (do ~@body)))
@@ -761,11 +798,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-var
 
-  ^{:arglists '([bindings then]
-                [bindings then else])
-    :doc "bindings => binding-form test
-         If test is a var, evaluates 'then'
-         with binding-form bound to the value of test."}
+  "bindings => binding-form test
+  If test is a var, evaluates 'then'
+  with binding-form bound to the value of test."
+  {:arglists '([bindings then]
+               [bindings then else])}
 
   ([bindings then]
    `(if-var ~bindings ~then nil))
@@ -776,10 +813,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro when-var
 
-  ^{:arglists '([bindings & body])
-    :doc "bindings => binding-form test
-         If test is a var, evaluates the body."}
-
+  "bindings => binding-form test
+  If test is a var, evaluates the body."
+  {:arglists '([bindings & body])}
   [bindings & body]
 
   `(if-var ~bindings (do ~@body)))
@@ -787,11 +823,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-number
 
-  ^{:arglists '([bindings then]
-                [bindings then else])
-    :doc "bindings => binding-form test
-         If test is a number, evaluates 'then'
-         with binding-form bound to the value of test."}
+  "bindings => binding-form test
+  If test is a number, evaluates 'then'
+  with binding-form bound to the value of test."
+  {:arglists '([bindings then]
+               [bindings then else])}
 
   ([bindings then]
    `(if-number ~bindings ~then nil))
@@ -802,10 +838,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro when-number
 
-  ^{:arglists '([bindings & body])
-    :doc "bindings => binding-form test
-         If test is a number, evaluates the body."}
-
+  "bindings => binding-form test
+  If test is a number, evaluates the body."
+  {:arglists '([bindings & body])}
   [bindings & body]
 
   `(if-number ~bindings (do ~@body)))
@@ -813,11 +848,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-string
 
-  ^{:arglists '([bindings then]
-                [bindings then else])
-    :doc "bindings => binding-form test
-         If test is a string, evaluates 'then'
-         with binding-form bound to the value of test."}
+  "bindings => binding-form test
+  If test is a string, evaluates 'then'
+  with binding-form bound to the value of test."
+  {:arglists '([bindings then]
+               [bindings then else])}
 
   ([bindings then]
    `(if-string ~bindings ~then nil))
@@ -828,10 +863,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro when-string
 
-  ^{:arglists '([bindings & body])
-    :doc "bindings => binding-form test
-         If test is a string, evaluates the body."}
-
+  "bindings => binding-form test
+  If test is a string, evaluates the body."
+  {:arglists '([bindings & body])}
   [bindings & body]
 
   `(if-string ~bindings (do ~@body)))
@@ -839,18 +873,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro nloop
 
-  ^{:arglists '([n & forms])
-    :doc "Loop over code n times."}
+  "Loop over code n times."
+  {:arglists '([n & forms])}
+  [n & forms]
 
-  [n & forms] (let [x (gensym)]
-                `(dotimes [~x ~n] ~@forms)))
+  (let [x (gensym)] `(dotimes [~x ~n] ~@forms)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro each*
 
-  ^{:arglists '([func coll])
-    :doc "Evals function for each element, indexed."}
-
+  "Evals function for each element, indexed."
+  {:arglists '([func coll])}
   [func coll]
 
   (let [C (gensym) I (gensym) T (gensym)]
@@ -860,18 +893,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro each
 
-  ^{:arglists '([func coll])
-    :doc "Evals function for each element."}
+  "Evals function for each element."
+  {:arglists '([func coll])}
+  [func coll]
 
-  [func coll] (let [I (gensym)]
-                `(doseq [~I ~coll] (~func ~I))))
+  (let [I (gensym)] `(doseq [~I ~coll] (~func ~I))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro mget
 
-  ^{:arglists '([m k])
-    :doc "Java map.get()."}
-
+  "Java map.get()."
+  {:arglists '([m k])}
   [m k]
 
   `(.get ~(with-meta m {:tag 'java.util.Map}) ~k))
@@ -879,9 +911,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mdel!
 
-  ^{:arglists '([m k])
-    :doc "Java map.remove()."}
-
+  "Java map.remove()."
+  {:arglists '([m k])}
   [m k]
 
   (.remove ^java.util.Map m k))
@@ -889,9 +920,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro mput!
 
-  ^{:arglists '([m k v])
-    :doc "Java map.put()."}
-
+  "Java map.put()."
+  {:arglists '([m k v])}
   [m k v]
 
   `(.put ~(with-meta m {:tag 'java.util.Map}) ~k ~v))
@@ -901,9 +931,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro deftest
 
-  ^{:arglists '([name & body])
-    :doc "A bunch of test-cases grouped together."}
-
+  "A bunch of test-cases grouped together."
+  {:arglists '([name & body])}
   [name & body]
 
   `(def ~name (fn [] (filter #(not (nil? %)) [~@body]))))
@@ -911,18 +940,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ensure??
 
-  ^{:arglists '([msg form])
-    :doc "Assert test was ok."}
-
+  "Assert test was ok."
+  {:arglists '([msg form])}
   [msg form]
+
   `(czlab.basal.core/ensure-test ~form ~msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ensure-thrown??
 
-  ^{:arglists '([msg expected form])
-    :doc "Assert an error was thrown."}
-
+  "Assert an error was thrown."
+  {:arglists '([msg expected form])}
   [msg expected form]
 
   `(try ~form
@@ -933,18 +961,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro prn!!
 
-  ^{:arglists '([fmt & args])
-    :doc "Println with format."}
+  "Println with format."
+  {:arglists '([fmt & args])}
+  [fmt & args]
 
-  [fmt & args] `(println (format ~fmt ~@args)))
+  `(println (format ~fmt ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro prn!
 
-  ^{:arglists '([fmt & args])
-    :doc "Print with format."}
+  "Print with format."
+  {:arglists '([fmt & args])}
+  [fmt & args]
 
-  [fmt & args] `(print (format ~fmt ~@args)))
+  `(print (format ~fmt ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
@@ -956,89 +986,106 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro object<>
 
-  ^{:arglists '([z][z m][z ab & more])
-    :doc "Create a new record instance.
-         e.g. (object<> ClazzA)
-              (object<> ClazzA {:a 1})
-              (object<> ClazzA :a 1 :b 2)"}
+  "Create a new record instance.
+  e.g. (object<> ClazzA)
+  (object<> ClazzA {:a 1})
+  (object<> ClazzA :a 1 :b 2)"
+  {:arglists '([z]
+               [z m]
+               [z ab & more])}
 
-  ([z] `(new ~z))
-  ([z m] `(merge (new ~z) ~m))
-  ([z a b & more] `(assoc (new ~z) ~a ~b ~@more)))
+  ([z]
+   `(new ~z))
+
+  ([z m]
+   `(merge (new ~z) ~m))
+
+  ([z a b & more]
+   `(assoc (new ~z) ~a ~b ~@more)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro vargs
 
-  ^{:arglists '([z arglist])
-    :doc "Coerce into java array of type z."}
+  "Coerce into java array of type z."
+  {:arglists '([z arglist])}
+  [z arglist]
 
-  [z arglist] `(into-array ~z ~arglist))
+  `(into-array ~z ~arglist))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro preduce<map>
 
-  ^{:arglists '([f coll])
-    :doc "Reduce with a transient map accumulator, returning a map."}
+  "Reduce with a transient map accumulator, returning a map."
+  {:arglists '([f coll])}
+  [f coll]
 
-  [f coll] `(persistent! (reduce ~f (transient {}) ~coll)))
+  `(persistent! (reduce ~f (transient {}) ~coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro preduce<set>
 
-  ^{:arglists '([f coll])
-    :doc "Reduce with a transient set accumulator, returning a set."}
+  "Reduce with a transient set accumulator, returning a set."
+  {:arglists '([f coll])}
+  [f coll]
 
-  [f coll] `(persistent! (reduce ~f (transient #{}) ~coll)))
+  `(persistent! (reduce ~f (transient #{}) ~coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro preduce<vec>
 
-  ^{:arglists '([f coll])
-    :doc "Reduce with a transient vec accumulator, returning a vec."}
+  "Reduce with a transient vec accumulator, returning a vec."
+  {:arglists '([f coll])}
+  [f coll]
 
-  [f coll] `(persistent! (reduce ~f (transient []) ~coll)))
+  `(persistent! (reduce ~f (transient []) ~coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro rset!
 
-  ^{:arglists '([a][a value])
-    :doc "Reset a atom."}
+  "Reset a atom."
+  {:arglists '([a]
+               [a value])}
 
-  ([a] `(rset! ~a nil))
-  ([a value] `(reset! ~a ~value)))
+  ([a]
+   `(rset! ~a nil))
+
+  ([a value]
+   `(reset! ~a ~value)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro exp!
 
-  ^{:arglists '([E & args])
-    :doc "Create an exception of type E."}
+  "Create an exception of type E."
+  {:arglists '([E & args])}
+  [E & args]
 
-  [E & args] `(new ~E ~@args))
+  `(new ~E ~@args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro trap!
 
-  ^{:arglists '([E & args])
-    :doc "Throw exception of type E."}
+  "Throw exception of type E."
+  {:arglists '([E & args])}
 
-  [E & args] `(throw (exp! ~E ~@args)))
+  [E & args]
+
+  `(throw (exp! ~E ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro raise!
 
-  ^{:arglists '([fmt & args])
-    :doc "Throw java Exception with message."}
-
+  "Throw java Exception with message."
+  {:arglists '([fmt & args])}
   [fmt & args]
+
   `(throw (new java.lang.Exception (str (format ~fmt ~@args)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro decl-assert-exp
 
-  ^{:arglists '([name E])
-    :doc "Generate a function which when called, will
-         assert the condition and if false, throw the desired exception."}
-
+  "Generate a function which when called, will
+  assert the condition and if false, throw the desired exception."
+  {:arglists '([name E])}
   [name E]
 
   `(defn ~name [~'kond ~'arg & ~'xs]
@@ -1053,10 +1100,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro decl-throw-exp
 
-  ^{:arglists '([name E])
-    :doc "Generate a function which when called,
-         will throw the desired exception."}
-
+  "Generate a function which when called,
+  will throw the desired exception."
+  {:arglists '([name E])}
   [name E]
 
   `(defn ~name [~'arg & ~'xs]
@@ -1070,19 +1116,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro assert-on!
 
-  ^{:arglists '([cond E & args])
-    :doc "Like assert, but throws a specific exception."}
+  "Like assert, but throws a specific exception."
+  {:arglists '([cond E & args])}
+  [cond E & args]
 
-  [cond E & args] `(if-not ~cond (trap! ~E ~@args)))
+  `(if-not ~cond (trap! ~E ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do-with
 
-  ^{:arglists '([bindings & forms])
-    :doc "bindings => [symbol init-expr]
-         Evals the body in a context in which the symbol is always the
-         returned value."}
-
+  "bindings => [symbol init-expr]
+  Evals the body in a context in which the symbol is always the
+  returned value."
+  {:arglists '([bindings & forms])}
   [bindings & forms]
 
   (let [f (first bindings)
@@ -1098,12 +1144,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do-with-str
 
-  ^{:arglists '([bindings & forms])
-    :doc "bindings => [symbol init-expr]
-         Eval the body in a context in which the symbol is always the
-         returned value to-string'ed.
-         e.g. (do-with-str [a (f)] ... (str a))."}
-
+  "bindings => [symbol init-expr]
+  Eval the body in a context in which the symbol is always the
+  returned value to-string'ed.
+  e.g. (do-with-str [a (f)] ... (str a))."
+  {:arglists '([bindings & forms])}
   [bindings & forms]
 
   `(str (czlab.basal.core/do-with ~bindings ~@forms)))
@@ -1111,12 +1156,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro do-with-atom
 
-  ^{:arglists '([bindings & forms])
-    :doc "bindings => [symbol init-expr]
-         Eval the body in a context in which the symbol is always the
-         returned value deref'ed.
-         e.g. (do-with-atom [a (atom 0)] ... (deref a))."}
-
+  "bindings => [symbol init-expr]
+  Eval the body in a context in which the symbol is always the
+  returned value deref'ed.
+  e.g. (do-with-atom [a (atom 0)] ... (deref a))."
+  {:arglists '([bindings & forms])}
   [bindings & forms]
 
   `(deref (czlab.basal.core/do-with ~bindings ~@forms)))
@@ -1124,34 +1168,38 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro bool!
 
-  ^{:arglists '([x])
-    :doc "Same as boolean."} [x] `(boolean ~x))
+  "Same as boolean."
+  {:arglists '([x])}
+  [x]
+
+  `(boolean ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro trye!
 
-  ^{:arglists '([value & forms])
-    :doc "Eat exception and return a value."}
-
+  "Eat exception and return a value."
+  {:arglists '([value & forms])}
   [value & forms]
+
   `(try ~@forms (catch Throwable ~'_ ~value)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro try!
 
-  ^{:arglists '([& forms])
-    :doc "Eat exception and return nil."}
+  "Eat exception and return nil."
+  {:arglists '([& forms])}
+  [& forms]
 
-  [& forms] `(czlab.basal.core/trye! nil ~@forms))
+  `(czlab.basal.core/trye! nil ~@forms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-some+
 
-  ^{:arglists '([bindings then]
-                [bindings then else])
-    :doc "bindings => [binding-form test].
-         When test is not empty, evaluates body
-         with binding-form bound to the value of test."}
+  "bindings => [binding-form test].
+  When test is not empty, evaluates body
+  with binding-form bound to the value of test."
+  {:arglists '([bindings then]
+               [bindings then else])}
 
   ([bindings then]
    `(if-some+ ~bindings ~then nil))
@@ -1162,22 +1210,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro when-some+
 
-  ^{:arglists '([bindings & body])
-    :doc "bindings => [binding-form test].
-         When test is not empty, evaluates body
-         with binding-form bound to the value of test."}
-
+  "bindings => [binding-form test].
+  When test is not empty, evaluates body
+  with binding-form bound to the value of test."
+  {:arglists '([bindings & body])}
   [bindings & body]
+
   `(czlab.basal.core/if-some+ ~bindings (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro if-fn
 
-  ^{:arglists '([bindings then]
-                [bindings then else])
-    :doc "bindings => [binding-form test].
-         When test is a fn?, evaluates body
-         with binding-form bound to the value of test."}
+  "bindings => [binding-form test].
+  When test is a fn?, evaluates body
+  with binding-form bound to the value of test."
+  {:arglists '([bindings then]
+               [bindings then else])}
 
   ([bindings then]
    `(if-fn ~bindings ~then nil))
@@ -1188,20 +1236,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro when-fn
 
-  ^{:arglists '([bindings & body])
-    :doc "bindings => [binding-form test].
-         When test is a fn?, evaluates body
-         with binding-form bound to the value of test."}
-
+  "bindings => [binding-form test].
+  When test is a fn?, evaluates body
+  with binding-form bound to the value of test."
+  {:arglists '([bindings & body])}
   [bindings & body]
+
   `(czlab.basal.core/if-fn ~bindings (do ~@body)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro doto->>
 
-  ^{:arglists '([x & forms])
-    :doc "Combine doto and ->>."}
-
+  "Combine doto and ->>."
+  {:arglists '([x & forms])}
   [x & forms]
 
   (let [X (gensym)]
@@ -1212,9 +1259,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro doto->
 
-  ^{:arglists '([x & forms])
-    :doc "Combine doto and ->."}
-
+  "Combine doto and ->."
+  {:arglists '([x & forms])}
   [x & forms]
 
   (let [X (gensym)]
@@ -1228,50 +1274,63 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro eq?
 
-  ^{:arglists '([a b])
-    :doc "Use java's .equals method."} [a b] `(.equals ~a ~b))
+  "Use java's .equals method."
+  {:arglists '([a b])}
+  [a b]
+
+  `(.equals ~a ~b))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !eq?
 
-  ^{:arglists '([a b])
-    :doc "Use java's .equals method."} [a b] `(not (.equals ~a ~b)))
+  "Use java's .equals method."
+  {:arglists '([a b])}
+  [a b]
+
+  `(not (.equals ~a ~b)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !=?
 
-  ^{:arglists '([& more])
-    :doc "Same as not-identical?"}
+  "Same as not-identical?"
+  {:arglists '([& more])}
+  [& more]
 
-  [& more] `(not (identical? ~@more)))
+  `(not (identical? ~@more)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro =?
 
-  ^{:arglists '([& more])
-    :doc "Same as identical?"}
+  "Same as identical?"
+  {:arglists '([& more])}
+  [& more]
 
-  [& more] `(identical? ~@more))
+  `(identical? ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !in?
 
-  ^{:arglists '([& more])
-    :doc "Same as not-contains?"} [& more] `(not (contains? ~@more)))
+  "Same as not-contains?"
+  {:arglists '([& more])}
+  [& more]
+
+  `(not (contains? ~@more)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro in?
 
-  ^{:arglists '([& more])
-    :doc "Same as contains?"} [& more] `(contains? ~@more))
+  "Same as contains?"
+  {:arglists '([& more])}
+  [& more]
+
+  `(contains? ~@more))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;had to use this trick to prevent reflection warning
 (defmacro cast?
 
-  ^{:arglists '([someType obj])
-    :doc "Cast object of this type else nil."}
-
+  "Cast object of this type else nil."
+  {:arglists '([someType obj])}
   [someType obj]
 
   (let [X (gensym)]
@@ -1282,36 +1341,44 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro cexp?
 
-  ^{:arglists '([e])
-    :doc "Try casting to Throwable."} [e] `(cast? Throwable ~e))
+  "Try casting to Throwable."
+  {:arglists '([e])}
+  [e]
+
+  `(cast? Throwable ~e))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !nil?
 
-  ^{:arglists '([x])
-    :doc "Same as not-nil."} [x] `(not (nil? ~x)))
+  "Same as not-nil."
+  {:arglists '([x])}
+  [x]
+
+  `(not (nil? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro rnil
 
-  ^{:arglists '([coll])
-    :doc "Skip nil(s) in collection."} [coll] `(remove nil? ~coll))
+  "Skip nil(s) in collection."
+  {:arglists '([coll])}
+  [coll]
+
+  `(remove nil? ~coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro rnilv
 
-  ^{:arglists '([coll])
-    :doc "Same as rnil but returns a vec."}
-
+  "Same as rnil but returns a vec."
+  {:arglists '([coll])}
   [coll]
+
   `(into [] (remove nil? ~coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro szero?
 
-  ^{:arglists '([e])
-    :doc "Safe zero?"}
-
+  "Safe zero?"
+  {:arglists '([e])}
   [e]
 
   (let [E (gensym)]
@@ -1320,9 +1387,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro sneg?
 
-  ^{:arglists '([e])
-    :doc "Safe neg?"}
-
+  "Safe neg?"
+  {:arglists '([e])}
   [e]
 
   (let [E (gensym)]
@@ -1331,9 +1397,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro spos?
 
-  ^{:arglists '([e])
-    :doc "Safe pos?"}
-
+  "Safe pos?"
+  {:arglists '([e])}
   [e]
 
   (let [E (gensym)]
@@ -1342,9 +1407,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro snneg?
 
-  ^{:arglists '([e])
-    :doc "Safe not neg?"}
-
+  "Safe not neg?"
+  {:arglists '([e])}
   [e]
 
   (let [E (gensym)]
@@ -1354,83 +1418,103 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !false?
 
-  ^{:arglists '([x])
-    :doc "Same as not-false."} [x] `(not (false? ~x)))
+  "Same as not-false."
+  {:arglists '([x])}
+  [x]
+
+  `(not (false? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro !true?
 
-  ^{:arglists '([x])
-    :doc "Same as not true."} [x] `(not (true? ~x)))
+  "Same as not true."
+  {:arglists '([x])}
+  [x]
+
+  `(not (true? ~x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro assert-not
 
-  ^{:arglists '([cond])
-    :doc "Assert a false condition."} [cond] `(assert (not ~cond)))
+  "Assert a false condition."
+  {:arglists '([cond])}
+  [cond]
+
+  `(assert (not ~cond)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro marray
 
-  ^{:arglists '([Z n])
-    :doc "n-size java array of type Z."} [Z n] `(make-array ~Z ~n))
+  "n-size java array of type Z."
+  {:arglists '([Z n])}
+  [Z n]
+
+  `(make-array ~Z ~n))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro zarray
 
-  ^{:arglists '([Z])
-    :doc "0-size java array of type Z."}[Z] `(make-array ~Z 0))
+  "0-size java array of type Z."
+  {:arglists '([Z])}
+  [Z]
+
+  `(make-array ~Z 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro vtbl**
 
-  ^{:arglists '([parent & args])
-    :doc "Make a virtual table:
-         op1 f1 op2 f2, with parent vtbl."}
-
+  "Make a virtual table:
+  op1 f1 op2 f2, with parent vtbl."
+  {:arglists '([parent & args])}
   [parent & args]
 
-  (assert (even? (count args)))
-  `(czlab.basal.core/object<>
-     ~'czlab.basal.core.VTable :____proto ~parent ~@args))
+  (do (assert (even? (count args)))
+      `(czlab.basal.core/object<>
+         ~'czlab.basal.core.VTable :____proto ~parent ~@args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro vtbl*
 
-  ^{:arglists '([& args])
-    :doc "Make a virtual table: op1 f1 op2 f2."}
+  "Make a virtual table: op1 f1 op2 f2."
+  {:arglists '([& args])}
+  [& args]
 
-  [& args] `(vtbl** nil ~@args))
+  `(vtbl** nil ~@args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro wo*
 
-  ^{:arglists '([bindings & forms])
-    :doc "Same as with-open."}
+  "Same as with-open."
+  {:arglists '([bindings & forms])}
+  [bindings & forms]
 
-  [bindings & forms] `(with-open ~bindings ~@forms))
+  `(with-open ~bindings ~@forms))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro wm*
 
-  ^{:arglists '([obj m])
-    :doc "Same as with-meta."} [obj m] `(with-meta ~obj ~m))
+  "Same as with-meta."
+  {:arglists '([obj m])}
+  [obj m]
+
+  `(with-meta ~obj ~m))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ->str
 
-  ^{:arglists '([obj])
-    :doc "Same as java's .toString."} [obj] `(some-> ~obj .toString))
+  "Same as java's .toString."
+  {:arglists '([obj])}
+  [obj]
+
+  `(some-> ~obj .toString))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;monads
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro run-bind
 
-  ^{:arglists '([binder steps expr])
-    :no-doc true
-    :Xdoc "Run the bind operator. *Internal*"}
-
+  ;"Run the bind operator. *Internal*"
+  {:arglists '([binder steps expr])}
   [binder steps expr]
 
   (let [more (drop 2 steps)
@@ -1443,11 +1527,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro defmonad
 
-  ^{:arglists '([name ops][name docs ops])
-    :doc "Define a named monad by defining the monad operations.
-         The definitions are written like bindings
-         to the monad operations bind and
-         unit (required) and zero and plus (optional)."}
+  "Define a named monad by defining the monad operations.
+  The definitions are written like bindings
+  to the monad operations bind and
+  unit (required) and zero and plus (optional)."
+  {:arglists '([name ops]
+               [name docs ops])}
 
   ([name ops]
    `(defmonad ~name "" ~ops))
@@ -1464,10 +1549,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro domonad
 
-  ^{:arglists '([monad steps][monad steps body])
-    :doc "Monad comprehension. Takes the name of a monad,
-         a vector of steps given as binding-form,
-         and a result value specified by body."}
+  "Monad comprehension. Takes the name of a monad,
+  a vector of steps given as binding-form,
+  and a result value specified by body."
+  {:arglists '([monad steps]
+               [monad steps body])}
 
   ([monad steps]
    `(domonad ~monad ~steps nil))
@@ -1541,72 +1627,86 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn run-cont
 
-  ^{:arglists '([cont])
-    :doc "Execute the computation in the
-         cont monad and return its result."} [cont] (cont identity))
+  "Execute the computation in the
+  cont monad and return its result."
+  {:arglists '([cont])}
+  [cont]
+
+  (cont identity))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; end-monad
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn kvs->map
 
-  ^{:arglists '([arglist])
-    :doc "Turn a list of key values into map."}
-
+  "Turn a list of key values into map."
+  {:arglists '([arglist])}
   [arglist]
-  {:pre [(even? (count arglist))]} (apply array-map arglist))
+  {:pre [(even? (count arglist))]}
+
+  (apply array-map arglist))
   ;(into {} (map #(vec %) (partition 2 arglist)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn repeat-str
 
-  ^{:arglists '([n s])
-    :tag String
-    :doc "Repeat string n times."} [n s] (cs/join "" (repeat n s)))
+  "Repeat string n times."
+  {:tag String
+   :arglists '([n s])}
+  [n s]
+
+  (cs/join "" (repeat n s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn num??
 
-  ^{:arglists '([n other])
-    :doc "If n is not a number, return other."}
-
+  "If n is not a number, return other."
+  {:arglists '([n other])}
   [n other]
-  {:pre [(number? other)]} (if (number? n) n other))
+  {:pre [(number? other)]}
+
+  (if (number? n) n other))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn !==
 
-  ^{:arglists '([x][x y][x y & more])
-    :doc "Same as (not (== num1 num2))."}
+  "Same as (not (== num1 num2))."
+  {:arglists '([x]
+               [x y]
+               [x y & more])}
 
   ([x] false)
-  ([x y] (not (== x y)))
+
+  ([x y]
+   (not (== x y)))
+
   ([x y & more]
    (not (apply == x y more))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn flip
 
-  ^{:arglists '([x])
-    :doc "Invert number if not zero."}
+  "Invert number if not zero."
+  {:arglists '([x])}
+  [x]
+  {:pre [(number? x)]}
 
-  [x] {:pre [(number? x)]} (if (zero? x) 0 (/ 1 x)))
+  (if (zero? x) 0 (/ 1 x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn percent
 
-  ^{:arglists '([numerator denominator])
-    :doc "Calculate the percentage."}
-
+  "Calculate the percentage."
+  {:arglists '([numerator denominator])}
   [numerator denominator]
+
   (* 100.0 (/ numerator denominator)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn split-seq
 
-  ^{:arglists '([coll cnt])
-    :doc "Split a collection into 2 parts."}
-
+  "Split a collection into 2 parts."
+  {:arglists '([coll cnt])}
   [coll cnt]
 
   (if-not (< cnt (count coll))
@@ -1616,8 +1716,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn compare-asc*
 
-  ^{:arglists '([][f])
-    :doc "Returns a ascending compare function."}
+  "Returns a ascending compare function."
+  {:arglists '([]
+               [f])}
 
   ([]
    (compare-asc* identity))
@@ -1629,8 +1730,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn compare-des*
 
-  ^{:arglists '([][f])
-    :doc "Returns a descending compare function."}
+  "Returns a descending compare function."
+  {:arglists '([]
+               [f])}
 
   ([]
    (compare-des* identity))
@@ -1642,10 +1744,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- xxx-by
 
-  ^{:arglists '([cb coll])
-    :no-doc true
-    :Xdoc "Used by min-by & max-by. *Internal*"}
-
+  "Used by min-by & max-by. *Internal*"
+  {:arglists '([cb coll])}
   [cb coll]
 
   (if (not-empty coll)
@@ -1654,36 +1754,37 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn min-by
 
-  ^{:arglists '([f coll])
-    :doc "Find item with minimum value as defined by the function."}
-
+  "Find item with minimum value as defined by the function."
+  {:arglists '([f coll])}
   [f coll]
+
   (xxx-by #(if (< (f %1) (f %2)) %1 %2) coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn max-by
 
-  ^{:arglists '([f coll])
-    :doc "Find item with maximum value as defined by the function."}
-
+  "Find item with maximum value as defined by the function."
+  {:arglists '([f coll])}
   [f coll]
+
   (xxx-by #(if (< (f %1) (f %2)) %2 %1) coll))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ensure-test
 
-  ^{:arglists '([cond msg])
-    :doc "Assert a test condition, returning a message."}
-
+  "Assert a test condition, returning a message."
+  {:arglists '([cond msg])}
   [cond msg]
+
   (str (try (if cond t-ok t-bad)
             (catch Throwable _ t-bad)) ": " msg))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ensure-thrown
 
-  ^{:arglists '([msg][expected error msg])
-    :doc "Assert an exception is thrown during test."}
+  "Assert an exception is thrown during test."
+  {:arglists '([msg]
+               [expected error msg])}
 
   ([msg]
    (ensure-thrown nil nil msg))
@@ -1697,10 +1798,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rip-fn-name
 
-  ^{:arglists '([func])
-    :tag String
-    :doc "Extract (mangled) name of the function."}
-
+  "Extract (mangled) name of the function."
+  {:tag String
+   :arglists '([func])}
   [func]
 
   (let [s (str func)
@@ -1711,15 +1811,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mu-int
 
-  ^{:arglists '([][arr][arr v][arr op nv])
-    :doc "Operate like a mutable int, get and set."}
+  "Operate like a mutable int, get and set."
+  {:arglists '([]
+               [arr]
+               [arr v]
+               [arr op nv])}
 
   ;setter
-  ([^ints arr v] (aset arr 0 (int v)) (int v))
+  ([^ints arr v]
+   (aset arr 0 (int v)) (int v))
   ;ctor
-  ([] (int-array 1 0))
+  ([]
+   (int-array 1 0))
   ;getter
-  ([^ints arr] (int (aget arr 0)))
+  ([^ints arr]
+   (int (aget arr 0)))
   ;apply (op old-val new-value)
   ([^ints arr op nv]
    (let [v (int (op (aget arr 0) nv))] (aset arr 0 v) v)))
@@ -1727,24 +1833,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mu-int*
 
-  ^{:arglists '([i])
-    :doc "Create & init mu-i."}
-
+  "Create & init mu-i."
+  {:arglists '([i])}
   [i]
-  {:pre [(number? i)]} (doto (mu-int) (mu-int i)))
+  {:pre [(number? i)]}
+
+  (doto (mu-int) (mu-int i)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mu-long
 
-  ^{:arglists '([][arr][arr v][arr op nv])
-    :doc "Operate like a mutable long, get and set."}
+  "Operate like a mutable long, get and set."
+  {:arglists '([]
+               [arr]
+               [arr v]
+               [arr op nv])}
 
   ;setter
-  ([^longs arr v] (aset arr 0 (long v)) (long v))
+  ([^longs arr v]
+   (aset arr 0 (long v)) (long v))
   ;ctor
-  ([] (long-array 1 0))
+  ([]
+   (long-array 1 0))
   ;getter
-  ([^longs arr] (long (aget arr 0)))
+  ([^longs arr]
+   (long (aget arr 0)))
   ;apply (op old-val new-val)
   ([^longs arr op nv]
    (let [v (long (op (aget arr 0) nv))] (aset arr 0 v) v)))
@@ -1752,25 +1865,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mu-long*
 
-  ^{:arglists '([n])
-    :doc "Create & init a mu-long."}
-
+  "Create & init a mu-long."
+  {:arglists '([n])}
   [n]
-  {:pre [(number? n)]} (doto (mu-long) (mu-long n)))
+  {:pre [(number? n)]}
+
+  (doto (mu-long) (mu-long n)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn nth??
 
-  ^{:arglists '([coll pos])
-    :doc "Get the nth element, 1-indexed."}
+  "Get the nth element, 1-indexed."
+  {:arglists '([coll pos])}
+  [coll pos]
+  {:pre [(> pos 0)]}
 
-  [coll pos] {:pre [(> pos 0)]} (first (drop (- pos 1) coll)))
+  (first (drop (- pos 1) coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn vargs*
 
-  ^{:arglists '([clazz & args])
-    :doc "Coerce into java array."} [clazz & args] (vargs clazz args))
+  "Coerce into java array."
+  {:arglists '([clazz & args])}
+  [clazz & args]
+
+  (vargs clazz args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
@@ -1785,55 +1904,60 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn scoped-keyword
 
-  ^{:arglists '([t])
-    :doc "Scope name as a fully-qualified keyword."}
-
+  "Scope name as a fully-qualified keyword."
+  {:arglists '([t])}
   [t]
   {:pre [(string? t)
          (nil? (cs/index-of t "/"))
-         (nil? (cs/index-of t ":"))]} (keyword (str *ns*) t))
+         (nil? (cs/index-of t ":"))]}
+
+  (keyword (str *ns*) t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-scoped-keyword?
 
-  ^{:arglists '([kw])
-    :doc "If a scoped keyword?"}
+  "If a scoped keyword?"
+  {:arglists '([kw])}
+  [kw]
 
-  [kw] (and (keyword? kw)
-            (cs/includes? (str kw) "/")))
+  (and (keyword? kw)
+       (cs/includes? (str kw) "/")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rand-sign
 
-  ^{:arglists '([])
-    :doc "Randomly choose a sign."}
+  "Randomly choose a sign."
+  {:arglists '([])}
+  []
 
-  [] (if (even? (rand-int Integer/MAX_VALUE)) 1 -1))
+  (if (even? (rand-int Integer/MAX_VALUE)) 1 -1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rand-bool
 
-  ^{:arglists '([])
-    :doc "Randomly choose a boolean value."}
+  "Randomly choose a boolean value."
+  {:arglists '([])}
+  []
 
-  [] (even? (rand-int Integer/MAX_VALUE)))
+  (even? (rand-int Integer/MAX_VALUE)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn num-sign
 
-  ^{:arglists '([n])
-    :doc "Find the sign of a number."}
-
+  "Find the sign of a number."
+  {:arglists '([n])}
   [n]
   {:pre [(number? n)]}
+
   (cond (> n 0) 1 (< n 0) -1 :else 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn s->long
 
-  ^{:arglists '([s][s dv])
-    :tag Long
-    :doc "String as a long value."}
+  "String as a long value."
+  {:tag Long
+   :arglists '([s]
+               [s dv])}
 
   ([s]
    (s->long s nil))
@@ -1845,10 +1969,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn s->int
 
-  ^{:arglists '([s][s dv])
-    :doc "String as an int value."}
-
-  {:tag Integer}
+  "String as an int value."
+  {:tag Integer
+   :arglists '([s]
+               [s dv])}
 
   ([s]
    (s->int s nil))
@@ -1860,10 +1984,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn s->double
 
-  ^{:arglists '([s][s dv])
-    :doc "String as a double value."}
-
-  {:tag Double}
+  "String as a double value."
+  {:tag Double
+   :arglists '([s][s dv])}
 
   ([s]
    (s->double s nil))
@@ -1875,19 +1998,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn s->bool
 
-  ^{:arglists '([s])
-    :doc "String as a boolean value."}
+  "String as a boolean value."
+  {:arglists '([s])}
+  [s]
 
-  [s] (contains? BOOLS (cs/lower-case (str s))))
+  (contains? BOOLS (cs/lower-case (str s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test and assert funcs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn test-isa
 
-  ^{:arglists '([reason parent child])
-    :doc "Is child of parent?"}
-
+  "Is child of parent?"
+  {:arglists '([reason parent child])}
   [reason parent child]
 
   (do#true (-> (cond
@@ -1900,27 +2023,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn test-some
 
-  ^{:arglists '([reason obj])
-    :doc "Object is not null?"}
-
+  "Object is not null?"
+  {:arglists '([reason obj])}
   [reason obj]
+
   (do#true (assert (some? obj) (str reason " is null."))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn test-cond
 
-  ^{:arglists '([reason cond])
-    :doc "A true condition?"}
-
+  "A true condition?"
+  {:arglists '([reason cond])}
   [reason cond]
+
   (do#true (assert cond (str reason))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn test-hgl
 
-  ^{:arglists '([reason s])
-    :doc "String is not empty?"}
-
+  "String is not empty?"
+  {:arglists '([reason s])}
   [reason s]
 
   (do#true
@@ -1976,9 +2098,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn test-seq+
 
-  ^{:arglists '([reason v])
-    :doc "Check sequence is not empty?"}
-
+  "Check sequence is not empty?"
+  {:arglists '([reason v])}
   [reason v]
 
   (do#true (assert (pos? (count v)) (str reason " must be non empty."))))
@@ -1986,10 +2107,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sort-join
 
-  ^{:arglists '([ss][sep ss])
-    :doc "Sort and concatenate strings."}
-
-  {:tag String}
+  "Sort and concatenate strings."
+  {:tag String
+   :arglists '([ss]
+               [sep ss])}
 
   ([ss]
    (sort-join "" ss))
@@ -2000,11 +2121,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn strip-ns-path
 
-  ^{:arglists '([path])
-    :tag String
-    :doc "Remove the leading colon."}
+  "Remove the leading colon."
+  {:tag String
+   :arglists '([path])}
+  [path]
 
-  [path] (cs/replace (str path) #"^:" ""))
+  (cs/replace (str path) #"^:" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol VTableAPI
@@ -2046,9 +2168,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn identity-n
 
-  ^{:arglists '([n][n index-zero?])
-    :doc "Like identity but returns positional param.
-         e.g. (def get-2nd (identity-n 2)) (get-2nd a b c) => b."}
+  "Like identity but returns positional param.
+  e.g. (def get-2nd (identity-n 2)) (get-2nd a b c) => b."
+  {:arglists '([n]
+               [n index-zero?])}
 
   ([n]
    (identity-n n false))
@@ -2091,9 +2214,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn merge+
 
-  ^{:arglists '([& more])
-    :doc "Merge (deep) of clojure data."}
-
+  "Merge (deep) of clojure data."
+  {:arglists '([& more])}
   [& more]
 
   (cond (empty? more) nil
@@ -2109,27 +2231,28 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro sreduce<>
 
-  ^{:arglists '([f coll])
-    :doc "Reduce with a string-builder."}
+  "Reduce with a string-builder."
+  {:arglists '([f coll])}
+  [f coll]
 
-  [f coll] `(str (reduce ~f (StringBuilder.) ~coll)))
+  `(str (reduce ~f (StringBuilder.) ~coll)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fmt
 
-  ^{:arglists '([f & args])
-    :tag String
-    :doc "Same as string format."}
+  "Same as string format."
+  {:tag String
+   :arglists '([f & args])}
+  [f & args]
 
-  [f & args] (apply format f args))
+  (apply format f args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn char-array??
 
-  ^{:arglists '([s])
-    :doc "Splits a string into string-char,
-         e.g. \"abc\" = [\"a\" \"b\" \"c\"]."}
-
+  "Splits a string into string-char,
+  e.g. \"abc\" = [\"a\" \"b\" \"c\"]."
+  {:arglists '([s])}
   [s]
   {:pre [(or (nil? s)
              (string? s))]}
@@ -2139,10 +2262,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbf+
 
-  ^{:arglists '([buf & args])
-    :tag StringBuilder
-    :doc "StringBuilder concat."}
-
+  "StringBuilder concat."
+  {:tag StringBuilder
+   :arglists '([buf & args])}
   [buf & args]
 
   (doseq [x args]
@@ -2151,10 +2273,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbf<>
 
-  ^{:arglists '([][& args])
-    :doc "Same as StringBuilder.new"}
-
-  {:tag StringBuilder}
+  "Same as StringBuilder.new"
+  {:tag StringBuilder
+   :arglists '([]
+               [& args])}
 
   ([]
    (sbf<> ""))
@@ -2165,11 +2287,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbf-join
 
-  ^{:arglists '([buf sep item])
-    :tag StringBuilder
-    :doc "Append to a string-builder, optionally
-         inserting a delimiter if the buffer is not empty."}
-
+  "Append to a string-builder, optionally
+  inserting a delimiter if the buffer is not empty."
+  {:tag StringBuilder
+   :arglists '([buf sep item])}
   [buf sep item]
 
   (do-with [^StringBuilder buf]
@@ -2182,17 +2303,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sbfz
 
-  ^{:arglists '([b])
-    :doc "Length of the string-buffer."}
+  "Length of the string-buffer."
+  {:arglists '([b])}
+  [b]
 
-  [b] (.length ^StringBuilder b))
+  (.length ^StringBuilder b))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn nichts?
 
-  ^{:arglists '([s])
-    :doc "Is string empty?"}
-
+  "Is string empty?"
+  {:arglists '([s])}
   [s]
 
   (or (nil? s)
@@ -2202,20 +2323,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn hgl?
 
-  ^{:arglists '([s])
-    :doc "If string has length?"}
+  "If string has length?"
+  {:arglists '([s])}
+  [s]
 
-  [s] (and (string? s)
-           (not (.isEmpty ^String s))))
+  (and (string? s) (not (.isEmpty ^String s))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn stror
 
-  ^{:arglists '([s s2])
-    :tag String
-    :doc "If not s then s2"}
+  "If not s then s2"
+  {:tag String
+   :arglists '([s s2])}
+  [s s2]
 
-  [s s2] (if (nichts? s) s2 s))
+  (if (nichts? s) s2 s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (comment
@@ -2229,9 +2351,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro stror*
 
-  ^{:arglists '([& args])
-    :doc "If not s then s2...etc"}
-
+  "If not s then s2...etc"
+  {:arglists '([& args])}
   [& args]
 
   (let [[a & xs] args]
@@ -2242,30 +2363,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn lcase
 
-  ^{:arglists '([s])
-    :tag String
-    :doc "Lowercase string safely."}
+  "Lowercase string safely."
+  {:tag String
+   :arglists '([s])}
+  [s]
 
-  [s] (str (some-> s clojure.string/lower-case)))
+  (str (some-> s clojure.string/lower-case)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ucase
 
-  ^{:arglists '([s])
-    :tag String
-    :doc "Uppercase string safely."}
+  "Uppercase string safely."
+  {:tag String
+   :arglists '([s])}
+  [s]
 
-  [s] (str (some-> s clojure.string/upper-case)))
+  (str (some-> s clojure.string/upper-case)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;#^"[Ljava.lang.Class;"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn triml
 
-  ^{:arglists '([src unwantedChars])
-    :tag String
-    :doc "Get rid of unwanted chars from left."}
-
+  "Get rid of unwanted chars from left."
+  {:tag String
+   :arglists '([src unwantedChars])}
   [^String src ^String unwantedChars]
 
   (if-not (and (hgl? src)
@@ -2281,10 +2403,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn trimr
 
-  ^{:arglists '([src unwantedChars])
-    :tag String
-    :doc "Get rid of unwanted chars from right."}
-
+  "Get rid of unwanted chars from right."
+  {:tag String
+   :arglists '([src unwantedChars])}
   [^String src ^String unwantedChars]
 
   (if-not (and (hgl? src)
@@ -2300,9 +2421,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn includes?
 
-  ^{:arglists '([bigs arg])
-    :doc "If the char is inside the big str?"}
-
+  "If the char is inside the big str?"
+  {:arglists '([bigs arg])}
   [^String bigs arg]
 
   (let [rc (cond (or (nil? arg)
@@ -2317,17 +2437,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro embeds?
 
-  ^{:arglists '([bigs s])
-    :doc "If sub-str is inside the big str?"}
+  "If sub-str is inside the big str?"
+  {:arglists '([bigs s])}
+  [bigs s]
 
-  [bigs s] `(czlab.basal.core/includes? ~bigs ~s))
+  `(czlab.basal.core/includes? ~bigs ~s))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro has-no-case?
 
-  ^{:arglists '([bigs s])
-    :doc "If sub-str is inside the big str - ignore case?"}
-
+  "If sub-str is inside the big str - ignore case?"
+  {:arglists '([bigs s])}
   [bigs s]
 
   `(czlab.basal.core/includes?
@@ -2336,9 +2456,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn index-any
 
-  ^{:arglists '([bigs chStr])
-    :doc "If any one char is inside the big str, return the position."}
-
+  "If any one char is inside the big str, return the position."
+  {:arglists '([bigs chStr])}
   [^String bigs ^String chStr]
 
   (if-not (and (hgl? bigs)
@@ -2350,9 +2469,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn count-str
 
-  ^{:arglists '([bigs s])
-    :doc "Count the times the sub-str appears in the big str."}
-
+  "Count the times the sub-str appears in the big str."
+  {:arglists '([bigs s])}
   [^String bigs ^String s]
 
   (if-not (and (hgl? s)
@@ -2370,9 +2488,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn count-char
 
-  ^{:arglists '([bigs ch])
-    :doc "Count the times this char appears in the big str."}
-
+  "Count the times this char appears in the big str."
+  {:arglists '([bigs ch])}
   [bigs ch]
 
   (reduce #(if (= ch %2)
@@ -2383,53 +2500,57 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro sname
 
-  ^{:arglists '([n])
-    :doc "Safely get the name of this object."}
+  "Safely get the name of this object."
+  {:arglists '([n])}
+  [n]
 
-  [n] `(str (some-> ~n name)))
+  `(str (some-> ~n name)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn nsb
 
-  ^{:arglists '([obj])
-    :tag String
-    :doc "Empty string if obj is null, or obj.toString"}
+  "Empty string if obj is null, or obj.toString."
+  {:tag String
+   :arglists '([obj])}
+  [obj]
 
-  [obj] (if (keyword? obj) (name obj) (str obj)))
+  (if (keyword? obj) (name obj) (str obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn kw->str
 
-  ^{:arglists '([k])
-    :tag String
-    :doc "Stringify a keyword - no leading colon."}
+  "Stringify a keyword - no leading colon."
+  {:tag String
+   :arglists '([k])}
+  [k]
 
-  [k] (cs/replace (str k) #"^:" ""))
+  (cs/replace (str k) #"^:" ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->kw
 
-  ^{:arglists '([& args])
-    :doc "Concatenate all args and return it as a keyword."}
+  "Concatenate all args and return it as a keyword."
+  {:arglists '([& args])}
+  [& args]
 
-  [& args] (if-not (empty? args)
-             (keyword (apply str args))))
+  (if-not (empty? args)
+    (keyword (apply str args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn nsn
 
-  ^{:arglists '([obj])
-    :tag String
-    :doc "(null) if obj is null, or obj.toString"}
+  "(null) if obj is null, or obj.toString."
+  {:tag String
+   :arglists '([obj])}
+  [obj]
 
-  [obj] (if (nil? obj) "(null)" (str obj)))
+  (if (nil? obj) "(null)" (str obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn match-char?
 
-  ^{:arglists '([ch setOfChars])
-    :doc "If this char is inside this set of chars?"}
-
+  "If this char is inside this set of chars?"
+  {:arglists '([ch setOfChars])}
   [ch setOfChars]
 
   (and (set? setOfChars)
@@ -2438,19 +2559,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro strim
 
-  ^{:arglists '([s])
-    :doc "Safely trim this string."}
+  "Safely trim this string."
+  {:arglists '([s])}
+  [s]
 
-  [s] `(str (some-> ~s clojure.string/trim)))
+  `(str (some-> ~s clojure.string/trim)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn strim-any
 
-  ^{:arglists '([src unwantedChars]
-                [src unwantedChars whitespace?])
-    :doc "Strip source string of these unwanted chars."}
-
-  {:tag String}
+  "Strip source string of these unwanted chars."
+  {:tag String
+   :arglists '([src unwantedChars]
+               [src unwantedChars whitespace?])}
 
   ([src unwantedChars]
    (strim-any src unwantedChars false))
@@ -2464,10 +2585,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn splunk
 
-  ^{:arglists '([largeString chunkLength])
-    :doc "Split a large string into chunks,
-         each chunk having a specific length."}
-
+  "Split a large string into chunks,
+  each chunk having a specific length."
+  {:arglists '([largeString chunkLength])}
   [^String largeString chunkLength]
 
   (if-not (and (hgl? largeString)
@@ -2479,9 +2599,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn hasic-any?
 
-  ^{:arglists '([bigs substrs])
-    :doc "If bigs contains any one of these strs - ignore case?"}
-
+  "If bigs contains any one of these strs - ignore case?"
+  {:arglists '([bigs substrs])}
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
 
@@ -2492,9 +2611,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn has-any?
 
-  ^{:arglists '([bigs substrs])
-    :doc "If bigs contains any one of these strs?"}
-
+  "If bigs contains any one of these strs?"
+  {:arglists '([bigs substrs])}
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
 
@@ -2505,9 +2623,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn hasic-all?
 
-  ^{:arglists '([bigs substrs])
-    :doc "If bigs contains all of these strs - ignore case?"}
-
+  "If bigs contains all of these strs - ignore case?"
+  {:arglists '([bigs substrs])}
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
 
@@ -2518,9 +2635,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn has-all?
 
-  ^{:arglists '([bigs substrs])
-    :doc "If bigs contains all of these strs?"}
-
+  "If bigs contains all of these strs?"
+  {:arglists '([bigs substrs])}
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
 
@@ -2531,9 +2647,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ewic-any?
 
-  ^{:arglists '([bigs substrs])
-    :doc "If bigs endsWith any one of the strs, no-case?"}
-
+  "If bigs endsWith any one of the strs, no-case?"
+  {:arglists '([bigs substrs])}
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
 
@@ -2545,9 +2660,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ew-any?
 
-  ^{:arglists '([bigs substrs])
-    :doc "If bigs endsWith any one of the strs?"}
-
+  "If bigs endsWith any one of the strs?"
+  {:arglists '([bigs substrs])}
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
 
@@ -2558,9 +2672,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn swic-any?
 
-  ^{:arglists '([bigs substrs])
-    :doc "If bigs startWith any one of the strs - no case?"}
-
+  "If bigs startWith any one of the strs - no case?"
+  {:arglists '([bigs substrs])}
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
 
@@ -2572,9 +2685,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sw-any?
 
-  ^{:arglists '([bigs substrs])
-    :doc "If bigs startWith any one of the strs?"}
-
+  "If bigs startWith any one of the strs?"
+  {:arglists '([bigs substrs])}
   [^String bigs substrs]
   {:pre [(sequential? substrs)]}
 
@@ -2585,9 +2697,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro eqic?
 
-  ^{:arglists '([src other])
-    :doc "Same as String.equalIgnoreCase()?"}
-
+  "Same as String.equalIgnoreCase()?"
+  {:arglists '([src other])}
   [src other]
 
   (let [^String ss src
@@ -2596,9 +2707,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn eqic-any?
 
-  ^{:arglists '([src substrs])
-    :doc "String.equalIgnoreCase() on any one of the strs?"}
-
+  "String.equalIgnoreCase() on any one of the strs?"
+  {:arglists '([src substrs])}
   [^String src substrs]
   {:pre [(sequential? substrs)]}
 
@@ -2610,9 +2720,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn eq-any?
 
-  ^{:arglists '([src substrs])
-    :doc "If String.equals() on any one of the strs?"}
-
+  "If String.equals() on any one of the strs?"
+  {:arglists '([src substrs])}
   [^String src substrs]
   {:pre [(sequential? substrs)]}
 
@@ -2622,9 +2731,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn wrapped?
 
-  ^{:arglists '([src head tail])
-    :doc "If src string starts with head and ends with tail?"}
-
+  "If src string starts with head and ends with tail?"
+  {:arglists '([src head tail])}
   [^String src ^String head ^String tail]
 
   (if (and (hgl? src)
@@ -2634,10 +2742,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rights
 
-  ^{:arglists '([src len])
-    :tag String
-    :doc "Get the rightmost len characters of a String."}
-
+  "Get the rightmost len characters of a String."
+  {:tag String
+   :arglists '([src len])}
   [^String src len]
   {:pre [(number? len)]}
 
@@ -2651,10 +2758,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn lefts
 
-  ^{:arglists '([src len])
-    :tag String
-    :doc "Get the leftmost len characters of a String."}
-
+  "Get the leftmost len characters of a String."
+  {:tag String
+   :arglists '([src len])}
   [^String src len]
   {:pre [(number? len)]}
 
@@ -2668,10 +2774,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn drop-head
 
-  ^{:arglists '([src len])
-    :tag String
-    :doc "Drop leftmost len characters of a String."}
-
+  "Drop leftmost len characters of a String."
+  {:tag String
+   :arglists '([src len])}
   [^String src len]
   {:pre [(number? len)]}
 
@@ -2685,10 +2790,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn drop-tail
 
-  ^{:arglists '([src len])
-    :tag String
-    :doc "Drop rightmost len characters of a String."}
-
+  "Drop rightmost len characters of a String."
+  {:tag String
+   :arglists '([src len])}
   [^String src len]
   {:pre [(number? len)]}
 
@@ -2703,19 +2807,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn matches?
 
-  ^{:arglists '([src regex])
-    :doc "Same as String.matches."}
-
+  "Same as String.matches."
+  {:arglists '([src regex])}
   [src regex]
   {:pre [(string? regex)]}
+
   (if (hgl? src) (.matches ^String src ^String regex)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn split
 
-  ^{:arglists '([src regex]
-                [src regex limit])
-    :doc "Same as String.split."}
+  "Same as String.split."
+  {:arglists '([src regex]
+               [src regex limit])}
 
   ([src regex]
    (split src regex nil))
@@ -2731,9 +2835,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn split-str
 
-  ^{:arglists '([s sep]
-                [s sep incSep?])
-    :doc "Same as String-tokenizer."}
+  "Same as String-tokenizer."
+  {:arglists '([s sep]
+               [s sep incSep?])}
 
   ([s sep]
    (split-str s sep false))
@@ -2749,10 +2853,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn esc-xml
 
-  ^{:arglists '([s])
-    :tag String
-    :doc "Escape XML special chars."}
-
+  "Escape XML special chars."
+  {:tag String
+   :arglists '([s])}
   [s]
 
   (cs/escape s {\& "&amp;"
@@ -2808,9 +2911,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn clj-test??
 
-  ^{:arglists '([test]
-                [test title print?])
-    :doc "Run test as a clojure test case."}
+  "Run test as a clojure test case."
+  {:arglists '([test]
+               [test title print?])}
 
   ([test]
    (clj-test?? test nil true))
@@ -2990,5 +3093,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;EOF
+
 
 

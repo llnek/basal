@@ -45,23 +45,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fmt-timestamp
 
-  ^{:arglists '([ts])
-    :doc "Java's Timestamp as string."} [ts] `(str ~ts))
+  "Java's Timestamp as string."
+  {:arglists '([ts])}
+  [ts]
+
+  `(str ~ts))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro fmt-time
 
-  ^{:arglists '([fmt])
-    :doc "Format current time."}
+  "Format current time."
+  {:arglists '([fmt])}
+  [fmt]
 
-  [fmt] `(fmt-date (new java.util.Date) ~fmt))
+  `(fmt-date (new java.util.Date) ~fmt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn is-leap-year?
 
-  ^{:arglists '([year])
-    :doc "If it's leap year?"}
-
+  "If it's leap year?"
+  {:arglists '([year])}
   [year]
 
   (cond (zero? (mod year 400)) true
@@ -97,21 +100,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-timestamp
 
-  ^{:arglists '([s])
-    :tag Timestamp
-    :doc "Convert string into a valid Timestamp object
-         *tstr* conforming to the format
-         \"yyyy-mm-dd hh:mm:ss.[fff...]\""}
+  "Convert string into a valid Timestamp object
+  *tstr* conforming to the format
+  \"yyyy-mm-dd hh:mm:ss.[fff...]\""
+  {:tag Timestamp
+   :arglists '([s])}
+  [s]
 
-  [s] (c/try! (Timestamp/valueOf ^String s)))
+  (c/try! (Timestamp/valueOf ^String s)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-date
 
-  ^{:arglists '([tstr fmt])
-    :tag Date
-    :doc "String to Java's Date."}
-
+  "String to Java's Date."
+  {:tag Date
+   :arglists '([tstr fmt])}
   [tstr fmt]
 
   (when (and (c/hgl? fmt)
@@ -121,10 +124,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parse-iso8601
 
-  ^{:arglists '([tstr])
-    :tag Date
-    :doc "To ISO8601 format."}
-
+  "To ISO8601 format."
+  {:tag Date
+   :arglists '([tstr])}
   [tstr]
 
   (when (c/hgl? tstr)
@@ -139,12 +141,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fmt-date
 
-  ^{:arglists '([dt]
-                [dt fmt]
-                [dt fmt tz])
-    :doc "Date to string."}
-
-  {:tag String}
+  "Date to string."
+  {:tag String
+   :arglists '([dt]
+               [dt fmt]
+               [dt fmt tz])}
 
   ([dt] (fmt-date dt dt-fmt-micro nil))
 
@@ -160,10 +161,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fmt-gmt
 
-  ^{:arglists '([dt])
-    :tag String
-    :doc "Date to string - GMT."}
-
+  "Date to string - GMT."
+  {:tag String
+   :arglists '([dt])}
   [dt]
 
   (fmt-date dt dt-fmt-micro (TimeZone/getTimeZone "GMT")))
@@ -179,10 +179,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gcal<>
 
-  ^{:arglists '([][arg])
-    :doc "Make a Calendar."}
-
-  {:tag Calendar}
+  "Make a Calendar."
+  {:tag Calendar
+   :arglists '([][arg])}
 
   ([] (gcal<> (Date.)))
 
@@ -202,11 +201,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn add-years
 
-  ^{:arglists '([years]
-                [cal years])
-    :doc "Add years to the calendar."}
-
-  {:tag Calendar}
+  "Add years to the calendar."
+  {:tag Calendar
+   :arglists '([years]
+               [cal years])}
 
   ([cal years] (add cal Calendar/YEAR years))
 
@@ -215,11 +213,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn add-months
 
-  ^{:arglists '([months]
-                [cal months])
-    :doc "Add more months to the calendar."}
-
-  {:tag Calendar}
+  "Add more months to the calendar."
+  {:tag Calendar
+   :arglists '([months]
+               [cal months])}
 
   ([months] (add-months (gcal<> (Date.)) months))
 
@@ -228,10 +225,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn add-days
 
-  ^{:arglists '([days][cal days])
-    :doc "Add more days to the calendar."}
-
-  {:tag Calendar}
+  "Add more days to the calendar."
+  {:tag Calendar
+   :arglists '([days][cal days])}
 
   ([days] (add-days (gcal<> (Date.)) days))
 
@@ -240,10 +236,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gmt<>
 
-  ^{:arglists '([][arg])
-    :doc "Make a Calendar (GMT)."}
-
-  {:tag GregorianCalendar}
+  "Make a Calendar (GMT)."
+  {:arglists '([][arg])
+   :tag GregorianCalendar}
 
   ([] (GregorianCalendar.
         (TimeZone/getTimeZone "GMT")))
@@ -258,12 +253,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn dtime
 
-  ^{:arglists '([][d])
-    :doc "Get the time in millis."}
+  "Get the time in millis."
+  {:arglists '([][d])}
 
-  ([d] (.getTime ^Date d))
+  ([d]
+   (.getTime ^Date d))
 
-  ([] (dtime (new java.util.Date))))
+  ([]
+   (dtime (new java.util.Date))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- fmt-cal
@@ -284,10 +281,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn debug-cal
 
-  ^{:arglists '([cal])
-    :tag String
-    :doc "Debug show a calendar's internal data."}
-
+  "Debug show a calendar's internal data."
+  {:tag String
+   :arglists '([cal])}
   [^Calendar cal]
 
   (cs/join ""

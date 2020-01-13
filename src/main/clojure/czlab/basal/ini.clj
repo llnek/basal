@@ -193,6 +193,7 @@
 (defn win-ini<>
 
   "Parse a windows ini file."
+  {:arglists '([in])}
   [in]
 
   (cond (c/is? File in)

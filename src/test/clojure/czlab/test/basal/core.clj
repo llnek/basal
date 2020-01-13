@@ -150,7 +150,7 @@
   (ensure?? "let#true" (true? (c/let#true [a 3] a)))
 
   (ensure?? "defenum"
-            (== 4 (do (c/defenum xxx a 1 b c) (+ xxx-a xxx-c))))
+            (== 4 (do (c/defenum xxx 1 a b c) (+ xxx-a xxx-c))))
 
   (ensure?? "n#-even?"
             (and (c/n#-even? [])

@@ -82,49 +82,53 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro istream
 
-  ^{:arglists '([x])
-    :doc "Same as clojure.java.io's input-stream."}
+  "Same as clojure.java.io's input-stream."
+  {:arglists '([x])}
+  [x]
 
-  [x] `(clojure.java.io/input-stream ~x))
+  `(clojure.java.io/input-stream ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro ostream
 
-  ^{:arglists '([x])
-    :doc "Same as clojure.java.io's output-stream."}
+  "Same as clojure.java.io's output-stream."
+  {:arglists '([x])}
+  [x]
 
-  [x] `(clojure.java.io/output-stream ~x))
+  `(clojure.java.io/output-stream ~x))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro file?
 
-  ^{:arglists '([in])
-    :doc "Is this a file?"}
+  "Is this a file?"
+  {:arglists '([in])}
+  [in]
 
-  [in] `(instance? java.io.File ~in))
+  `(instance? java.io.File ~in))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro slurp-utf8
 
-  ^{:arglists '([f])
-    :doc "Read f with utf8 encoding."}
+  "Read f with utf8 encoding."
+  {:arglists '([f])}
+  [f]
 
-  [f] `(slurp ~f :encoding "utf-8"))
+  `(slurp ~f :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro spit-utf8
 
-  ^{:arglists '([f c])
-    :doc "Write f with utf8 encoding."}
+  "Write f with utf8 encoding."
+  {:arglists '([f c])}
+  [f c]
 
-  [f c] `(spit ~f (str ~c) :encoding "utf-8"))
+  `(spit ~f (str ~c) :encoding "utf-8"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn file-repo
 
-  ^{:arglists '([])
-    :doc "Java's system temporary folder."}
-
+  "Java's system temporary folder."
+  {:arglists '([])}
   []
 
   (io/file (u/sys-tmp-dir)))
@@ -132,10 +136,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn baos<>
 
-  ^{:arglists '([][size])
-    :doc "Make a byte array output stream."}
-
-  {:tag ByteArrayOutputStream}
+  "Make a byte array output stream."
+  {:arglists '([][size])
+   :tag ByteArrayOutputStream}
 
   ([]
    (baos<> nil))
@@ -146,37 +149,37 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fsize
 
-  ^{:arglists '([in])
-    :doc "Get length of file."}
-
+  "Get length of file."
+  {:arglists '([in])}
   [in]
+
   (some-> in io/file .length))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fname
 
-  ^{:arglists '([in])
-    :tag String
-    :doc "Get name of file."}
-
+  "Get name of file."
+  {:tag String
+   :arglists '([in])}
   [in]
+
   (some-> in io/file .getName))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn klose
 
-  ^{:arglists '([obj])
-    :doc "Close object (quietly)."}
-
+  "Close object (quietly)."
+  {:arglists '([obj])}
   [obj]
+
   (c/try! (some-> (c/cast? Closeable obj) .close)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn copy
 
-  ^{:arglists '([in out]
-                [in out count])
-    :doc "Copy certain number of bytes to output."}
+  "Copy certain number of bytes to output."
+  {:arglists '([in out]
+               [in out count])}
 
   ([in out]
    (copy in out -1))
@@ -211,10 +214,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->bytes
 
-  ^{:arglists '([in][in enc])
-    :doc "Convert almost anything to byte[]."}
-
-  {:tag "[B"}
+  "Convert almost anything to byte[]."
+  {:tag "[B"
+   :arglists '([in][in enc])}
 
   ([in]
    (x->bytes in "utf-8"))
@@ -244,10 +246,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->chars
 
-  ^{:arglists '([in][in enc])
-    :doc "Convert almost anything to char[]."}
-
-  {:tag "[C"}
+  "Convert almost anything to char[]."
+  {:tag "[C"
+   :arglists '([in][in enc])}
 
   ([in]
    (x->chars in "utf-8"))
@@ -276,10 +277,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->str
 
-  ^{:arglists '([in][in enc])
-    :doc "Convert almost anything to String."}
-
-  {:tag String}
+  "Convert almost anything to String."
+  {:tag String
+   :arglists '([in][in enc])}
 
   ([in]
    (x->str in "utf-8"))
@@ -307,9 +307,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn read-number
 
-  ^{:arglists '([in numType])
-    :tag Number
-    :doc "Deserialize a number."}
+  "Deserialize a number."
+  {:tag Number
+   :arglists '([in numType])}
 
   [in numType]
   {:pre [(class? numType)]}
@@ -333,10 +333,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn write-number
 
-  ^{:arglists '([nnum])
-    :tag bytes
-    :doc "Serialize a number."}
-
+  "Serialize a number."
+  {:tag "[B"
+   :arglists '([nnum])}
   [nnum]
   {:pre [(number? nnum)]}
 
@@ -363,19 +362,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fdelete
 
-  ^{:arglists '([f])
-    :doc "Delete file (quietly)."}
+  "Delete file (quietly)."
+  {:arglists '([f])}
+  [f]
 
-  [f] (c/try! (if (c/is? File f)
-                (io/delete-file f true))))
+  (c/try! (if (c/is? File f)
+            (io/delete-file f true))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn bytes->hex
 
-  ^{:arglists '([in])
-    :tag chars
-    :doc "Bytes into hex-chars."}
-
+  "Bytes into hex-chars."
+  {:tag "[C"
+   :arglists '([in])}
   [in]
 
   (let [b' (x->bytes in)
@@ -401,19 +400,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn hexify
 
-  ^{:arglists '([in])
-    :tag String
-    :doc "Turn bytes into hex string."}
+  "Turn bytes into hex string."
+  {:tag String
+   :arglists '([in])}
+  [in]
 
-  [in] (some-> in bytes->hex x->str))
+  (some-> in bytes->hex x->str))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gzip
 
-  ^{:arglists '([in])
-    :tag bytes
-    :doc "Gzip input."}
-
+  "Gzip input."
+  {:tag "[B"
+   :arglists '([in])}
   [in]
 
   (if-some [b (x->bytes in)]
@@ -426,10 +425,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gunzip
 
-  ^{:arglists '([in])
-    :tag bytes
-    :doc "Gunzip input."}
-
+  "Gunzip input."
+  {:tag "[B"
+   :arglists '([in])}
   [in]
 
   (if-some [b (x->bytes in)]
@@ -439,9 +437,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn reset-stream!
 
-  ^{:arglists '([in])
-    :doc "Reset stream (safely)."}
-
+  "Reset stream (safely)."
+  {:arglists '([in])}
   [in]
 
   (if-some [inp (c/cast? InputStream in)] (c/try! (.reset inp))) in)
@@ -449,8 +446,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn input-stream??
 
-  ^{:arglists '([arg][arg enc])
-    :doc "Returns a tuple [you-close? stream]."}
+  "Returns a tuple [you-close? stream]."
+  {:arglists '([arg]
+               [arg enc])}
 
   ([arg]
    (input-stream?? arg "utf-8"))
@@ -475,10 +473,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn gzb64->bytes
 
-  ^{:arglists '([in])
-    :tag bytes
-    :doc "Unzip content which is base64 encoded + gziped."}
-
+  "Unzip content which is base64 encoded + gziped."
+  {:tag "[B"
+   :arglists '([in])}
   [in]
 
   (some->> in x->str (.decode (Base64/getDecoder)) gunzip))
@@ -486,10 +483,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn bytes->gzb64
 
-  ^{:arglists '([in])
-    :tag String
-    :doc "Zip content and then base64 encode it."}
-
+  "Zip content and then base64 encode it."
+  {:tag String
+   :arglists '([in])}
   [in]
 
   (some->> (some-> in x->bytes gzip)
@@ -498,10 +494,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn readable-bytes
 
-  ^{:arglists '([in][in enc])
-    :doc "Get the available bytes in this stream."}
-
-  {:tag Integer}
+  "Get the available bytes in this stream."
+  {:tag Integer
+   :arglists '([in][in enc])}
 
   ([in]
    (readable-bytes in "utf-8"))
@@ -519,11 +514,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn tmpfile
 
-  ^{:arglists '([f])
-    :tag File
-    :doc "Create f in temp dir."}
-
+  "Create f in temp dir."
+  {:tag File
+   :arglists '([f])}
   [f]
+
   (->> (if-not (c/is? File f)
          (str f)
          (.getName ^File f))
@@ -532,12 +527,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn temp-file
 
-  ^{:arglists '([]
-                [pfx sux]
-                [pfx sux dir])
-    :doc "Create a temporary file."}
-
-  {:tag File}
+  "Create a temporary file."
+  {:tag File
+   :arglists '([]
+               [pfx sux]
+               [pfx sux dir])}
 
   ([]
    (temp-file nil nil))
@@ -553,14 +547,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn open-temp-file
 
-  ^{:arglists '([]
-                [pfx sux]
-                [pfx sux dir])
-    :doc "A Tuple(2) [File, OutputStream?]."}
+  "A Tuple(2) [File, OutputStream?]."
+  {:arglists '([]
+               [pfx sux]
+               [pfx sux dir])}
 
-  ([] (open-temp-file nil nil))
+  ([]
+   (open-temp-file nil nil))
 
-  ([pfx sux] (open-temp-file pfx sux (file-repo)))
+  ([pfx sux]
+   (open-temp-file pfx sux (file-repo)))
 
   ([pfx sux dir]
    (let [fp (temp-file pfx sux dir)] [fp (os* fp)])))
@@ -568,10 +564,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn x->file
 
-  ^{:arglists '([in][in fout])
-    :doc "Copy content to a temp file."}
-
-  {:tag File}
+  "Copy content to a temp file."
+  {:tag File
+   :arglists '([in][in fout])}
 
   ([in]
    (x->file in nil))
@@ -587,9 +582,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn reset-source!
 
-  ^{:arglists '([in])
-    :doc "Reset an input source."}
-
+  "Reset an input source."
+  {:arglists '([in])}
   [in]
 
   (if-some [src (c/cast? InputSource in)]
@@ -668,14 +662,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn slurpb
 
-  ^{:arglists '([in]
-                [in enc]
-                [in enc useFile?])
-    :doc "Like slurp but reads in bytes."}
+  "Like slurp but reads in bytes."
+  {:arglists '([in]
+               [in enc]
+               [in enc useFile?])}
 
-  ([in enc] (slurpb in enc false))
+  ([in enc]
+   (slurpb in enc false))
 
-  ([in] (slurpb in "utf-8"))
+  ([in]
+   (slurpb in "utf-8"))
 
   ([in enc usefile?]
    (let [[c? i] (input-stream?? in)]
@@ -686,14 +682,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn slurpc
 
-  ^{:arglists '([in]
-                [in enc]
-                [in enc useFile?])
-    :doc "Like slurp but reads in chars."}
+  "Like slurp but reads in chars."
+  {:arglists '([in]
+               [in enc]
+               [in enc useFile?])}
 
-  ([in enc] (slurpc in enc false))
+  ([in enc]
+   (slurpc in enc false))
 
-  ([in] (slurpc in "utf-8"))
+  ([in]
+   (slurpc in "utf-8"))
 
   ([in enc usefile?]
    (let [[c? i] (input-stream?? in)
@@ -707,9 +705,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn file-read-write?
 
-  ^{:arglists '([in])
-    :doc "Is file readable & writable?"}
-
+  "Is file readable & writable?"
+  {:arglists '([in])}
   [in]
 
   (if-some [^File fp (some-> in (io/file))]
@@ -719,9 +716,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn file-ok?
 
-  ^{:arglists '([in])
-    :doc "If file exists?"}
-
+  "If file exists?"
+  {:arglists '([in])}
   [in]
 
   (if-some [^File fp (some-> in (io/file))] (.exists fp)))
@@ -729,9 +725,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn file-read?
 
-  ^{:arglists '([in])
-    :doc "Is file readable?"}
-
+  "Is file readable?"
+  {:arglists '([in])}
   [in]
 
   (if-some [^File fp (some-> in (io/file))]
@@ -740,9 +735,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn dir-read-write?
 
-  ^{:arglists '([in])
-    :doc "Is dir readable and writable?"}
-
+  "Is dir readable and writable?"
+  {:arglists '([in])}
   [in]
 
   (if-some [^File dir (some-> in (io/file))]
@@ -752,9 +746,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn dir-read?
 
-  ^{:arglists '([in])
-    :doc "Is dir readable?"}
-
+  "Is dir readable?"
+  {:arglists '([in])}
   [in]
 
   (if-some [^File dir (some-> in (io/file))]
@@ -763,9 +756,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn can-exec?
 
-  ^{:arglists '([in])
-    :doc "Is file executable?"}
-
+  "Is file executable?"
+  {:arglists '([in])}
   [in]
 
   (if-some
@@ -775,29 +767,28 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parent-file
 
-  ^{:arglists '([in])
-    :tag File
-    :doc "Parent file."}
-
+  "Parent file."
+  {:tag File
+   :arglists '([in])}
   [in]
+
   (if-some [^File f (some-> in (io/file))] (.getParentFile f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn parent-path
 
-  ^{:arglists '([path])
-    :tag String
-    :doc "Path to parent."}
-
+  "Path to parent."
+  {:tag String
+   :arglists '([path])}
   [path]
+
   (if (c/nichts? path) "" (.getParent (io/file path))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn get-file
 
-  ^{:arglists '([dir fname])
-    :doc "Get a file from a directory."}
-
+  "Get a file from a directory."
+  {:arglists '([dir fname])}
   [dir fname]
 
   (let [fp (io/file dir fname)]
@@ -806,11 +797,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn spit-file
 
-  ^{:arglists '([file stuff]
-                [file stuff del?])
-    :doc "Save a file to a directory."}
-
-  {:tag File}
+  "Save a file to a directory."
+  {:tag File
+   :arglists '([file stuff]
+               [file stuff del?])}
 
   ([file stuff]
    (spit-file file stuff false))
@@ -838,11 +828,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn save-file
 
-  ^{:arglists '([dir fname stuff]
-                [dir fname stuff del?])
-    :doc "Save a file to a directory."}
-
-  {:tag File}
+  "Save a file to a directory."
+  {:tag File
+   :arglists '([dir fname stuff]
+               [dir fname stuff del?])}
 
   ([dir fname stuff]
    (save-file dir fname stuff false))
@@ -853,12 +842,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn change-content
 
-  ^{:arglists '([file work]
-                [file work enc])
-    :doc "Pass file content - as string to
-         the work function, returning new content."}
-
-  {:tag String}
+  "Pass file content - as string to
+  the work function, returning new content."
+  {:tag String
+   :arglists '([file work]
+               [file work enc])}
 
   ([file work]
    (change-content file work "utf-8"))
@@ -871,11 +859,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn replace-file!
 
-  ^{:arglists '([file work]
-                [file work enc])
-    :doc "Update file with new content."}
-
-  {:tag File}
+  "Update file with new content."
+  {:tag File
+   :arglists '([file work]
+               [file work enc])}
 
   ([file work]
    (replace-file! file work "utf-8"))
@@ -887,10 +874,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn unzip->dir
 
-  ^{:arglists '([srcZip desDir])
-    :doc "Unzip zip file to a target folder."}
-
+  "Unzip zip file to a target folder."
+  {:arglists '([srcZip desDir])}
   [^File srcZip ^File desDir]
+
   (let [z (ZipFile. srcZip)
         es (.entries z)]
     (.mkdirs desDir)
@@ -906,10 +893,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn mkdirs
 
-  ^{:arglists '([arg])
-    :tag File
-    :doc "Make directories."}
-
+  "Make directories."
+  {:tag File
+   :arglists '([arg])}
   [arg]
 
   (cond (string? arg) (mkdirs (io/file arg))
@@ -918,9 +904,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-files
 
-  ^{:arglists '([dir ext])
-    :doc "List files with certain extension."}
-
+  "List files with certain extension."
+  {:arglists '([dir ext])}
   [dir ext]
 
   (c/vec-> (.listFiles (io/file dir)
@@ -931,9 +916,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-dirs
 
-  ^{:arglists '([dir])
-    :doc "List sub-directories."}
-
+  "List sub-directories."
+  {:arglists '([dir])}
   [dir]
 
   (c/vec-> (.listFiles (io/file dir)
@@ -943,9 +927,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn list-any-files
 
-  ^{:arglists '([dir ext])
-    :doc "List files with certain extension recursively."}
-
+  "List files with certain extension recursively."
+  {:arglists '([dir ext])}
   [dir ext]
 
   (c/do-with-atom [res (atom [])]
@@ -963,10 +946,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn grep-folder-paths
 
-  ^{:arglists '([rootDir ext])
-    :doc "Recurse a dir, pick out dirs
-         that have files of this extension."}
-
+  "Recurse a dir, pick out dirs
+  that have files of this extension."
+  {:arglists '([rootDir ext])}
   [rootDir ext]
 
   (c/do-with-atom [bin (atom #{})]
@@ -1005,20 +987,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn grep-file-paths
 
-  ^{:arglists '([rootDir ext])
-    :doc "Recurse a folder, picking out
-         files with the given extension."}
-
+  "Recurse a folder, picking out
+  files with the given extension."
+  {:arglists '([rootDir ext])}
   [rootDir ext]
+
   ;; the stack is used to store the folder hierarchy
   @(scan-tree (Stack.) ext (atom []) (io/file rootDir)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn basename
 
-  ^{:arglists '([file])
-    :doc "Get the name of file without extension."}
-
+  "Get the name of file without extension."
+  {:arglists '([file])}
   [file]
 
   (let [n (.getName (io/file file))
@@ -1027,9 +1008,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn touch!
 
-  ^{:arglists '([file])
-    :doc "Touch a file."}
-
+  "Touch a file."
+  {:arglists '([file])}
   [file]
 
   (if-some [f (io/file file)]
@@ -1042,10 +1022,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn chunk-read-stream
 
-  ^{:arglists '([data cb])
-    :doc "Reads through this data, and for each chunk
-         calls the function."}
-
+  "Reads through this data, and for each chunk
+  calls the function."
+  {:arglists '([data cb])}
   [data cb]
 
   (let [b (byte-array c/FourK)
@@ -1061,10 +1040,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fmt->edn
 
-  ^{:arglists '([obj])
-    :tag String
-    :doc "Format to EDN."}
-
+  "Format to EDN."
+  {:tag String
+   :arglists '([obj])}
   [obj]
 
   (let [w (StringWriter.)]
@@ -1075,8 +1053,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn read-edn
 
-  ^{:arglists '([arg][arg enc])
-    :doc "Parse EDN formatted text."}
+  "Parse EDN formatted text."
+  {:arglists '([arg]
+               [arg enc])}
 
   ([arg]
    (read-edn arg "utf-8"))
@@ -1087,23 +1066,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn fmt->json
 
-  ^{:arglists '([data])
-    :tag String
-    :doc "Format to JSON."}
+  "Format to JSON."
+  {:tag String
+   :arglists '([data])}
+  [data]
 
-  [data] (some-> data js/write-str))
+  (some-> data js/write-str))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn read-json
 
-  ^{:arglists '([data]
-                [data enc]
-                [data enc keyfn])
-    :doc "Parses JSON."}
+  "Parses JSON."
+  {:arglists '([data]
+               [data enc]
+               [data enc keyfn])}
 
-  ([data enc] (read-json data enc nil))
+  ([data enc]
+   (read-json data enc nil))
 
-  ([data] (read-json data "utf-8"))
+  ([data]
+   (read-json data "utf-8"))
 
   ([data enc keyfn]
    (if-some [s (x->str data enc)]
@@ -1113,10 +1095,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn res->stream
 
-  ^{:arglists '([path][path ldr])
-    :doc "Load the resource as stream."}
-
-  {:tag InputStream}
+  "Load the resource as stream."
+  {:tag InputStream
+   :arglists '([path]
+               [path ldr])}
 
   ([path]
    (res->stream path nil))
@@ -1130,10 +1112,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn res->url
 
-  ^{:arglists '([path][path ldr])
-    :doc "Load the resource as URL."}
-
-  {:tag URL}
+  "Load the resource as URL."
+  {:tag URL
+   :arglists '([path]
+               [path ldr])}
 
   ([path]
    (res->url path nil))
@@ -1147,16 +1129,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn res->str
 
-  ^{:arglists '([path]
-                [path enc]
-                [path enc ldr])
-    :doc "Load the resource as string."}
+  "Load the resource as string."
+  {:tag String
+   :arglists '([path]
+               [path enc]
+               [path enc ldr])}
 
-  {:tag String}
+  ([path enc]
+   (res->str path enc nil))
 
-  ([path enc] (res->str path enc nil))
-
-  ([path] (res->str path "utf-8" nil))
+  ([path]
+   (res->str path "utf-8" nil))
 
   ([path enc ldr]
    (if-some [r (res->stream path ldr)]
@@ -1169,10 +1152,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn res->bytes
 
-  ^{:arglists '([path][path ldr])
-    :doc "Load the resource as bytes."}
-
-  {:tag "[B"}
+  "Load the resource as bytes."
+  {:tag "[B"
+   :arglists '([path][path ldr])}
 
   ([path]
    (res->bytes path nil))
@@ -1188,10 +1170,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn res->file
 
-  ^{:arglists '([path][path ldr])
-    :doc "Load the resource and write it to a temp file."}
-
-  {:tag File}
+  "Load the resource and write it to a temp file."
+  {:tag File
+   :arglists '([path]
+               [path ldr])}
 
   ([path]
    (res->file path nil))
@@ -1205,10 +1187,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn delete-dir
 
-  ^{:arglists '([dir])
-    :doc "Deleting recursively a directory with native Java.
-         https://docs.oracle.com/javase/tutorial/essential/io/walk.html"}
-
+  "Deleting recursively a directory with native Java.
+  https://docs.oracle.com/javase/tutorial/essential/io/walk.html"
+  {:arglists '([dir])}
   [dir]
 
   (if-some [root (Paths/get (-> dir io/file .toURI))]
@@ -1226,10 +1207,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn clean-dir
 
-  ^{:arglists '([dir])
-    :doc "Clean out recursively a directory with native Java.
-         https://docs.oracle.com/javase/tutorial/essential/io/walk.html"}
-
+  "Clean out recursively a directory with native Java.
+  https://docs.oracle.com/javase/tutorial/essential/io/walk.html"
+  {:arglists '([dir])}
   [dir]
 
   (if-some [root (Paths/get (-> dir io/file .toURI))]
@@ -1248,9 +1228,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn cmenu
 
-  ^{:arglists '([cmdQs q1])
-    :doc "A console menu, prompting a sequence of questions via console."}
-
+  "A console menu, prompting a sequence of questions via console."
+  {:arglists '([cmdQs q1])}
   [cmdQs q1]
   {:pre [(map? cmdQs)]}
 

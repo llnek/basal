@@ -40,17 +40,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn tcore<>
 
-  ^{:arglists '([id]
-                [id tds]
-                [id tds trace?]
-                [id tds keepAliveMillis trace?])
-    :doc "A BlockingQueue Thread Pool Executor."}
+  "A BlockingQueue Thread Pool Executor."
+  {:arglists '([id]
+               [id tds]
+               [id tds trace?]
+               [id tds keepAliveMillis trace?])}
 
-  ([id] (tcore<> id 0))
+  ([id]
+   (tcore<> id 0))
 
-  ([id tds] (tcore<> id tds true))
+  ([id tds]
+   (tcore<> id tds true))
 
-  ([id tds trace?] (tcore<> id tds 60000 trace?))
+  ([id tds trace?]
+   (tcore<> id tds 60000 trace?))
 
   ([id tds keepAliveMillis trace?]
    (let [tds (if (pos? (c/num?? tds 0)) tds (u/pthreads))
@@ -104,11 +107,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn thread<>
 
-  ^{:arglists '([func start?]
-                [func start? options])
-    :doc "Run a function in a separate thread."}
-
-  {:tag Thread}
+  "Run a function in a separate thread."
+  {:tag Thread
+   :arglists '([func start?]
+               [func start? options])}
 
   ([func start?]
    (thread<> func start? nil))
@@ -130,9 +132,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn async!
 
-  ^{:arglists '([func]
-                [func options])
-    :doc "Run function async."}
+  "Run function async."
+  {:arglists '([func]
+               [func options])}
 
   ([func]
    (async! func nil))
@@ -145,9 +147,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn jvm-info
 
-  ^{:arglists '([])
-    :doc "Get info on the JVM."}
-
+  "Get info on the JVM."
+  {:arglists '([])}
   []
 
   (let [os (ManagementFactory/getOperatingSystemMXBean)
@@ -168,10 +169,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn process-pid
 
-  ^{:arglists '([])
-    :tag String
-    :doc "Get the process pid."}
-
+  "Get the process pid."
+  {:tag String
+   :arglists '([])}
   []
 
   (let [b (ManagementFactory/getRuntimeMXBean)]
@@ -180,9 +180,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn delay-exec
 
-  ^{:arglists '([func delayMillis])
-    :doc "Run function after some delay."}
-
+  "Run function after some delay."
+  {:arglists '([func delayMillis])}
   [func delayMillis]
   {:pre [(fn? func)
          (c/spos? delayMillis)]}
@@ -192,9 +191,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn exit-hook
 
-  ^{:arglists '([func])
-    :doc "Add a shutdown hook."}
-
+  "Add a shutdown hook."
+  {:arglists '([func])}
   [func]
   {:pre [(fn? func)]}
 
@@ -224,9 +222,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn scheduler<>
 
-  ^{:arglists '([]
-                [named options])
-    :doc "Create a task scheduler."}
+  "Create a task scheduler."
+  {:arglists '([]
+               [named options])}
 
   ([]
    (scheduler<> (u/jid<>) nil))
