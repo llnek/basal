@@ -2872,16 +2872,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- prn-test
-  [results title]
-  (let [mark (System/currentTimeMillis)
-        lsep (repeat-str 78 "+")
+  [results title diff]
+  (let [lsep (repeat-str 78 "+")
         esep (repeat-str 78 "=")
         sum (count results)
         f (filter #(cs/starts-with? % "F") results)
         p (filter #(cs/starts-with? % "p") results)
         ok (count p)
-        perc (percent ok sum)
-        diff (- (System/currentTimeMillis) mark)]
+        perc (percent ok sum)]
 
     (-> lsep ansi/bold-white prn!!)
     (-> "test-case: "
@@ -2920,10 +2918,11 @@
 
   ([test title print?]
    {:pre [(fn? test)]}
-   (let [[res ok?]
-         (run-test test)]
+   (let [mark (System/currentTimeMillis)
+         [res ok?] (run-test test)
+         diff (- (System/currentTimeMillis) mark)]
      (if print?
-       (prn-test res title)) ok?)))
+       (prn-test res title diff)) ok?)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;protocols
