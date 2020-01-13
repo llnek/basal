@@ -2871,6 +2871,30 @@
     [res (every? #(cs/starts-with? % "p") res)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn pretty-millis
+
+  "Pretty print milliseconds value."
+  {:tag String
+   :arglists '([millis])}
+  [millis]
+  {:pre [(number? millis)]}
+
+  (let [secs (int (/ millis 1000.0))
+        millis (int (- millis
+                       (* secs 1000.0)))
+        mins (int (/ secs 60.0))
+        secs (int (- secs
+                     (* mins 60.0)))
+        hours (int (/ mins 60.0))
+        mins (int (- mins
+                     (* hours 60.0)))]
+    (cond
+      (pos? hours) (fmt "%d hours %2d minutes %2d.%03d secs" hours mins secs millis)
+      (pos? mins) (fmt "%2d minutes %2d.%03d secs" mins secs millis)
+      (pos? secs) (fmt "%2d.%03d seconds" secs millis)
+      :else (fmt "0.%03d seconds" millis))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn- prn-test
   [results title diff]
   (let [lsep (repeat-str 78 "+")
@@ -2902,7 +2926,8 @@
         ansi/bold-white prn!!)
     (-> (str "Failed: " (- sum ok))
         ansi/bold-white prn!!)
-    (-> (str "cpu-time: " diff "ms")
+    (-> (str "cpu-time: "
+             (pretty-millis diff))
         ansi/bold-white prn!!)
     (-> "" ansi/white prn!!)))
 
