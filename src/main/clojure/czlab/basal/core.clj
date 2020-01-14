@@ -10,7 +10,7 @@
 
   "Useful additions to clojure core & string."
 
-  (:refer-clojure :exclude [send])
+  (:refer-clojure :exclude [send next])
 
   (:require [clojure.set :as ct]
             [clojure.string :as cs]
@@ -3109,6 +3109,11 @@
   (fire [_]
         [_ arg] "")
   (set-trigger [_ t] ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defprotocol Nextable
+  "Something that has a next."
+  (next [_] ""))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol Versioned
