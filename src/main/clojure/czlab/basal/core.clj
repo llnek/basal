@@ -571,7 +571,7 @@
   `(- ~x 1))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro do#false
+(defmacro do->false
 
   "Do returns false."
   {:arglists '([& forms])}
@@ -580,7 +580,7 @@
   `(do ~@forms false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro do#true
+(defmacro do->true
 
   "Do returns true."
   {:arglists '([& forms])}
@@ -589,7 +589,7 @@
   `(do ~@forms true))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro do#nil
+(defmacro do->nil
 
   "Do returns nil."
   {:arglists '([& forms])}
@@ -598,7 +598,7 @@
   `(do ~@forms nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro let#false
+(defmacro let->false
 
   "Let returns false."
   {:arglists '([& forms])}
@@ -607,7 +607,7 @@
   `(let ~@forms false))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro let#true
+(defmacro let->true
 
   "Let returns true."
   {:arglists '([& forms])}
@@ -616,7 +616,7 @@
   `(let ~@forms true))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defmacro let#nil
+(defmacro let->nil
 
   "Let returns nil."
   {:arglists '([& forms])}
@@ -2013,7 +2013,7 @@
   {:arglists '([reason parent child])}
   [reason parent child]
 
-  (do#true (-> (cond
+  (do->true (-> (cond
                  (and (class? parent) (class? child)) (isa? child parent)
                  (or (nil? parent) (nil? child)) false
                  (not (class? parent)) (test-isa reason (class parent) child)
@@ -2027,7 +2027,7 @@
   {:arglists '([reason obj])}
   [reason obj]
 
-  (do#true (assert (some? obj) (str reason " is null."))))
+  (do->true (assert (some? obj) (str reason " is null."))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn test-cond
@@ -2036,7 +2036,7 @@
   {:arglists '([reason cond])}
   [reason cond]
 
-  (do#true (assert cond (str reason))))
+  (do->true (assert cond (str reason))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn test-hgl
@@ -2045,7 +2045,7 @@
   {:arglists '([reason s])}
   [reason s]
 
-  (do#true
+  (do->true
     (assert (and (string? s)
                  (not-empty s)) (str reason " is empty."))))
 
@@ -2072,28 +2072,28 @@
 
   :double [reason v]
 
-  (do#true (assert (snneg? v) (str reason " must be >= 0."))))
+  (do->true (assert (snneg? v) (str reason " must be >= 0."))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmethod test-pos0
 
   :long [reason v]
 
-  (do#true (assert (snneg? v) (str reason " must be >= 0."))))
+  (do->true (assert (snneg? v) (str reason " must be >= 0."))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmethod test-pos
 
   :double [reason v]
 
-  (do#true (assert (spos? v) (str reason " must be > 0."))))
+  (do->true (assert (spos? v) (str reason " must be > 0."))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmethod test-pos
 
   :long [reason v]
 
-  (do#true (assert (spos? v) (str reason " must be > 0."))))
+  (do->true (assert (spos? v) (str reason " must be > 0."))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn test-seq+
@@ -2102,7 +2102,7 @@
   {:arglists '([reason v])}
   [reason v]
 
-  (do#true (assert (pos? (count v)) (str reason " must be non empty."))))
+  (do->true (assert (pos? (count v)) (str reason " must be non empty."))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn sort-join

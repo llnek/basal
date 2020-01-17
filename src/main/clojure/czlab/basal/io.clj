@@ -1241,13 +1241,13 @@
                (let [m (cond (or (== c 4) (== c -1)) #{:quit :break}
                              (== c (int \newline)) #{:break}
                              (c/or?? [== c] 27 (int \return) (int \backspace)) nil
-                             :else (c/do#nil (c/sbf+ bf (char c))))]
+                             :else (c/do->nil (c/sbf+ bf (char c))))]
                  (if (c/in? m :break) [m bf] (recur (.read in) bf))))]
          (if-not (c/in? ms :quit) (c/strim (str bf)))))
      (on-answer [^Writer cout answer props {:keys [result id
                                                    must? default next]}]
        (if (nil? answer)
-         (c/do#nil (.write cout "\n"))
+         (c/do->nil (.write cout "\n"))
          (let [rc (c/stror answer default)]
            (cond (and must?
                       (c/nichts? rc)) id ;no answer, loop try again

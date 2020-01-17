@@ -26,7 +26,7 @@
 (c/deftest test-proc
 
   (ensure?? "init"
-            (c/let#true
+            (c/let->true
               [s (p/scheduler<>)] (reset! SCD s) (c/activate s)))
 
   (ensure?? "run*" (== 1
@@ -74,7 +74,7 @@
 
   (ensure?? "process-pid" (> (.length (p/process-pid)) 0))
 
-  (ensure?? "finz" (c/do#true (c/deactivate @SCD)))
+  (ensure?? "finz" (c/do->true (c/deactivate @SCD)))
 
   (ensure?? "test-end" (== 1 1)))
 

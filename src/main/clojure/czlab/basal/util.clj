@@ -338,7 +338,7 @@
      (c/do-with [m (reify MonoFlop
                      (is-first-call? [_]
                        (if-not (.get flag)
-                         (c/do#true (.set flag true)))))]
+                         (c/do->true (.set flag true)))))]
        (if flipOnCreate? (is-first-call? m))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

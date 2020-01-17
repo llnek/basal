@@ -150,7 +150,7 @@
                            :keys [action]} z]]
               (action expected topic msg)))))
       (walk [async? branch pathTokens topic msg tst]
-        (c/let#nil
+        (c/let->nil
           [{:keys [levels subcs]} branch
            [p & more] pathTokens
            cur (levels p)

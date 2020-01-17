@@ -141,13 +141,13 @@
 
   (ensure?? "dec*" (== 2 (c/dec* (+ 2 1))))
 
-  (ensure?? "do#false" (false? (c/do#false "aaa")))
-  (ensure?? "do#nil" (nil? (c/do#nil "aaa")))
-  (ensure?? "do#true" (true? (c/do#true "aaa")))
+  (ensure?? "do->false" (false? (c/do->false "aaa")))
+  (ensure?? "do->nil" (nil? (c/do->nil "aaa")))
+  (ensure?? "do->true" (true? (c/do->true "aaa")))
 
-  (ensure?? "let#false" (false? (c/let#false [a 3] a)))
-  (ensure?? "let#nil" (nil? (c/let#nil [a 3] a)))
-  (ensure?? "let#true" (true? (c/let#true [a 3] a)))
+  (ensure?? "let->false" (false? (c/let->false [a 3] a)))
+  (ensure?? "let->nil" (nil? (c/let->nil [a 3] a)))
+  (ensure?? "let->true" (true? (c/let->true [a 3] a)))
 
   (ensure?? "defenum"
             (== 4 (do (c/defenum xxx 1 a b c) (+ xxx-a xxx-c))))
