@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defproject io.czlab/basal "2.0.0"
+(defproject io.czlab/basal "2.0.1"
 
   :license {:url "http://www.eclipse.org/legal/epl-v10.html"
             :name "Eclipse Public License"}
@@ -66,7 +66,8 @@
   :jvm-opts ["-Dczlabloggerflag=true"
              "-Dlog4j.configurationFile=file:attic/log4j2.xml"]
 
-  :javac-options [;"-source" "8"
+  :javac-options ["-source" "11"
+                  "-target" "11"
                   "-Xlint:unchecked" "-Xlint:-options" "-Xlint:deprecation"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
