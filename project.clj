@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defproject io.czlab/basal "2.0.1"
+(defproject io.czlab/basal "2.0.2"
 
   :license {:url "http://www.eclipse.org/legal/epl-v10.html"
             :name "Eclipse Public License"}
@@ -8,21 +8,21 @@
   :description "General clojure helper functions"
   :url "https://github.com/llnek/basal"
 
-  :dependencies [[org.apache.logging.log4j/log4j-slf4j-impl "2.13.0"]
-                 [org.apache.logging.log4j/log4j-core "2.13.0"]
-                 [org.slf4j/slf4j-api "1.7.30" ]
-                 [io.aviso/pretty "0.1.37"]
-                 [org.clojure/core.async "0.6.532"]
-                 [org.flatland/ordered "1.5.7"]
-                 [org.clojure/data.json "0.2.7"]
-                 [org.clojure/tools.logging "0.5.0"]
-                 [org.clojure/clojurescript "1.10.597"]]
+  :dependencies [[org.apache.logging.log4j/log4j-slf4j-impl "2.14.1"]
+                 [org.apache.logging.log4j/log4j-core "2.14.1"]
+                 [org.slf4j/slf4j-api "1.7.31" ]
+                 [io.aviso/pretty "1.1"]
+                 [org.clojure/core.async "1.3.618"]
+                 [org.flatland/ordered "1.5.9"]
+                 [org.clojure/data.json "2.4.0"]
+                 [org.clojure/tools.logging "1.1.0"]
+                 [org.clojure/clojurescript "1.10.866"]]
 
   :exclusions [org.clojure/clojure]
 
-  :plugins [[cider/cider-nrepl "0.22.4"]
+  :plugins [[cider/cider-nrepl "0.26.0"]
             [lein-codox "0.10.7"]
-            [lein-cljsbuild "1.1.7"]]
+            [lein-cljsbuild "1.1.8"]]
 
   :cljsbuild {
     :builds [{
@@ -37,7 +37,7 @@
           :pretty-print true}}]}
 
   :profiles {:provided {:dependencies [[org.clojure/clojure
-                                        "1.10.1" :scope "provided"]]}
+                                        "1.10.3" :scope "provided"]]}
              :uberjar {:aot :all}}
 
   :global-vars {*warn-on-reflection* true}
@@ -66,8 +66,8 @@
   :jvm-opts ["-Dczlabloggerflag=true"
              "-Dlog4j.configurationFile=file:attic/log4j2.xml"]
 
-  :javac-options ["-source" "11"
-                  "-target" "11"
+  :javac-options ["-source" "16"
+                  "-target" "16"
                   "-Xlint:unchecked" "-Xlint:-options" "-Xlint:deprecation"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
