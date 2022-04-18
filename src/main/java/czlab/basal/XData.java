@@ -17,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.nio.charset.Charset;
+import java.lang.ref.Cleaner;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,9 +46,12 @@ public class XData implements Serializable {
    */
   public XData(Object p, boolean delFlag) {
     reset(p,delFlag);
+    Cleaner.create().register(this, ()->{
+      this.finalise();
+    });
   }
   public XData(Object p) {
-    reset(p);
+    this(p,true);
   }
   public XData() {
     this(null);
@@ -228,8 +232,7 @@ public class XData implements Serializable {
     return len;
   }
 
-  @Override
-  public void finalize() throws Throwable {
+  private void finalise(){
     dispose();
   }
 

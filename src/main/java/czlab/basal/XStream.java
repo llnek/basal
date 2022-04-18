@@ -13,6 +13,7 @@ package czlab.basal;
 //import static org.slf4j.LoggerFactory.*;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
+import java.lang.ref.Cleaner;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.File;
@@ -38,6 +39,9 @@ public class XStream extends InputStream {
   public XStream(File f, boolean isTransient) {
     _transientFile = isTransient;
     _fn= f;
+    Cleaner.create().register(this, ()->{
+      this.finalise();
+    });
   }
 
   /**
@@ -141,8 +145,7 @@ public class XStream extends InputStream {
    */
   public long getPosition() { return pos; }
 
-  @Override
-  public void finalize() throws Throwable {
+  private void finalise(){
     dispose();
   }
 
