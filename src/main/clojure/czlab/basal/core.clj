@@ -71,6 +71,129 @@
                          (assoc (meta name)
                                 :private true)) more))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro decl-long-var
+
+  "Define a long array[1] for local operation"
+
+  ([] `(decl-long-var 0))
+  ([n] `(long-array 1 ~n)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro decl-int-var
+
+  "Define a int array[1] for local operation"
+
+  ([] `(decl-int-var 0))
+  ([n] `(int-array 1 ~n)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn int-var
+
+  ""
+
+  ([^ints arr v] (aset arr 0 (int v)) (int v))
+  ([^ints arr] (aget arr 0))
+  ([^ints arr op nv]
+   (let [v (int (op (aget arr 0) nv))] (aset arr 0 v) v)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn long-var
+
+  ""
+
+  ([^longs arr ^long v] (aset arr 0 v) v)
+  ([^longs arr] (aget arr 0))
+  ([^longs arr op nv]
+   (let [v (long (op (aget arr 0) nv))] (aset arr 0 v) v)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro decl-var-docstring
+
+  "Add docstring to var"
+  [v s]
+
+  `(alter-meta! ~v assoc :doc ~s))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro decl-var-private
+
+  "Make var private"
+
+  [v]
+
+  `(alter-meta! ~v assoc :private true))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro decl-object<>
+
+  "Define a simple type"
+  [name & more]
+
+  `(defrecord ~name [] ~@more))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defprotocol JEnumProto
+  "Mimic Java Enum"
+  (lookup-enum-str [_ s] "Get enum from string")
+  (get-enum-str [_ e] "Get string value of enum")
+  (lookup-enum-int [_ n] "Get enum from int"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;Loose equivalent of a Java Enum
+(decl-object<> JEnum
+               JEnumProto
+               (get-enum-str [me e]
+                 (if (contains? me e)
+                   (cs/replace (str e) #"^:" "")))
+               (lookup-enum-str [me s]
+                 (let [kee (keyword s)]
+                   (some #(if (= kee (first %)) (first %)) me)))
+               (lookup-enum-int [me n]
+                (some #(if (= n (last %)) (first %)) me)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro decl-generic-enum
+
+  "e.g. (decl-generic-enum
+          weather
+          hot
+          cold)"
+  [name base & more]
+
+  (assert (and (not-empty more)
+               (integer? base)))
+  `(def ~name
+     (czlab.basal.core/object<>
+       czlab.basal.core.JEnum
+       (-> {}
+           ~@(reduce
+               #(conj %1
+                      `(assoc (keyword (str *ns*) ~(str %2))
+                              ~(+ base (count %1)))) [] more)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;how to make it private
+;;(alter-meta! #'weather assoc :private true)
+(defmacro decl-special-enum
+
+  "e.g. (decl-special-enum
+          weather
+          hot 3
+          cold 7)"
+  [name & more]
+
+  (assert (even? (count more)))
+  (let [ps (partition 2 more)]
+    `(def ~name
+       (czlab.basal.core/object<>
+         czlab.basal.core.JEnum
+         (-> {}
+             ~@(mapv #(do
+                        `(assoc (keyword (str *ns*)
+                                         ~(str (first %)))
+                                ~(last %))) ps))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro trace
 

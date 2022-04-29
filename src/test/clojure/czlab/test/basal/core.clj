@@ -155,6 +155,41 @@
   (ensure?? "let->nil" (nil? (c/let->nil [a 3] a)))
   (ensure?? "let->true" (true? (c/let->true [a 3] a)))
 
+  (ensure?? "decl-(long|int)-var"
+            (let [n (c/decl-long-var 9)
+                  i (c/decl-int-var 3)]
+              (and (== 9 (nth n 0))(== 3 (first i)))))
+
+  (ensure?? "(long|int)-var"
+            (let [n (c/decl-long-var)
+                  i (c/decl-int-var)]
+              (c/long-var n 9)
+              (c/int-var i 9)
+              (and (== 9 (c/long-var n))
+                   (== 3 (c/long-var n - 6))
+                   (== 9 (c/int-var i))
+                   (== 3 (c/int-var i - 6)))))
+
+  (ensure?? "decl-generic-enum"
+            (do
+              (c/decl-generic-enum g_enum 0 hot cold)
+              (let [a (c/lookup-enum-str g_enum "user/cold")
+                    s (c/get-enum-str g_enum :user/hot)
+                    b (c/lookup-enum-int g_enum 1)]
+                (and (= s "user/hot")
+                     (identical? a b)))))
+
+  (ensure?? "decl-special-enum"
+            (do
+              (c/decl-special-enum g_enum hot 6 cold 9)
+              (let [a (c/lookup-enum-str g_enum "user/cold")
+                    s (c/get-enum-str g_enum :user/hot)
+                    b (c/lookup-enum-int g_enum 9)
+                    z (c/lookup-enum-int g_enum 6)]
+                (and (= s "user/hot")
+                     (not (nil? z))
+                     (identical? a b)))))
+
   (ensure?? "defenum"
             (== 4 (do (c/defenum xxx 1 a b c) (+ xxx-a xxx-c))))
 
