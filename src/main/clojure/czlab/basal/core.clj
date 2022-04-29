@@ -3249,6 +3249,19 @@
   "Something that has a version."
   (version [_] ""))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn id??
+
+  "Get id of this object"
+  [obj]
+
+  (cond
+    (satisfies? Idable obj)
+    (czlab.basal.core/id obj)
+    (map? obj)
+    (:id obj)
+    :t nil))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;EOF
 
