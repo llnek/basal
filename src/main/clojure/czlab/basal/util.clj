@@ -1093,6 +1093,38 @@
                                ^Locale locale (get-cldr cl)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defprotocol I18NApi
+  ""
+  (set-bundle-path [_ bkey path] "")
+  (set-bundle [_ bkey b] "")
+  (get-base [_] "")
+  (get-bundle [_ bkey] ""))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(c/decl-object<> I18N
+                 c/AtomicGS
+                 (getf [me n]
+                       (get @(:o me) n))
+                 (setf [me n v]
+                       (swap! (:o me) assoc n v))
+                 I18NApi
+                 (get-base [me] (.getf me :base))
+                 (get-bundle [me bkey]
+                             (.getf me bkey))
+                 (set-bundle [me bkey b]
+                             (.setf me bkey b))
+                 (set-bundle-path [me bkey path]
+                                  (.setf me bkey (load-resource path))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn i18n<>
+
+  ""
+  [base]
+
+  (czlab.basal.core/atomic<> I18N {:base base}))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn rstr
 
   "The string value for this key,

@@ -1132,6 +1132,26 @@
   ([z a b & more]
    `(assoc (new ~z) ~a ~b ~@more)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defmacro atomic<>
+
+  "Create a new record instance, with all attributes inside an atom.
+  e.g. (atomic<> ClazzA)
+  (atomic<> ClazzA {:a 1})
+  (atomic<> ClazzA :a 1 :b 2)"
+  {:arglists '([z]
+               [z m]
+               [z ab & more])}
+
+  ([z]
+   `(assoc (new ~z) :o (atom {})))
+
+  ([z m]
+   `(assoc (new ~z) :o (atom (merge {} ~m))))
+
+  ([z a b & more]
+   `(assoc (new ~z) :o (atom (assoc {} ~a ~b ~@more)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defmacro vargs
 
@@ -3080,6 +3100,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;protocols
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defprotocol AtomicGS
+  ""
+  (getf [_ n] "Get field")
+  (setf [_ n v] "Set field"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defprotocol Activable
   "Something that can be activated."
