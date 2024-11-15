@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defproject io.czlab/basal "2.1.0"
+(defproject io.czlab/basal "2.2.0"
 
   :license {:url "https://www.apache.org/licenses/LICENSE-2.0.txt"
             :name "Apache License"}
@@ -8,19 +8,19 @@
   :description "General clojure helper functions"
   :url "https://github.com/llnek/basal"
 
-  :dependencies [[org.apache.logging.log4j/log4j-slf4j-impl "2.17.2"]
-                 [org.apache.logging.log4j/log4j-core "2.17.2"]
-                 [org.slf4j/slf4j-api "1.7.36" ]
-                 [io.aviso/pretty "1.1.1"]
-                 [org.clojure/core.async "1.5.648"]
-                 [org.flatland/ordered "1.15.10"]
-                 [org.clojure/data.json "2.4.0"]
-                 [org.clojure/tools.logging "1.2.4"]
-                 [org.clojure/clojurescript "1.11.4"]]
+  :dependencies [[org.apache.logging.log4j/log4j-slf4j2-impl "2.24.1"]
+                 [org.apache.logging.log4j/log4j-core "2.24.1"]
+                 [org.slf4j/slf4j-api "2.0.16" ]
+                 [io.aviso/pretty "1.4.4"]
+                 [org.clojure/core.async "1.6.681"]
+                 [org.flatland/ordered "1.15.12"]
+                 [org.clojure/data.json "2.5.0"]
+                 [org.clojure/tools.logging "1.3.0"]
+                 [org.clojure/clojurescript "1.11.132"]]
 
-  :exclusions [org.clojure/clojure]
+  :XXXexclusions [org.clojure/clojure]
 
-  :plugins [[cider/cider-nrepl "0.28.3"]
+  :plugins [[cider/cider-nrepl "0.50.2" :exclusions [nrepl/nrepl]]
             [lein-codox "0.10.8"]
             [lein-cljsbuild "1.1.8"]]
 
@@ -36,9 +36,8 @@
           :optimizations :whitespace
           :pretty-print true}}]}
 
-  :profiles {:provided {:dependencies [[org.clojure/clojure
-                                        "1.11.1" :scope "provided"]]}
-             :uberjar {:aot :all}}
+  :profiles {:uberjar {:aot :all}
+             :provided {:dependencies [[org.clojure/clojure "1.12.0"]]} }
 
   :global-vars {*warn-on-reflection* true}
   :target-path "out/%s"
@@ -67,7 +66,7 @@
              "-Dlog4j.configurationFile=file:attic/log4j2.xml"]
 
   :javac-options ["-source" "16"
-                  "-target" "16"
+                  "-target" "22"
                   "-Xlint:unchecked" "-Xlint:-options" "-Xlint:deprecation"])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

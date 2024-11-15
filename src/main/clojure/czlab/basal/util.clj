@@ -10,7 +10,7 @@
 ;; See the License for the specific language governing permissions and
 ;; limitations under the License.
 ;;
-;; Copyright © 2013-2022, Kenneth Leung. All rights reserved.
+;; Copyright © 2013-2024, Kenneth Leung. All rights reserved.
 
 (ns czlab.basal.util
 
@@ -880,7 +880,7 @@
 
   "Block current thread for some millisecs."
   {:arglists '([millis])}
-  [millis]
+  [^long millis]
 
   (c/try! (if (c/spos? millis) (Thread/sleep millis))))
 
