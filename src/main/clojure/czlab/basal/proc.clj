@@ -113,7 +113,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn thread<>
 
-  "Run a function in a separate thread."
+  "Run a function in a platform thread."
   {:tag Thread
    :arglists '([func start?]
                [func start? options])}
@@ -122,7 +122,7 @@
    (thread<> func start? nil))
 
   ([func start? {:as options
-                 :keys [cldr daemon?]}]
+                 :keys [name cldr daemon?]}]
    {:pre [(fn? func)]}
 
    (c/do-with [t (Thread. (u/run<> (func)))]
@@ -130,10 +130,39 @@
        (some->> (c/cast? ClassLoader c)
                 (.setContextClassLoader t))
        (.setDaemon t (true? daemon?))
+       (if name (.setName t name))
        (if start? (.start t))
-       (c/debug "thread#%s%s%s"
+       (c/debug "thread#%s%s%s - %s"
                 (.getName t)
-                ", daemon = " (.isDaemon t))))))
+                ", daemon = "
+                (.isDaemon t)
+                (if start? "started" "created"))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn vthread<>
+
+  "Run a function in a virtual thread."
+  {:tag Thread
+   :arglists '([func start?]
+               [func start? options])}
+
+  ([func start?]
+   (vthread<> func start? nil))
+
+  ([func start? {:as options
+                 :keys [name cldr]}]
+   {:pre [(fn? func)]}
+
+   (c/do-with [t (->> (u/run<> (func))
+                      (.unstarted (Thread/ofVirtual)))]
+     (let [c (or cldr (u/get-cldr))]
+       (some->> (c/cast? ClassLoader c)
+                (.setContextClassLoader t)))
+     (some->> name (.setName t))
+     (if start? (.start t))
+     (c/debug "virtual thread#%s - %s"
+              (.getName t)
+              (if start? "started" "created")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn async!
@@ -202,8 +231,9 @@
   [func]
   {:pre [(fn? func)]}
 
-  (->> (thread<> func false {:daemon? true})
-       (.addShutdownHook (Runtime/getRuntime))))
+  (->>
+    (thread<> func false {:daemon? true})
+    (.addShutdownHook (Runtime/getRuntime))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;scheduler

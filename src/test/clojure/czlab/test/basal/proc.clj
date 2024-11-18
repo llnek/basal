@@ -27,6 +27,7 @@
 (def ^{:private true
        :tag java.io.File} CUR-FP (i/tmpfile (u/jid<>)))
 (def ^:private SCD (atom nil))
+(def ^:private TDATA (atom nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (c/deftest test-proc
@@ -34,6 +35,22 @@
   (ensure?? "init"
             (c/let->true
               [s (p/scheduler<>)] (reset! SCD s) (c/activate s)))
+
+  (ensure?? "thread<>"
+            (let [_ (reset! TDATA nil)
+                  t (p/thread<> #(reset! TDATA 117)
+                                true
+                                {:name "t9"})]
+              (Thread/sleep 1500)
+              (== 117 @TDATA)))
+
+  (ensure?? "vthread<>"
+            (let [_ (reset! TDATA nil)
+                  t (p/vthread<> #(reset! TDATA 117)
+                                 true
+                                 {:name "t9"})]
+              (Thread/sleep 1500)
+              (== 117 @TDATA)))
 
   (ensure?? "run*" (== 1
                      (let [x (atom 0)]
