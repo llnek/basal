@@ -3289,6 +3289,22 @@
     :t nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn deref-atomic-core??
+
+  "Return the inner atom (derefed) inside this atomic object."
+  [atomicObj]
+
+  (if atomicObj @(:o atomicObj)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn atomic-core??
+
+  "Return the inner atom inside this atomic object."
+  [atomicObj]
+
+  (if atomicObj (:o atomicObj)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;EOF
 
 
